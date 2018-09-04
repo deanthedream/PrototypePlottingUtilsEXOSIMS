@@ -5,8 +5,12 @@ This script is designed for two modes:
 	Sweep Single Parameter
 	Sweep Multiple Parameters over Range
 
+#makeSimilarScripts.py is designed to run from the 'EXOSIMS/Scripts/' Folder
+
 Another example
- %run makeSimilarJson.py
+ %run makeSimilarScripts.py
+
+
  
 Written by Dean Keithly on 6/28/2018
 """
@@ -22,20 +26,31 @@ import string
 import copy
 import datetime
 
+def createScriptFolder(makeSimilarInst,sourcefile):
+    """This method creates a 'Script Folder' - a new folder with name 'makeSimilarInst_sourcefile' in 'EXOSIMS/Scripts/'
+    """
+    myString = os.getcwd() + '/' + makeSimilarInst + '_' + sourcefile
+    try:
+        os.mkdir(myString)#will fail if directory exists
+        print('MADE DIR: ' + myString)
+    except:
+        print('DID NOT MAKE DIR: ' + myString + ' It already exists.')
+
+
+
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Create a set of scripts and a queue. all files are relocated to a new folder.")
     parser.add_argument('--makeSimilarInst',nargs=1,type=str, help='Full path to the makeSimilar.json instruction script (string).')
 
     valid_chars = "-_.() %s%s" % (string.ascii_letters, string.digits)
 
-    """
-    (default) If no makeSimilarScripts instruction file is provided, default use makeSimilar.json
-    else: use the provided instructions
-    """
+    
+    #(default) If no makeSimilarScripts instruction file is provided, default use makeSimilar.json
     if makeSimilarInst is None:
         with open('./makeSimilar.json') as f:#Load variational instruction script
             jsonDataInstruction = json.load(f)#This script contains the instructions for precisely how to modify the base file
-    else:
+        makeSimilarInst = 'makeSimilar.json'
+    else:#else: use the provided instructions
         assert os.path.exists(makeSimilarInst), "%s is not a valid filepath" % (makeSimilarInst)
         with open(makeSimilarInst) as f:#Load variational instruction script
             jsonDataInstruction = json.load(f)#This script contains the instructions for precisely how to modify the base file
@@ -45,6 +60,8 @@ if __name__ == "__main__":
     with open('../Scripts/' + sourcefile) as f:#Load source script json file
         jsonDataSource = json.load(f)#This script contains the information to be slightly modified
 
+    #Create Script Folder
+    createScriptFolder(makeSimilarInst,sourcefile)#Create 'Script Folder' - a new folder with name 'makeSimilarInst_sourcefile' in 'EXOSIMS/Scripts/'
     
 
     namesOfScriptsCreated = list()
