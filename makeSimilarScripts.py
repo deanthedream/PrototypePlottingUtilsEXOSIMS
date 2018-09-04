@@ -23,11 +23,23 @@ import copy
 import datetime
 
 if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="Create a set of scripts and a queue. all files are relocated to a new folder.")
+    parser.add_argument('--makeSimilarInst',nargs=1,type=str, help='Full path to the makeSimilar.json instruction script (string).')
 
     valid_chars = "-_.() %s%s" % (string.ascii_letters, string.digits)
 
-    with open('./makeSimilar.json') as f:#Load variational instruction script
-        jsonDataInstruction = json.load(f)#This script contains the instructions for precisely how to modify the base file
+    """
+    (default) If no makeSimilarScripts instruction file is provided, default use makeSimilar.json
+    else: use the provided instructions
+    """
+    if makeSimilarInst is None:
+        with open('./makeSimilar.json') as f:#Load variational instruction script
+            jsonDataInstruction = json.load(f)#This script contains the instructions for precisely how to modify the base file
+    else:
+        assert os.path.exists(makeSimilarInst), "%s is not a valid filepath" % (makeSimilarInst)
+        with open(makeSimilarInst) as f:#Load variational instruction script
+            jsonDataInstruction = json.load(f)#This script contains the instructions for precisely how to modify the base file
+
 
     sourcefile = jsonDataInstruction['scriptName']#the filename of the script to be copied
     with open('../Scripts/' + sourcefile) as f:#Load source script json file
@@ -112,4 +124,6 @@ if __name__ == "__main__":
             queueOut['scriptNames'] = namesOfScriptsCreated
             queueOut['numRuns'] = [jsonDataInstruction['numRuns'] for i in range(len(namesOfScriptsCreated))]
             json.dump(queueOut, g, indent=1)
+    else:
+        print('not a valid instruction script')
 
