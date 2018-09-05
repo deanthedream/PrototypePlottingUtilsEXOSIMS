@@ -1,7 +1,8 @@
 {
     "scriptName":"sampleScript_sureThing.json",
-    "sweepType":"SweepParametersPercentage",
+    "sweepType":"SweepParametersPercentages",
     "sweepParameters": ["missionLife","missionPortion"],
-    "sweepPercentage": [0.1, 0.1],
+    "sweepCombNums": [1],
+    "sweepPercentages": [0.1, -0.1],
     "numRuns":1000
 }

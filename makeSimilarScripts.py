@@ -55,6 +55,9 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Create a set of scripts and a queue. all files are relocated to a new folder.")
     parser.add_argument('--makeSimilarInst',nargs=1,type=str, help='Full path to the makeSimilar.json instruction script (string).')
 
+    args = parser.parse_args()
+    makeSimilarInst = args.makeSimilarInst[0]
+
     valid_chars = "-_.() %s%s" % (string.ascii_letters, string.digits)
     valid_sweepTypes = ['SweepParameters','SweepParametersPercentages']
     
@@ -68,9 +71,11 @@ if __name__ == "__main__":
         assert os.path.exists(makeSimilarInst), "%s is not a valid filepath" % (makeSimilarInst)
         with open(makeSimilarInst) as f:#Load variational instruction script
             jsonDataInstruction = json.load(f)#This script contains the instructions for precisely how to modify the base file
+    sourceFolderCore = (makeSimilarInst.split('/')[-1]).split('.')[0]
 
-
+    #Load source File
     sourcefile = jsonDataInstruction['scriptName']#the filename of the script to be copied
+    sourceFileCore = sourcefile.split('.')[0]#strips the .json part of the filename
     with open('./' + sourcefile) as f:#Load source script json file
         jsonDataSource = json.load(f)#This script contains the information to be slightly modified
 
@@ -78,7 +83,7 @@ if __name__ == "__main__":
     assert jsonDataInstruction['sweepType'] in valid_sweepTypes, 'sweepType %s not in valid_sweepTypes' %(jsonDataInstruction['sweepType'])
 
     #Create Script Folder
-    folderName = createScriptFolder(makeSimilarInst.split('/')[-1],sourcefile)#Create 'Script Folder' - a new folder with name 'makeSimilarInst_sourcefile' in 'EXOSIMS/Scripts/'
+    folderName = createScriptFolder(sourceFolderCore,sourceFileCore)#Create 'Script Folder' - a new folder with name 'makeSimilarInst_sourcefile' in 'EXOSIMS/Scripts/'
 
     namesOfScriptsCreated = list()
     # Case 1
@@ -103,7 +108,7 @@ if __name__ == "__main__":
             for ind2 in range(len(sweepParameters)):#Iterate over all parameters
                 paramNameSet = paramNameSet + sweepParameters[ind2] + str(sweepValues[ind2][ind])
             
-            scriptName = createScriptName('auto',makeSimilarInst.split('/')[-1],sourcefile,ind)#create script name
+            scriptName = createScriptName('auto',sourceFolderCore,sourceFileCore,ind)#create script name
             namesOfScriptsCreated.append(scriptName)#Append to master list of all scripts created
             jsonDataOutput = copy.deepcopy(jsonDataSource)#Create a deepCopy of the original json script
 
@@ -117,7 +122,7 @@ if __name__ == "__main__":
 
         # Create queue.json script from namesOfScriptsCreated
         queueOut = {}
-        queueName = createScriptName('queue',makeSimilarInst.split('/')[-1],sourcefile,'')
+        queueName = createScriptName('queue',sourceFolderCore,sourceFileCore,'')
         with open('./' + folderName + '/' + queueName, 'w') as g:
             queueOut['scriptNames'] = namesOfScriptsCreated
             queueOut['numRuns'] = [jsonDataInstruction['numRuns'] for i in range(len(namesOfScriptsCreated))]
@@ -126,9 +131,6 @@ if __name__ == "__main__":
             queueOut['scriptNames'] = namesOfScriptsCreated
             queueOut['numRuns'] = [jsonDataInstruction['numRuns'] for i in range(len(namesOfScriptsCreated))]
             json.dump(queueOut, g, indent=1)
-
-        #Copy MakeSimilarInst to directory containing scripts
-        shutil.copy2(makeSimilarInst,'./' + folderName)
 
 
         # Case 2
@@ -144,12 +146,12 @@ if __name__ == "__main__":
         else:
             sweepCombNums = [1]
 
+        #Error Checking
+        assert max(sweepCombNums) <= len(sweepParameters), "sweepCombNums: %d > len(sweepParameters): %d" %(max(sweepCombNums),len(sweepParameters)) #check the sweepCombNum is valid
+
         #Combination Number Loop
         cnt = 0
         for cInd in range(len(sweepCombNums)):
-
-            #Error Checking
-            assert max(sweepCombNums[cInd]) <= len(sweepParameters), "sweepCombNums: %d > len(sweepParameters): %d" %(max(sweepCombNums[cInd]),len(sweepParameters)) #check the sweepCombNum is valid
 
             paramInds = range(len(sweepParameters)) # inds for parameters to sweep
             allIndCombs = list(combinations(paramInds,sweepCombNums[cInd])) # all combinations of paramInds for sweepCombNums
@@ -161,13 +163,13 @@ if __name__ == "__main__":
                 #Iterate over sweepPercentages
                 for pInd in range(len(sweepPercentages)):
 
-                    scriptName = createScriptName('auto',makeSimilarInst.split('/')[-1],sourcefile,cnt)#create script name
+                    scriptName = createScriptName('auto',sourceFolderCore,sourceFileCore,cnt)#create script name
                     namesOfScriptsCreated.append(scriptName)#Append to master list of all scripts created
                     jsonDataOutput = copy.deepcopy(jsonDataSource)#Create a deepCopy of the original json script
 
                     #Iterate over all Parameters and update based on percentage
-                    for jnd in range(len(combs)):
-                        paramInd = combs[jnd]#The specific parameter index being modified in this script
+                    for jnd in range(len(comb)):
+                        paramInd = comb[jnd]#The specific parameter index being modified in this script
                         jsonDataOutput[sweepParameters[paramInd]] = jsonDataOutput[sweepParameters[paramInd]]*(1. + sweepPercentages[pInd]) #replace value
                     
                     #Write Out Script
@@ -177,7 +179,7 @@ if __name__ == "__main__":
 
         # Create queue.json script from namesOfScriptsCreated
         queueOut = {}
-        queueName = createScriptName('queue',makeSimilarInst.split('/')[-1],sourcefile,'')
+        queueName = createScriptName('queue',sourceFolderCore,sourceFileCore,'')
         with open('./' + folderName + '/' + queueName, 'w') as g:
             queueOut['scriptNames'] = namesOfScriptsCreated
             queueOut['numRuns'] = [jsonDataInstruction['numRuns'] for i in range(len(namesOfScriptsCreated))]
@@ -186,10 +188,6 @@ if __name__ == "__main__":
             queueOut['scriptNames'] = namesOfScriptsCreated
             queueOut['numRuns'] = [jsonDataInstruction['numRuns'] for i in range(len(namesOfScriptsCreated))]
             json.dump(queueOut, g, indent=1)
-
-        #Copy MakeSimilarInst to directory containing scripts
-        shutil.copy2(makeSimilarInst,'./' + folderName)
-
 
         #Create Filename Substring using parameters and values
         # paramNameSet = ''
@@ -209,3 +207,7 @@ if __name__ == "__main__":
     else:
         print('not a valid instruction script')
 
+    #Copy MakeSimilarInst to directory containing scripts
+    shutil.copy2(makeSimilarInst,'./' + folderName)
+    #Copy ScriptAAA.json to directory containing scripts
+    shutil.copy2(sourcefile,'./' + folderName)
