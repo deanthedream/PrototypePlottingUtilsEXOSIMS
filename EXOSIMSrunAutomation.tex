@@ -1,0 +1,90 @@
+\title{EXOSIMS Run and Post Processing Automation}
+\author{
+		Dean Keithly
+}
+\date{\today}
+
+\documentclass[12pt]{article}
+
+\begin{document}
+\maketitle
+
+%\begin{abstract}
+%This is the paper's abstract \ldots
+%\end{abstract}
+
+\section{makeSimilarScripts.py}
+This script is designed to be run from the 'EXOSIMS/Scripts' folder.
+The template script scriptAAA.json must be located in the 'EXOSIMS/script' folder.
+\paragraph{Inputs:}
+makeSimilarInst.json - this file is located in the run directory and encodes the instructions for making a set of similar json input scripts.
+scriptAAA.json
+\paragraph{Outputs:}
+queueXXX.json - this file is a queue containing a list of all
+
+\subsection{makeSimilarInst.json}
+Every configuration of this script has keys
+'sweepType' and 'sweepParameters'.
+The 'sweepType' field must be a string.
+'sweepType' has valid input fields of "SweepParameters" and "SweepParametersPercentages".
+The 'sweepParameters' field must be a list of strings where each string is a valid key of the EXOSIMS json script.
+
+\subsubsection{SweepParameters}
+The 'sweepType' "SweepParameters" is designed to sweep any set of parameters in 'sweepParameters' key.
+The makeSimilarInst.json must have the 'sweepValues' key.
+The 'sweepValues' key must have the same length as the 'sweepParameters' key.
+i.e. 'sweepParameters':[param1, param2, ..., paramn] and 'sweepValues':[vals1, vals2, ..., valsn] where the length of both lists are n
+Each valsi in 'sweepValues' is a list of values.
+Each list valsi in 'sweepValues' has the same length.
+The number of executable EXOSIMS created has length len(valsi).
+
+\subsubsection{SweepParametersPercentages}
+The 'sweepType' "SweepParametersPercentages" is designed to take a set of parameters and set of percentages and run percentage based sweeps on single and combinations of parameters.
+This 'sweepType' requires a 'sweepPercentages', 'sweepParameters', and 'sweepCombNums'.
+
+\paragraph{The 'sweepCombNums'} are a list of sweep combination lengths (i.e. sweepCombNums = [1] means each parameter).
+\paragraph{The 'sweepPercentages'} are a list of percentages   where XX\% is 0.XX and -XX\% is -0.XX. 
+The list must contain at least 1 element but may contain an arbitrarily large number of elements.
+No element may contain less than or equal to -100\%.
+\paragraph{The 'sweepParameters'} can be any number of parameters, but all parameters will be varied by the same percentage.
+
+%\subsubsection{SweepParametersUniquePercentages}
+%The 'sweepType' "SweepParametersUniquePercentages" is designed to take a set of parameters  percentages and run percentage based sweeps on single and combinations of parameters.
+
+
+\section{runQueue}
+\paragraph{Inputs:}
+outpath (string) - this is the full filepath to the "output directory". This "output directory" is the location that each "job" directory will be saved. A "job" is a specific json script which is executed over a number of runs (numRuns).
+queue.json (file) - see \ref{queue.json)
+\paragraph{Outputs:}
+
+
+\section{queue.json}\label{sec:queue.json}
+This file is located in the "EXOSIMS/run" directory.
+This json file encodes the "scriptNames" and "numRuns".
+"scriptNames" is a list of strings where each string is a filename of a file that exists in the "EXOSIMS/Scripts" folder.
+"numRuns" is a list of integers with same length as "scriptNames" where each number of runs is the number of runs to execute for the corresponding script name.
+
+
+
+This is time for all good men to come to the aid of their party!
+
+\paragraph{Outline}
+The remainder of this article is organized as follows.
+Section~\ref{previous work} gives account of previous work.
+Our new and exciting results are described in Section~\ref{results}.
+Finally, Section~\ref{conclusions} gives the conclusions.
+
+\section{Previous work}\label{previous work}
+A much longer \LaTeXe{} example was written by Gil~\cite{Gil:02}.
+
+\section{Results}\label{results}
+In this section we describe the results.
+
+\section{Conclusions}\label{conclusions}
+We worked hard, and achieved very little.
+
+\bibliographystyle{abbrv}
+\bibliography{main}
+
+\end{document}
