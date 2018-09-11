@@ -110,7 +110,7 @@ axes.set_ylim([0,1.1*np.amax(rcounts)])
 show(block=False)
 
 filename = 'UniqDetvsMissionLength'
-runPath = '/home/dean/Documents/SIOSlab/SPIE2018Journal/'
+runPath = '/home/dean/Documents/SIOSlab/SPIE2018Journal/DELETE'
 savefig(runPath + filename + '.png', format='png', dpi=500)
 savefig(runPath + filename + '.svg')
 savefig(runPath + filename + '.eps', format='eps', dpi=500)
@@ -163,7 +163,7 @@ vlines(inds, twentyfifthPercentile, seventyfifthPercentile, color='silver', line
 show(block=False)
 
 filename = 'UniqDetvsMissionLengthVIOLIN'
-runPath = '/home/dean/Documents/SIOSlab/SPIE2018Journal/'
+runPath = '/home/dean/Documents/SIOSlab/SPIE2018Journal/DELETE'
 savefig(runPath + filename + '.png', format='png', dpi=500)
 savefig(runPath + filename + '.svg')
 savefig(runPath + filename + '.eps', format='eps', dpi=500)
