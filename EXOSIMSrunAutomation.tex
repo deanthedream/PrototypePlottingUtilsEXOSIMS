@@ -5,6 +5,8 @@
 \date{\today}
 
 \documentclass[12pt]{article}
+\usepackage{dirtree,float}
+\usepackage{bibentry}
 
 \begin{document}
 \maketitle
@@ -13,14 +15,62 @@
 %This is the paper's abstract \ldots
 %\end{abstract}
 
+\section{setupEXOSIMS.py}
+setupEXOSIMS.py is designed to be run from level 1 of the EXOSIMS repository (the same folder where documentation, ICD, tests, and EXOSIMS folders exist).
+This script creates the "Scripts", "cache", and "fitFilesFolder"  at level 0 (one folder level above level1, the EXOSIMS repository).
+This script copies the makeSimilarScripts.py, singleRunPostProcessing.py, and multiRunPostProcessing.py scripts to the level 0 scripts folder.
+The script also copies deleteMe100.json (a templeate script), makeSimilar.json, makeSimilar2.json (the makeSimilarScripts.py instruction files) to the Scripts folder which form the base examples of how to use makeSimilarScripts.py. 
+This script uses setuptools.command.easy\_install to install the python modules listed in requirements.txt.
+
+
+\section{Directory Tree}
+\fbox{%
+	\small
+	
+\noindent\begin{minipage}[t]{0.99\linewidth\relax}
+	\dirtree{%
+	.1 /exosims (Folder Where EXOSIMS module is located). 
+	.2 /EXOSIMS. 
+	.3 setupEXOSIMS.py. 
+	.3 /tests. 
+	.3 /ICD. 
+	.3 /EXOSIMS. 
+	.4 /run. 
+	.4 /Scripts. 
+	.5 TemplateScript1.json. 
+	.5 TemplateScript2.json. 
+	.2 /Scripts (External Scripts Folder). 
+	.3 makeSimilarScripts.py. 
+	.3 makeSimilarJson.py. 
+	.3 queue.json. 
+	.3 deleteMe100.json. 
+	.3 makeSimilar.json. 
+	.3 /makeSimilar\_deleteM100. 
+	.4 deleteMe100.json. 
+	.4 makeSimilar.json. 
+	.4 queue\_*date*\_makeSimilar\_deleteMe100.json. 
+	.4 *List of scripts created by deleteMe100.json and makeSimilar.json*.
+	.2 /cache. 
+	.3 queue.json. 
+	.3 runLog.csv. 
+	.3 *.comp. 
+	.3 ....
+	.2 /fitFilesFolder. 
+	}
+	\end{minipage}
+}
+
+
+%%% OLD makeSimilarScripts.py < Sept 15th 2018
 \section{makeSimilarScripts.py}
-This script is designed to be run from the 'EXOSIMS/Scripts' folder.
-The template script scriptAAA.json must be located in the 'EXOSIMS/script' folder.
+This script is designed to be run from the 'EXOSIMS/../Scripts' folder.
+The template script scriptAAA.json must be located in the 'EXOSIMS/../Scripts' folder.
 \paragraph{Inputs:}
 makeSimilarInst.json - this file is located in the run directory and encodes the instructions for making a set of similar json input scripts.
 scriptAAA.json
 \paragraph{Outputs:}
 queueXXX.json - this file is a queue containing a list of all
+
 
 \subsection{makeSimilarInst.json}
 Every configuration of this script has keys
@@ -55,36 +105,22 @@ No element may contain less than or equal to -100\%.
 \section{runQueue}
 \paragraph{Inputs:}
 outpath (string) - this is the full filepath to the "output directory". This "output directory" is the location that each "job" directory will be saved. A "job" is a specific json script which is executed over a number of runs (numRuns).
-queue.json (file) - see \ref{queue.json)
+queue.json (file) - see \ref{sec:queue.json}
 \paragraph{Outputs:}
 
 
 \section{queue.json}\label{sec:queue.json}
-This file is located in the "EXOSIMS/run" directory.
+This file is located in the "EXOSIMS/../cache" directory.
 This json file encodes the "scriptNames" and "numRuns".
-"scriptNames" is a list of strings where each string is a filename of a file that exists in the "EXOSIMS/Scripts" folder.
+"scriptNames" is a list of strings where each string is a filename of a file that exists in the "EXOSIMS/../Scripts" folder.
 "numRuns" is a list of integers with same length as "scriptNames" where each number of runs is the number of runs to execute for the corresponding script name.
 
-
-
-This is time for all good men to come to the aid of their party!
-
-\paragraph{Outline}
-The remainder of this article is organized as follows.
-Section~\ref{previous work} gives account of previous work.
-Our new and exciting results are described in Section~\ref{results}.
-Finally, Section~\ref{conclusions} gives the conclusions.
-
-\section{Previous work}\label{previous work}
-A much longer \LaTeXe{} example was written by Gil~\cite{Gil:02}.
-
-\section{Results}\label{results}
-In this section we describe the results.
-
-\section{Conclusions}\label{conclusions}
-We worked hard, and achieved very little.
-
-\bibliographystyle{abbrv}
-\bibliography{main}
+\nocite{*}
+%\bibstyle{}
+\bibliographystyle{plain}
+\nobibliography{main}
+%\bibliography{masterthesis}
+%\bibliographystyle{abbrv}
+%\bibliography{main.bib}
 
 \end{document}
