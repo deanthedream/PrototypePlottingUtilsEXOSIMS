@@ -11,10 +11,10 @@ Written By: Dean Keithly
 Written On: 9/10/2018
 """
 import os
-if not 'DISPLAY' in os.environ.keys():
-    import matplotlib
-    matplotlib.use('Agg')
-
+if not 'DISPLAY' in os.environ.keys(): #Check environment for keys
+    from matplotlib import *
+    use('Agg')
+from pylab import *
 import shutil
 import numpy as np
 import argparse
