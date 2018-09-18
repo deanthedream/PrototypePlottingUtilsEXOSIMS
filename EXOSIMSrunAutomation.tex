@@ -60,6 +60,17 @@ This script uses setuptools.command.easy\_install to install the python modules 
 	\end{minipage}
 }
 
+\subsection{cache}
+\subsection{Scripts}
+The Scripts folder is where makeSimilarScripts.py is designed to be run from.
+The Scripts folder should contain all makeSimilarInst.json files.
+If makeSimilarInst.json file refers to a Template.json file as the template script, then that script should be located in the Scripts folder.
+A note on operation of makeSimilarScripts.py: If a makeSimilarInst.json file refers to a Template file Template.json and this Template.json file has a field which is a file name, that file will be copied into the subfolder makeSimilarInst\_Template with 'auto\_makeSimilarInst\_Template' prepended to the filename (This ensure that all necessary information required to replicate a given run is contained within the makeSimilarInst\_Template folder).
+\paragraph{Example:} If a makeSimilarInst.json file refers to a Template.json file with a "missionSchedule" dictionary key with value "sampleOB.csv", then sampleOB.csv should reside in the Scripts folder.
+When makeSimilarScripts.py is run, a copy of sampleOB.csv will be made in makeSimilarInst\_Template with filename auto\_makeSimilarInst\_TemplatesampleOB.csv.
+\subsection{fitFilesFolder}
+The fitFilesFolder is where fit files should be stored (EXOSIMS does not require this as of 9/18/2018 and is not anticipated to require this).
+
 
 %%% OLD makeSimilarScripts.py < Sept 15th 2018
 \section{makeSimilarScripts.py}
