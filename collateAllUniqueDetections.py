@@ -54,7 +54,7 @@ if __name__ == "__main__":
     ####################################3
 
     #### Search Through All Files
-    for f in pklfiles2[0:1]:
+    for f in pklfiles2:
         out = gen_summary(f, includeUniversePlanetPop=False)
 
         Rps = list()
