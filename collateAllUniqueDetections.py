@@ -38,7 +38,7 @@ if __name__ == "__main__":
     outFolder = args.outFolder[0]
 
     #### Get List of All run_dir containing pkl files
-    searchFolder = '/home/dean/Documents/SIOSlab/'  
+    #searchFolder = '/home/dean/Documents/SIOSlab/'  
     searchFolder += '*/'
     pklfiles = glob.glob(os.path.join(searchFolder,'*.pkl'))
     pklfiles2 = list()
