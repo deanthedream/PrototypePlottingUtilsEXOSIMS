@@ -1,7 +1,5 @@
 \title{EXOSIMS Run and Post Processing Automation}
-\author{
-		Dean Keithly
-}
+\author{	Dean Keithly}
 \date{\today}
 
 \documentclass[12pt]{article}
@@ -29,6 +27,12 @@ This script uses setuptools.command.easy\_install to install the python modules 
 	
 \noindent\begin{minipage}[t]{0.99\linewidth\relax}
 	\dirtree{%
+	.1 .
+	.1 Level -1.
+	.2 Level 0.
+	.3 Level 1.
+	.4 Level 2.
+	.5 Level 3.
 	.1 /exosims (Folder Where EXOSIMS module is located). 
 	.2 /EXOSIMS. 
 	.3 setupEXOSIMS.py. 
@@ -114,17 +118,58 @@ No element may contain less than or equal to -100\%.
 
 
 \section{runQueue}
+
 \paragraph{Inputs:}
 outpath (string) - this is the full filepath to the "output directory". This "output directory" is the location that each "job" directory will be saved. A "job" is a specific json script which is executed over a number of runs (numRuns).
-queue.json (file) - see \ref{sec:queue.json}
+queue.json (file) - see \ref{sec:queue.json} (FUTURE 9/25/2018) *IF queue.json contains "outpath" and outpath is not specified as an input, then it will use the value of "outpath" presuming it is a valid filepath.
 \paragraph{Outputs:}
 
 
 \section{queue.json}\label{sec:queue.json}
 This file is located in the "EXOSIMS/../cache" directory.
-This json file encodes the "scriptNames" and "numRuns".
-"scriptNames" is a list of strings where each string is a filename of a file that exists in the "EXOSIMS/../Scripts" folder.
-"numRuns" is a list of integers with same length as "scriptNames" where each number of runs is the number of runs to execute for the corresponding script name.
+This json file encodes the "scriptNames", "numRuns", "singleRunPostProcessing", "multiRunPostProcessing", and "outpath".
+\paragraph{"scriptNames"} is a list of strings where each string is a filename of a file that exists in the "EXOSIMS/../Scripts" folder.
+\paragraph{"numRuns"} is a list of integers with same length as "scriptNames" where each number of runs is the number of runs to execute for the corresponding script name.
+\paragraph{"singleRunPostProcessing"} is a dictionary where each dictionary key is the name of a post processing script to call and the value of each dictionary key represent the arguments of that script(EXACT FORMATTING OF ARGUMENTS TBD).
+Each script-key in "singleRunPostProcessing" will be run on all of the "Run Types" in the folder specified by the "outpath" key.
+\paragraph{"singleRunPostProcessing"} is a dictionary where each dictionary key is the name of a post processing script to call and the value of each dictionary key represent the arguments of that script (EXACT FORMATTING OF ARGUMENTS TBD).
+Each script-key in "singleRunPostProcessing" will be run on all of the "Run Types" in the folder specified by the "outpath" key.
+\paragraph{"outpath"} specifies the path to place each of the "Run Type" folders. NOTE: outpath is overridden by a manual input to runQueue.py.
+\paragraph{"PPoutpath"}
+is where each of the runs single run and multi-run post processing will be run on.
+
+
+\section{createOBdurArray.py}
+This script is designed to create observing blocks start and end times to execute missions over.
+The top, we input exoplanetObsTime and maxNum Years.
+We calculate maximum number of days in a year.
+We calculate the mission Portion. This should be constrained for what I am trying to do.
+%THIS IS CURRENTLY LOCATED IN THE PrototypePlottingUtilsEXOSIMS folder
+We create OBdur2, a list of logarithmically spaced Observing Block Durations (50 different durations from a duration of 0.1 to 365days).
+We also create 10 additional OB durations from 2.5 to 10.5 with spacing of 1 day in between each (verify this against simulations I actually ran. Not 100\% on this).
+HarmonicDistOB[OBdur2][0-startTimes, 1-endTimes][observing blocks]
+
+\section{runPostProcessing.py}
+runPostProcessing is run by running \%run runPostProcessing.py --queueFileFolder "/full path to json instruction file or json instruction folder/"
+
+Executing runPostProcessing as main calls the queuePostProcessing method if any queueFileFolder input is provided.
+
+Logic is implemented in the queuePostProcessing method to determine whether the queueFileFolder information is for a specific file or a folder to search for a queue* file in (a valid file or folder containing a valid file must be passed). 
+
+This queue file must be in json format.
+The queue file CAN but is not required to have the following dictionary keys outpath, PPoutpath, scriptNames, singleRunPostProcessing, multiRunPostProcessing.
+outpath is the path to the folder containing folders to analyze (this is the outpath specified in runQueue).
+PPoutpath is the Full Path to the directory the multi-run analysis outputs to.
+scriptNames is a list of Names of Run Type Folders containing runs to analyze.
+singleRunPostProcessing is a list of dictionaries which must contain key 'analysisName' and can contain 'args' key which contains the arguments for the post processing script.
+For singleRunPostProcessing, each 'analysisName' will be run over each run in 'scriptNames'.
+Behavior and requirements for multiRunPostProcessing are the same.
+In multiRunPostProcessing, each 'analysisName' will be run over the set of 'scriptNames'.
+singleRunPostProcessing are run first, then multiRunPostProcessing.
+MOTIVATION with this architecture, we are able to use the same queue.json file used to start a runQueue process to start creating plots for each individual run and process the set of runs.
+
+
+\section{}
 
 \nocite{*}
 %\bibstyle{}
