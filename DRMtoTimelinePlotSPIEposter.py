@@ -35,6 +35,9 @@ except:
     import pickle
 import os
 import numpy as np
+if not 'DISPLAY' in os.environ.keys(): #Check environment for keys
+    from matplotlib import *
+    use('Agg')
 from pylab import *
 from numpy import nan
 import matplotlib.pyplot as plt
@@ -44,8 +47,8 @@ import json
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Create Mission Timeline Figures")
-    parser.add_argument('pklfile', nargs=1, type=str, help='Full path to pkl file (string).')
-    parser.add_argument('outspecfile', nargs=1, type=str, help='Full path to outspec file (string).')
+    parser.add_argument('--pklfile', nargs=1, type=str, help='Full path to pkl file (string).')
+    parser.add_argument('--outspecfile', nargs=1, type=str, help='Full path to outspec file (string).')
 
     args = parser.parse_args()
     pklfile = args.pklfile[0]
