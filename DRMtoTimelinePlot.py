@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 """Purpose: Plot Observation Timeline for mission
 
 Written by Dean Keithly on 23 Apr, 2018
@@ -36,57 +37,84 @@ from numpy import nan
 import matplotlib.pyplot as plt
 import argparse
 import json
+from EXOSIMS.util.vprint import vprint
 
+class DRMtoTimelinePlot(object):
+    """
+    """
+    _modtype = 'util'
 
-if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="Create Mission Timeline Figures")
-    parser.add_argument('pklfile', nargs=1, type=str, help='Full path to pkl file (string).')
-    parser.add_argument('outspecfile', nargs=1, type=str, help='Full path to outspec file (string).')
+    def __init__(self, args):
+        vprint(args)
+        vprint('DRMtoTimelinePlot Initialization done')
+        pass
 
-    args = parser.parse_args()
-    pklfile = args.pklfile[0]
-    outspecfile = args.outspecfile[0]
+    def singleRunPostProcessing(self, PPoutpath, folder):
+        """This is called by runPostProcessing
+        """
+        pass
 
-    if not os.path.exists(pklfile):
-        raise ValueError('%s not found'%pklfile)
+    # if __name__ == "__main__":
+    #     parser = argparse.ArgumentParser(description="Create Mission Timeline Figures")
+    #     parser.add_argument('--pklfile', nargs=1, type=str, help='Full path to pkl file (string).')
+    #     parser.add_argument('--outspecfile', nargs=1, type=str, help='Full path to outspec file (string).')
 
-    #Given Filepath for pklfile, Plot a pkl from each testrun in subdir
-    pklPaths = list()
-    pklfname = list()
-    outspecPaths = list()
-    if(os.path.isdir(pklfile)):
-        #Look for all directories in specified path with structured folder name
-        fp1 = pklfile
-        dirs = [myString for myString in next(os.walk(fp1))[1] if 'SU' in myString \
-            and 'PP' in myString \
-            and 'OB' in myString \
-            and 'fZ' in myString \
-            and 'RS' in myString]  # Folders containing Monte Carlo Runs
+    #     args = parser.parse_args()
+    #     pklfile = args.pklfile[0]
+    #     outspecfile = args.outspecfile[0]
 
-        for i in np.arange(len(dirs)):
-            pklFiles = [myFileName for myFileName in os.listdir(fp1+dirs[i]) if 'run' in myFileName and '.pkl' in myFileName]  # Get names of all pkl files in path
-            pklfname.append(np.random.choice(pklFiles))
-            pklPaths.append(fp1 + dirs[i] + '/' + pklfname[i])  # append a random pkl file to path
-            outspecPaths.append(fp1 + dirs[i] + '/' + 'outspec.json')
-    elif(os.path.isfile(pklfile)):
-        dirs = [pklfile.split('/')[-2]]
-        pklfname.append(pklfile.split('/')[-1].split('.')[0])
-        pklPaths.append(pklfile)#append filepath provided in args
-        outspecPaths.append(outspecfile)#append filepath provided in args
+    def PlotTimelineWithOB(self, pklfile, outspecfile, PPoutpath):
+        """
+        Args:
+            pklfile (string) - full path to pkl file
+            outspecfile (string) - full path to outspec file
+            PPoutpath (string) - full path to output directory of file
+        Return:
+        """
+        #Error check to ensure provided pkl file exists
+        assert os.path.isfile(pklfile), '%s not found' %pklfile
+        assert os.path.isfile(outspecfile), '%s not found' %outspecfile
 
-    #Iterate over all pkl files
-    for cnt in np.arange(len(pklPaths)):
+        #if not os.path.exists(pklfile):
+        #    raise ValueError('%s not found'%pklfile)
+
+        #Given Filepath for pklfile, Plot a pkl from each testrun in subdir
+        pklPaths = list()
+        pklfname = list()
+        outspecPaths = list()
+        # if(os.path.isdir(pklfile)):
+        #     #Look for all directories in specified path with structured folder name
+        #     fp1 = pklfile
+        #     dirs = [myString for myString in next(os.walk(fp1))[1] if 'SU' in myString \
+        #         and 'PP' in myString \
+        #         and 'OB' in myString \
+        #         and 'fZ' in myString \
+        #         and 'RS' in myString]  # Folders containing Monte Carlo Runs
+
+        #     for i in np.arange(len(dirs)):
+        #         pklFiles = [myFileName for myFileName in os.listdir(fp1+dirs[i]) if 'run' in myFileName and '.pkl' in myFileName]  # Get names of all pkl files in path
+        #         pklfname.append(np.random.choice(pklFiles))
+        #         pklPaths.append(fp1 + dirs[i] + '/' + pklfname[i])  # append a random pkl file to path
+        #         outspecPaths.append(fp1 + dirs[i] + '/' + 'outspec.json')
+        #elif(os.path.isfile(pklfile)):
+        
+        pkldir = [pklfile.split('/')[-2]]
+        pklfname = pklfile.split('/')[-1].split('.')[0]
+
+            # pklPaths.append(pklfile)#append filepath provided in args
+            # outspecPaths.append(outspecfile)#append filepath provided in args
+
         try:
-            with open(pklPaths[cnt], 'rb') as f:#load from cache
+            with open(pklfile, 'rb') as f:#load from cache
                 DRM = pickle.load(f)
         except:
-            print('Failed to open pklfile %s'%pklPaths[cnt])
+            vprint('Failed to open pklfile %s'%pklfile)
             pass
         try:
-            with open(outspecPaths[cnt], 'rb') as g:
+            with open(outspecfile, 'rb') as g:
                 outspec = json.load(g)
         except:
-            print('Failed to open outspecfile %s'%outspecPaths[cnt])
+            vprint('Failed to open outspecfile %s'%outspecfile)
             pass
 
         arrival_times = [DRM['DRM'][i]['arrival_time'].value for i in np.arange(len(DRM['DRM']))]
@@ -98,8 +126,8 @@ if __name__ == "__main__":
         char_times = [DRM['DRM'][i]['char_time'].value*(1+outspec['charMargin'])+sumOHTIME*(DRM['DRM'][i]['char_time'].value > 0.) for i in np.arange(len(DRM['DRM']))]
         OBdurations = np.asarray(outspec['OBendTimes'])-np.asarray(outspec['OBstartTimes'])
         #sumOHTIME = [1 for i in np.arange(len(DRM['DRM']))]
-        print(sum(det_times))
-        print(sum(char_times))
+        vprint(sum(det_times))
+        vprint(sum(char_times))
 
 
         #Check if plotting font #########################################################
@@ -139,7 +167,7 @@ if __name__ == "__main__":
 
         colors = 'rb'#'rgbwmc'
         patch_handles = []
-        fig = plt.figure(figsize=(30,3.5),num=cnt)
+        fig = plt.figure(figsize=(30,3.5),num=0)
         ax = fig.add_subplot(111)
 
         # Plot All Detection Observations
@@ -189,12 +217,12 @@ if __name__ == "__main__":
         ax.set_yticks(y_pos)
         ax.set_yticklabels(('Obs','OB'),fontsize=12)
         ax.set_xlabel('Current Normalized Time (days)', weight='bold',fontsize=12)
-        title('Mission Timeline for runName: ' + dirs[cnt] + '\nand pkl file: ' + pklfname[cnt], weight='bold',fontsize=12)
+        title('Mission Timeline for runName: ' + pkldir + '\nand pkl file: ' + pklfname, weight='bold',fontsize=12)
         plt.tight_layout()
         plt.show(block=False)
-        savefig('/'.join(pklPaths[cnt].split('/')[:-1]) + '/' + dirs[cnt] + 'Timeline' + '.png')
-        savefig('/'.join(pklPaths[cnt].split('/')[:-1]) + '/' + dirs[cnt] + 'Timeline' + '.svg')
-        savefig('/'.join(pklPaths[cnt].split('/')[:-1]) + '/' + dirs[cnt] + 'Timeline' + '.eps')
+        savefig('/'.join(pklfile.split('/')[:-1]) + '/' + pkldir + 'Timeline' + '.png')
+        savefig('/'.join(pklfile.split('/')[:-1]) + '/' + pkldir + 'Timeline' + '.svg')
+        savefig('/'.join(pklfile.split('/')[:-1]) + '/' + pkldir + 'Timeline' + '.eps')
 
         #plt.close()
 
@@ -222,9 +250,9 @@ if __name__ == "__main__":
         # sb1.add_patch(rect)
         title('Mission Length: ' + str(outspec['missionLife'])  +'yr OBduration: ' + str(outspec['OBduration']) + 'd MissionPortion: ' + str(outspec['missionPortion']),weight='bold',fontsize=12)
         plt.show(block=False)
-        savefig('/'.join(pklPaths[cnt].split('/')[:-1]) + '/' + dirs[cnt] + 'SkyCoverage' + '.png')
-        savefig('/'.join(pklPaths[cnt].split('/')[:-1]) + '/' + dirs[cnt] + 'SkyCoverage' + '.svg')
-        savefig('/'.join(pklPaths[cnt].split('/')[:-1]) + '/' + dirs[cnt] + 'SkyCoverage' + '.eps')
+        savefig('/'.join(pklfile.split('/')[:-1]) + '/' + pkldir + 'SkyCoverage' + '.png')
+        savefig('/'.join(pklfile.split('/')[:-1]) + '/' + pkldir + 'SkyCoverage' + '.svg')
+        savefig('/'.join(pklfile.split('/')[:-1]) + '/' + pkldir + 'SkyCoverage' + '.eps')
 
 
         
