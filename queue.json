@@ -1,0 +1,12 @@
+{
+    "singleRunPostProcessing":[
+        {"analysisName": "fakeSingleRunAnalysis.py"
+        }
+    ],
+    "multiRunPostProcessing":[
+        {"analysisName": "fakeMultiRunAnalysis.py"
+        }
+    ],
+    "PPoutpath":"/home/dean/Documents/SIOSlab/EXOSIMSres",
+    "outpath":"/home/dean/Documents/SIOSlab/EXOSIMSres"
+}
