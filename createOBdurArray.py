@@ -215,7 +215,7 @@ show(block=False)
 # ####################################################################
 
 
-#### HarmonicDist ##################################################
+#### PeriodicDist ##################################################
 def harmonicDist(numOB, OBdur, exoplanetObsTime):#, missionPortion):
     """
     """
@@ -298,7 +298,7 @@ tmp5L = integrate.quad(dfunc,0,max(num))#This is the total length of the path fr
 minNumReps = 0
 
 numRep = 10#number of repetitions in 1 year
-assert(numRep <= 365.25/OBdur - 365.25%OBdur, 'numRep too large')
+assert numRep <= 365.25/OBdur - 365.25%OBdur, 'numRep too large'
 missionPortion = numRep*OBdur/365.25
 missionLife = exoplanetObsTime/missionPortion
 
@@ -369,8 +369,9 @@ t_dets = sim.SurveySimulation.t0#OK
 comp = sim.Completeness.comp_per_intTime(t_dets, TL, sInds, fZ, fEZ, WA, mode, Cb, Csp)
 sum_comp = sum(comp[comp>0.])
 
-Cb = np.zeros(sInds.shape[0])/u.s#Technically, forcing this to be zero results in the dMag limit that can be achieved with inf time
-comp_Cb0 = sim.Completeness.comp_per_intTime(t_dets, TL, sInds, fZ, fEZ, WA, mode, Cb, Csp)
+Cb2 = np.zeros(sInds.shape[0])/u.s#Technically, forcing this to be zero results in the dMag limit that can be achieved with inf time
+comp_Cb0 = sim.Completeness.comp_per_intTime(t_dets, TL, sInds, fZ, fEZ, WA, mode, Cb2, Csp)
+
 sum_comp_Cb0 = sum(comp_Cb0[comp_Cb0>0.])
 #########################################################################################################
 
@@ -444,7 +445,7 @@ hEclipLon = np.arctan2(r_stars_eclip[:,1],r_stars_eclip[:,0])
 #######
 
 #Generate evenly distributed points of reference sphere###############
-xyzpoints, lat_lon = generateEquadistantPointsOnSphere(N=30)
+xyzpoints, lat_lon = generateEquadistantPointsOnSphere(N=40)
 lon_sphere = lat_lon[:,1] - np.pi #lon of points distributed over sphere
 lat_sphere = lat_lon[:,0] - np.pi/2. #lat of points distributed over sphere
 x = np.cos(lat_sphere)*np.cos(lon_sphere)
@@ -454,16 +455,83 @@ r_sphere = np.asarray([[x[i],y[i],z[i]] for i in np.arange(len(x))])
 r_sphere = np.divide(r_sphere,np.asarray([np.linalg.norm(r_sphere,axis=1).tolist()]).T)
 lat_lon2 = np.asarray([lon_sphere,lat_sphere])
 #################################################
+#ATTEMPT USING GABE's Code
+from EXOSIMS.StarCatalog import FakeCatalog
+FC = FakeCatalog.FakeCatalog()
+gabe_coords = FC.partitionSphere(40,1)
+gabe_coords.ra.value*np.pi/180.
+gabe_coords.dec.value*np.pi/180.
+##########################
 
 #Calculate distances between stars and points##########
 hStars = np.zeros(len(r_sphere[:,0]))
 for ind in np.arange(len(r_stars_eclip[:,0])):
-    r_diff = r_sphere - r_stars_eclip[ind]
+    r_diff = r_sphere - r_stars_eclip[ind]skycoords
     d_diff = np.linalg.norm(r_diff,axis=1)
     minInd = np.argmin(d_diff)
     hStars[minInd] += 1
 ########################################################
+def secondSmallest(d_diff_pts):
+    """For a list of points, return the value and ind of the second smallest
+    args:
+        d_diff_pts - numy array of floats of distances between points
+    returns:
+        secondSmallest_value - 
+        secondSmallest_ind - 
+    """
+    tmp_inds = np.arange(len(d_diff_pts))
+    tmp_inds_min0 = np.argmin(d_diff_pts)
+    tmp_inds = np.delete(tmp_inds, tmp_inds_min0)
+    tmp_d_diff_pts =np.delete(d_diff_pts, tmp_inds_min0)
+    secondSmallest_value = min(tmp_d_diff_pts)
+    secondSmallest_ind = np.argmin(np.abs(d_diff_pts - secondSmallest_value))
+    return secondSmallest_value, secondSmallest_ind
+
 #TODO Create method of plotting these bins on the celestial sphere
+#We will use the points as the vertices of the edges. Divide all into triangles
+#Iterate over each xyzpoint in xyzpoints and find top N closest to current point (save as indexes)
+closest_point_inds = list() # list of numpy arrays containing closest points to a given ind
+for i in np.arange(len(xyzpoints)):
+    xyzpoint = xyzpoints[i] # extract a single xyz point on sphere
+    diff_pts = xyzpoints - xyzpoint # calculate angular difference between point spacing
+    d_diff_pts = np.linalg.norm(diff_pts,axis=1) # calculate linear distance between points
+    #base distance off closest point (that is not ~0, itself)
+    # tmp_inds = np.arange(len(d_diff_pts))
+    # tmp_inds_min0 = np.argmin(d_diff_pts)
+    # tmp_inds = np.delete(tmp_inds, tmp_inds_min0)
+    # tmp_d_diff_pts =np.delete(d_diff_pts, tmp_inds_min0)
+    # secondSmallest_value = min(tmp_d_diff_pts)
+    # secondSmallest_ind = np.argmin(np.abs(d_diff_pts - secondSmallest_value))
+    ss_d, ss_ind = secondSmallest(d_diff_pts)
+    ss_d = ss_d*1.5 # This is a factor that defines the distance that all other points will be away from the current point. Just a guess
+    tmp_closest_point_inds = np.where((d_diff_pts < ss_d)*(d_diff_pts != min(d_diff_pts)))[0]
+    
+    r_closest = list()
+    for j in np.arange(len(tmp_closest_point_inds)-1):
+        r_closest.append(xyzpoints[tmp_closest_point_inds[j]] - xyzpoint) # gets vector from center point to closest points
+
+    #r_closest[0]
+    #np.cross()
+    closest_point_inds.append(tmp_closest_point_inds)
+
+
+    
+
+fig = figure(num=5000)
+ax = fig.axes[0]#add_subplot(111, projection='3d')
+# ax = gca()
+for i in closest_point_inds[0]:
+    ax.scatter(xyzpoints[i,0], xyzpoints[i,1], xyzpoints[i,2], color='r', marker='+',s=200)
+for i in np.arange(len(xyzpoints)):
+    for j in np.arange(len(closest_point_inds[i])):
+        ind = closest_point_inds[i][j]
+        ax.plot([xyzpoints[i,0],xyzpoints[ind,0]],[xyzpoints[i,1],xyzpoints[ind,1]],[xyzpoints[i,2],xyzpoints[ind,2]])
+show(block=False)
+
+
+
+
+
 
 #### Histograms of Star Count vs Heliocentric Ecliptic Longitude ##################################
 histInterp, targUnderSpline, sumh, xdiff, edges = generateHistHEL(hEclipLon)
