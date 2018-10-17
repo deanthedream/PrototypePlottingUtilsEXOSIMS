@@ -444,6 +444,44 @@ hEclipLat = np.arcsin(r_stars_eclip[:,2])
 hEclipLon = np.arctan2(r_stars_eclip[:,1],r_stars_eclip[:,0])
 #######
 
+#### From EXOSIMS/util/evenlyDistributePointsOnSphere.py
+from evenlyDistributePointsOnSphere import splitOut, nlcon2, f, pt_pt_distances, secondSmallest, setupConstraints, initialXYZpoints
+from scipy.optimize import minimize
+x, y, z, v = initialXYZpoints(num_pts=30) # Generate Initial Set of XYZ Points
+con = setupConstraints(v,nlcon2) # Define constraints on each point of the sphere
+x0 = v.flatten() # takes v and converts it into [x0,y0,z0,x1,y1,z1,...,xn,yn,zn]
+out1k = minimize(f,x0, method='SLSQP',constraints=(con), options={'ftol':1e-4, 'maxiter':1000}) # run optimization problem for 1000 iterations
+out1kx, out1ky, out1kz = splitOut(out1k)
+out1kv = np.asarray([[out1kx[i], out1ky[i], out1kz[i]] for i in np.arange(len(out1kx))])
+dist1k = pt_pt_distances(out1kv)
+####################################################################
+d_diff_pts_array = list()
+inds_of_closest = list()
+for i in np.arange(len(out1kv)):
+    xyzpoint = out1kv[i] # extract a single xyz point on sphere
+    diff_pts = out1kv - xyzpoint # calculate angular difference between point spacing
+    d_diff_pts = np.linalg.norm(diff_pts,axis=1) # calculate linear distance between points
+    d_diff_pts_array.append(d_diff_pts)
+    inds_of_closest.append(d_diff_pts_array[i].argsort()[:6])
+d_diff_pts_array = np.asarray(d_diff_pts_array)
+# This method is too simple to turn into a method...
+# def pt_to_allOtherPTS(out1kv,ind):
+#     """Calculate the distances between a point and all points
+#     Args:
+#         out1kv (numpy aray) - 
+#         ind (int) - 
+#     Return:
+#         numpy array
+#     """
+#     # for i in np.arange(len(xyzpoints)):
+#     #     xyzpoint = xyzpoints[i] # extract a single xyz point on sphere
+#     diff_pts = out1kv - out1kv[ind] # calculate angular difference between point spacing
+#     d_diff_pts = np.linalg.norm(diff_pts,axis=1) # calculate linear distance between points
+
+
+
+
+
 #Generate evenly distributed points of reference sphere###############
 xyzpoints, lat_lon = generateEquadistantPointsOnSphere(N=40)
 lon_sphere = lat_lon[:,1] - np.pi #lon of points distributed over sphere
@@ -459,33 +497,34 @@ lat_lon2 = np.asarray([lon_sphere,lat_sphere])
 from EXOSIMS.StarCatalog import FakeCatalog
 FC = FakeCatalog.FakeCatalog()
 gabe_coords = FC.partitionSphere(40,1)
-gabe_coords.ra.value*np.pi/180.
-gabe_coords.dec.value*np.pi/180.
+gra = gabe_coords.ra.value*np.pi/180.
+gdec = gabe_coords.dec.value*np.pi/180.
 ##########################
 
 #Calculate distances between stars and points##########
 hStars = np.zeros(len(r_sphere[:,0]))
 for ind in np.arange(len(r_stars_eclip[:,0])):
-    r_diff = r_sphere - r_stars_eclip[ind]skycoords
+    r_diff = r_sphere - r_stars_eclip[ind]#skycoords
     d_diff = np.linalg.norm(r_diff,axis=1)
     minInd = np.argmin(d_diff)
     hStars[minInd] += 1
 ########################################################
-def secondSmallest(d_diff_pts):
-    """For a list of points, return the value and ind of the second smallest
-    args:
-        d_diff_pts - numy array of floats of distances between points
-    returns:
-        secondSmallest_value - 
-        secondSmallest_ind - 
-    """
-    tmp_inds = np.arange(len(d_diff_pts))
-    tmp_inds_min0 = np.argmin(d_diff_pts)
-    tmp_inds = np.delete(tmp_inds, tmp_inds_min0)
-    tmp_d_diff_pts =np.delete(d_diff_pts, tmp_inds_min0)
-    secondSmallest_value = min(tmp_d_diff_pts)
-    secondSmallest_ind = np.argmin(np.abs(d_diff_pts - secondSmallest_value))
-    return secondSmallest_value, secondSmallest_ind
+# Now imported from evenlyDistributePointsOnSphere.py
+# def secondSmallest(d_diff_pts):
+#     """For a list of points, return the value and ind of the second smallest
+#     args:
+#         d_diff_pts - numy array of floats of distances between points
+#     returns:
+#         secondSmallest_value - 
+#         secondSmallest_ind - 
+#     """
+#     tmp_inds = np.arange(len(d_diff_pts))
+#     tmp_inds_min0 = np.argmin(d_diff_pts)
+#     tmp_inds = np.delete(tmp_inds, tmp_inds_min0)
+#     tmp_d_diff_pts =np.delete(d_diff_pts, tmp_inds_min0)
+#     secondSmallest_value = min(tmp_d_diff_pts)
+#     secondSmallest_ind = np.argmin(np.abs(d_diff_pts - secondSmallest_value))
+#     return secondSmallest_value, secondSmallest_ind
 
 #TODO Create method of plotting these bins on the celestial sphere
 #We will use the points as the vertices of the edges. Divide all into triangles
@@ -650,85 +689,85 @@ dec2 = dec[comp > 0.]
 
 
 
-# right_ascensions = sim.TargetList.coords.ra.value*np.pi/180. -np.pi#The right ascension of the stars in the heliocentric ecliptic fixed frame
-# right_ascensions = right_ascensions[comp > 0.]
-# declinations = sim.TargetList.coords.dec.value*np.pi/180.#The declinations of the stars in the heliocentric ecliptic fixed frame
-# declinations = declinations[comp > 0.]
+# # right_ascensions = sim.TargetList.coords.ra.value*np.pi/180. -np.pi#The right ascension of the stars in the heliocentric ecliptic fixed frame
+# # right_ascensions = right_ascensions[comp > 0.]
+# # declinations = sim.TargetList.coords.dec.value*np.pi/180.#The declinations of the stars in the heliocentric ecliptic fixed frame
+# # declinations = declinations[comp > 0.]
 
-ra = ra*np.pi/180. -np.pi#The right ascension of the stars in the heliocentric ecliptic fixed frame
-ra2 = ra[comp > 0.]
-dec = dec*np.pi/180.#The declinations of the stars in the heliocentric ecliptic fixed frame
-dec2 = dec[comp > 0.]
+# ra = ra*np.pi/180. -np.pi#The right ascension of the stars in the heliocentric ecliptic fixed frame
+# ra2 = ra[comp > 0.]
+# dec = dec*np.pi/180.#The declinations of the stars in the heliocentric ecliptic fixed frame
+# dec2 = dec[comp > 0.]
 
-ra_dec = np.vstack([ra2,dec2])#vstack of points to create gaussian_kde over
-x = np.arange(0.,361.)
-y = np.arange(0.,362.)/2.-90.
-#xy = np.vstack([x,y])
-#xy = np.meshgrid(x,y)
+# ra_dec = np.vstack([ra2,dec2])#vstack of points to create gaussian_kde over
+# x = np.arange(0.,361.)
+# y = np.arange(0.,362.)/2.-90.
+# #xy = np.vstack([x,y])
+# #xy = np.meshgrid(x,y)
 
-X, Y = np.meshgrid(x, y)
-#positions = np.vstack([X.ravel(), Y.ravel()])
+# X, Y = np.meshgrid(x, y)
+# #positions = np.vstack([X.ravel(), Y.ravel()])
 
-# g = meshgrid2(x, y)
-# positions = np.vstack(map(np.ravel, g))
-# z = gaussian_kde(ra_dec)(positions)
+# # g = meshgrid2(x, y)
+# # positions = np.vstack(map(np.ravel, g))
+# # z = gaussian_kde(ra_dec)(positions)
 
-# z2 = np.zeros([len(x),len(y)])
-# minX = int(min(positions[0,:]))
-# minY = int(min(positions[1,:]))
-# for ind in np.arange(len(positions[0,:])):
-#     xi = int(positions[0,ind])#this is the ra
-#     yi = int(positions[1,ind])#This is the dec
+# # z2 = np.zeros([len(x),len(y)])
+# # minX = int(min(positions[0,:]))
+# # minY = int(min(positions[1,:]))
+# # for ind in np.arange(len(positions[0,:])):
+# #     xi = int(positions[0,ind])#this is the ra
+# #     yi = int(positions[1,ind])#This is the dec
 
-#     #count number of targets around coord in sky
-#     cnt = 0
-#     for ind in np.arange(len(comp)):
-#         if comp[ind]>0.:
-#             #do stuff
-#             r_coord = np.asarray([np.cos(xi*np.pi/180.),np.sin(xi*np.pi/180.),np.sin(yi*np.pi/180.)])
-#             r_star = np.asarray([np.cos(ra[ind]*np.pi/180.),np.sin(ra[ind]*np.pi/180.),np.sin(dec[ind]*np.pi/180.)])
-#             if np.abs(np.arccos(np.dot(r_coord,r_star)/np.linalg.norm(r_coord)/np.linalg.norm(r_star))) < 20.*np.pi/180.:#checks if star is within 5 def of location
-#                 cnt += 1
-#     z2[xi-minX,yi-minY] = cnt
-
-
-#     #Uses z from the gaussian_kde but doesn't give what I want
-#     #z2[xi-minX,yi-minY] = z[ind]
-
-# contourf(X,Y,np.asarray(z2).T)
-# #contour(x,y,z2)
-# #contour([x,y,] z)
-
-x = np.arange(0.,360.)
-y = np.arange(0.,180.)-90.
-xmin =0
-xmax=360
-ymin=-90
-ymax=90
-#bins = .#doing evert 10x10deg grid
-h, xedges, yedges = np.histogram2d(ra2*180./np.pi,dec2*180./np.pi,bins=(x[::10],y[::10]),normed=True)#bins,range=[[xmin,xmax],[ymin,ymax]])
-cm2 = cm.get_cmap('winter')
-X, Y = np.meshgrid(xedges[:-1], yedges[:-1])
-contourf(X, Y, h, 100, cmap=cm2)
-colorbar()
-contour(X, Y, h, 10, colors='k')
-#contourf(xedges[:-1],yedges[:-1],h,cmap=cm2)
-colorbar()
-#contourf(X, Y, h)#(xedges, yedges, h)
-
-cm1 = cm.get_cmap('autumn')
-sc = scatter(ra2,dec2,c=comp[comp > 0.],cmap=cm1)
-title('Observed Targets in the sky',weight='bold',fontsize=12)
-colorbar()
-#add colorbar label
-show(block=False)
+# #     #count number of targets around coord in sky
+# #     cnt = 0
+# #     for ind in np.arange(len(comp)):
+# #         if comp[ind]>0.:
+# #             #do stuff
+# #             r_coord = np.asarray([np.cos(xi*np.pi/180.),np.sin(xi*np.pi/180.),np.sin(yi*np.pi/180.)])
+# #             r_star = np.asarray([np.cos(ra[ind]*np.pi/180.),np.sin(ra[ind]*np.pi/180.),np.sin(dec[ind]*np.pi/180.)])
+# #             if np.abs(np.arccos(np.dot(r_coord,r_star)/np.linalg.norm(r_coord)/np.linalg.norm(r_star))) < 20.*np.pi/180.:#checks if star is within 5 def of location
+# #                 cnt += 1
+# #     z2[xi-minX,yi-minY] = cnt
 
 
-# savefig('/'.join(pklfile.split('/')[:-1]) + '/' + pkldir + 'SkyCoverage' + '.png')
-# savefig('/'.join(pklfile.split('/')[:-1]) + '/' + pkldir + 'SkyCoverage' + '.svg')
-# savefig('/'.join(pklfile.split('/')[:-1]) + '/' + pkldir + 'SkyCoverage' + '.eps')
+# #     #Uses z from the gaussian_kde but doesn't give what I want
+# #     #z2[xi-minX,yi-minY] = z[ind]
 
-ra = sim.TargetList.coords.ra.value
-dec = sim.TargetList.coords.dec.value
-observedCompHammer(ra,dec,comp)
+# # contourf(X,Y,np.asarray(z2).T)
+# # #contour(x,y,z2)
+# # #contour([x,y,] z)
+
+# x = np.arange(0.,360.)
+# y = np.arange(0.,180.)-90.
+# xmin =0
+# xmax=360
+# ymin=-90
+# ymax=90
+# #bins = .#doing evert 10x10deg grid
+# h, xedges, yedges = np.histogram2d(ra2*180./np.pi,dec2*180./np.pi,bins=(x[::10],y[::10]),normed=True)#bins,range=[[xmin,xmax],[ymin,ymax]])
+# cm2 = cm.get_cmap('winter')
+# X, Y = np.meshgrid(xedges[:-1], yedges[:-1])
+# contourf(X, Y, h, 100, cmap=cm2)
+# colorbar()
+# contour(X, Y, h, 10, colors='k')
+# #contourf(xedges[:-1],yedges[:-1],h,cmap=cm2)
+# colorbar()
+# #contourf(X, Y, h)#(xedges, yedges, h)
+
+# cm1 = cm.get_cmap('autumn')
+# sc = scatter(ra2,dec2,c=comp[comp > 0.],cmap=cm1)
+# title('Observed Targets in the sky',weight='bold',fontsize=12)
+# colorbar()
+# #add colorbar label
+# show(block=False)
+
+
+# # savefig('/'.join(pklfile.split('/')[:-1]) + '/' + pkldir + 'SkyCoverage' + '.png')
+# # savefig('/'.join(pklfile.split('/')[:-1]) + '/' + pkldir + 'SkyCoverage' + '.svg')
+# # savefig('/'.join(pklfile.split('/')[:-1]) + '/' + pkldir + 'SkyCoverage' + '.eps')
+
+# ra = sim.TargetList.coords.ra.value
+# dec = sim.TargetList.coords.dec.value
+# observedCompHammer(ra,dec,comp)
 
