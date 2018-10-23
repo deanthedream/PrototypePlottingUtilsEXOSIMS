@@ -177,6 +177,48 @@ def line2linev2(p0,v0,p1,v1):
     dP = p1-p0 + t0*v0 - t1*v1#p1-p0 + (sc * v0) - (tc * v1)
     return np.linalg.norm(dP), dP, p0-t0*v0, p1-t1*v1, t0, t1
 
+
+def sphericalAngles(ah,bh,ch,R=1.):
+    """ Calculates Spherical Angles Between 3 points on the surface of a sphere
+    http://mathworld.wolfram.com/SphericalTrigonometry.html
+    Args:
+        R (float) - Radius of the sphere
+        ah (numpy array) - unit vector from O to A 
+        bh (numpy array) - unit vector from O to B
+        ch (numpy array) - unit vector from O to C
+    Returns:
+        A (float) - angle of arc A in radians
+        B (float) - angle of arc B in radians
+        C (float) - angle of arc C in radians
+    """
+    ap = np.arccos(np.dot(bh,ch))# angular lengths of sides (angle formed by BOC)
+    bp = np.arccos(np.dot(ah,ch))
+    cp = np.arccos(np.dot(ah,bh))
+    a = R*ap# arc length of sides
+    b = R*bp
+    c = R*cp
+    A = np.arcsin(np.abs(np.cross(np.cross(ah,bh),np.cross(ah,ch)))/\
+                    (np.abs(np.cross(ah,bh))*np.abs(np.cross(ah,ch)))) # cosines rule for sides Smart 1960
+    B = np.arcsin(np.sin(A)/np.sin(a)*np.sin(b)) # spherical triangle analagous law of cosines
+    C = np.arcsin(np.sin(A)/np.sin(a)*np.sin(c))
+    return A, B, C
+
+
+def sphericalArea(A,B,C,r=1.):
+    """ Calculates the area on the sphere subtended by 3 arcs on its surface
+    http://mathworld.wolfram.com/SphericalTriangle.html
+    Args:
+        r (float) - radius of the sphere
+        A (float) - angle of arc A in radians
+        B (float) - angle of arc B in radians
+        C (float) - angle of arc C in radians
+    Returns:
+        area (float) - area subtended in units^2
+    """
+    area = (r**2.)*((A+B+C)-np.pi)
+    return area
+
+
 close('all')
 
 #### Inputs ##########################################################
@@ -520,13 +562,11 @@ show(block=False)
 d_diff_pts_array = np.asarray(d_diff_pts_array)
 
 
-original_inds_of_closest = inds_of_closest #DELETE using to debug stuff
 import random
 import itertools
 #Problem: At least 4 points on the surface appear to be coplanar and ~equidistant causing the 6 closest connecting policy to fail
 #Solution For all points that share two connecting points and are NOT directly connected, IF the two points they share are connected, delete the connection between the two shared points
 ind_ind_observed = list()
-inds_of_closestCPY = inds_of_closest # creating a copy
 connectionsToDelete = list() # list of sets containing links to delete
 #DELETE listToCheckIntersection = list()
 for ind0_1 in np.arange(len(inds_of_closest)):#iterate over all points
@@ -534,12 +574,6 @@ for ind0_1 in np.arange(len(inds_of_closest)):#iterate over all points
         wasBreak = False
         if ind0_1 == ind0_2: # Skip if inds are the same
             continue
-
-        # Was used for debugging purposes
-        # if ind0_1 == 11:
-        #     print ind0_1, ind0_2
-        #     print inds_of_closest[ind0_1]
-        #     #print saltyburrito
 
         ms = set([ind0_1,ind0_2]) # a small set containing the current two inds
         if any([True if ms == iio else False for iio in ind_ind_observed]): #Determine if we have observed the complement i.e. if 1-3 observed, don't observe 3-1
@@ -553,10 +587,6 @@ for ind0_1 in np.arange(len(inds_of_closest)):#iterate over all points
         if  not ind0_1 in set(inds_of_closest[ind0_2]) or \
             not ind0_2 in set(inds_of_closest[ind0_1]):
             continue
-
-        # #For debugging
-        if ind0_1 == 11 and ind0_2 == 13:
-            print saltyburrito
 
         if len(set(inds_of_closest[ind0_1]).intersection(set(inds_of_closest[ind0_2]))) >= 3: # if ind0_1 in inds_of_closest[ind0_2]:
             #Requirement where the inds we care about are directly connected
@@ -607,7 +637,7 @@ for ind0_1 in np.arange(len(inds_of_closest)):#iterate over all points
                             continue
                         elif np.abs(np.dot(v0Hat,v1Hat)) > 0.8: # The lines are approximately parallel
                             continue
-                        elif not tmpInd1 in inds_of_closest[tmpInd0] or not tmpInd0 in inds_of_closest[tmpInd1]: # EXPERIENCING ISSUE WHERE tmpInd0 not in inds_of_closest[tmpInd0]... This patches that...
+                        elif not tmpInd1 in inds_of_closest[tmpInd0] or not tmpInd0 in inds_of_closest[tmpInd1]: # When tmpInd0 not in inds_of_closest[tmpInd0]... This patches that...
                             continue
                         elif np.abs(np.linalg.norm(dP)) < 0.05: #Threshold I define, the intersection is close
                             print 'intersection Is close!'
@@ -615,10 +645,6 @@ for ind0_1 in np.arange(len(inds_of_closest)):#iterate over all points
                             ms2 = set([tmpInd0,tmpInd1])
                             if not ms2 in connectionsToDelete:
                                 connectionsToDelete.append(ms2)
-                            # index = np.argwhere(inds_of_closest[tmpInd0]==tmpInd1)[0][0]
-                            # inds_of_closestCPY[tmpInd0] = np.delete(inds_of_closest[tmpInd0],index) #we must remove tmpInd1 from inds_of_closest[tmpInd0]
-                            # index = np.argwhere(inds_of_closest[tmpInd1]==tmpInd0)[0][0]
-                            # inds_of_closestCPY[tmpInd1] = np.delete(inds_of_closest[tmpInd1],index) #we must remove tmpInd0 from inds_of_closest[tmpInd1]
                             lltiTF = [True if (tmpInd0, tmpInd1) in lineList[llti] or \
                                      (tmpInd1, tmpInd0) in lineList[llti] else False for llti in np.arange(len(lineList))]
                                      #Create array indicating where invalid lines exist
@@ -641,9 +667,9 @@ for ind0_1 in np.arange(len(inds_of_closest)):#iterate over all points
                         else: #they do not intersect! duh!
                             continue
 
-                    ax.scatter(out1kv[ind0_1][0],out1kv[ind0_1][1],out1kv[ind0_1][2],color='blue',zorder=2)
-                    ax.scatter(out1kv[ind0_2][0],out1kv[ind0_2][1],out1kv[ind0_2][2],color='blue',zorder=2)
-                    ax.scatter(out1kv[ind3][0],out1kv[ind3][1],out1kv[ind3][2],color='blue',zorder=2)
+                    # ax.scatter(out1kv[ind0_1][0],out1kv[ind0_1][1],out1kv[ind0_1][2],color='blue',zorder=2)
+                    # ax.scatter(out1kv[ind0_2][0],out1kv[ind0_2][1],out1kv[ind0_2][2],color='blue',zorder=2)
+                    # ax.scatter(out1kv[ind3][0],out1kv[ind3][1],out1kv[ind3][2],color='blue',zorder=2)
                     show(block=False)
                 
                 if wasBreak == True: # we do not want to continue in this loop
@@ -654,7 +680,6 @@ for ind0_1 in np.arange(len(inds_of_closest)):#iterate over all points
             
         if  wasBreak == True: # we do not want to continue in this loop
             break
-# inds_of_closest = inds_of_closestCPY
 for ind in np.arange(len(connectionsToDelete)):
     tmpInd0 = list(connectionsToDelete[ind])[0]
     tmpInd1 = list(connectionsToDelete[ind])[1]
@@ -662,8 +687,48 @@ for ind in np.arange(len(connectionsToDelete)):
     inds_of_closest[tmpInd0] = np.delete(inds_of_closest[tmpInd0],index) #we must remove tmpInd1 from inds_of_closest[tmpInd0]
     index = np.argwhere(inds_of_closest[tmpInd1]==tmpInd0)[0][0]
     inds_of_closest[tmpInd1] = np.delete(inds_of_closest[tmpInd1],index) #we must remove tmpInd1 from inds_of_closest[tmpInd0]
+###################################################################################
 
+#### Calculate Centroid of Each Area #################################
+#Calculate averate of the 3 inds
+triangleCornerIndList = list()
+triangleAreaList = list()
+triangleCenterList = list()
+for ind0_1 in np.arange(len(inds_of_closest)):#iterate over all points
+    for ind0_2 in inds_of_closest[ind0_1]:#also iterate over all points
+        if ind0_1 == ind0_2: # Skip if inds are the same
+            continue
 
+        # # Skip if ind0_1 and ind0_2 are not connected
+        if  not ind0_1 in set(inds_of_closest[ind0_2]) or \
+            not ind0_2 in set(inds_of_closest[ind0_1]):
+            continue
+
+        #Get intersection between ind0_1 and ind0_2
+        intSet = set(inds_of_closest[ind0_1]).intersection(set(inds_of_closest[ind0_2]))
+        intSet.remove(ind0_1)#remove inds that are directly connected
+        intSet.remove(ind0_2)#remove inds that are directly connected
+        #pick ind0_1, pick ind0_2, iterate over the other two
+        remainingInds = list(intSet)
+        for ind in remainingInds:
+            cornerIndSet = set([ind0_1, ind0_2, ind])
+            if not cornerIndSet in triangleCornerIndList:
+                triangleCornerIndList.append(cornerIndSet)
+                centroid =  1./3.*out1kv[list(cornerIndSet)[0]] + \
+                            1./3.*out1kv[list(cornerIndSet)[1]] + \
+                            1./3.*out1kv[list(cornerIndSet)[2]]
+                triangleCenterList.append(centroid)
+                A, B, C = sphericalAngles(out1kv[list(cornerIndSet)[0]],out1kv[list(cornerIndSet)[1]],out1kv[list(cornerIndSet)[2]]) 
+                area = sphericalArea(A,B,C)
+                #DELETE area = 0.5*np.abs(np.linalg.norm(np.cross(out1kv[list(cornerIndSet)[1]]-out1kv[list(cornerIndSet)[0]],\
+                #DELETE                                            out1kv[list(cornerIndSet)[2]]-out1kv[list(cornerIndSet)[0]])))
+                triangleAreaList.append(area)
+            else:
+                continue
+sumTriangleArea = sum(np.asarray(triangleAreaList))
+print sumTriangleArea
+print len(triangleCenterList)
+######################################################################
 
 #### Re plot Sphere ################################
 close(500672)
@@ -673,75 +738,25 @@ ax = fig.add_subplot(111, projection='3d')
 title('Plot of all point-to-point connections on sphere Corrected')
 show(block=False)
 
+#Plot Edges
 plotted = list()
 for i in np.arange(len(out1kv)):
     xyzpoint = out1kv[i] # extract a single xyz point on sphere
-
     #plotted = list() #keeps track of index-to-index lines plotted
     for j in inds_of_closest[i]:#np.delete(inds_of_closest[i],0):
         if [i,j] in plotted or [j,i] in plotted:
             continue
-        ax.plot([xyzpoint[0],out1kv[j,0]],[xyzpoint[1],out1kv[j,1]],[xyzpoint[2],out1kv[j,2]],color='red',zorder=0)
+        ax.plot([xyzpoint[0],out1kv[j,0]],[xyzpoint[1],out1kv[j,1]],[xyzpoint[2],out1kv[j,2]],color='red',zorder=1)
         plotted.append([i,j])
+#Plot Centroids
+for i in np.arange(len(triangleCenterList)):
+    ax.scatter(triangleCenterList[i][0],triangleCenterList[i][1],triangleCenterList[i][2],color='purple', zorder=2)
 ax.set_xlabel('X')
 ax.set_ylabel('Y')
 ax.set_zlabel('Z')
-ax.scatter(out1kv[9][0],out1kv[9][1],out1kv[9][2],color='black') # DELETE for debugging the "only plots negative X "
-# ax.scatter(out1kv[22][0],out1kv[22][1],out1kv[22][2],color='black') # DELETE for debugging the "only plots negative X "
-# ax.scatter(out1kv[12][0],out1kv[12][1],out1kv[12][2],color='black') # DELETE for debugging the "only plots negative X "
-# ax.scatter(out1kv[13][0],out1kv[13][1],out1kv[13][2],color='black') # DELETE for debugging the "only plots negative X "
-ax.scatter(out1kv[11][0],out1kv[11][1],out1kv[11][2],color='black') # DELETE for debugging the "only plots negative X "
-ax.scatter(out1kv[27][0],out1kv[27][1],out1kv[27][2],color='black') # DELETE for debugging the "only plots negative X "
-ax.scatter(out1kv[13][0],out1kv[13][1],out1kv[13][2],color='black') # DELETE for debugging the "only plots negative X "
-ax.scatter(out1kv[19][0],out1kv[19][1],out1kv[19][2],color='black') # DELETE for debugging the "only plots negative X "
 show(block=False)
 ######################################################################
 
-
-
-
-#### Calculate Centroid of Each Area #################################
-#Calculate averate of the 3 inds
-#DELETE ind_ind_observed = list()
-triangleCornerIndList = list()
-triangleAreaList = list()
-triangleCenterList = list()
-for ind0_1 in np.arange(len(inds_of_closest)):#iterate over all points
-    for ind0_2 in np.arange(len(inds_of_closest[ind0_1])):#also iterate over all points
-        ms = set([ind0_1,ind0_2]) # a small set containing the current two inds
-        if any([True if ms == iio else False for iio in ind_ind_observed]): #Determine if we have observed the complement i.e. if 1-3 observed, don't observe 3-1
-            continue
-        #DELETE else:
-        #DELETE    ind_ind_observed.append(ms) # we are looking at a new ind-ind pairing
-        del ms
-
-        if ind0_1 == ind0_2: # Skip if inds are the same
-            continue
-
-        # Skip if ind0_1 and ind0_2 are not connected
-        if  not ind0_1 in set(inds_of_closest[ind0_2]) or \
-            not ind0_2 in set(inds_of_closest[ind0_1]):
-            continue
-
-        #Get intersection between ind0_1 and ind0_2
-        intSet = set(inds_of_closest[ind0_1]).intersection(set(inds_of_closest[ind0_2])) # should be length 4
-        intSet.remove(ind0_1)#remove inds that are directly connected
-        intSet.remove(ind0_2)#remove inds that are directly connected
-        #pick ind0_1, pick ind0_2, iterate over the other two
-        remainingInds = list(intSet)
-        for ind in remainingInds:
-            cornerIndSet = set([ind0_1, ind0_2, ind])
-            if not cornerIndSet in triangleCornerIndList:
-                triangleCornerIndList.append(cornerIndSet)
-                centroid = 1./3.*out1kv[list(cornerIndSet)[0]] + 1./3.*out1kv[list(cornerIndSet)[1]] + 1./3.*out1kv[list(cornerIndSet)[2]]
-                triangleCenterList.append(centroid)
-                area = 0.5*np.abs(np.linalg.norm(np.cross(out1kv[list(cornerIndSet)[1]]-out1kv[list(cornerIndSet)[0]],out1kv[list(cornerIndSet)[2]]-out1kv[list(cornerIndSet)[0]])))
-                triangleAreaList.append(area)
-            else:
-                continue
-sumTriangleArea = sum(np.asarray(triangleAreaList))
-print sumTriangleArea
-######################################################################
 
 
 
