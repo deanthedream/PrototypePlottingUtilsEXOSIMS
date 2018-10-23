@@ -486,6 +486,8 @@ out1kv = np.asarray([[out1kx[i], out1ky[i], out1kz[i]] for i in np.arange(len(ou
 dist1k = pt_pt_distances(out1kv)
 ####################################################################
 
+
+
 close(50067)
 fig = figure(num=50067)
 ax = fig.add_subplot(111, projection='3d')
@@ -499,7 +501,7 @@ diff_closest = list()
 for i in np.arange(len(out1kv)):
     xyzpoint = out1kv[i] # extract a single xyz point on sphere
     diff_pts = out1kv - xyzpoint # calculate angular difference between point spacing
-    d_diff_pts = np.linalg.norm(diff_pts,axis=1) # calculate linear distance between points
+    d_diff_pts = np.abs(np.linalg.norm(diff_pts,axis=1)) # calculate linear distance between points
     d_diff_pts_array.append(d_diff_pts)
     inds_of_closest.append(d_diff_pts_array[i].argsort()[:7])
     diff_closest.append(d_diff_pts_array[i][inds_of_closest[i]])
@@ -511,6 +513,9 @@ for i in np.arange(len(out1kv)):
             continue
         ax.plot([xyzpoint[0],out1kv[j,0]],[xyzpoint[1],out1kv[j,1]],[xyzpoint[2],out1kv[j,2]],color='red',zorder=0)
         plotted.append([i,j])
+ax.set_xlabel('X')
+ax.set_ylabel('Y')
+ax.set_zlabel('Z')
 show(block=False)
 d_diff_pts_array = np.asarray(d_diff_pts_array)
 
@@ -521,23 +526,37 @@ import itertools
 #Problem: At least 4 points on the surface appear to be coplanar and ~equidistant causing the 6 closest connecting policy to fail
 #Solution For all points that share two connecting points and are NOT directly connected, IF the two points they share are connected, delete the connection between the two shared points
 ind_ind_observed = list()
+inds_of_closestCPY = inds_of_closest # creating a copy
+connectionsToDelete = list() # list of sets containing links to delete
 #DELETE listToCheckIntersection = list()
 for ind0_1 in np.arange(len(inds_of_closest)):#iterate over all points
-    for ind0_2 in np.arange(len(inds_of_closest[ind0_1])):#also iterate over all points
+    for ind0_2 in inds_of_closest[ind0_1]:#np.arange(len(inds_of_closest[ind0_1])):#also iterate over all points
+        wasBreak = False
+        if ind0_1 == ind0_2: # Skip if inds are the same
+            continue
+
+        # Was used for debugging purposes
+        # if ind0_1 == 11:
+        #     print ind0_1, ind0_2
+        #     print inds_of_closest[ind0_1]
+        #     #print saltyburrito
+
         ms = set([ind0_1,ind0_2]) # a small set containing the current two inds
         if any([True if ms == iio else False for iio in ind_ind_observed]): #Determine if we have observed the complement i.e. if 1-3 observed, don't observe 3-1
             continue
         else:
+            #print ms
             ind_ind_observed.append(ms) # we are looking at a new ind-ind pairing
         del ms
-
-        if ind0_1 == ind0_2: # Skip if inds are the same
-            continue
 
         # Skip if ind0_1 and ind0_2 are not connected
         if  not ind0_1 in set(inds_of_closest[ind0_2]) or \
             not ind0_2 in set(inds_of_closest[ind0_1]):
             continue
+
+        # #For debugging
+        if ind0_1 == 11 and ind0_2 == 13:
+            print saltyburrito
 
         if len(set(inds_of_closest[ind0_1]).intersection(set(inds_of_closest[ind0_2]))) >= 3: # if ind0_1 in inds_of_closest[ind0_2]:
             #Requirement where the inds we care about are directly connected
@@ -554,19 +573,18 @@ for ind0_1 in np.arange(len(inds_of_closest)):#iterate over all points
                     #IF the len >1, this point is connected to ind1, ind2, and a 3rd point connected to ind1 and ind2
                     # Note I removed ind0_1 and ind0_2 from intSet causing us to use 1, would be > 3 otherwise
 
-                    #We must take ind3, 1in0_1, and ind0_2 and find 4th point
-                    all4 = set(inds_of_closest[ind3]).intersection(inds_of_closest[ind0_1]).intersection(inds_of_closest[ind0_2]) #set of all 4 connected points
+                    #We must take ind3, ind0_1, and ind0_2 and find 4th point
+                    all4 = set(inds_of_closest[ind3]).intersection(set(inds_of_closest[ind0_1])).intersection(set(inds_of_closest[ind0_2])) #set of all 4 connected points
                     lineList = list(itertools.permutations(itertools.combinations(all4,r=2),r=2)) # generates a list of all vector comparisons to do
 
                     #Iterate over point0-point1 point2-point3 lines
                     wasBreak = False
-                    numIndsRemoved = 0 # keeps track of the number of lines removed from lineList
                     skipList = list() # keeps track of line comparisons to skip in lineList
                     for tmpInd in np.arange(len(lineList)):
                         if tmpInd in skipList: # if line comparison is in skipList
                             continue
                         tmpInd0 = lineList[tmpInd][0][0] # Extract line inds
-                        tmpInd1 = lineList[tmpInd][0][1] # *Note -numIndsRemoved should work because order is preserved...
+                        tmpInd1 = lineList[tmpInd][0][1]
                         tmpInd2 = lineList[tmpInd][1][0]
                         tmpInd3 = lineList[tmpInd][1][1]
                         p0 = out1kv[tmpInd0]
@@ -591,14 +609,18 @@ for ind0_1 in np.arange(len(inds_of_closest)):#iterate over all points
                             continue
                         elif not tmpInd1 in inds_of_closest[tmpInd0] or not tmpInd0 in inds_of_closest[tmpInd1]: # EXPERIENCING ISSUE WHERE tmpInd0 not in inds_of_closest[tmpInd0]... This patches that...
                             continue
-                        else:
+                        elif np.abs(np.linalg.norm(dP)) < 0.05: #Threshold I define, the intersection is close
+                            print 'intersection Is close!'
                             #we just found the two lines that intersect, but not at one of the points
-                            index = np.argwhere(inds_of_closest[tmpInd0]==tmpInd1)[0][0]
-                            inds_of_closest[tmpInd0] = np.delete(inds_of_closest[tmpInd0],index) #we must remove tmpInd1 from inds_of_closest[tmpInd0]
-                            index = np.argwhere(inds_of_closest[tmpInd1]==tmpInd0)[0][0]
-                            inds_of_closest[tmpInd1] = np.delete(inds_of_closest[tmpInd1],index) #we must remove tmpInd0 from inds_of_closest[tmpInd1]
-                            lltiTF = [True if (tmpInd0, tmpInd1) in lineList[tmpInd] or \
-                                     (tmpInd1, tmpInd0) in lineList[tmpInd] else False for llti in np.arange(len(lineList))]
+                            ms2 = set([tmpInd0,tmpInd1])
+                            if not ms2 in connectionsToDelete:
+                                connectionsToDelete.append(ms2)
+                            # index = np.argwhere(inds_of_closest[tmpInd0]==tmpInd1)[0][0]
+                            # inds_of_closestCPY[tmpInd0] = np.delete(inds_of_closest[tmpInd0],index) #we must remove tmpInd1 from inds_of_closest[tmpInd0]
+                            # index = np.argwhere(inds_of_closest[tmpInd1]==tmpInd0)[0][0]
+                            # inds_of_closestCPY[tmpInd1] = np.delete(inds_of_closest[tmpInd1],index) #we must remove tmpInd0 from inds_of_closest[tmpInd1]
+                            lltiTF = [True if (tmpInd0, tmpInd1) in lineList[llti] or \
+                                     (tmpInd1, tmpInd0) in lineList[llti] else False for llti in np.arange(len(lineList))]
                                      #Create array indicating where invalid lines exist
                             for item in np.arange(len(lltiTF))[lltiTF]:
                                 skipList.append(item)
@@ -616,6 +638,8 @@ for ind0_1 in np.arange(len(inds_of_closest)):#iterate over all points
 
                             show(block=False)
                             break
+                        else: #they do not intersect! duh!
+                            continue
 
                     ax.scatter(out1kv[ind0_1][0],out1kv[ind0_1][1],out1kv[ind0_1][2],color='blue',zorder=2)
                     ax.scatter(out1kv[ind0_2][0],out1kv[ind0_2][1],out1kv[ind0_2][2],color='blue',zorder=2)
@@ -630,6 +654,14 @@ for ind0_1 in np.arange(len(inds_of_closest)):#iterate over all points
             
         if  wasBreak == True: # we do not want to continue in this loop
             break
+# inds_of_closest = inds_of_closestCPY
+for ind in np.arange(len(connectionsToDelete)):
+    tmpInd0 = list(connectionsToDelete[ind])[0]
+    tmpInd1 = list(connectionsToDelete[ind])[1]
+    index = np.argwhere(inds_of_closest[tmpInd0]==tmpInd1)[0][0]
+    inds_of_closest[tmpInd0] = np.delete(inds_of_closest[tmpInd0],index) #we must remove tmpInd1 from inds_of_closest[tmpInd0]
+    index = np.argwhere(inds_of_closest[tmpInd1]==tmpInd0)[0][0]
+    inds_of_closest[tmpInd1] = np.delete(inds_of_closest[tmpInd1],index) #we must remove tmpInd1 from inds_of_closest[tmpInd0]
 
 
 
@@ -641,26 +673,75 @@ ax = fig.add_subplot(111, projection='3d')
 title('Plot of all point-to-point connections on sphere Corrected')
 show(block=False)
 
-d_diff_pts_array = list()
-inds_of_closest = list()
-diff_closest = list()
+plotted = list()
 for i in np.arange(len(out1kv)):
     xyzpoint = out1kv[i] # extract a single xyz point on sphere
-    diff_pts = out1kv - xyzpoint # calculate angular difference between point spacing
-    d_diff_pts = np.linalg.norm(diff_pts,axis=1) # calculate linear distance between points
-    d_diff_pts_array.append(d_diff_pts)
-    #DELETE inds_of_closest.append(d_diff_pts_array[i].argsort()[:7])
-    diff_closest.append(d_diff_pts_array[i][inds_of_closest[i]])
 
-    #### Plot closest segments
-    plotted = list() #keeps track of index-to-index lines plotted
-    for j in np.delete(inds_of_closest[i],0):
+    #plotted = list() #keeps track of index-to-index lines plotted
+    for j in inds_of_closest[i]:#np.delete(inds_of_closest[i],0):
         if [i,j] in plotted or [j,i] in plotted:
             continue
         ax.plot([xyzpoint[0],out1kv[j,0]],[xyzpoint[1],out1kv[j,1]],[xyzpoint[2],out1kv[j,2]],color='red',zorder=0)
         plotted.append([i,j])
+ax.set_xlabel('X')
+ax.set_ylabel('Y')
+ax.set_zlabel('Z')
+ax.scatter(out1kv[9][0],out1kv[9][1],out1kv[9][2],color='black') # DELETE for debugging the "only plots negative X "
+# ax.scatter(out1kv[22][0],out1kv[22][1],out1kv[22][2],color='black') # DELETE for debugging the "only plots negative X "
+# ax.scatter(out1kv[12][0],out1kv[12][1],out1kv[12][2],color='black') # DELETE for debugging the "only plots negative X "
+# ax.scatter(out1kv[13][0],out1kv[13][1],out1kv[13][2],color='black') # DELETE for debugging the "only plots negative X "
+ax.scatter(out1kv[11][0],out1kv[11][1],out1kv[11][2],color='black') # DELETE for debugging the "only plots negative X "
+ax.scatter(out1kv[27][0],out1kv[27][1],out1kv[27][2],color='black') # DELETE for debugging the "only plots negative X "
+ax.scatter(out1kv[13][0],out1kv[13][1],out1kv[13][2],color='black') # DELETE for debugging the "only plots negative X "
+ax.scatter(out1kv[19][0],out1kv[19][1],out1kv[19][2],color='black') # DELETE for debugging the "only plots negative X "
 show(block=False)
-d_diff_pts_array = np.asarray(d_diff_pts_array)
+######################################################################
+
+
+
+
+#### Calculate Centroid of Each Area #################################
+#Calculate averate of the 3 inds
+#DELETE ind_ind_observed = list()
+triangleCornerIndList = list()
+triangleAreaList = list()
+triangleCenterList = list()
+for ind0_1 in np.arange(len(inds_of_closest)):#iterate over all points
+    for ind0_2 in np.arange(len(inds_of_closest[ind0_1])):#also iterate over all points
+        ms = set([ind0_1,ind0_2]) # a small set containing the current two inds
+        if any([True if ms == iio else False for iio in ind_ind_observed]): #Determine if we have observed the complement i.e. if 1-3 observed, don't observe 3-1
+            continue
+        #DELETE else:
+        #DELETE    ind_ind_observed.append(ms) # we are looking at a new ind-ind pairing
+        del ms
+
+        if ind0_1 == ind0_2: # Skip if inds are the same
+            continue
+
+        # Skip if ind0_1 and ind0_2 are not connected
+        if  not ind0_1 in set(inds_of_closest[ind0_2]) or \
+            not ind0_2 in set(inds_of_closest[ind0_1]):
+            continue
+
+        #Get intersection between ind0_1 and ind0_2
+        intSet = set(inds_of_closest[ind0_1]).intersection(set(inds_of_closest[ind0_2])) # should be length 4
+        intSet.remove(ind0_1)#remove inds that are directly connected
+        intSet.remove(ind0_2)#remove inds that are directly connected
+        #pick ind0_1, pick ind0_2, iterate over the other two
+        remainingInds = list(intSet)
+        for ind in remainingInds:
+            cornerIndSet = set([ind0_1, ind0_2, ind])
+            if not cornerIndSet in triangleCornerIndList:
+                triangleCornerIndList.append(cornerIndSet)
+                centroid = 1./3.*out1kv[list(cornerIndSet)[0]] + 1./3.*out1kv[list(cornerIndSet)[1]] + 1./3.*out1kv[list(cornerIndSet)[2]]
+                triangleCenterList.append(centroid)
+                area = 0.5*np.abs(np.linalg.norm(np.cross(out1kv[list(cornerIndSet)[1]]-out1kv[list(cornerIndSet)[0]],out1kv[list(cornerIndSet)[2]]-out1kv[list(cornerIndSet)[0]])))
+                triangleAreaList.append(area)
+            else:
+                continue
+sumTriangleArea = sum(np.asarray(triangleAreaList))
+print sumTriangleArea
+######################################################################
 
 
 
