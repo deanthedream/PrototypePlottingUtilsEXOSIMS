@@ -24,6 +24,7 @@ from mpl_toolkits.mplot3d import Axes3D #required for 3d plot
 import seaborn as sns
 from scipy.interpolate import interp1d
 from scipy.interpolate import CubicSpline
+from copy import deepcopy
 
 
 def generateEquadistantPointsOnSphere(N=100,PPoutpath='/home/dean/Documents/exosims/cache/'):
@@ -177,7 +178,6 @@ def line2linev2(p0,v0,p1,v1):
     dP = p1-p0 + t0*v0 - t1*v1#p1-p0 + (sc * v0) - (tc * v1)
     return np.linalg.norm(dP), dP, p0-t0*v0, p1-t1*v1, t0, t1
 
-
 def sphericalAngles(ah,bh,ch,R=1.):
     """ Calculates Spherical Angles Between 3 points on the surface of a sphere
     http://mathworld.wolfram.com/SphericalTrigonometry.html
@@ -191,20 +191,30 @@ def sphericalAngles(ah,bh,ch,R=1.):
         B (float) - angle of arc B in radians
         C (float) - angle of arc C in radians
     """
-    ap = np.arccos(np.dot(bh,ch))# angular lengths of sides (angle formed by BOC)
-    bp = np.arccos(np.dot(ah,ch))
-    cp = np.arccos(np.dot(ah,bh))
+    ah = ah/np.linalg.norm(ah)
+    bh = bh/np.linalg.norm(bh)
+    ch = ch/np.linalg.norm(ch)
+
+    ap = np.arccos(np.dot(bh,ch)/R**2.)# angular lengths of sides (angle formed by BOC)
+    bp = np.arccos(np.dot(ah,ch)/R**2.)
+    cp = np.arccos(np.dot(ah,bh)/R**2.)
+    assert ap >=0, 'angle must be positive'
+    assert bp >=0, 'angle must be positive'
+    assert cp >=0, 'angle must be positive'
+
     a = R*ap# arc length of sides
     b = R*bp
     c = R*cp
-    A = np.arcsin(np.abs(np.cross(np.cross(ah,bh),np.cross(ah,ch)))/\
-                    (np.abs(np.cross(ah,bh))*np.abs(np.cross(ah,ch)))) # cosines rule for sides Smart 1960
-    B = np.arcsin(np.sin(A)/np.sin(a)*np.sin(b)) # spherical triangle analagous law of cosines
+    A = np.arccos((np.cos(a)-np.cos(b)*np.cos(c))/(np.sin(b)*np.sin(c)))
+    #A = np.arcsin(np.abs(np.linalg.norm(np.cross(np.cross(ah,bh),np.cross(ah,ch))))/\
+    #                (np.abs(np.linalg.norm(np.cross(ah,bh)))*np.abs(np.linalg.norm(np.cross(ah,ch))))) # cosines rule for sides Smart 1960
+    B = np.arcsin(np.sin(A)/np.sin(a)*np.sin(b)) # spherical triangle analagous law of sines
     C = np.arcsin(np.sin(A)/np.sin(a)*np.sin(c))
+    # if A+B+C < np.pi:
+    #     print saltyburrito
     return A, B, C
 
-
-def sphericalArea(A,B,C,r=1.):
+def sphericalArea(A,B,C,a,b,c,r=1.):
     """ Calculates the area on the sphere subtended by 3 arcs on its surface
     http://mathworld.wolfram.com/SphericalTriangle.html
     Args:
@@ -212,11 +222,31 @@ def sphericalArea(A,B,C,r=1.):
         A (float) - angle of arc A in radians
         B (float) - angle of arc B in radians
         C (float) - angle of arc C in radians
+        a (numpy array) - vector from O to A 
+        b (numpy array) - vector from O to B
+        c (numpy array) - vector from O to C
     Returns:
         area (float) - area subtended in units^2
     """
-    area = (r**2.)*((A+B+C)-np.pi)
-    return area
+    #assert A+B+C >= np.pi, 'The angles input are less than that required for a spherical triangle'
+    areaDelta = (r**2.)*((A+B+C)-np.pi) # the delta in surface area caused by the angles of the edges on the surface
+    v0 = b-a
+    v1 = c-a
+    areaNominal = 0.5*np.abs(np.linalg.norm(np.cross(v0,v1)))
+    return areaNominal# + areaDelta
+
+def latlonToxyz(lat,lon):
+    """
+    Args:
+        lat (radians) - should be from -np.pi/2 to np.pi/2
+        lon (radians) - should be from 0 to 2*np.pi
+    Return:
+        xyz (numpy array) - x,y,z points on unit sphere
+    """
+    x = 1.*np.cos(lat)*np.cos(lon)
+    y = 1.*np.cos(lat)*np.sin(lon)
+    z = 1.*np.sin(lat)
+    return np.asarray([x,y,z])
 
 
 close('all')
@@ -691,7 +721,7 @@ for ind in np.arange(len(connectionsToDelete)):
 
 #### Calculate Centroid of Each Area #################################
 #Calculate averate of the 3 inds
-triangleCornerIndList = list()
+triangleCornerIndList = list() # note these are inds of out1kv
 triangleAreaList = list()
 triangleCenterList = list()
 for ind0_1 in np.arange(len(inds_of_closest)):#iterate over all points
@@ -718,8 +748,8 @@ for ind0_1 in np.arange(len(inds_of_closest)):#iterate over all points
                             1./3.*out1kv[list(cornerIndSet)[1]] + \
                             1./3.*out1kv[list(cornerIndSet)[2]]
                 triangleCenterList.append(centroid)
-                A, B, C = sphericalAngles(out1kv[list(cornerIndSet)[0]],out1kv[list(cornerIndSet)[1]],out1kv[list(cornerIndSet)[2]]) 
-                area = sphericalArea(A,B,C)
+                A, B, C = sphericalAngles(out1kv[list(cornerIndSet)[0]],out1kv[list(cornerIndSet)[1]],out1kv[list(cornerIndSet)[2]])
+                area = sphericalArea(A,B,C,out1kv[list(cornerIndSet)[0]],out1kv[list(cornerIndSet)[1]],out1kv[list(cornerIndSet)[2]])
                 #DELETE area = 0.5*np.abs(np.linalg.norm(np.cross(out1kv[list(cornerIndSet)[1]]-out1kv[list(cornerIndSet)[0]],\
                 #DELETE                                            out1kv[list(cornerIndSet)[2]]-out1kv[list(cornerIndSet)[0]])))
                 triangleAreaList.append(area)
@@ -727,7 +757,11 @@ for ind0_1 in np.arange(len(inds_of_closest)):#iterate over all points
                 continue
 sumTriangleArea = sum(np.asarray(triangleAreaList))
 print sumTriangleArea
+triangleAreaList = list(np.asarray(triangleAreaList)*4.*np.pi/sumTriangleArea)
+print sum(np.asarray(triangleAreaList))
 print len(triangleCenterList)
+
+assert len([True for tri in triangleCornerIndList if len(tri) < 3]) < 1, 'At least One Triangle Corner List Item has fewer than 3 inds'
 ######################################################################
 
 #### Re plot Sphere ################################
@@ -756,6 +790,110 @@ ax.set_ylabel('Y')
 ax.set_zlabel('Z')
 show(block=False)
 ######################################################################
+
+#### Distribute Stars into Bins ######################################
+tmpsInds = sInds[comp>0.]
+starxyz = np.zeros([len(tmpsInds),3])
+starAssignedTriangleCorners = list() # this is the list of "corner sets" each star is assigned to
+for ind in np.arange(len(sInds[comp>0.])): # iterate over all stars
+    starxyz[ind] = latlonToxyz(hEclipLat[ind],hEclipLon[ind]) #get star in xyz points
+
+    # find closest triangle corner
+    diff_star_corner = out1kv - starxyz[ind] #difference between corner and star location
+    indOfMin = np.argmin(np.abs(np.linalg.norm(diff_star_corner,axis=1))) #grab minimum distance indicie
+    print indOfMin
+
+    # Calculate r and project r onto plane defined by closest corner
+    r = starxyz[ind]*(1. - np.dot(starxyz[ind],out1kv[indOfMin])) # vector from triangle corner to starxyz point
+    projected_r = r - out1kv[indOfMin]*np.dot(out1kv[indOfMin]/np.linalg.norm(out1kv[indOfMin]),r/np.linalg.norm(r)) # project r onto plane defined by corner
+    projected_r = projected_r/np.linalg.norm(projected_r) # normalize that projected vector
+
+    # Find relevant triangle corners
+    relevantTriangles = deepcopy([tri for tri in triangleCornerIndList if indOfMin in tri])
+    assert len([True for tri in relevantTriangles if len(tri) < 3]) == 0, 'All sets in relevantTriangles must have length 3'
+    print 'rT: ' + str(relevantTriangles)
+    tmp = set([])
+    relevantCorners = set.union(*relevantTriangles)#[tmp tri for tri in relevantTriangles] # this is a set of all corners
+    relevantCorners.remove(indOfMin) #remove the center corner
+    relevantCornersArr = np.asarray(list(relevantCorners)) #turn into array
+
+    # Calculate projected center-to-corner vectors
+    r0i = list() # list of vectors from center to different triangle corners
+    projected_r0i = list()
+    for corrInd in np.arange(len(relevantCornersArr)):
+        r0i.append(out1kv[relevantCornersArr[corrInd]]-out1kv[indOfMin]) # lines from center to corners of each triangle containing center
+        projected_r0i.append(r0i[corrInd]/np.linalg.norm(r0i[corrInd]) - starxyz[ind]/np.linalg.norm(starxyz[ind])*np.dot(starxyz[ind]/np.linalg.norm(starxyz[ind]),r0i[corrInd]/np.linalg.norm(r0i[corrInd]))) #projects each r0i onto plane of closest star
+        projected_r0i[corrInd] = projected_r0i[corrInd]/np.linalg.norm(projected_r0i[corrInd]) # normalizes this into a unit vector
+    
+    # Get vector from triangle edges to star
+    r0iToPTDist = list() # contains vectors from triangle edges to star Point *all in projected plane
+    for corrInd in np.arange(len(relevantCornersArr)):
+        # #If I do this, the ptTor0iDist has wrong length
+        # if np.dot(r,r0i[corrInd]) <= 0.: # r is not in the +r0i direction of the center to corner line
+        #     continue
+
+        r0iToPTDist.append(projected_r - projected_r0i[corrInd]*np.dot(projected_r,projected_r0i[corrInd])) # vect from line from center to corner to star
+    r0iToPTDist = np.asarray(r0iToPTDist)
+    indClosestEdge = np.argmin(np.abs(np.linalg.norm(r0iToPTDist,axis=1))) #finds the distance from the star to the closest edge
+
+    # Find Corners connected to indClosestEdge
+    edgePT = relevantCornersArr[indClosestEdge]
+    set(relevantCornersArr).intersection(set())
+    relevantTriangles2 = deepcopy([tri for tri in relevantTriangles if len(tri.intersection(set([edgePT]))) > 0]) # sort out triangles with center and edgePT
+    assert len([True for tri in relevantTriangles2 if len(tri) < 3]) == 0, 'All sets in relevantTriangles must have length 3'
+    print 'rT2: ' + str(relevantTriangles2)
+    relevantTriangles2[0].remove(edgePT)
+    relevantTriangles2[1].remove(edgePT)
+    relevantTriangles2[0].remove(indOfMin)
+    relevantTriangles2[1].remove(indOfMin)
+
+    # Want vectors from edgePT to both items in relvantTriangles2
+    cornerInd0 = np.where(relevantCornersArr==list(relevantTriangles2[0])[0])[0][0] #projected_r0i are tied to relevantCornersArr, need that index
+    cornerInd1 = np.where(relevantCornersArr==list(relevantTriangles2[1])[0])[0][0]
+    oc0 = projected_r0i[cornerInd0] - projected_r0i[indClosestEdge]
+    oc1 = projected_r0i[cornerInd1] - projected_r0i[indClosestEdge]
+
+    # 3rd Corner is whichever vector dot perpendicular is positive (should only be 1)
+    if np.dot(oc0,r0iToPTDist[indClosestEdge]) > 0:
+        starAssignedTriangleCorners.append(set([indOfMin, edgePT, relevantCornersArr[cornerInd0]]))
+        #return
+    elif np.dot(oc1,r0iToPTDist[indClosestEdge]) > 0:
+        starAssignedTriangleCorners.append(set([indOfMin, edgePT, relevantCornersArr[cornerInd1]]))
+        #return
+    else:
+        print saltyburrito # there was some kind of error I didn't  anticipate
+
+######################################################################
+
+#### Count number of each type of "corner set"/triangle
+countDict = {} # list of dicts
+for tset in starAssignedTriangleCorners:
+    try:
+        countDict[str(sort(list(tset)))] += 1
+    except:
+        countDict[str(sort(list(tset)))] = 1
+print countDict # this is the output dictionary
+countsForColoring = list() # this is a list of the number of stars in each bin
+for key in countDict.keys():
+    countsForColoring.append(countDict[key])
+print max(countsForColoring)
+###########################################
+
+
+
+
+
+#### Plot Each Triangle on a 2D plot with Hammer Projection
+fig = figure(num=96993)
+#### Plot Each Surface with specific color scaled based on max(countsForColoring)
+
+t1 = Polygon()
+gca().add_patch(t1)
+
+
+
+
+
 
 
 
