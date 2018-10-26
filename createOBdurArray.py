@@ -545,7 +545,7 @@ hEclipLat = np.arcsin(r_stars_eclip[:,2])
 hEclipLon = np.arctan2(r_stars_eclip[:,1],r_stars_eclip[:,0])
 #######
 
-#### Create Set of Evenly distributed and same size bins on sky ##############
+#### Create Set of Evenly distributed Points on Sphere ##############
 # From EXOSIMS/util/evenlyDistributePointsOnSphere.py
 from evenlyDistributePointsOnSphere import splitOut, nlcon2, f, pt_pt_distances, secondSmallest, setupConstraints, initialXYZpoints
 from scipy.optimize import minimize
@@ -555,42 +555,60 @@ x0 = v.flatten() # takes v and converts it into [x0,y0,z0,x1,y1,z1,...,xn,yn,zn]
 out1k = minimize(f,x0, method='SLSQP',constraints=(con), options={'ftol':1e-4, 'maxiter':1000}) # run optimization problem for 1000 iterations
 out1kx, out1ky, out1kz = splitOut(out1k)
 out1kv = np.asarray([[out1kx[i], out1ky[i], out1kz[i]] for i in np.arange(len(out1kx))]) #These are the points of each ind
-dist1k = pt_pt_distances(out1kv)
+dist1k = pt_pt_distances(out1kv) # for informational purposes: distances between points on sphere
 ####################################################################
 
+def calculateClosestPoints(out1kv):
+    """ Calculates the distance between each point and each other point, 
+    finds inds of closest 7 points (including itself), 
+    finds separation distance between point and closest point
+    Args:
+        out1kv (2d numpy array nx3) - 2d numpy array of floats where dim 1 is the number of points
+            and dim 2 are the xyz components
+    Returns:
+        d_diff_pts_array (numpy array) - 2d numpy array of floats where dim 1 is the number of points
+            and dim 2 are the distances between that point and all other points
+        inds_of_closest (list of numpy arrays) - list of numpy arrays with length number of points
+            where each array are integer indices of 7 closest points in out1kv
+        diff_closest (list of numpy arrays) - list of numpy arrays with length number of points
+            where each array are linear distances between point and 7 closest points
+    """
+    d_diff_pts_array = list() # for each point, distances from point to all other points
+    inds_of_closest = list() # for each point, indicie of closest point
+    diff_closest = list()
+    for i in np.arange(len(out1kv)):
+        xyzpoint = out1kv[i] # extract a single xyz point on sphere
+        diff_pts = out1kv - xyzpoint # calculate angular difference between point spacing
+        d_diff_pts = np.abs(np.linalg.norm(diff_pts,axis=1)) # calculate linear distance between points
+        d_diff_pts_array.append(d_diff_pts)
+        inds_of_closest.append(d_diff_pts_array[i].argsort()[:7])
+        diff_closest.append(d_diff_pts_array[i][inds_of_closest[i]])
+    d_diff_pts_array = np.asarray(d_diff_pts_array)
+    return d_diff_pts_array, inds_of_closest, diff_closest
 
+d_diff_pts_array, inds_of_closest, diff_closest = calculateClosestPoints(out1kv)
 
-close(50067)
-fig = figure(num=50067)
-ax = fig.add_subplot(111, projection='3d')
-#ax.scatter(out1kv[:,0], out1kv[:,1], out1kv[:,2], color='black',zorder=1)
-title('Plot of all point-to-point connections on sphere')
-show(block=False)
+def plotClosestPoints(inds_of_closest, out1kv):
+    """ Plots a unit sphere with all lines connecting points
+    """
+    close(50067)
+    fig = figure(num=50067)
+    ax = fig.add_subplot(111, projection='3d')
+    title('Plot of all point-to-point connections on sphere')
+    for i in np.arange(len(out1kv)):
+        xyzpoint = out1kv[i] # extract a single xyz point on sphere
+        plotted = list() #keeps track of index-to-index lines plotted
+        for j in np.delete(inds_of_closest[i],0):
+            if [i,j] in plotted or [j,i] in plotted:
+                continue
+            ax.plot([xyzpoint[0],out1kv[j,0]],[xyzpoint[1],out1kv[j,1]],[xyzpoint[2],out1kv[j,2]],color='red',zorder=0)
+            plotted.append([i,j])
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+    show(block=False)
 
-d_diff_pts_array = list()
-inds_of_closest = list()
-diff_closest = list()
-for i in np.arange(len(out1kv)):
-    xyzpoint = out1kv[i] # extract a single xyz point on sphere
-    diff_pts = out1kv - xyzpoint # calculate angular difference between point spacing
-    d_diff_pts = np.abs(np.linalg.norm(diff_pts,axis=1)) # calculate linear distance between points
-    d_diff_pts_array.append(d_diff_pts)
-    inds_of_closest.append(d_diff_pts_array[i].argsort()[:7])
-    diff_closest.append(d_diff_pts_array[i][inds_of_closest[i]])
-
-    #### Plot closest segments
-    plotted = list() #keeps track of index-to-index lines plotted
-    for j in np.delete(inds_of_closest[i],0):
-        if [i,j] in plotted or [j,i] in plotted:
-            continue
-        ax.plot([xyzpoint[0],out1kv[j,0]],[xyzpoint[1],out1kv[j,1]],[xyzpoint[2],out1kv[j,2]],color='red',zorder=0)
-        plotted.append([i,j])
-ax.set_xlabel('X')
-ax.set_ylabel('Y')
-ax.set_zlabel('Z')
-show(block=False)
-d_diff_pts_array = np.asarray(d_diff_pts_array)
-
+plotClosestPoints(inds_of_closest, out1kv)
 
 import random
 import itertools
@@ -598,7 +616,6 @@ import itertools
 #Solution For all points that share two connecting points and are NOT directly connected, IF the two points they share are connected, delete the connection between the two shared points
 ind_ind_observed = list()
 connectionsToDelete = list() # list of sets containing links to delete
-#DELETE listToCheckIntersection = list()
 for ind0_1 in np.arange(len(inds_of_closest)):#iterate over all points
     for ind0_2 in inds_of_closest[ind0_1]:#np.arange(len(inds_of_closest[ind0_1])):#also iterate over all points
         wasBreak = False
@@ -884,6 +901,7 @@ print max(countsForColoring)
 
 
 #### Plot Each Triangle on a 2D plot with Hammer Projection
+close(96993)
 fig = figure(num=96993)
 #### Plot Each Surface with specific color scaled based on max(countsForColoring)
 
