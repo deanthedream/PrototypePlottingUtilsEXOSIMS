@@ -935,7 +935,7 @@ for ind in np.arange(len(triangleCornerIndList)):
         pass
     elif sum(np.sign(tcptslatlon[:,0]) > 0) == 1\
         and (max(tcptslatlon[:,0]) - min(tcptslatlon[:,0])) > np.pi:
-        # One 1 of the values positive OR 1 of the values is positive and the others are negative
+        # One 1 of the values positive and the others are negative
         # AND the distance between max and min is > pi (this avoids problems with triangles intersecting 0 lon line)
 
         #then make the positive number into a really negative one
@@ -945,7 +945,7 @@ for ind in np.arange(len(triangleCornerIndList)):
         # One 1 of the values is negative and the others are positive
         # AND the distance between max and min is > pi (this avoids problems with triangles intersecting 0 lon line)
         #then make the negative number into a really positive one
-        tcptslatlon[np.argmin(tcptslatlon[:,0]),0] = np.pi + (tcptslatlon[np.argmin(tcptslatlon[:,0]),0] - np.pi)
+        tcptslatlon[np.argmin(tcptslatlon[:,0]),0] = np.pi + (np.pi + tcptslatlon[np.argmin(tcptslatlon[:,0]),0])
     else:
         pass
 
@@ -997,8 +997,8 @@ for ind in np.arange(len(tDict.keys())):
     t1 = Polygon(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'], color=cmap(norm(tDict[tDict.keys()[ind]]['count'])))
     ax.add_patch(t1)
     show(block=False)
-    # print ind
-    # input("...")
+    print ind
+    input("...")
 # ax.set_xlim(left=xmin,right=xmax)
 # ax.set_ylim(bottom=ymin,top=ymax)
 #xlim(xmin,xmax)
