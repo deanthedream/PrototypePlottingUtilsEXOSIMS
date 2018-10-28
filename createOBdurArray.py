@@ -795,7 +795,7 @@ hEclipLon = np.arctan2(r_stars_eclip[:,1],r_stars_eclip[:,0])
 
 #### Create Set of Evenly distributed Points on Sphere ##############
 # From EXOSIMS/util/evenlyDistributePointsOnSphere.py
-from evenlyDistributePointsOnSphere import splitOut, nlcon2, f, pt_pt_distances, secondSmallest, setupConstraints, initialXYZpoints
+from EXOSIMS.util.evenlyDistributePointsOnSphere import splitOut, nlcon2, f, pt_pt_distances, secondSmallest, setupConstraints, initialXYZpoints
 from scipy.optimize import minimize
 x, y, z, v = initialXYZpoints(num_pts=30) # Generate Initial Set of XYZ Points
 con = setupConstraints(v,nlcon2) # Define constraints on each point of the sphere
