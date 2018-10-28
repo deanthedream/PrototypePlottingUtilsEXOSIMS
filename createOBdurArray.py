@@ -940,12 +940,16 @@ for ind in np.arange(len(triangleCornerIndList)):
 
         #then make the positive number into a really negative one
         tcptslatlon[np.argmax(tcptslatlon[:,0]),0] = -np.pi - (np.pi - tcptslatlon[np.argmax(tcptslatlon[:,0]),0])
+        tcptslatlon2 = deepcopy(tcptslatlon)
+        tcptslatlon2[:,0] = tcptslatlon2[:,0]+2.*np.pi #trying this
     elif sum(np.sign(tcptslatlon[:,0]) < 0) == 1\
         and (max(tcptslatlon[:,0]) - min(tcptslatlon[:,0])) > np.pi:
         # One 1 of the values is negative and the others are positive
         # AND the distance between max and min is > pi (this avoids problems with triangles intersecting 0 lon line)
         #then make the negative number into a really positive one
         tcptslatlon[np.argmin(tcptslatlon[:,0]),0] = np.pi + (np.pi + tcptslatlon[np.argmin(tcptslatlon[:,0]),0])
+        tcptslatlon2 = deepcopy(tcptslatlon)
+        tcptslatlon2[:,0] = tcptslatlon2[:,0]-2.*np.pi #trying this
     else:
         pass
 
@@ -959,6 +963,12 @@ for ind in np.arange(len(triangleCornerIndList)):
     except:
         pass
 
+    try:
+        tDict[str(sort(list(tset)))]['triangleCornerPointsXYZlatlon2'] = tcptslatlon2
+        del tcptslatlon2
+    except:
+        pass
+
 
 
 #### Count number of each type of "corner set"/triangle
@@ -968,7 +978,7 @@ for tset in starAssignedTriangleCorners:
         tDict[str(sort(list(tset)))]['count'] += 1
     except:
         tDict[str(sort(list(tset)))] = {'count':1}
-print countDict # this is the output dictionary
+#DELETE print tDict # this is the output dictionary
 countsForColoring = list() # this is a list of the number of stars in each bin
 for key in tDict.keys():
     countsForColoring.append(tDict[key])
@@ -983,27 +993,37 @@ tDict[tDict.keys()[0]]['triangleCornerPointsXYZlatlon']
 #### Plot Each Triangle on a 2D plot with Hammer Projection
 close(96993)
 fig = figure(num=96993)
-ax = fig.add_subplot(111)#, projection='3d')
+ax = fig.add_subplot(111, projection="mollweide")#"hammer")
 ymin = min([min(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'][:,1]) for ind in np.arange(len(tDict.keys()))])
 ymax = max([max(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'][:,1]) for ind in np.arange(len(tDict.keys()))])
 xmin = min([min(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'][:,0]) for ind in np.arange(len(tDict.keys()))])
 xmax = max([max(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'][:,0]) for ind in np.arange(len(tDict.keys()))])
-ax.set_xlim(left=xmin,right=xmax)
-ax.set_ylim(bottom=ymin,top=ymax)
+#ax.set_xlim(left=xmin,right=xmax)
+#ax.set_ylim(bottom=ymin,top=ymax)
 cmap = cm.winter
-norm = mpl.colors.Normalize(vmin=0,vmax=max([tDict[key]['count'] for key in tDict.keys()]))
+norm = mpl.colors.Normalize(vmin=0,vmax=max([tDict[key]['count']/tDict[key]['triangleArea'] for key in tDict.keys()]))
 #### Plot Each Surface with specific color scaled based on max(countsForColoring)
 for ind in np.arange(len(tDict.keys())):
-    t1 = Polygon(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'], color=cmap(norm(tDict[tDict.keys()[ind]]['count'])))
+    t1 = Polygon(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'], color=cmap(norm(tDict[tDict.keys()[ind]]['count']/tDict[tDict.keys()[ind]]['triangleArea'])))
     ax.add_patch(t1)
+    del t1
     show(block=False)
-    print ind
-    input("...")
+    #### Add mirror patch
+    if 'triangleCornerPointsXYZlatlon2' in tDict[tDict.keys()[ind]].keys():
+        print 'HasKey!'
+        t2 = Polygon(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon2'], color=cmap(norm(tDict[tDict.keys()[ind]]['count'])/tDict[tDict.keys()[ind]]['triangleArea']))
+        ax.add_patch(t2)
+        del t2
+        show(block=False)
+        #print ind
+        #input("...")
+    # print ind
+    # input("...")
 # ax.set_xlim(left=xmin,right=xmax)
 # ax.set_ylim(bottom=ymin,top=ymax)
 #xlim(xmin,xmax)
 #ylim(ymin,ymax)
-show(block=False)
+#show(block=False)
 
 
 
