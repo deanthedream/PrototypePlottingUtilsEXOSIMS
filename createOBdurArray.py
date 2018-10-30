@@ -495,6 +495,168 @@ def calculateTriangles(inds_of_closest,out1kv):
     ######################################################################
     return sumTriangleArea, triangleCornerIndList, triangleAreaList, triangleCenterList
 
+def createTriangleCornerSets(sInds,comp,hEclipLat,hEclipLon,out1kv,triangleCornerIndList):
+    """Create List of Corner Sets
+    Args:
+        sInds
+        comp
+        hEclipLat
+        hEclipLon
+        out1kv
+        triangleCornerIndList
+    Return:
+        starAssignedTriangleCorners (list) - list of "corner sets" each star is assigned to
+    """
+    tmpsInds = sInds[comp>0.]
+    starxyz = np.zeros([len(tmpsInds),3])
+    starAssignedTriangleCorners = list() # this is the list of "corner sets" each star is assigned to
+    for ind in np.arange(len(sInds[comp>0.])): # iterate over all stars
+        starxyz[ind] = latlonToxyz(hEclipLat[ind],hEclipLon[ind]) #get star in xyz points
+
+        # find closest triangle corner
+        diff_star_corner = out1kv - starxyz[ind] #difference between corner and star location
+        indOfMin = np.argmin(np.abs(np.linalg.norm(diff_star_corner,axis=1))) #grab minimum distance indicie
+        #print indOfMin
+
+        # Calculate r and project r onto plane defined by closest corner
+        r = starxyz[ind]*(1. - np.dot(starxyz[ind],out1kv[indOfMin])) # vector from triangle corner to starxyz point
+        projected_r = r - out1kv[indOfMin]*np.dot(out1kv[indOfMin]/np.linalg.norm(out1kv[indOfMin]),r/np.linalg.norm(r)) # project r onto plane defined by corner
+        projected_r = projected_r/np.linalg.norm(projected_r) # normalize that projected vector
+
+        # Find relevant triangle corners
+        relevantTriangles = deepcopy([tri for tri in triangleCornerIndList if indOfMin in tri])
+        assert len([True for tri in relevantTriangles if len(tri) < 3]) == 0, 'All sets in relevantTriangles must have length 3'
+        #print 'rT: ' + str(relevantTriangles)
+        tmp = set([])
+        relevantCorners = set.union(*relevantTriangles)#[tmp tri for tri in relevantTriangles] # this is a set of all corners
+        relevantCorners.remove(indOfMin) #remove the center corner
+        relevantCornersArr = np.asarray(list(relevantCorners)) #turn into array
+
+        # Calculate projected center-to-corner vectors
+        r0i = list() # list of vectors from center to different triangle corners
+        projected_r0i = list()
+        for corrInd in np.arange(len(relevantCornersArr)):
+            r0i.append(out1kv[relevantCornersArr[corrInd]]-out1kv[indOfMin]) # lines from center to corners of each triangle containing center
+            projected_r0i.append(r0i[corrInd]/np.linalg.norm(r0i[corrInd]) - starxyz[ind]/np.linalg.norm(starxyz[ind])*np.dot(starxyz[ind]/np.linalg.norm(starxyz[ind]),r0i[corrInd]/np.linalg.norm(r0i[corrInd]))) #projects each r0i onto plane of closest star
+            projected_r0i[corrInd] = projected_r0i[corrInd]/np.linalg.norm(projected_r0i[corrInd]) # normalizes this into a unit vector
+        
+        # Get vector from triangle edges to star
+        r0iToPTDist = list() # contains vectors from triangle edges to star Point *all in projected plane
+        for corrInd in np.arange(len(relevantCornersArr)):
+            r0iToPTDist.append(projected_r - projected_r0i[corrInd]*np.dot(projected_r,projected_r0i[corrInd])) # vect from line from center to corner to star
+        r0iToPTDist = np.asarray(r0iToPTDist)
+        indClosestEdge = np.argmin(np.abs(np.linalg.norm(r0iToPTDist,axis=1))) #finds the distance from the star to the closest edge
+
+        # Find Corners connected to indClosestEdge
+        edgePT = relevantCornersArr[indClosestEdge]
+        set(relevantCornersArr).intersection(set())
+        relevantTriangles2 = deepcopy([tri for tri in relevantTriangles if len(tri.intersection(set([edgePT]))) > 0]) # sort out triangles with center and edgePT
+        assert len([True for tri in relevantTriangles2 if len(tri) < 3]) == 0, 'All sets in relevantTriangles must have length 3'
+        #print 'rT2: ' + str(relevantTriangles2)
+        relevantTriangles2[0].remove(edgePT)
+        relevantTriangles2[1].remove(edgePT)
+        relevantTriangles2[0].remove(indOfMin)
+        relevantTriangles2[1].remove(indOfMin)
+
+        # Want vectors from edgePT to both items in relvantTriangles2
+        cornerInd0 = np.where(relevantCornersArr==list(relevantTriangles2[0])[0])[0][0] #projected_r0i are tied to relevantCornersArr, need that index
+        cornerInd1 = np.where(relevantCornersArr==list(relevantTriangles2[1])[0])[0][0]
+        oc0 = projected_r0i[cornerInd0] - projected_r0i[indClosestEdge]
+        oc1 = projected_r0i[cornerInd1] - projected_r0i[indClosestEdge]
+
+        # 3rd Corner is whichever vector dot perpendicular is positive (should only be 1)
+        if np.dot(oc0,r0iToPTDist[indClosestEdge]) > 0:
+            starAssignedTriangleCorners.append(set([indOfMin, edgePT, relevantCornersArr[cornerInd0]]))
+            #return
+        elif np.dot(oc1,r0iToPTDist[indClosestEdge]) > 0:
+            starAssignedTriangleCorners.append(set([indOfMin, edgePT, relevantCornersArr[cornerInd1]]))
+            #return
+        else:
+            print saltyburrito # there was some kind of error I didn't  anticipate
+    return starAssignedTriangleCorners
+    ######################################################################
+
+def createtDict(triangleCornerIndList,triangleAreaList,triangleCenterList,out1kv):
+    """Creates tDict, the triangle dictionary of triangle knowledge
+    Args:
+        triangleCornerIndList () - 
+        triangleAreaList () - 
+        triangleCenterList () - 
+        out1kv () - 
+    Returns:
+        tDict (dict) - triangle dictionary of triangle knowledge. Indexed first by str(sort(list(cornerInds)))
+            then contains ['count','triangleCornerInds','triangleArea','triangleCenter',
+            'triangleCornerPointsXYZ','triangleCornerPointsXYZlatlon']
+    """
+    tDict = {}
+    for ind in np.arange(len(triangleCornerIndList)):
+        tset = triangleCornerIndList[ind]
+        ta = triangleAreaList[ind]
+        tc = triangleCenterList[ind]
+        tcptsxyz = [out1kv[ind2] for ind2 in sort(list(tset))]
+        tcptslatlon = np.asarray([xyzTolonlat(tcptsxyz[ind2]) for ind2 in np.arange(len(tcptsxyz))])
+
+        #Ensure lon aren't on other sides of skymap MOVE TRIANGLES AROUND
+        if sum(np.sign(tcptslatlon[:,0]) > 0) == 3 or sum(np.sign(tcptslatlon[:,0]) < 0) == 3:
+            pass
+        elif sum(np.sign(tcptslatlon[:,0]) > 0) == 1\
+            and (max(tcptslatlon[:,0]) - min(tcptslatlon[:,0])) > np.pi:
+            # One 1 of the values positive and the others are negative
+            # AND the distance between max and min is > pi (this avoids problems with triangles intersecting 0 lon line)
+
+            #then make the positive number into a really negative one
+            tcptslatlon[np.argmax(tcptslatlon[:,0]),0] = -np.pi - (np.pi - tcptslatlon[np.argmax(tcptslatlon[:,0]),0])
+            tcptslatlon2 = deepcopy(tcptslatlon)
+            tcptslatlon2[:,0] = tcptslatlon2[:,0]+2.*np.pi #trying this
+        elif sum(np.sign(tcptslatlon[:,0]) < 0) == 1\
+            and (max(tcptslatlon[:,0]) - min(tcptslatlon[:,0])) > np.pi:
+            # One 1 of the values is negative and the others are positive
+            # AND the distance between max and min is > pi (this avoids problems with triangles intersecting 0 lon line)
+            #then make the negative number into a really positive one
+            tcptslatlon[np.argmin(tcptslatlon[:,0]),0] = np.pi + (np.pi + tcptslatlon[np.argmin(tcptslatlon[:,0]),0])
+            tcptslatlon2 = deepcopy(tcptslatlon)
+            tcptslatlon2[:,0] = tcptslatlon2[:,0]-2.*np.pi #trying this
+        else:
+            pass
+
+        try:
+            tDict[str(sort(list(tset)))] = {'count':0,\
+                'triangleCornerInds':tset,\
+                'triangleArea':ta,\
+                'triangleCenter':tc,\
+                'triangleCornerPointsXYZ':tcptsxyz,\
+                'triangleCornerPointsXYZlatlon':tcptslatlon}
+        except:
+            pass
+
+        try:
+            tDict[str(sort(list(tset)))]['triangleCornerPointsXYZlatlon2'] = tcptslatlon2
+            del tcptslatlon2
+        except:
+            pass
+    return tDict
+    #########################################################################
+
+def distributeStarsIntoBins(tDict,starAssignedTriangleCorners):
+    """Count number of each type of "corner set"/triangle. Effectively updates count field in tDict
+    Args:
+        tDict
+        starAssignedTriangleCorners
+    Returns:
+        tDict
+    """
+    for tset in starAssignedTriangleCorners:
+        try:
+            tDict[str(sort(list(tset)))]['count'] += 1
+        except:
+            tDict[str(sort(list(tset)))] = {'count':1}
+    countsForColoring = list() # this is a list of the number of stars in each bin
+    for key in tDict.keys():
+        countsForColoring.append(tDict[key])
+    #print max(countsForColoring)
+    return tDict
+    ###########################################
+
 
 
 close('all')
@@ -846,160 +1008,39 @@ ax.set_zlabel('Z')
 show(block=False)
 ######################################################################
 
+
+#### Create sets of triangle corners #################################
+starAssignedTriangleCorners = createTriangleCornerSets(sInds,comp,hEclipLat,hEclipLon,out1kv,triangleCornerIndList)
+######################################################################
+
+#### Create tDict, the triangleDictionary of triangleKnowledge ############
+tDict = createtDict(triangleCornerIndList,triangleAreaList,triangleCenterList,out1kv)
+###########################################################################
+
 #### Distribute Stars into Bins ######################################
-tmpsInds = sInds[comp>0.]
-starxyz = np.zeros([len(tmpsInds),3])
-starAssignedTriangleCorners = list() # this is the list of "corner sets" each star is assigned to
-for ind in np.arange(len(sInds[comp>0.])): # iterate over all stars
-    starxyz[ind] = latlonToxyz(hEclipLat[ind],hEclipLon[ind]) #get star in xyz points
-
-    # find closest triangle corner
-    diff_star_corner = out1kv - starxyz[ind] #difference between corner and star location
-    indOfMin = np.argmin(np.abs(np.linalg.norm(diff_star_corner,axis=1))) #grab minimum distance indicie
-    #print indOfMin
-
-    # Calculate r and project r onto plane defined by closest corner
-    r = starxyz[ind]*(1. - np.dot(starxyz[ind],out1kv[indOfMin])) # vector from triangle corner to starxyz point
-    projected_r = r - out1kv[indOfMin]*np.dot(out1kv[indOfMin]/np.linalg.norm(out1kv[indOfMin]),r/np.linalg.norm(r)) # project r onto plane defined by corner
-    projected_r = projected_r/np.linalg.norm(projected_r) # normalize that projected vector
-
-    # Find relevant triangle corners
-    relevantTriangles = deepcopy([tri for tri in triangleCornerIndList if indOfMin in tri])
-    assert len([True for tri in relevantTriangles if len(tri) < 3]) == 0, 'All sets in relevantTriangles must have length 3'
-    #print 'rT: ' + str(relevantTriangles)
-    tmp = set([])
-    relevantCorners = set.union(*relevantTriangles)#[tmp tri for tri in relevantTriangles] # this is a set of all corners
-    relevantCorners.remove(indOfMin) #remove the center corner
-    relevantCornersArr = np.asarray(list(relevantCorners)) #turn into array
-
-    # Calculate projected center-to-corner vectors
-    r0i = list() # list of vectors from center to different triangle corners
-    projected_r0i = list()
-    for corrInd in np.arange(len(relevantCornersArr)):
-        r0i.append(out1kv[relevantCornersArr[corrInd]]-out1kv[indOfMin]) # lines from center to corners of each triangle containing center
-        projected_r0i.append(r0i[corrInd]/np.linalg.norm(r0i[corrInd]) - starxyz[ind]/np.linalg.norm(starxyz[ind])*np.dot(starxyz[ind]/np.linalg.norm(starxyz[ind]),r0i[corrInd]/np.linalg.norm(r0i[corrInd]))) #projects each r0i onto plane of closest star
-        projected_r0i[corrInd] = projected_r0i[corrInd]/np.linalg.norm(projected_r0i[corrInd]) # normalizes this into a unit vector
-    
-    # Get vector from triangle edges to star
-    r0iToPTDist = list() # contains vectors from triangle edges to star Point *all in projected plane
-    for corrInd in np.arange(len(relevantCornersArr)):
-        # #If I do this, the ptTor0iDist has wrong length
-        # if np.dot(r,r0i[corrInd]) <= 0.: # r is not in the +r0i direction of the center to corner line
-        #     continue
-
-        r0iToPTDist.append(projected_r - projected_r0i[corrInd]*np.dot(projected_r,projected_r0i[corrInd])) # vect from line from center to corner to star
-    r0iToPTDist = np.asarray(r0iToPTDist)
-    indClosestEdge = np.argmin(np.abs(np.linalg.norm(r0iToPTDist,axis=1))) #finds the distance from the star to the closest edge
-
-    # Find Corners connected to indClosestEdge
-    edgePT = relevantCornersArr[indClosestEdge]
-    set(relevantCornersArr).intersection(set())
-    relevantTriangles2 = deepcopy([tri for tri in relevantTriangles if len(tri.intersection(set([edgePT]))) > 0]) # sort out triangles with center and edgePT
-    assert len([True for tri in relevantTriangles2 if len(tri) < 3]) == 0, 'All sets in relevantTriangles must have length 3'
-    #print 'rT2: ' + str(relevantTriangles2)
-    relevantTriangles2[0].remove(edgePT)
-    relevantTriangles2[1].remove(edgePT)
-    relevantTriangles2[0].remove(indOfMin)
-    relevantTriangles2[1].remove(indOfMin)
-
-    # Want vectors from edgePT to both items in relvantTriangles2
-    cornerInd0 = np.where(relevantCornersArr==list(relevantTriangles2[0])[0])[0][0] #projected_r0i are tied to relevantCornersArr, need that index
-    cornerInd1 = np.where(relevantCornersArr==list(relevantTriangles2[1])[0])[0][0]
-    oc0 = projected_r0i[cornerInd0] - projected_r0i[indClosestEdge]
-    oc1 = projected_r0i[cornerInd1] - projected_r0i[indClosestEdge]
-
-    # 3rd Corner is whichever vector dot perpendicular is positive (should only be 1)
-    if np.dot(oc0,r0iToPTDist[indClosestEdge]) > 0:
-        starAssignedTriangleCorners.append(set([indOfMin, edgePT, relevantCornersArr[cornerInd0]]))
-        #return
-    elif np.dot(oc1,r0iToPTDist[indClosestEdge]) > 0:
-        starAssignedTriangleCorners.append(set([indOfMin, edgePT, relevantCornersArr[cornerInd1]]))
-        #return
-    else:
-        print saltyburrito # there was some kind of error I didn't  anticipate
-
+tDict = distributeStarsIntoBins(tDict,starAssignedTriangleCorners)
 ######################################################################
 
 
-tDict = {}
-for ind in np.arange(len(triangleCornerIndList)):
-    tset = triangleCornerIndList[ind]
-    ta = triangleAreaList[ind]
-    tc = triangleCenterList[ind]
-    tcptsxyz = [out1kv[ind2] for ind2 in sort(list(tset))]
-    tcptslatlon = np.asarray([xyzTolonlat(tcptsxyz[ind2]) for ind2 in np.arange(len(tcptsxyz))])
+# DELETE tDict[tDict.keys()[0]]['triangleCornerPointsXYZlatlon']
 
-    #Ensure lon aren't on other sides of skymap MOVE TRIANGLES AROUND
-    if sum(np.sign(tcptslatlon[:,0]) > 0) == 3 or sum(np.sign(tcptslatlon[:,0]) < 0) == 3:
-        pass
-    elif sum(np.sign(tcptslatlon[:,0]) > 0) == 1\
-        and (max(tcptslatlon[:,0]) - min(tcptslatlon[:,0])) > np.pi:
-        # One 1 of the values positive and the others are negative
-        # AND the distance between max and min is > pi (this avoids problems with triangles intersecting 0 lon line)
-
-        #then make the positive number into a really negative one
-        tcptslatlon[np.argmax(tcptslatlon[:,0]),0] = -np.pi - (np.pi - tcptslatlon[np.argmax(tcptslatlon[:,0]),0])
-        tcptslatlon2 = deepcopy(tcptslatlon)
-        tcptslatlon2[:,0] = tcptslatlon2[:,0]+2.*np.pi #trying this
-    elif sum(np.sign(tcptslatlon[:,0]) < 0) == 1\
-        and (max(tcptslatlon[:,0]) - min(tcptslatlon[:,0])) > np.pi:
-        # One 1 of the values is negative and the others are positive
-        # AND the distance between max and min is > pi (this avoids problems with triangles intersecting 0 lon line)
-        #then make the negative number into a really positive one
-        tcptslatlon[np.argmin(tcptslatlon[:,0]),0] = np.pi + (np.pi + tcptslatlon[np.argmin(tcptslatlon[:,0]),0])
-        tcptslatlon2 = deepcopy(tcptslatlon)
-        tcptslatlon2[:,0] = tcptslatlon2[:,0]-2.*np.pi #trying this
-    else:
-        pass
-
-    try:
-        tDict[str(sort(list(tset)))] = {'count':0,\
-            'triangleCornerInds':tset,\
-            'triangleArea':ta,\
-            'triangleCenter':tc,\
-            'triangleCornerPointsXYZ':tcptsxyz,\
-            'triangleCornerPointsXYZlatlon':tcptslatlon}
-    except:
-        pass
-
-    try:
-        tDict[str(sort(list(tset)))]['triangleCornerPointsXYZlatlon2'] = tcptslatlon2
-        del tcptslatlon2
-    except:
-        pass
-
-
-
-#### Count number of each type of "corner set"/triangle
-#tDict = {} # list of dicts
-for tset in starAssignedTriangleCorners:
-    try:
-        tDict[str(sort(list(tset)))]['count'] += 1
-    except:
-        tDict[str(sort(list(tset)))] = {'count':1}
-#DELETE print tDict # this is the output dictionary
-countsForColoring = list() # this is a list of the number of stars in each bin
-for key in tDict.keys():
-    countsForColoring.append(tDict[key])
-print max(countsForColoring)
-###########################################
-
-
-
-
-tDict[tDict.keys()[0]]['triangleCornerPointsXYZlatlon']
 
 #### Plot Each Triangle on a 2D plot with Hammer Projection
 close(96993)
 fig = figure(num=96993)
 ax = fig.add_subplot(111, projection="mollweide")#"hammer")
+rc('axes',linewidth=2)
+rc('lines',linewidth=2)
+rcParams['axes.linewidth']=2
+rc('font',weight='bold')
+#grid(axis='both',which='major') # Dmitry says this makes it look too crowded
 ymin = min([min(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'][:,1]) for ind in np.arange(len(tDict.keys()))])
 ymax = max([max(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'][:,1]) for ind in np.arange(len(tDict.keys()))])
 xmin = min([min(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'][:,0]) for ind in np.arange(len(tDict.keys()))])
 xmax = max([max(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'][:,0]) for ind in np.arange(len(tDict.keys()))])
-#ax.set_xlim(left=xmin,right=xmax)
+#ax.set_xlim(left=xmin,right=xmax) #used for error checking on non-projected plot
 #ax.set_ylim(bottom=ymin,top=ymax)
-cmap = cm.winter
+cmap = cm.viridis
 norm = mpl.colors.Normalize(vmin=0,vmax=max([tDict[key]['count']/tDict[key]['triangleArea'] for key in tDict.keys()]))
 #### Plot Each Surface with specific color scaled based on max(countsForColoring)
 for ind in np.arange(len(tDict.keys())):
@@ -1059,8 +1100,6 @@ for ind in np.arange(len(tDict.keys())):
         ax.add_patch(t3)
         continue
 
-
-
     t1 = Polygon(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'], color=cmap(norm(tDict[tDict.keys()[ind]]['count']/tDict[tDict.keys()[ind]]['triangleArea'])))
     ax.add_patch(t1)
     del t1
@@ -1072,19 +1111,7 @@ for ind in np.arange(len(tDict.keys())):
         ax.add_patch(t2)
         del t2
         show(block=False)
-        # print ind
-        # input("...")
-    # print ind
-    # input("...")
-# ax.set_xlim(left=xmin,right=xmax)
-# ax.set_ylim(bottom=ymin,top=ymax)
-#xlim(xmin,xmax)
-#ylim(ymin,ymax)
-#show(block=False)
-
-
-
-
+#######################################################################################
 
 
 
