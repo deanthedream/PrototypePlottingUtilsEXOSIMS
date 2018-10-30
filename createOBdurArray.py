@@ -1298,19 +1298,6 @@ scatter(hEclipLon,hEclipLat,c=comp[comp > 0.],cmap=cm1)
 title('Observed Targets in the sky',weight='bold',fontsize=12)
 colorbar()
 tight_layout()
-#add colorbar label
-
-tmpfig2 = figure(figsize=(14,4),num=4000)#,num=3)
-sb2 = subplot(111,projection="rectilinear")
-cm3 = cm.get_cmap('winter')
-contourf(xcents, ycents, h.T, num=15, cmap=cm3, extent=(xmin, xmax, ymin, ymax),origin='lower')
-colorbar()
-scatter(hEclipLon,hEclipLat,c=comp[comp > 0.],cmap=cm1)
-colorbar()
-scatter(xcents[0],ycents[0],color='white',cmap=cm1)
-# rect = Rectangle((start_angles[i],-np.pi/2),angular_widths[i],np.pi,angle=0.0, alpha=0.2)
-# sb2.add_patch(rect)
-#colorbar()
 show(block=False)
 
 
