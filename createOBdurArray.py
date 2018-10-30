@@ -806,7 +806,6 @@ out1kv = np.asarray([[out1kx[i], out1ky[i], out1kz[i]] for i in np.arange(len(ou
 dist1k = pt_pt_distances(out1kv) # for informational purposes: distances between points on sphere
 ####################################################################
 
-
 #### Calculate closest points to each point on unit sphere ################
 d_diff_pts_array, inds_of_closest, diff_closest = calculateClosestPoints(out1kv)
 fig, ax = plotClosestPoints(inds_of_closest, out1kv)
@@ -1004,6 +1003,64 @@ cmap = cm.winter
 norm = mpl.colors.Normalize(vmin=0,vmax=max([tDict[key]['count']/tDict[key]['triangleArea'] for key in tDict.keys()]))
 #### Plot Each Surface with specific color scaled based on max(countsForColoring)
 for ind in np.arange(len(tDict.keys())):
+    #Make Exceptions and Spoof North Pole Plotting ()
+    if np.any(np.asarray(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZ'])[:,2] > 0.95): #determine if triangle at pole
+        try:
+            tmp = deepcopy(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon2'])
+            #1 Find index where lat is maximum
+            dindex = np.argmax(tmp[:,1])
+            #2 Remove From list of points
+            tmp2 = np.delete(tmp,dindex,axis=0)
+            #3 Reassign Maximum Values to that Value
+            tmp3 = np.append(tmp2,np.asarray([[tmp2[1,0],np.pi/2.]]),axis=0)
+            tmp4 = np.append(tmp3,np.asarray([[tmp2[0,0],np.pi/2.]]),axis=0)
+            t3 = Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['count']/tDict[tDict.keys()[ind]]['triangleArea'])))
+            ax.add_patch(t3)
+        except:
+            pass
+
+        tmp = deepcopy(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'])
+        #1 Find index where lat is maximum
+        dindex = np.argmax(tmp[:,1])
+        #2 Remove From list of points
+        tmp2 = np.delete(tmp,dindex,axis=0)
+        #3 Reassign Maximum Values to that Value
+        tmp3 = np.append(tmp2,np.asarray([[tmp2[1,0],np.pi/2.]]),axis=0)
+        tmp4 = np.append(tmp3,np.asarray([[tmp2[0,0],np.pi/2.]]),axis=0)
+        t3 = Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['count']/tDict[tDict.keys()[ind]]['triangleArea'])))
+        ax.add_patch(t3)
+        continue
+
+    #Make Exceptions and Spoof South Pole Plotting
+    if np.any(np.asarray(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZ'])[:,2] < -0.95): #determine if triangle at pole
+        try:
+            tmp = deepcopy(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon2'])
+            #1 Find index where lat is maximum
+            dindex = np.argmin(tmp[:,1])
+            #2 Remove From list of points
+            tmp2 = np.delete(tmp,dindex,axis=0)
+            #3 Reassign Maximum Values to that Value
+            tmp3 = np.append(tmp2,np.asarray([[tmp2[1,0],-np.pi/2.]]),axis=0)
+            tmp4 = np.append(tmp3,np.asarray([[tmp2[0,0],-np.pi/2.]]),axis=0)
+            t3 = Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['count']/tDict[tDict.keys()[ind]]['triangleArea'])))
+            ax.add_patch(t3)
+        except:
+            pass
+
+        tmp = deepcopy(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'])
+        #1 Find index where lat is maximum
+        dindex = np.argmin(tmp[:,1])
+        #2 Remove From list of points
+        tmp2 = np.delete(tmp,dindex,axis=0)
+        #3 Reassign Maximum Values to that Value
+        tmp3 = np.append(tmp2,np.asarray([[tmp2[1,0],-np.pi/2.]]),axis=0)
+        tmp4 = np.append(tmp3,np.asarray([[tmp2[0,0],-np.pi/2.]]),axis=0)
+        t3 = Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['count']/tDict[tDict.keys()[ind]]['triangleArea'])))
+        ax.add_patch(t3)
+        continue
+
+
+
     t1 = Polygon(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'], color=cmap(norm(tDict[tDict.keys()[ind]]['count']/tDict[tDict.keys()[ind]]['triangleArea'])))
     ax.add_patch(t1)
     del t1
@@ -1015,8 +1072,8 @@ for ind in np.arange(len(tDict.keys())):
         ax.add_patch(t2)
         del t2
         show(block=False)
-        #print ind
-        #input("...")
+        # print ind
+        # input("...")
     # print ind
     # input("...")
 # ax.set_xlim(left=xmin,right=xmax)
