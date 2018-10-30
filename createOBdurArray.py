@@ -657,6 +657,110 @@ def distributeStarsIntoBins(tDict,starAssignedTriangleCorners):
     return tDict
     ###########################################
 
+def plotSkyScheduledObservationCountDistribution(tDict):
+    """
+    Returns:
+        fig
+    """
+    #Each Triangle on a 2D plot with Hammer Projection
+    close(96993)
+    fig = figure(num=96993, figsize=(7,2.5))
+    gs = GridSpec(1,1, width_ratios=[4,], height_ratios=[1])
+    gs.update(wspace=0.06, hspace=0.06) # set the spacing between axes. 
+    ax = plt.subplot(gs[0],projection='mollweide')#2D histogram of planet pop
+    #ax = fig.add_subplot(111, projection="mollweide")#"hammer")
+    rc('axes',linewidth=2)
+    rc('lines',linewidth=2)
+    rcParams['axes.linewidth']=2
+    rc('font',weight='bold')
+    #grid(axis='both',which='major') # Dmitry says this makes it look too crowded
+    ymin = min([min(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'][:,1]) for ind in np.arange(len(tDict.keys()))])
+    ymax = max([max(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'][:,1]) for ind in np.arange(len(tDict.keys()))])
+    xmin = min([min(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'][:,0]) for ind in np.arange(len(tDict.keys()))])
+    xmax = max([max(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'][:,0]) for ind in np.arange(len(tDict.keys()))])
+    #ax.set_xlim(left=xmin,right=xmax) #used for error checking on non-projected plot
+    #ax.set_ylim(bottom=ymin,top=ymax)
+    cmap = cm.viridis
+    norm = mpl.colors.Normalize(vmin=0,vmax=max([tDict[key]['count']/tDict[key]['triangleArea'] for key in tDict.keys()]))
+    #### Plot Each Surface with specific color scaled based on max(countsForColoring)
+    for ind in np.arange(len(tDict.keys())):
+        #Make Exceptions and Spoof North Pole Plotting ()
+        if np.any(np.asarray(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZ'])[:,2] > 0.95): #determine if triangle at pole
+            try:
+                tmp = deepcopy(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon2'])
+                #1 Find index where lat is maximum
+                dindex = np.argmax(tmp[:,1])
+                #2 Remove From list of points
+                tmp2 = np.delete(tmp,dindex,axis=0)
+                #3 Reassign Maximum Values to that Value
+                tmp3 = np.append(tmp2,np.asarray([[tmp2[1,0],np.pi/2.]]),axis=0)
+                tmp4 = np.append(tmp3,np.asarray([[tmp2[0,0],np.pi/2.]]),axis=0)
+                t3 = Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['count']/tDict[tDict.keys()[ind]]['triangleArea'])))
+                ax.add_patch(t3)
+            except:
+                pass
+
+            tmp = deepcopy(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'])
+            #1 Find index where lat is maximum
+            dindex = np.argmax(tmp[:,1])
+            #2 Remove From list of points
+            tmp2 = np.delete(tmp,dindex,axis=0)
+            #3 Reassign Maximum Values to that Value
+            tmp3 = np.append(tmp2,np.asarray([[tmp2[1,0],np.pi/2.]]),axis=0)
+            tmp4 = np.append(tmp3,np.asarray([[tmp2[0,0],np.pi/2.]]),axis=0)
+            t3 = Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['count']/tDict[tDict.keys()[ind]]['triangleArea'])))
+            ax.add_patch(t3)
+            continue
+
+        #Make Exceptions and Spoof South Pole Plotting
+        if np.any(np.asarray(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZ'])[:,2] < -0.95): #determine if triangle at pole
+            try:
+                tmp = deepcopy(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon2'])
+                #1 Find index where lat is maximum
+                dindex = np.argmin(tmp[:,1])
+                #2 Remove From list of points
+                tmp2 = np.delete(tmp,dindex,axis=0)
+                #3 Reassign Maximum Values to that Value
+                tmp3 = np.append(tmp2,np.asarray([[tmp2[1,0],-np.pi/2.]]),axis=0)
+                tmp4 = np.append(tmp3,np.asarray([[tmp2[0,0],-np.pi/2.]]),axis=0)
+                t3 = Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['count']/tDict[tDict.keys()[ind]]['triangleArea'])))
+                ax.add_patch(t3)
+            except:
+                pass
+
+            tmp = deepcopy(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'])
+            #1 Find index where lat is maximum
+            dindex = np.argmin(tmp[:,1])
+            #2 Remove From list of points
+            tmp2 = np.delete(tmp,dindex,axis=0)
+            #3 Reassign Maximum Values to that Value
+            tmp3 = np.append(tmp2,np.asarray([[tmp2[1,0],-np.pi/2.]]),axis=0)
+            tmp4 = np.append(tmp3,np.asarray([[tmp2[0,0],-np.pi/2.]]),axis=0)
+            t3 = Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['count']/tDict[tDict.keys()[ind]]['triangleArea'])))
+            ax.add_patch(t3)
+            continue
+
+        t1 = Polygon(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'], color=cmap(norm(tDict[tDict.keys()[ind]]['count']/tDict[tDict.keys()[ind]]['triangleArea'])))
+        ax.add_patch(t1)
+        del t1
+        #### Add mirror patch
+        if 'triangleCornerPointsXYZlatlon2' in tDict[tDict.keys()[ind]].keys():
+            #DELETE print 'HasKey!'
+            t2 = Polygon(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon2'], color=cmap(norm(tDict[tDict.keys()[ind]]['count'])/tDict[tDict.keys()[ind]]['triangleArea']))
+            ax.add_patch(t2)
+            del t2
+
+    cnt = 0#tally total number of stars plotted
+    for ind in np.arange(len(tDict.keys())):
+        cnt += tDict[tDict.keys()[ind]]['count']
+
+    sc = ax.scatter([-1000,-1000],[-1000,-1000],c=[norm.vmin,norm.vmax],cmap=cmap,vmin=0.,vmax=norm.vmax) #spoof colorbar
+    cbar = fig.colorbar(sc) #spoof colorbar
+    cbar.set_label('Star Count per Fraction Of Sky')
+    fig.text(0.62,0.11,r'$\sum$# stars='+str(cnt))
+    plt.show(block=False)
+    return fig
+    #######################################################################################
 
 
 close('all')
@@ -1021,97 +1125,13 @@ tDict = createtDict(triangleCornerIndList,triangleAreaList,triangleCenterList,ou
 tDict = distributeStarsIntoBins(tDict,starAssignedTriangleCorners)
 ######################################################################
 
+#### Plot Observation Schedule Sky Count Distribution ################
+fig = plotSkyScheduledObservationCountDistribution(tDict)
+######################################################################
 
-# DELETE tDict[tDict.keys()[0]]['triangleCornerPointsXYZlatlon']
 
 
-#### Plot Each Triangle on a 2D plot with Hammer Projection
-close(96993)
-fig = figure(num=96993)
-ax = fig.add_subplot(111, projection="mollweide")#"hammer")
-rc('axes',linewidth=2)
-rc('lines',linewidth=2)
-rcParams['axes.linewidth']=2
-rc('font',weight='bold')
-#grid(axis='both',which='major') # Dmitry says this makes it look too crowded
-ymin = min([min(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'][:,1]) for ind in np.arange(len(tDict.keys()))])
-ymax = max([max(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'][:,1]) for ind in np.arange(len(tDict.keys()))])
-xmin = min([min(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'][:,0]) for ind in np.arange(len(tDict.keys()))])
-xmax = max([max(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'][:,0]) for ind in np.arange(len(tDict.keys()))])
-#ax.set_xlim(left=xmin,right=xmax) #used for error checking on non-projected plot
-#ax.set_ylim(bottom=ymin,top=ymax)
-cmap = cm.viridis
-norm = mpl.colors.Normalize(vmin=0,vmax=max([tDict[key]['count']/tDict[key]['triangleArea'] for key in tDict.keys()]))
-#### Plot Each Surface with specific color scaled based on max(countsForColoring)
-for ind in np.arange(len(tDict.keys())):
-    #Make Exceptions and Spoof North Pole Plotting ()
-    if np.any(np.asarray(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZ'])[:,2] > 0.95): #determine if triangle at pole
-        try:
-            tmp = deepcopy(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon2'])
-            #1 Find index where lat is maximum
-            dindex = np.argmax(tmp[:,1])
-            #2 Remove From list of points
-            tmp2 = np.delete(tmp,dindex,axis=0)
-            #3 Reassign Maximum Values to that Value
-            tmp3 = np.append(tmp2,np.asarray([[tmp2[1,0],np.pi/2.]]),axis=0)
-            tmp4 = np.append(tmp3,np.asarray([[tmp2[0,0],np.pi/2.]]),axis=0)
-            t3 = Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['count']/tDict[tDict.keys()[ind]]['triangleArea'])))
-            ax.add_patch(t3)
-        except:
-            pass
 
-        tmp = deepcopy(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'])
-        #1 Find index where lat is maximum
-        dindex = np.argmax(tmp[:,1])
-        #2 Remove From list of points
-        tmp2 = np.delete(tmp,dindex,axis=0)
-        #3 Reassign Maximum Values to that Value
-        tmp3 = np.append(tmp2,np.asarray([[tmp2[1,0],np.pi/2.]]),axis=0)
-        tmp4 = np.append(tmp3,np.asarray([[tmp2[0,0],np.pi/2.]]),axis=0)
-        t3 = Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['count']/tDict[tDict.keys()[ind]]['triangleArea'])))
-        ax.add_patch(t3)
-        continue
-
-    #Make Exceptions and Spoof South Pole Plotting
-    if np.any(np.asarray(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZ'])[:,2] < -0.95): #determine if triangle at pole
-        try:
-            tmp = deepcopy(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon2'])
-            #1 Find index where lat is maximum
-            dindex = np.argmin(tmp[:,1])
-            #2 Remove From list of points
-            tmp2 = np.delete(tmp,dindex,axis=0)
-            #3 Reassign Maximum Values to that Value
-            tmp3 = np.append(tmp2,np.asarray([[tmp2[1,0],-np.pi/2.]]),axis=0)
-            tmp4 = np.append(tmp3,np.asarray([[tmp2[0,0],-np.pi/2.]]),axis=0)
-            t3 = Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['count']/tDict[tDict.keys()[ind]]['triangleArea'])))
-            ax.add_patch(t3)
-        except:
-            pass
-
-        tmp = deepcopy(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'])
-        #1 Find index where lat is maximum
-        dindex = np.argmin(tmp[:,1])
-        #2 Remove From list of points
-        tmp2 = np.delete(tmp,dindex,axis=0)
-        #3 Reassign Maximum Values to that Value
-        tmp3 = np.append(tmp2,np.asarray([[tmp2[1,0],-np.pi/2.]]),axis=0)
-        tmp4 = np.append(tmp3,np.asarray([[tmp2[0,0],-np.pi/2.]]),axis=0)
-        t3 = Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['count']/tDict[tDict.keys()[ind]]['triangleArea'])))
-        ax.add_patch(t3)
-        continue
-
-    t1 = Polygon(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'], color=cmap(norm(tDict[tDict.keys()[ind]]['count']/tDict[tDict.keys()[ind]]['triangleArea'])))
-    ax.add_patch(t1)
-    del t1
-    show(block=False)
-    #### Add mirror patch
-    if 'triangleCornerPointsXYZlatlon2' in tDict[tDict.keys()[ind]].keys():
-        print 'HasKey!'
-        t2 = Polygon(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon2'], color=cmap(norm(tDict[tDict.keys()[ind]]['count'])/tDict[tDict.keys()[ind]]['triangleArea']))
-        ax.add_patch(t2)
-        del t2
-        show(block=False)
-#######################################################################################
 
 
 
