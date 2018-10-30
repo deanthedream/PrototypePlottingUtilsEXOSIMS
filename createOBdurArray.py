@@ -658,7 +658,9 @@ def distributeStarsIntoBins(tDict,starAssignedTriangleCorners):
     ###########################################
 
 def plotSkyScheduledObservationCountDistribution(tDict):
-    """
+    """ Plots Distribution of Stars Scheduled to be Observed on Sky
+    Args:
+        tDict () - 
     Returns:
         fig
     """
@@ -995,46 +997,6 @@ sum_comp_Cb0 = sum(comp_Cb0[comp_Cb0>0.])
 sim.TargetList.coords.ra
 #To Get DEC of All Targets
 sim.TargetList.coords.dec
-
-
-def meshgrid2(*arrs):
-    arrs = tuple(reversed(arrs))
-    lens = map(len, arrs)
-    dim = len(arrs)
-    sz = 1
-    for s in lens:
-       sz *= s
-    ans = []
-    for i, arr in enumerate(arrs):
-        slc = [1]*dim
-        slc[i] = lens[i]
-        arr2 = asarray(arr).reshape(slc)
-        for j, sz in enumerate(lens):
-            if j != i:
-                arr2 = arr2.repeat(sz, axis=j)
-        ans.append(arr2)
-    return tuple(ans)
-
-# def observedCompHammer(ra,dec,comp):
-#     """
-#     Args:
-#         ra (numpy array) - numpy array of floats (unitless) with length number of stars in target list
-#             containing the right ascension of each star in deg
-#         dec (numpy array) - numpy array of floats (unitless) with length number of stars in target list
-#             containing the declination of each star in deg
-#     """
-
-# #Simple Plot of Temporal Coverage of Sky
-# tmpfig2 = figure(figsize=(14,4))#,num=3)
-# #gs = GridSpec(2,5, width_ratios=[4,1,0.3,4,1.25], height_ratios=[1,4])
-# #gs.update(wspace=0.06, hspace=0.06) # set the spacing between axes. 
-# rc('axes',linewidth=2)
-# rc('lines',linewidth=2)
-# rcParams['axes.linewidth']=2
-# rc('font',weight='bold')
-# sb1 = subplot(111,projection="hammer")
-# grid(True)
-
 
 
 
