@@ -674,16 +674,17 @@ def distributeStarsIntoBins(tDict,starAssignedTriangleCorners,sInds):
     return tDict
     ###########################################
 
-def plotSkyScheduledObservationCountDistribution(tDict):
+def plotSkyScheduledObservationCountDistribution(tDict,fignum=96993):
     """ Plots Distribution of Stars Scheduled to be Observed on Sky
     Args:
         tDict () - 
+        fignum (integer) - 
     Returns:
         fig
     """
     #Each Triangle on a 2D plot with Hammer Projection
-    close(96993)
-    fig = figure(num=96993, figsize=(7,2.5))
+    close(fignum)
+    fig = figure(num=fignum, figsize=(7,2.5))
     gs = GridSpec(1,1, width_ratios=[4,], height_ratios=[1])
     gs.update(wspace=0.06, hspace=0.06) # set the spacing between axes. 
     ax = plt.subplot(gs[0],projection='mollweide')#2D histogram of planet pop
@@ -780,16 +781,17 @@ def plotSkyScheduledObservationCountDistribution(tDict):
     plt.show(block=False)
     return fig
 
-def plotSkyScheduledObservationCompletenessDistribution(tDict):
+def plotSkyScheduledObservationCompletenessDistribution(tDict,fignum=96994):
     """ Plots Distribution of Star Completeness Scheduled to be Observed on Sky
     Args:
         tDict () - 
+        fignum (integer) - 
     Returns:
         fig
     """
     #Each Triangle on a 2D plot with Hammer Projection
-    close(96994)
-    fig = figure(num=96994, figsize=(7,2.5))
+    close(fignum)
+    fig = figure(num=fignum, figsize=(7,2.5))
     gs = GridSpec(1,1, width_ratios=[4,], height_ratios=[1])
     gs.update(wspace=0.06, hspace=0.06) # set the spacing between axes. 
     ax = plt.subplot(gs[0],projection='mollweide')#2D histogram of planet pop
@@ -886,7 +888,7 @@ def plotSkyScheduledObservationCompletenessDistribution(tDict):
     plt.show(block=False)
     return fig
 
-def plotSkyScheduledObservationIntegrationDistribution(tDict):
+def plotSkyScheduledObservationIntegrationDistribution(tDict,fignum=96995):
     """ Plots Distribution of Stars Scheduled to be Observed on Sky
     Args:
         tDict () - 
@@ -894,8 +896,8 @@ def plotSkyScheduledObservationIntegrationDistribution(tDict):
         fig
     """
     #Each Triangle on a 2D plot with Hammer Projection
-    close(96995)
-    fig = figure(num=96995, figsize=(7,2.5))
+    close(fignum)
+    fig = figure(num=fignum, figsize=(7,2.5))
     gs = GridSpec(1,1, width_ratios=[4,], height_ratios=[1])
     gs.update(wspace=0.06, hspace=0.06) # set the spacing between axes. 
     ax = plt.subplot(gs[0],projection='mollweide')#2D histogram of planet pop
@@ -987,13 +989,13 @@ def plotSkyScheduledObservationIntegrationDistribution(tDict):
 
     sc = ax.scatter([-1000,-1000],[-1000,-1000],c=[norm.vmin,norm.vmax],cmap=cmap,vmin=0.,vmax=norm.vmax) #spoof colorbar
     cbar = fig.colorbar(sc) #spoof colorbar
-    cbar.set_label(r'$\Tau$ per Fraction Of Sky')
-    fig.text(0.62,0.11,r'$\sum \Tau$='+str(cntIntTime))
+    cbar.set_label(r'$\tau$ (d) per Fraction Of Sky')
+    fig.text(0.62,0.11,r'$\sum \tau$='+str(cntIntTime) + ' (d)')
     plt.show(block=False)
     return fig
 
 #NEED TO REDO BECAUSE THIS DOES NOT PLOT MAX COMPLETENESS YET
-def plotSkyMaximumCompletenessDistribution(tDict):
+def plotSkyMaximumCompletenessDistribution(starDict,fignum=96996):
     """ Plots Distribution of Star Completeness Scheduled to be Observed on Sky
     Args:
         tDict () - 
@@ -1001,8 +1003,8 @@ def plotSkyMaximumCompletenessDistribution(tDict):
         fig
     """
     #Each Triangle on a 2D plot with Hammer Projection
-    close(96996)
-    fig = figure(num=96996, figsize=(7,2.5))
+    close(fignum)
+    fig = figure(num=fignum, figsize=(7,2.5))
     gs = GridSpec(1,1, width_ratios=[4,], height_ratios=[1])
     gs.update(wspace=0.06, hspace=0.06) # set the spacing between axes. 
     ax = plt.subplot(gs[0],projection='mollweide')#2D histogram of planet pop
@@ -1455,6 +1457,9 @@ fig = plotSkyScheduledObservationIntegrationDistribution(tDict)
 
 #### Plot Sky Maximum Completeness Distribution ######################
 #fig = plotSkyMaximumCompletenessDistribution(tDict)
+starDict = createtDict(triangleCornerIndList,triangleAreaList,triangleCenterList,out1kv)
+starDict = distributeStarsIntoBins(starDict,starAssignedTriangleCorners,sInds)
+fig = plotSkyScheduledObservationCountDistribution(starDict)
 ######################################################################
 
 
