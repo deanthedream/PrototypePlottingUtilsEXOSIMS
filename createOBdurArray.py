@@ -1597,58 +1597,6 @@ histInterp, targUnderSpline, sumh, xdiff, edges = generateHistHEL(hEclipLon)
 generatePlannedObsTimeHistHEL(edges,t_dets,comp,hEclipLon)
 ###########################################################
 
-#Simple Plot of Temporal Coverage of Sky
-tmpfig2 = figure(figsize=(14,4),num=3000)#,num=3)
-#gs = GridSpec(2,5, width_ratios=[4,1,0.3,4,1.25], height_ratios=[1,4])
-#gs.update(wspace=0.06, hspace=0.06) # set the spacing between axes. 
-rc('axes',linewidth=2)
-rc('lines',linewidth=2)
-rcParams['axes.linewidth']=2
-rc('font',weight='bold')
-sb1 = subplot(111,projection="hammer")
-grid(True)
-
-num1 = 15#+1
-num2 = num1/2.#+1
-xmin =-np.pi
-xmax=np.pi
-ymin=-np.pi/2.
-ymax=np.pi/2.
-x = np.linspace(xmin,xmax,num=int(num1),endpoint=True)#np.arange(0.,360.)
-y = np.linspace(ymin,ymax,num=int(num2),endpoint=True)#np.arange(0.,180.)-90.
-#x = np.append(x,x[-1]+(x[-1]-x[-2]))
-#y = np.append(y,y[-1]+(y[-1]-y[-2]))
-
-bins = (x,y)#(x[::10],y[::10])
-h, xedges, yedges = np.histogram2d(hEclipLon,hEclipLat,bins=bins,density=True)#,normed=True#,range=[[xmin,xmax],[ymin,ymax]])
-cm2 = cm.get_cmap('winter')
-X, Y = np.meshgrid(xedges[:-1], yedges[:-1])
-
-
-xbins = x
-ybins = y
-xcents = np.diff(xbins)/2.+xbins[:-1]
-ycents = np.diff(ybins)/2.+ybins[:-1]
-pcolormesh(xcents,ycents,h.T,cmap=cm2,edgecolors='face')
-#contourf(xcents, ycents, h.T, num=15, cmap=cm2,extent=(xmin, xmax, ymin, ymax))#,origin='lower')# intepolation='nearest')
-#contourf(X.T, Y.T, h, num=15, cmap=cm2)
-colorbar()
-# contour(X.T, Y.T, h, num=3, colors='k')
-# colorbar()
-#contourf(xedges[:-1],yedges[:-1],h,cmap=cm2)
-#contourf(X, Y, h)#(xedges, yedges, h)
-scatter(xcents[0],ycents[0],color='white')
-
-smhist = gaussian_filter(h, (5,5), mode='wrap')
-
-cm1 = cm.get_cmap('autumn')
-scatter(hEclipLon,hEclipLat,c=comp[comp > 0.],cmap=cm1)
-title('Observed Targets in the sky',weight='bold',fontsize=12)
-colorbar()
-tight_layout()
-show(block=False)
-
-
 
 #### 2d spline fit of points #######################
 ra = sim.TargetList.coords.ra.value
