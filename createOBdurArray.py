@@ -69,6 +69,7 @@ def generateEquadistantPointsOnSphere(N=100,PPoutpath='/home/dean/Documents/exos
     ax = fig.add_subplot(111, projection='3d')
     xyzpoint = np.asarray(point)
     ra_dec = np.asarray(ra_dec)
+    prettifyPlot()
     ax.scatter(xyzpoint[:,0], xyzpoint[:,1], xyzpoint[:,2], color='k', marker='o')
     title('Points Evenly Distributed on a Unit Sphere')
     ax.set_xlabel('x')
@@ -91,10 +92,7 @@ def generateHistHEL(hEclipLon,PPoutpath='/home/dean/Documents/exosims/cache/'):
             located along the heliocentric ecliptic longitude
     """
     figure(num=2000)
-    rc('axes',linewidth=2)
-    rc('lines',linewidth=2)
-    rcParams['axes.linewidth']=2
-    rc('font',weight='bold')
+    prettifyPlot()
     h, edges = np.histogram(hEclipLon)
     xdiff = np.diff(edges)
     xcents = xdiff/2.+edges[:-1]
@@ -140,6 +138,7 @@ def generatePlannedObsTimeHistHEL(edges,t_dets,comp,hEclipLon,PPoutpath='/home/d
     t_bins = np.asarray(t_bins)
     widths = np.diff(edges)
     figure(num=2002)
+    prettifyPlot()
     bar(centers,t_bins,width=widths)
     xlabel('Heliocentric Ecliptic Longitude of Targets (rad)')
     ylabel('Sum Integration Time (days)')
@@ -674,6 +673,12 @@ def distributeStarsIntoBins(tDict,starAssignedTriangleCorners,sInds):
     return tDict
     ###########################################
 
+def prettifyPlot():
+    rc('axes',linewidth=2)
+    rc('lines',linewidth=2)
+    rcParams['axes.linewidth']=2
+    rc('font',weight='bold')
+
 def plotSkyScheduledObservationCountDistribution(tDict,fignum=96993):
     """ Plots Distribution of Stars Scheduled to be Observed on Sky
     Args:
@@ -689,10 +694,7 @@ def plotSkyScheduledObservationCountDistribution(tDict,fignum=96993):
     gs.update(wspace=0.06, hspace=0.06) # set the spacing between axes. 
     ax = plt.subplot(gs[0],projection='mollweide')#2D histogram of planet pop
     #ax = fig.add_subplot(111, projection="mollweide")#"hammer")
-    rc('axes',linewidth=2)
-    rc('lines',linewidth=2)
-    rcParams['axes.linewidth']=2
-    rc('font',weight='bold')
+    prettifyPlot()
     #grid(axis='both',which='major') # Dmitry says this makes it look too crowded
     ymin = min([min(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'][:,1]) for ind in np.arange(len(tDict.keys()))])
     ymax = max([max(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'][:,1]) for ind in np.arange(len(tDict.keys()))])
@@ -796,10 +798,7 @@ def plotSkyScheduledObservationCompletenessDistribution(tDict,fignum=96994):
     gs.update(wspace=0.06, hspace=0.06) # set the spacing between axes. 
     ax = plt.subplot(gs[0],projection='mollweide')#2D histogram of planet pop
     #ax = fig.add_subplot(111, projection="mollweide")#"hammer")
-    rc('axes',linewidth=2)
-    rc('lines',linewidth=2)
-    rcParams['axes.linewidth']=2
-    rc('font',weight='bold')
+    prettifyPlot()
     #grid(axis='both',which='major') # Dmitry says this makes it look too crowded
     ymin = min([min(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'][:,1]) for ind in np.arange(len(tDict.keys()))])
     ymax = max([max(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'][:,1]) for ind in np.arange(len(tDict.keys()))])
@@ -902,10 +901,7 @@ def plotSkyScheduledObservationIntegrationDistribution(tDict,fignum=96995):
     gs.update(wspace=0.06, hspace=0.06) # set the spacing between axes. 
     ax = plt.subplot(gs[0],projection='mollweide')#2D histogram of planet pop
     #ax = fig.add_subplot(111, projection="mollweide")#"hammer")
-    rc('axes',linewidth=2)
-    rc('lines',linewidth=2)
-    rcParams['axes.linewidth']=2
-    rc('font',weight='bold')
+    prettifyPlot()
     #grid(axis='both',which='major') # Dmitry says this makes it look too crowded
     ymin = min([min(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'][:,1]) for ind in np.arange(len(tDict.keys()))])
     ymax = max([max(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'][:,1]) for ind in np.arange(len(tDict.keys()))])
@@ -1009,10 +1005,7 @@ def plotSkyMaximumCompletenessDistribution(starDict,fignum=96996):
     gs.update(wspace=0.06, hspace=0.06) # set the spacing between axes. 
     ax = plt.subplot(gs[0],projection='mollweide')#2D histogram of planet pop
     #ax = fig.add_subplot(111, projection="mollweide")#"hammer")
-    rc('axes',linewidth=2)
-    rc('lines',linewidth=2)
-    rcParams['axes.linewidth']=2
-    rc('font',weight='bold')
+    prettifyPlot()
     #grid(axis='both',which='major') # Dmitry says this makes it look too crowded
     ymin = min([min(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'][:,1]) for ind in np.arange(len(tDict.keys()))])
     ymax = max([max(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'][:,1]) for ind in np.arange(len(tDict.keys()))])
@@ -1101,7 +1094,131 @@ def plotSkyMaximumCompletenessDistribution(starDict,fignum=96996):
     plt.show(block=False)
     return fig
 
+def generatePreferentiallyDistributedOB(barout, numOB, OBdur, exoplanetObsTime, numYears, loadingPreference='even'):
+    """ Generates a distribution of OB start and end times which distributes observing blocks
+    such that they approximately match the Planned Total Time Histogram 
+    (amount of time needed in each portion of sky is met)
+    Args:
+        barout (dict) - 
+        numOB (integer) - 
+        OBdur (float) - 
 
+        loadingPreference (string) - options are 'even','front','end' 
+            'even' tries to evenly distribute OB with preference for overflow to be placed in first year
+            'front' will load as many Observing blocks into the first year as possible
+            'end' will load as many Observing Blocks into the last year as possible
+    Returns:
+        numOBassignedToBin (numpy array) - has length number of bins. Contains the number of OB to put into each bin
+        OBstartTimes (numpy array) - observing block start times (automatically merges OB if they overlap)
+        OBendTimes (numpy array) - observing block end times
+    """
+    daysInYear = 365.25 #Days in a year
+    numOBperYear = np.ceil(numOB/numYears)#Number of Observing blocks I need to distribute into 1 year
+    #REQUIRES OB size <= daysInYear/numBins # hmmmmm.... I could make the algorithm better than that
+    centers = (barout['centers']+np.pi)*(daysInYear/(2*np.pi)) # centers of bins in units of days from start of year
+    binWidths = barout['binWidths']*(daysInYear/(2*np.pi)) # widths of bins in units of days
+    timeInBins = barout['timeInBins'] # amount of time to be placed into each bin
+    p = timeInBins/np.sum(timeInBins) # set of "probabilities" of landing in each bin
+    if daysInYear/len(centers) < OBdur: # If we cannot shove an OB into a bin
+        #DO STUFF
+        pass
+    else: # distribute the OB into bins for each year
+        numOBassignedToBin = np.floor(numOB*p) # this is nominally the number of observing blocks to assign to a given bin
+        numOBleftToAssign = numOB - np.sum(np.floor(numOB*p)) # number of OB left to assign
+        tic = True
+        while numOBleftToAssign > 0:
+            if tic == True: #alternate between max time in bin
+                numOBassignedToBin[np.argsort(timeInBins - numOBassignedToBin*OBdur)[-1]] += 1 #assign next OB to one which needs it most
+                numOBleftToAssign -= 1 # decrement 1 from number of OB to assign
+                tic = False
+                continue
+            if tic == False: # and max cum time of nearby bins
+                lrbins = int(np.floor(len(centers)/4.)) # number of bins left or right of current bin to consider
+                nearby = list() # total amount of time available in nearby bins
+                for ind in np.arange(len(centers)):#iterate over all bins
+                    msumnearby = 0.
+                    for ind2 in  range(ind-lrbins,ind+lrbins):
+                        if ind2 > len(centers):
+                            #print 'ind2 > 0'
+                            #print ind2
+                            tmpind2 = ind2 - int(len(centers)*np.floor((ind2+1)/float(len(centers))))#correction if bins would exceed indexing
+                            #print tmpind2
+                        elif ind2 < 0:
+                            #print 'ind2 < 0'
+                            #print ind2
+                            tmpind2 = ind2 + int(len(centers)*np.floor((-ind2-1)/float(len(centers))))
+                            #print tmpind2
+                        else:
+                            pass
+                            #print ind2
+                        msumnearby += timeInBins[tmpind2] - numOBassignedToBin[tmpind2]*OBdur
+                    nearby.append(msumnearby)
+                numOBassignedToBin[np.argmax(msumnearby)] += 1 #assign next OB to one which has the most nearby bins that need it
+                numOBleftToAssign -= 1 # decrement 1 from number of OB to assign
+                tic = True
+                continue
+    # we now have numOBassignedToBin
+
+    #### Assign OB to years #################################################################
+    numOBinYearsBins = np.zeros([int(np.ceil(numYears)), len(centers)]) # contains number of OB in each bin over each portion of year
+    #1 approximately even
+    numOBInBinperYearAVG = numOBassignedToBin/int(np.ceil(numYears))
+    for yrInd in np.arange(int(np.ceil(numYears))): # Nominal Assignment of OB
+        numOBinYearsBins[yrInd,:] = np.asarray(numOBInBinperYearAVG).astype(int)
+    for binInd in np.arange(len(centers)): # distributing remaining OB
+        binCount = int(np.sum(numOBinYearsBins[:,binInd]))
+        remaingindBinsToDistribute = int(numOBassignedToBin[binInd] - binCount)
+        for i in np.arange(remaingindBinsToDistribute):
+            numOBinYearsBins[i,binInd] += 1
+    assert numOBassignedToBin[binInd] == np.sum(numOBinYearsBins[:,binInd],axis=0), \
+        'The number of observing blocks assigned is not equivalent to the number of observing blocks that should be assigned'
+    #2 TODO front load in first year
+    #3 TODO end load in final year
+
+    #### Pick Final OBstartTimes and OBendTimes###############################################
+    binStarts = centers - binWidths/2.
+    binEnds = centers + binWidths/2.
+    OBstartTimes = list()
+    OBendTimes = list()
+    for yrInd in np.arange(int(np.ceil(numYears))): # iterate over years
+        for binInd in np.arange(len(centers)): # iterate over bins in years
+            assert numOBinYearsBins[yrInd,binInd]*OBdur <= binEnds[binInd] - binStarts[binInd], \
+                'There is not enough time in the bin to distribute the given observing blocks'
+            tmpOBstartTimes = yrInd*daysInYear + np.sort(np.random.uniform(low=binStarts[binInd],high=binEnds[binInd]-OBdur,size=int(numOBinYearsBins[yrInd,binInd])))
+            tmpOBendTimes = tmpOBstartTimes + OBdur # create end times
+            while True:
+                intersectionBool, vInd = obIntersectionViolationCheck(tmpOBstartTimes,tmpOBendTimes)
+                if not intersectionBool: # there were no intersections
+                    break
+                #There is a violation at least 1 OB intersects #we merge OB[i] wit OB[i+1]
+                i = vInd
+                tmpOBendTimes[i] = tmpOBendTimes[i] + (tmpOBendTimes[i+1] - tmpOBstartTimes[i+1])
+                tmpOBstartTimes = np.delete(tmpOBstartTimes,i+1)
+                tmpOBendTimes = np.delete(tmpOBendTimes,i+1)
+                #Check if current OB exceeds bin end
+                if tmpOBendTimes[i] > binEnds[i]: #If so, shift left
+                    tmpOBstartTimes[i] = binEnds[i] - (tmpOBendTimes[i] - tmpOBstartTimes[i]) # OB start time starts perfectly so the Ob ends at the end of the bin
+                    tmpOBendTimes[i] = binEnds[i] #OB end time is the end of the bin
+
+            OBstartTimes.append(tmpOBstartTimes)
+            OBendTimes.append(tmpOBendTimes)
+    OBstartTimes = np.concatenate(OBstartTimes)
+    OBendTimes = np.concatenate(OBendTimes)
+    return numOBassignedToBin, OBstartTimes, OBendTimes
+
+def obIntersectionViolationCheck(OBstartTimes,OBendTimes):
+    """ Simply checks if the next OB start time starts before the current ob ends
+    Args:
+        OBstartTimes (numpy array) - sorted from smallest to largest
+        OBendTimes (numpy array) - follows OBstartTimes
+    Returns:
+        intersectionBool (bool) - True if there is an intersection of the OB
+        violatingIndex (integer) - Integer of OBstartTimes (left violator) where violation occurs
+    """
+    for i in np.arange(len(OBstartTimes)-1): #from left to right
+        if OBstartTimes[i+1] < OBendTimes[i]:
+            return True, i
+    return False, 0
 
 
 close('all')
@@ -1172,8 +1289,10 @@ show(block=False)
 
 
 #### PeriodicDist ##################################################
-def harmonicDist(numOB, OBdur, exoplanetObsTime):#, missionPortion):
-    """
+def periodicDist(numOB, OBdur, exoplanetObsTime):#, missionPortion):
+    """ Creates a set of observing blocks which start at the same time every 
+    Args:
+    Returns:
     """
     daysInYear = 365.25 #Days in a year
     numYears = exoplanetObsTime/daysInYear#Number of years
@@ -1189,7 +1308,7 @@ def harmonicDist(numOB, OBdur, exoplanetObsTime):#, missionPortion):
 
 HarmonicDistOB = list()
 for i in np.arange(len(OBdur2)):
-    tmpStart, tmpEnd = harmonicDist(maxNumRepTot2[i], OBdur2[i], maxNumDays)
+    tmpStart, tmpEnd = periodicDist(maxNumRepTot2[i], OBdur2[i], maxNumDays)
     HarmonicDistOB.append([tmpStart, tmpEnd])
 ##########
 
@@ -1210,7 +1329,7 @@ if writeHarmonicToOutputFiles == True:
         print '"' + fname.split('/')[-1] + '",'
 #####################################################################
 
-
+print saltyburrito
 
 
 
@@ -1459,8 +1578,124 @@ fig = plotSkyScheduledObservationIntegrationDistribution(tDict)
 #fig = plotSkyMaximumCompletenessDistribution(tDict)
 starDict = createtDict(triangleCornerIndList,triangleAreaList,triangleCenterList,out1kv)
 starDict = distributeStarsIntoBins(starDict,starAssignedTriangleCorners,sInds)
-fig = plotSkyScheduledObservationCountDistribution(starDict)
+fig = plotSkyScheduledObservationCountDistribution(starDict,fignum=1124)
 ######################################################################
+
+
+#### Histograms of Star Count vs Heliocentric Ecliptic Longitude ##################################
+histInterp, targUnderSpline, sumh, xdiff, edges = generateHistHEL(hEclipLon)
+#histIntep is a periodic interpolant from -pi to pi of planned observation planet occurence frequency
+#targUnderSpline and sumh are here to ensure consistency of the integral
+###################################################################################
+
+#### Generate Random OB distributions #####################
+# 1 Use Observing Block Durations Previously Defined OBdur2
+# 2 Determine 
+generatePlannedObsTimeHistHEL(edges,t_dets,comp,hEclipLon)
+###########################################################
+
+
+
+
+def generatePlannedObsTimeHistHEL2(edges,tDict,fignum=2003,fname='HistogramPlannedTotalTimes', PPoutpath='./'):
+    edges[0] = -np.pi#Force edges to -pi and pi
+    edges[-1] = np.pi
+
+    lon = list() # contains traingel longitudes
+    lonIntTime = list() # contains intTimes in each traingle
+    lonTotalTime = list() # contains totalTimes in each triangle
+    for key in tDict.keys():
+        lon.append((xyzTolonlat(tDict[key]['triangleCenter']))[0])
+        lonIntTime.append(tDict[key]['triangleIntTime'])
+        lonTotalTime.append(tDict[key]['triangleIntTime'] + 1.*tDict[key]['count'])
+    lonTotalTime = np.asarray(lonTotalTime)
+    lonIntTime = np.asarray(lonIntTime)
+
+    t_bins = list()
+    t_bins2 = list()
+    for i in np.arange(len(edges)-1):
+        t_bins.append(sum(lonTotalTime[np.where((edges[i] <= lon)*(lon <= edges[i+1]))[0]]))
+        t_bins2.append(sum(lonIntTime[np.where((edges[i] <= lon)*(lon <= edges[i+1]))[0]]))
+
+    #consistency check
+    sum(t_dets)
+    sum(np.asarray(t_bins))
+
+    #Plot t_bins in Histogram
+    left_edges = edges[:-1]
+    right_edges = edges[1:]
+    centers = (left_edges+right_edges)/2.
+    t_bins = np.asarray(t_bins)
+    widths = np.diff(edges)
+    close(fignum)
+    figure(num=fignum)
+    bar(centers,t_bins,width=widths)
+    xlabel('Heliocentric Ecliptic Longitude of Targets (rad)')
+    ylabel('Sum Integration Time (days)')
+    xlim([-np.pi,np.pi])
+    title('Histogram of Planned Total Time')
+    savefig(PPoutpath + fname + str(1) + '.png')
+
+    close(fignum+1)
+    figure(num=fignum+1)
+    out = bar(centers,t_bins2,width=widths)
+    xlabel('Heliocentric Ecliptic Longitude of Targets (rad)')
+    ylabel('Sum Integration Time (days)')
+    xlim([-np.pi,np.pi])
+    title('Histogram of Planned IntTime')
+    savefig(PPoutpath + fname + str(2) + '.png')
+
+    show(block=False)
+    return {'centers':centers, 'timeInBins':np.asarray(t_bins2), 'binWidths':widths}
+
+#lonGrabPts = np.linspace(-np.pi,np.pi,num=100) # the points to grab along longitude
+lon = list()
+lonIntTime = list()
+lonTotalTime = list()
+for key in tDict.keys():
+    lon.append((xyzTolonlat(tDict[key]['triangleCenter']))[0])
+    lonIntTime.append(tDict[key]['triangleIntTime'])
+    lonTotalTime.append(tDict[key]['triangleIntTime'] + 1.*tDict[key]['count'])
+close(2356)
+fig = figure(num=2356)
+scatter(lon,lonTotalTime)
+show(block=False)
+barout = generatePlannedObsTimeHistHEL2(edges,tDict)
+
+
+
+
+
+numOBassignedToBin, OBstartTimes, OBendTimes = generatePreferentiallyDistributedOB(barout, maxNumRepTot2[12], OBdur2[12], exoplanetObsTime, maxNumYears, loadingPreference='even')
+
+
+
+
+
+
+
+#### Plottung cumulative sum of integration time needed
+sortInds = np.argsort(lon)
+lonSorted = [lon[ind] for ind in sortInds]
+lonIntTimeSorted = [lonIntTime[ind] for ind in sortInds]
+f2 = np.cumsum(lonIntTimeSorted)
+close(2358)
+fig = figure(num=2358)
+plot(lonSorted,f2)
+plot(np.linspace(-np.pi,np.pi),sum(lonIntTime)/(2*np.pi)*np.linspace(0.,2.*np.pi))
+plot(np.linspace(-np.pi,np.pi),365.25/(2*np.pi)*np.linspace(0.,2.*np.pi))
+show(block=False)
+
+#### Plotting cumulative sum of total time needed 
+sortInds = np.argsort(lon)
+lonSorted = [lon[ind] for ind in sortInds]
+lonTotalTimeSorted = [lonTotalTime[ind] for ind in sortInds]
+f1 = np.cumsum(lonTotalTimeSorted)
+close(2357)
+fig = figure(num=2357)
+plot(lonSorted,f1)
+plot(np.linspace(-np.pi,np.pi),365.25/(2*np.pi)*np.linspace(0.,2.*np.pi))
+show(block=False)
 
 
 #### Find Closest Distance between two arbitrary lines ############## #See method line2linev2
@@ -1468,6 +1703,7 @@ fig = plotSkyScheduledObservationCountDistribution(starDict)
 close(2055121)
 fig = figure(num=2055121)
 ax = fig.add_subplot(111, projection='3d')
+prettifyPlot()
 p0 = np.asarray([0., 0., 0.])
 p1 = np.asarray([1., 1., 2.])
 v0 = np.asarray([1., 0., 1.])
@@ -1495,26 +1731,4 @@ show(block=False)
 
 
 
-#### Histograms of Star Count vs Heliocentric Ecliptic Longitude ##################################
-histInterp, targUnderSpline, sumh, xdiff, edges = generateHistHEL(hEclipLon)
-#histIntep is a periodic interpolant from -pi to pi of planned observation planet occurence frequency
-#targUnderSpline and sumh are here to ensure consistency of the integral
-###################################################################################
-
-#### Generate Random OB distributions #####################
-# 1 Use Observing Block Durations Previously Defined OBdur2
-# 2 Determine 
-generatePlannedObsTimeHistHEL(edges,t_dets,comp,hEclipLon)
-###########################################################
-
-
-#### 2d spline fit of points #######################
-ra = sim.TargetList.coords.ra.value
-dec = sim.TargetList.coords.dec.value
-ra = ra*np.pi/180. -np.pi#The right ascension of the stars in the heliocentric ecliptic fixed frame
-ra2 = ra[comp > 0.]
-dec = dec*np.pi/180.#The declinations of the stars in the heliocentric ecliptic fixed frame
-dec2 = dec[comp > 0.]
-
-####################################################
 
