@@ -1206,12 +1206,12 @@ def generatePreferentiallyDistributedOB(barout, numOB, OBdur, exoplanetObsTime, 
     OBendTimes = np.concatenate(OBendTimes)
     return numOBassignedToBin, OBstartTimes, OBendTimes
 
-
 def generatePlannedObsTimeHistHEL2(edges,tDict,fignum=2003,fname='HistogramPlannedTotalTimes', PPoutpath='./'):
     """ Finds bin centers, binwidths, and total time in each bin, plots time vs HEL histograms
     Args:
-        edges () - edges of the histogram to use
+        edges (numpy array) - edges of the histogram to use
         tDict (dict) - dictionary of triangles, on the celestial sphere, stars in those triangles
+        fignum (integer) - 
     """
     edges[0] = -np.pi#Force edges to -pi and pi
     edges[-1] = np.pi
@@ -1623,42 +1623,66 @@ close(2356)
 fig = figure(num=2356)
 scatter(lon,lonTotalTime)
 show(block=False)
+
+
+
+#### Generat ePReferentially Distributed Integration Times ####################
 barout = generatePlannedObsTimeHistHEL2(edges,tDict)
-
-
-
-
-
 numOBassignedToBin, OBstartTimes, OBendTimes = generatePreferentiallyDistributedOB(barout, maxNumRepTot2[12], OBdur2[12], exoplanetObsTime, maxNumYears, loadingPreference='even')
 
 
 
+prefDistOB = list()
+for i in np.arange(len(OBdur2)):
+    numOBassignedToBin, tmpStart, tmpEnd = generatePreferentiallyDistributedOB(barout, maxNumRepTot2[12], OBdur2[12], exoplanetObsTime, maxNumYears, loadingPreference='even')
+    #DELETE tmpStart, tmpEnd = periodicDist(maxNumRepTot2[i], OBdur2[i], maxNumDays)
+    prefDistOB.append([tmpStart, tmpEnd])
+
+writePrefToOutputFiles = False#Change this to true to create each of these start and end time Observing Blocks as .csv files
+if writePrefToOutputFiles == True:
+    path = '/home/dean/Documents/exosims/Scripts/'
+    tmp = ''
+    for i in np.arange(len(OBdur2)):
+        myList = list()
+        for j in range(len(prefDistOB[i][0])):
+            myList.append(str(prefDistOB[i][0][j]) + ',' + str(prefDistOB[i][1][j]) + '\n')
+        outString = ''.join(myList)
+        #print outString
+        fname = path + 'prefDistOB' + str(i) + '.csv'
+        f = open(fname, "w")
+        f.write(outString)
+        print '"' + fname.split('/')[-1] + '",'
+
+###############################################################################
 
 
 
 
-#### Plottung cumulative sum of integration time needed
-sortInds = np.argsort(lon)
-lonSorted = [lon[ind] for ind in sortInds]
-lonIntTimeSorted = [lonIntTime[ind] for ind in sortInds]
-f2 = np.cumsum(lonIntTimeSorted)
-close(2358)
-fig = figure(num=2358)
-plot(lonSorted,f2)
-plot(np.linspace(-np.pi,np.pi),sum(lonIntTime)/(2*np.pi)*np.linspace(0.,2.*np.pi))
-plot(np.linspace(-np.pi,np.pi),365.25/(2*np.pi)*np.linspace(0.,2.*np.pi))
-show(block=False)
 
-#### Plotting cumulative sum of total time needed 
-sortInds = np.argsort(lon)
-lonSorted = [lon[ind] for ind in sortInds]
-lonTotalTimeSorted = [lonTotalTime[ind] for ind in sortInds]
-f1 = np.cumsum(lonTotalTimeSorted)
-close(2357)
-fig = figure(num=2357)
-plot(lonSorted,f1)
-plot(np.linspace(-np.pi,np.pi),365.25/(2*np.pi)*np.linspace(0.,2.*np.pi))
-show(block=False)
+
+
+# #### Plottung cumulative sum of integration time needed
+# sortInds = np.argsort(lon)
+# lonSorted = [lon[ind] for ind in sortInds]
+# lonIntTimeSorted = [lonIntTime[ind] for ind in sortInds]
+# f2 = np.cumsum(lonIntTimeSorted)
+# close(2358)
+# fig = figure(num=2358)
+# plot(lonSorted,f2)
+# plot(np.linspace(-np.pi,np.pi),sum(lonIntTime)/(2*np.pi)*np.linspace(0.,2.*np.pi))
+# plot(np.linspace(-np.pi,np.pi),365.25/(2*np.pi)*np.linspace(0.,2.*np.pi))
+# show(block=False)
+
+# #### Plotting cumulative sum of total time needed 
+# sortInds = np.argsort(lon)
+# lonSorted = [lon[ind] for ind in sortInds]
+# lonTotalTimeSorted = [lonTotalTime[ind] for ind in sortInds]
+# f1 = np.cumsum(lonTotalTimeSorted)
+# close(2357)
+# fig = figure(num=2357)
+# plot(lonSorted,f1)
+# plot(np.linspace(-np.pi,np.pi),365.25/(2*np.pi)*np.linspace(0.,2.*np.pi))
+# show(block=False)
 
 
 #### Find Closest Distance between two arbitrary lines ############## #See method line2linev2
