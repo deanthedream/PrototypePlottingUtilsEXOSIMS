@@ -1206,6 +1206,63 @@ def generatePreferentiallyDistributedOB(barout, numOB, OBdur, exoplanetObsTime, 
     OBendTimes = np.concatenate(OBendTimes)
     return numOBassignedToBin, OBstartTimes, OBendTimes
 
+
+def generatePlannedObsTimeHistHEL2(edges,tDict,fignum=2003,fname='HistogramPlannedTotalTimes', PPoutpath='./'):
+    """ Finds bin centers, binwidths, and total time in each bin, plots time vs HEL histograms
+    Args:
+        edges () - edges of the histogram to use
+        tDict (dict) - dictionary of triangles, on the celestial sphere, stars in those triangles
+    """
+    edges[0] = -np.pi#Force edges to -pi and pi
+    edges[-1] = np.pi
+
+    #### Calculate totalTime vs HEL and intTime vs HEL#################
+    lon = list() # contains traingel longitudes
+    lonIntTime = list() # contains intTimes in each traingle
+    lonTotalTime = list() # contains totalTimes in each triangle
+    for key in tDict.keys():
+        lon.append((xyzTolonlat(tDict[key]['triangleCenter']))[0])
+        lonIntTime.append(tDict[key]['triangleIntTime'])
+        lonTotalTime.append(tDict[key]['triangleIntTime'] + 1.*tDict[key]['count'])
+    lonTotalTime = np.asarray(lonTotalTime)
+    lonIntTime = np.asarray(lonIntTime)
+    #####################################################################
+
+    #### distribute totalTime and intTime into bins #####################
+    t_bins = list()
+    t_bins2 = list()
+    for i in np.arange(len(edges)-1):
+        t_bins.append(sum(lonTotalTime[np.where((edges[i] <= lon)*(lon <= edges[i+1]))[0]]))
+        t_bins2.append(sum(lonIntTime[np.where((edges[i] <= lon)*(lon <= edges[i+1]))[0]]))
+    #####################################################################
+
+    #Plot t_bins in Histogram
+    left_edges = edges[:-1]
+    right_edges = edges[1:]
+    centers = (left_edges+right_edges)/2.
+    t_bins = np.asarray(t_bins)
+    widths = np.diff(edges)
+    close(fignum)
+    figure(num=fignum)
+    bar(centers,t_bins,width=widths)
+    xlabel('Heliocentric Ecliptic Longitude of Targets (rad)')
+    ylabel('Sum Integration Time (days)')
+    xlim([-np.pi,np.pi])
+    title('Histogram of Planned Total Time')
+    savefig(PPoutpath + fname + str(1) + '.png')
+
+    close(fignum+1)
+    figure(num=fignum+1)
+    out = bar(centers,t_bins2,width=widths)
+    xlabel('Heliocentric Ecliptic Longitude of Targets (rad)')
+    ylabel('Sum Integration Time (days)')
+    xlim([-np.pi,np.pi])
+    title('Histogram of Planned IntTime')
+    savefig(PPoutpath + fname + str(2) + '.png')
+    show(block=False)
+
+    return {'centers':centers, 'timeInBins':np.asarray(t_bins2), 'binWidths':widths}
+
 def obIntersectionViolationCheck(OBstartTimes,OBendTimes):
     """ Simply checks if the next OB start time starts before the current ob ends
     Args:
@@ -1219,6 +1276,29 @@ def obIntersectionViolationCheck(OBstartTimes,OBendTimes):
         if OBstartTimes[i+1] < OBendTimes[i]:
             return True, i
     return False, 0
+
+def periodicDist(numOB, OBdur, maxNumDays):#, missionPortion):
+    """ Creates a set of observing blocks which start at the same time every 
+    Args:
+        numOB (integer) - number of observing blocks to schedule
+        OBdur (float) - observing block duration
+        maxNumDays (float) - number of days in the whole mission
+    Returns:
+        OBstartTimes
+        OBendTimes
+    """
+    daysInYear = 365.25 #Days in a year
+    numYears = maxNumDays/daysInYear#Number of years
+
+    numOBperYear = int(np.ceil(numOB/numYears))#Number of Observing blocks that can fit into 1 year
+
+    OBstartTimes = np.asarray([])
+    OBendTimes = np.asarray([])
+    for i in range(int(np.ceil(numYears))):#Note it should be fine if we fully fill out the remaining year
+        OBstartTimes = np.append(OBstartTimes,np.linspace(0.,365.25,num=numOBperYear, endpoint=False)+i*daysInYear)
+        OBendTimes = np.append(OBendTimes,np.linspace(0.,365.25,num=numOBperYear, endpoint=False)+float(i*daysInYear+OBdur))
+    return OBstartTimes, OBendTimes
+
 
 
 close('all')
@@ -1259,78 +1339,27 @@ ylabel('Max Num Reps')
 show(block=False)
 
 
-# ##### Distribute Observing Blocks throughout years ##################################
-# #Even Distribution
-# def evenDist(numOB,OBdur,maxNumDays):
-#     """
-#     maxNumDays - missionLife in days
-#     OBdur - duration of an OB in days
-#     numOB - number of Observing blocks to create
-#     """
-#     OBstartTimes = np.linspace(0,maxNumDays-OBdur,num=numOB, endpoint=True)
-#     #Check maxNumDays - OBstartTimes[-1] < OBdur
-#     return OBstartTimes
-
-# #### GeomDist OB Spacing ############################################
-# def geomDist(numOB,OBdur,maxNumDays):
-#     """
-#     maxNumDays - missionLife in days
-#     OBdur - duration of an OB in days
-#     numOB - number of Observing blocks to create
-#     """
-#     OBstartTimes = np.geomspace(1e-10,maxNumDays-OBdur,num=numOB, endpoint=True)
-#     #Check maxNumDays - OBstartTimes[-1] < OBdur
-#     return OBstartTimes
-
-# GeomDistOBstartTimes = list()
-# for i in np.arange(len(OBdur2)):
-#     GeomDistOBstartTimes.append(geomDist(maxNumRepTot2[i], OBdur2[i], maxNumDays))
-# ####################################################################
-
-
-#### PeriodicDist ##################################################
-def periodicDist(numOB, OBdur, exoplanetObsTime):#, missionPortion):
-    """ Creates a set of observing blocks which start at the same time every 
-    Args:
-    Returns:
-    """
-    daysInYear = 365.25 #Days in a year
-    numYears = exoplanetObsTime/daysInYear#Number of years
-
-    numOBperYear = np.ceil(numOB/numYears)#Number of Observing blocks that can fit into 1 year
-
-    OneYrOBstartTimes = np.asarray([])
-    OneYrOBendTimes = np.asarray([])
-    for i in range(int(np.ceil(numYears))):#Note it should be fine if we fully fill out the remaining year
-        OneYrOBstartTimes = np.append(OneYrOBstartTimes,np.linspace(0.,365.25,num=numOBperYear, endpoint=False)+i*daysInYear)
-        OneYrOBendTimes = np.append(OneYrOBendTimes,np.linspace(0.,365.25,num=numOBperYear, endpoint=False)+float(i*daysInYear+OBdur))
-    return OneYrOBstartTimes, OneYrOBendTimes
-
-HarmonicDistOB = list()
+#### Create Periodic Distribution of OB ##################################
+periodicDistOB = list()
 for i in np.arange(len(OBdur2)):
     tmpStart, tmpEnd = periodicDist(maxNumRepTot2[i], OBdur2[i], maxNumDays)
-    HarmonicDistOB.append([tmpStart, tmpEnd])
-##########
+    periodicDistOB.append([tmpStart, tmpEnd])
 
-#Write to output files
 writeHarmonicToOutputFiles = False#Change this to true to create each of these start and end time Observing Blocks as .csv files
 if writeHarmonicToOutputFiles == True:
     path = '/home/dean/Documents/exosims/Scripts/'
     tmp = ''
     for i in np.arange(len(OBdur2)):
         myList = list()
-        for j in range(len(HarmonicDistOB[i][0])):
-            myList.append(str(HarmonicDistOB[i][0][j]) + ',' + str(HarmonicDistOB[i][1][j]) + '\n')
+        for j in range(len(periodicDistOB[i][0])):
+            myList.append(str(periodicDistOB[i][0][j]) + ',' + str(periodicDistOB[i][1][j]) + '\n')
         outString = ''.join(myList)
         #print outString
-        fname = path + 'harmonicOB' + str(i) + '.csv'
+        fname = path + 'periodicDistOB' + str(i) + '.csv'
         f = open(fname, "w")
         f.write(outString)
         print '"' + fname.split('/')[-1] + '",'
 #####################################################################
-
-print saltyburrito
-
 
 
 #######################################################################################
@@ -1366,45 +1395,38 @@ xlabel('Start Times')
 show(block=False)
 
 
+### DELETE THIS ?????????########################
+# import scipy.integrate as integrate
+# tmp5L = integrate.quad(dfunc,0,max(num))#This is the total length of the path from (0,0) to (num,maxNumDays)
 
-import scipy.integrate as integrate
-tmp5L = integrate.quad(dfunc,0,max(num))#This is the total length of the path from (0,0) to (num,maxNumDays)
+# minNumReps = 0
 
-minNumReps = 0
+# numRep = 10#number of repetitions in 1 year
+# assert numRep <= 365.25/OBdur - 365.25%OBdur, 'numRep too large'
+# missionPortion = numRep*OBdur/365.25
+# missionLife = exoplanetObsTime/missionPortion
 
-numRep = 10#number of repetitions in 1 year
-assert numRep <= 365.25/OBdur - 365.25%OBdur, 'numRep too large'
-missionPortion = numRep*OBdur/365.25
-missionLife = exoplanetObsTime/missionPortion
-
-def isoMissionDuration(mL,mP,mdur):
-    #missionLife,missionPortion,mission duration
-    #mdur = mL*mP #total amount of time to elapse during the mission
-    if mL is None:
-        mL = mdur/mP
-    elif mP is None:
-        mP = mdur/mL
-    return mL, mP
-
-# def OBharmonics(num,mP):
-#     #num of repetitions to occur within one year
-#     #mP missionPortion
+# def isoMissionDuration(mL,mP,mdur):
+#     #missionLife,missionPortion,mission duration
+#     #mdur = mL*mP #total amount of time to elapse during the mission
+#     if mL is None:
+#         mL = mdur/mP
+#     elif mP is None:
+#         mP = mdur/mL
+#     return mL, mP
 
 
+# tmp = np.asarray(range(30))*12.
+# tmp1 = np.asarray(range(30))
+# tmp2 = np.asarray(range(12))+0.5
+# denom = np.asarray(range(30),)+1.
+# tmp3 = 365.25/denom
 
-tmp = np.asarray(range(30))*12.
-tmp1 = np.asarray(range(30))
-tmp2 = np.asarray(range(12))+0.5
-denom = np.asarray(range(30),)+1.
-tmp3 = 365.25/denom
-
-OBdurs = list()
-[OBdurs.append(x) for x in tmp.tolist()]
-[OBdurs.append(x) for x in tmp1.tolist()]
-[OBdurs.append(x) for x in tmp2.tolist()]
-[OBdurs.append(x) for x in tmp3.tolist()]
-
-
+# OBdurs = list()
+# [OBdurs.append(x) for x in tmp.tolist()]
+# [OBdurs.append(x) for x in tmp1.tolist()]
+# [OBdurs.append(x) for x in tmp2.tolist()]
+# [OBdurs.append(x) for x in tmp3.tolist()]
 
 
 #### Calculate the Maximum Star Completeness of all 651 Targets under Consideration #####################
@@ -1449,15 +1471,6 @@ comp_Cb0 = sim.Completeness.comp_per_intTime(t_dets, TL, sInds, fZ, fEZ, WA, mod
 
 sum_comp_Cb0 = sum(comp_Cb0[comp_Cb0>0.])
 #########################################################################################################
-
-
-#To Get RA of All Targets
-sim.TargetList.coords.ra
-#To Get DEC of All Targets
-sim.TargetList.coords.dec
-
-
-
 
 
 
@@ -1597,56 +1610,6 @@ generatePlannedObsTimeHistHEL(edges,t_dets,comp,hEclipLon)
 
 
 
-def generatePlannedObsTimeHistHEL2(edges,tDict,fignum=2003,fname='HistogramPlannedTotalTimes', PPoutpath='./'):
-    edges[0] = -np.pi#Force edges to -pi and pi
-    edges[-1] = np.pi
-
-    lon = list() # contains traingel longitudes
-    lonIntTime = list() # contains intTimes in each traingle
-    lonTotalTime = list() # contains totalTimes in each triangle
-    for key in tDict.keys():
-        lon.append((xyzTolonlat(tDict[key]['triangleCenter']))[0])
-        lonIntTime.append(tDict[key]['triangleIntTime'])
-        lonTotalTime.append(tDict[key]['triangleIntTime'] + 1.*tDict[key]['count'])
-    lonTotalTime = np.asarray(lonTotalTime)
-    lonIntTime = np.asarray(lonIntTime)
-
-    t_bins = list()
-    t_bins2 = list()
-    for i in np.arange(len(edges)-1):
-        t_bins.append(sum(lonTotalTime[np.where((edges[i] <= lon)*(lon <= edges[i+1]))[0]]))
-        t_bins2.append(sum(lonIntTime[np.where((edges[i] <= lon)*(lon <= edges[i+1]))[0]]))
-
-    #consistency check
-    sum(t_dets)
-    sum(np.asarray(t_bins))
-
-    #Plot t_bins in Histogram
-    left_edges = edges[:-1]
-    right_edges = edges[1:]
-    centers = (left_edges+right_edges)/2.
-    t_bins = np.asarray(t_bins)
-    widths = np.diff(edges)
-    close(fignum)
-    figure(num=fignum)
-    bar(centers,t_bins,width=widths)
-    xlabel('Heliocentric Ecliptic Longitude of Targets (rad)')
-    ylabel('Sum Integration Time (days)')
-    xlim([-np.pi,np.pi])
-    title('Histogram of Planned Total Time')
-    savefig(PPoutpath + fname + str(1) + '.png')
-
-    close(fignum+1)
-    figure(num=fignum+1)
-    out = bar(centers,t_bins2,width=widths)
-    xlabel('Heliocentric Ecliptic Longitude of Targets (rad)')
-    ylabel('Sum Integration Time (days)')
-    xlim([-np.pi,np.pi])
-    title('Histogram of Planned IntTime')
-    savefig(PPoutpath + fname + str(2) + '.png')
-
-    show(block=False)
-    return {'centers':centers, 'timeInBins':np.asarray(t_bins2), 'binWidths':widths}
 
 #lonGrabPts = np.linspace(-np.pi,np.pi,num=100) # the points to grab along longitude
 lon = list()
