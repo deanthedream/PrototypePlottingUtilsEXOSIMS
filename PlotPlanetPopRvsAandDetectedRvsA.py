@@ -67,7 +67,7 @@ if __name__ == "__main__":
 
 
     #Create Mission Object To Extract Some Plotting Limits
-    outspecfile = runPath + 'outspec.json'
+    outspecfile = os.path.join(runPath,'outspec.json')
     sim = EXOSIMS.MissionSim.MissionSim(outspecfile, nopar=True)
     ymax = np.nanmax(sim.PlanetPhysicalModel.ggdat['radii']).to('earthRad').value
 
@@ -330,6 +330,8 @@ if __name__ == "__main__":
     savefig(runPath + os.path.basename(os.path.normpath(runPath)) + filename + '.svg')
     savefig(runPath + os.path.basename(os.path.normpath(runPath)) + filename + '.eps', format='eps', dpi=500)
 
+    del out
+    del allres
 
 
     # fig3 = figure(3)
