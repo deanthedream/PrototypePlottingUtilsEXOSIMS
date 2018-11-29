@@ -18,10 +18,10 @@ import json
 from EXOSIMS.util.vprint import vprint
 from scipy.stats import gaussian_kde
 from scipy.ndimage import gaussian_filter
-from physt import *
-import physt
+#from physt import *
+#import physt
 from mpl_toolkits.mplot3d import Axes3D #required for 3d plot
-import seaborn as sns
+#import seaborn as sns
 from scipy.interpolate import interp1d
 from scipy.interpolate import CubicSpline
 from copy import deepcopy
@@ -71,10 +71,10 @@ def generateEquadistantPointsOnSphere(N=100,PPoutpath='/home/dean/Documents/exos
     ra_dec = np.asarray(ra_dec)
     prettifyPlot()
     ax.scatter(xyzpoint[:,0], xyzpoint[:,1], xyzpoint[:,2], color='k', marker='o')
-    title('Points Evenly Distributed on a Unit Sphere')
-    ax.set_xlabel('x')
-    ax.set_ylabel('y')
-    ax.set_zlabel('z')
+    title('Points Evenly Distributed on a Unit Sphere',weight='bold')
+    ax.set_xlabel('x',weight='bold')
+    ax.set_ylabel('y',weight='bold')
+    ax.set_zlabel('z',weight='bold')
     show(block=False)
 
     fname = 'PointsEvenlyDistributedOnaUnitSphere'
@@ -109,8 +109,8 @@ def generateHistHEL(hEclipLon,PPoutpath='/home/dean/Documents/exosims/cache/'):
     hist(hEclipLon)
     plot(tp,numVsLonInterp2(tp))
     xlim(-np.pi,np.pi)
-    xlabel('Heliocentric Ecliptic Longitude of Targets (rad)')
-    title('Histogram of Planned to Observe Targets')
+    xlabel('Heliocentric Ecliptic Longitude of Targets (rad)',weight='bold')
+    title('Histogram of Planned to Observe Targets',weight='bold')
 
     fname = 'HistogramPlannedTargetsToObserve'
     savefig(PPoutpath + fname + '.png')
@@ -140,10 +140,10 @@ def generatePlannedObsTimeHistHEL(edges,t_dets,comp,hEclipLon,PPoutpath='/home/d
     figure(num=2002)
     prettifyPlot()
     bar(centers,t_bins,width=widths)
-    xlabel('Heliocentric Ecliptic Longitude of Targets (rad)')
-    ylabel('Sum Integration Time (days)')
+    xlabel('Heliocentric Ecliptic Longitude of Targets (rad)',weight='bold')
+    ylabel('Sum Integration Time (days)',weight='bold')
     xlim([-np.pi,np.pi])
-    title('Histogram of Planned Time to Observe Targets')
+    title('Histogram of Planned Time to Observe Targets',weight='bold')
 
     fname = 'HistogramPlannedTargetTimeToObserve'
     savefig(PPoutpath + fname + '.png')
@@ -306,9 +306,9 @@ def plotClosestPoints(inds_of_closest, out1kv):
                 continue
             ax.plot([xyzpoint[0],out1kv[j,0]],[xyzpoint[1],out1kv[j,1]],[xyzpoint[2],out1kv[j,2]],color='red',zorder=0)
             plotted.append([i,j])
-    ax.set_xlabel('X')
-    ax.set_ylabel('Y')
-    ax.set_zlabel('Z')
+    ax.set_xlabel('X',weight='bold')
+    ax.set_ylabel('Y',weight='bold')
+    ax.set_zlabel('Z',weight='bold')
     show(block=False)
     return fig, ax
 
@@ -1245,19 +1245,19 @@ def generatePlannedObsTimeHistHEL2(edges,tDict,fignum=2003,fname='HistogramPlann
     close(fignum)
     figure(num=fignum)
     bar(centers,t_bins,width=widths)
-    xlabel('Heliocentric Ecliptic Longitude of Targets (rad)')
-    ylabel('Sum Integration Time (days)')
+    xlabel('Heliocentric Ecliptic Longitude of Targets (rad)',weight='bold')
+    ylabel('Sum Integration Time (days)',weight='bold')
     xlim([-np.pi,np.pi])
-    title('Histogram of Planned Total Time')
+    title('Histogram of Planned Total Time',weight='bold')
     savefig(PPoutpath + fname + str(1) + '.png')
 
     close(fignum+1)
     figure(num=fignum+1)
     out = bar(centers,t_bins2,width=widths)
-    xlabel('Heliocentric Ecliptic Longitude of Targets (rad)')
-    ylabel('Sum Integration Time (days)')
+    xlabel('Heliocentric Ecliptic Longitude of Targets (rad)',weight='bold')
+    ylabel('Sum Integration Time (days)',weight='bold')
     xlim([-np.pi,np.pi])
-    title('Histogram of Planned IntTime')
+    title('Histogram of Planned IntTime',weight='bold')
     savefig(PPoutpath + fname + str(2) + '.png')
     show(block=False)
 
@@ -1334,8 +1334,8 @@ maxNumRepTot2, maxRepsPerYear2 = maxNumRepInTime(OBdur2,exoplanetObsTime)
 fig = figure(1)
 #loglog(OBdur2,maxNumRepTot2,marker='o')
 semilogx(OBdur2,maxNumRepTot2,marker='o')
-xlabel('Num Days')
-ylabel('Max Num Reps')
+xlabel('Num Days',weight='bold')
+ylabel('Max Num Reps',weight='bold')
 show(block=False)
 
 
@@ -1390,8 +1390,8 @@ plot(tmp2,num,marker='o',color='black')
 plot(tmp3,num,marker='o',color='red')
 plot(tmp4,num,marker='o',color='green')
 plot(tmp5,num,marker='o',color='orange')
-ylabel('Points Number')
-xlabel('Start Times')
+ylabel('Points Number',weight='bold')
+xlabel('Start Times',weight='bold')
 show(block=False)
 
 
@@ -1539,9 +1539,9 @@ for i in np.arange(len(out1kv)):
 #Plot Centroids
 for i in np.arange(len(triangleCenterList)):
     ax.scatter(triangleCenterList[i][0],triangleCenterList[i][1],triangleCenterList[i][2],color='purple', zorder=2)
-ax.set_xlabel('X')
-ax.set_ylabel('Y')
-ax.set_zlabel('Z')
+ax.set_xlabel('X',weight='bold')
+ax.set_ylabel('Y',weight='bold')
+ax.set_zlabel('Z',weight='bold')
 show(block=False)
 ######################################################################
 
@@ -1708,9 +1708,9 @@ ax.scatter(p1[0],p1[1],p1[2],color='black')#starting points
 ax.plot([q0[0],q1[0]],[q0[1],q1[1]],[q0[2],q1[2]],color='purple')
 ax.scatter(q0[0],q0[1],q0[2],color='purple')#ending points
 ax.scatter(q1[0],q1[1],q1[2],color='purple')#ending points
-ax.set_xlabel('X')
-ax.set_ylabel('Y')
-ax.set_zlabel('Z')
+ax.set_xlabel('X',weight='bold')
+ax.set_ylabel('Y',weight='bold')
+ax.set_zlabel('Z',weight='bold')
 ax.scatter(-1,-1,-1,color='white')
 ax.scatter(3,3,3,color='white')
 show(block=False)
