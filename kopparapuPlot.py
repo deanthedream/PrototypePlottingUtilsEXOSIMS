@@ -181,13 +181,13 @@ class kopparapuPlot(object):#RpLBins(object):
         ymaxVio = max([ymaxVio,max(earthLikeBins)])
         ax1.scatter([0], np.mean(earthLikeBins), marker='o', color='k', s=30, zorder=3)
         ax1.vlines([0], min(earthLikeBins), max(earthLikeBins), color='k', linestyle='-', lw=2)
-        ax1.vlines([0], np.mean(earthLikeBins)-np.std(earthLikeBins), np.mean(earthLikeBins)+np.std(earthLikeBins), color='silver', linestyle='-', lw=5)
+        ax1.vlines([0], np.mean(earthLikeBins)-np.std(earthLikeBins), np.mean(earthLikeBins)+np.std(earthLikeBins), color='purple', linestyle='-', lw=5)
         #### Plot Kopparapu Bar Chart
         plt.figure(figBar.number)
         ax2.bar(0,np.mean(earthLikeBins),width=0.8,color='green')
         ax2.scatter([0], np.mean(earthLikeBins), marker='o', color='k', s=30, zorder=3)
         ax2.vlines([0], min(earthLikeBins), max(earthLikeBins), color='k', linestyle='-', lw=2)
-        ax2.vlines([0], np.mean(earthLikeBins)-np.std(earthLikeBins), np.mean(earthLikeBins)+np.std(earthLikeBins), color='silver', linestyle='-', lw=5)
+        ax2.vlines([0], np.mean(earthLikeBins)-np.std(earthLikeBins), np.mean(earthLikeBins)+np.std(earthLikeBins), color='purple', linestyle='-', lw=5)
         ymaxBar = max([ymaxBar,max(earthLikeBins)])
 
 
@@ -223,6 +223,8 @@ class kopparapuPlot(object):#RpLBins(object):
                 minNumDetected[i][j] = min(counts)
                 percentAtMinimum[i][j] = float(counts.tolist().count(min(counts)))/len(counts)
                 maxNumDetected[i][j] = max(counts)
+                fiftiethPercentile[i][j] = np.percentile(counts,50)
+                seventyfifthPercentile[i][j] = np.percentile(counts,75)
 
 
                 #INSERT VIOLIN PLOT STUFF HERE
@@ -234,14 +236,14 @@ class kopparapuPlot(object):#RpLBins(object):
                 ymaxVio = max([ymaxVio,max(counts)])
                 ax1.scatter([3*i+j+1], binMeans[i][j], marker='o', color='k', s=30, zorder=3)
                 ax1.vlines([3*i+j+1], min(counts), max(counts), color='k', linestyle='-', lw=2)
-                ax1.vlines([3*i+j+1], twentyfifthPercentile[i][j], seventyfifthPercentile[i][j], color='silver', linestyle='-', lw=5)
+                ax1.vlines([3*i+j+1], twentyfifthPercentile[i][j], seventyfifthPercentile[i][j], color='purple', linestyle='-', lw=5)
                 #### Plot Kopparapu Bar Chart
                 plt.figure(figBar.number)
                 ax2.bar(3*i+j+1,binMeans[i][j],width=0.8,color=colorViolins[j])
                 ymaxBar = max([ymaxBar,max(counts)])
                 ax2.scatter([3*i+j+1], binMeans[i][j], marker='o', color='k', s=30, zorder=3)
                 ax2.vlines([3*i+j+1], min(counts), max(counts), color='k', linestyle='-', lw=2)
-                ax2.vlines([3*i+j+1], twentyfifthPercentile[i][j], seventyfifthPercentile[i][j], color='silver', linestyle='-', lw=5)
+                ax2.vlines([3*i+j+1], twentyfifthPercentile[i][j], seventyfifthPercentile[i][j], color='purple', linestyle='-', lw=5)
 
         #Limits Touch Up and Labels
         plt.figure(figVio.number)
