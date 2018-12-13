@@ -3,16 +3,19 @@
 
 import numpy as np
 import math
-from pylab import *
 try:
     import cPickle as pickle
 except:
     import pickle
 import os
-import numpy as np
 from pylab import *
 from numpy import nan
-import matplotlib.pyplot as plt
+if not 'DISPLAY' in os.environ.keys(): #Check environment for keys
+    import matplotlib
+    matplotlib.use('Agg')
+    import matplotlib.pyplot as plt
+else:
+    import matplotlib.pyplot as plt
 import argparse
 import json
 from EXOSIMS.util.vprint import vprint
@@ -28,9 +31,11 @@ from copy import deepcopy
 import random
 import itertools
 import matplotlib as mpl
+import datetime
+import re
 
 
-def generateEquadistantPointsOnSphere(N=100,PPoutpath='/home/dean/Documents/exosims/cache/'):
+def generateEquadistantPointsOnSphere(N=100,PPoutpath='./'):
     """Generate uniform points on a sphere
     #https://www.cmu.edu/biolphys/deserno/pdf/sphere_equi.pdf
     Args
@@ -71,27 +76,27 @@ def generateEquadistantPointsOnSphere(N=100,PPoutpath='/home/dean/Documents/exos
     ra_dec = np.asarray(ra_dec)
     prettifyPlot()
     ax.scatter(xyzpoint[:,0], xyzpoint[:,1], xyzpoint[:,2], color='k', marker='o')
-    title('Points Evenly Distributed on a Unit Sphere',weight='bold')
+    plt.title('Points Evenly Distributed on a Unit Sphere',weight='bold')
     ax.set_xlabel('x',weight='bold')
     ax.set_ylabel('y',weight='bold')
     ax.set_zlabel('z',weight='bold')
-    show(block=False)
+    plt.show(block=False)
 
     fname = 'PointsEvenlyDistributedOnaUnitSphere'
-    savefig(PPoutpath + fname + '.png')
-    savefig(PPoutpath + fname + '.svg')
-    savefig(PPoutpath + fname + '.eps')
+    plt.savefig(PPoutpath + fname + '.png')
+    plt.savefig(PPoutpath + fname + '.svg')
+    plt.savefig(PPoutpath + fname + '.eps')
 
     #output of form ra_dec[ind,ra/dec]
     return xyzpoint, ra_dec
 
-def generateHistHEL(hEclipLon,PPoutpath='/home/dean/Documents/exosims/cache/'):
+def generateHistHEL(hEclipLon,PPoutpath='./'):
     """ Generates a Heliocentric Ecliptic Longitude Histogram
     Returns:
         numVsLonInterp2 - (interpolant) - this is the interpolant of the histogram of stars 
             located along the heliocentric ecliptic longitude
     """
-    figure(num=2000)
+    plt.figure(num=2000)
     prettifyPlot()
     h, edges = np.histogram(hEclipLon)
     xdiff = np.diff(edges)
@@ -106,21 +111,29 @@ def generateHistHEL(hEclipLon,PPoutpath='/home/dean/Documents/exosims/cache/'):
     xcents = np.insert(xcents, 0, -np.pi, axis=0)
     numVsLonInterp2 = CubicSpline(xcents,h,bc_type='periodic')
     tp = np.linspace(-np.pi,np.pi,num=100)
-    hist(hEclipLon)
-    plot(tp,numVsLonInterp2(tp))
-    xlim(-np.pi,np.pi)
-    xlabel('Heliocentric Ecliptic Longitude of Targets (rad)',weight='bold')
-    title('Histogram of Planned to Observe Targets',weight='bold')
+    plt.hist(hEclipLon)
+    plt.plot(tp,numVsLonInterp2(tp))
+    plt.xlim(-np.pi,np.pi)
+    plt.xlabel('Heliocentric Ecliptic Longitude of Targets (rad)',weight='bold')
+    plt.title('Histogram of Planned to Observe Targets',weight='bold')
 
-    fname = 'HistogramPlannedTargetsToObserve'
-    savefig(PPoutpath + fname + '.png')
-    show(block=False)
+    #Save Plots
+    # Save to a File
+    date = unicode(datetime.datetime.now())
+    date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+
+    fname = 'HistogramPlannedTargetsToObserve_' + folder.split('/')[-1] + '_' + date
+    plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
+    plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
+    plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='png', dpi=500)
+    #DELETEplt.savefig(PPoutpath + fname + '.png')
+    plt.show(block=False)
 
     targUnderSpline = numVsLonInterp2.integrate(-np.pi,np.pi)/xdiff#Integral of spline, tells how many targets are under spline
     sumh = sum(h[1:-1])#*xdiff[0]
     return numVsLonInterp2, targUnderSpline, sumh, xdiff, edges
 
-def generatePlannedObsTimeHistHEL(edges,t_dets,comp,hEclipLon,PPoutpath='/home/dean/Documents/exosims/cache/'):
+def generatePlannedObsTimeHistHEL(edges,t_dets,comp,hEclipLon,PPoutpath='./'):
     edges[0] = -np.pi#Force edges to -pi and pi
     edges[-1] = np.pi
     t_bins = list()
@@ -137,17 +150,25 @@ def generatePlannedObsTimeHistHEL(edges,t_dets,comp,hEclipLon,PPoutpath='/home/d
     centers = (left_edges+right_edges)/2.
     t_bins = np.asarray(t_bins)
     widths = np.diff(edges)
-    figure(num=2002)
+    fig = plt.figure(num=2002,figsize=(10,3))
     prettifyPlot()
-    bar(centers,t_bins,width=widths)
-    xlabel('Heliocentric Ecliptic Longitude of Targets (rad)',weight='bold')
-    ylabel('Sum Integration Time (days)',weight='bold')
-    xlim([-np.pi,np.pi])
-    title('Histogram of Planned Time to Observe Targets',weight='bold')
+    plt.bar(centers,t_bins,width=widths,color='black')
+    plt.xlabel('Heliocentric Ecliptic Longitude of Targets (rad)',weight='bold')
+    plt.ylabel('Sum Integration Time (days)',weight='bold')
+    plt.xlim([-np.pi,np.pi])
+    plt.title('Histogram of Planned Time to Observe Targets',weight='bold')
+    fig.tight_layout()
 
-    fname = 'HistogramPlannedTargetTimeToObserve'
-    savefig(PPoutpath + fname + '.png')
-    show(block=False)
+    #Save Plots
+    # Save to a File
+    date = unicode(datetime.datetime.now())
+    date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+
+    fname = 'HistogramPlannedTargetTimeToObserve_' + folder.split('/')[-1] + '_' + date
+    plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
+    plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
+    plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='png', dpi=500)
+    plt.show(block=False)
 
 def line2linev2(p0,v0,p1,v1):
     """ Find the closest points between two arbitrary lines, and the distance between them
@@ -294,10 +315,10 @@ def calculateClosestPoints(out1kv):
 def plotClosestPoints(inds_of_closest, out1kv):
     """ Plots a unit sphere with all lines connecting points
     """
-    close(50067)
-    fig = figure(num=50067)
+    plt.close(50067)
+    fig = plt.figure(num=50067)
     ax = fig.add_subplot(111, projection='3d')
-    title('Plot of all point-to-point connections on sphere')
+    plt.title('Plot of all point-to-point connections on sphere')
     for i in np.arange(len(out1kv)):
         xyzpoint = out1kv[i] # extract a single xyz point on sphere
         plotted = list() #keeps track of index-to-index lines plotted
@@ -309,7 +330,7 @@ def plotClosestPoints(inds_of_closest, out1kv):
     ax.set_xlabel('X',weight='bold')
     ax.set_ylabel('Y',weight='bold')
     ax.set_zlabel('Z',weight='bold')
-    show(block=False)
+    plt.show(block=False)
     return fig, ax
 
 def removeCoplanarConnectingLines(inds_of_closest, out1kv):
@@ -674,12 +695,16 @@ def distributeStarsIntoBins(tDict,starAssignedTriangleCorners,sInds):
     ###########################################
 
 def prettifyPlot():
-    rc('axes',linewidth=2)
-    rc('lines',linewidth=2)
-    rcParams['axes.linewidth']=2
-    rc('font',weight='bold')
+    """ A method to change default plot parameters and make them prettier (bold axes and fold etc...)
+    Args:
+    Returns:
+    """
+    plt.rc('axes',linewidth=2)
+    plt.rc('lines',linewidth=2)
+    plt.rcParams['axes.linewidth']=2
+    plt.rc('font',weight='bold')
 
-def plotSkyScheduledObservationCountDistribution(tDict,fignum=96993):
+def plotSkyScheduledObservationCountDistribution(tDict,fignum=96993, PPoutpath='./'):
     """ Plots Distribution of Stars Scheduled to be Observed on Sky
     Args:
         tDict () - 
@@ -688,8 +713,8 @@ def plotSkyScheduledObservationCountDistribution(tDict,fignum=96993):
         fig
     """
     #Each Triangle on a 2D plot with Hammer Projection
-    close(fignum)
-    fig = figure(num=fignum, figsize=(7,2.5))
+    plt.close(fignum)
+    fig = plt.figure(num=fignum, figsize=(7,2.5))
     gs = GridSpec(1,1, width_ratios=[4,], height_ratios=[1])
     gs.update(wspace=0.06, hspace=0.06) # set the spacing between axes. 
     ax = plt.subplot(gs[0],projection='mollweide')#2D histogram of planet pop
@@ -717,7 +742,7 @@ def plotSkyScheduledObservationCountDistribution(tDict,fignum=96993):
                 #3 Reassign Maximum Values to that Value
                 tmp3 = np.append(tmp2,np.asarray([[tmp2[1,0],np.pi/2.]]),axis=0)
                 tmp4 = np.append(tmp3,np.asarray([[tmp2[0,0],np.pi/2.]]),axis=0)
-                t3 = Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['count']/tDict[tDict.keys()[ind]]['triangleArea'])))
+                t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['count']/tDict[tDict.keys()[ind]]['triangleArea'])))
                 ax.add_patch(t3)
             except:
                 pass
@@ -730,7 +755,7 @@ def plotSkyScheduledObservationCountDistribution(tDict,fignum=96993):
             #3 Reassign Maximum Values to that Value
             tmp3 = np.append(tmp2,np.asarray([[tmp2[1,0],np.pi/2.]]),axis=0)
             tmp4 = np.append(tmp3,np.asarray([[tmp2[0,0],np.pi/2.]]),axis=0)
-            t3 = Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['count']/tDict[tDict.keys()[ind]]['triangleArea'])))
+            t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['count']/tDict[tDict.keys()[ind]]['triangleArea'])))
             ax.add_patch(t3)
             continue
 
@@ -745,7 +770,7 @@ def plotSkyScheduledObservationCountDistribution(tDict,fignum=96993):
                 #3 Reassign Maximum Values to that Value
                 tmp3 = np.append(tmp2,np.asarray([[tmp2[1,0],-np.pi/2.]]),axis=0)
                 tmp4 = np.append(tmp3,np.asarray([[tmp2[0,0],-np.pi/2.]]),axis=0)
-                t3 = Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['count']/tDict[tDict.keys()[ind]]['triangleArea'])))
+                t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['count']/tDict[tDict.keys()[ind]]['triangleArea'])))
                 ax.add_patch(t3)
             except:
                 pass
@@ -758,17 +783,17 @@ def plotSkyScheduledObservationCountDistribution(tDict,fignum=96993):
             #3 Reassign Maximum Values to that Value
             tmp3 = np.append(tmp2,np.asarray([[tmp2[1,0],-np.pi/2.]]),axis=0)
             tmp4 = np.append(tmp3,np.asarray([[tmp2[0,0],-np.pi/2.]]),axis=0)
-            t3 = Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['count']/tDict[tDict.keys()[ind]]['triangleArea'])))
+            t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['count']/tDict[tDict.keys()[ind]]['triangleArea'])))
             ax.add_patch(t3)
             continue
 
-        t1 = Polygon(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'], color=cmap(norm(tDict[tDict.keys()[ind]]['count']/tDict[tDict.keys()[ind]]['triangleArea'])))
+        t1 = plt.Polygon(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'], color=cmap(norm(tDict[tDict.keys()[ind]]['count']/tDict[tDict.keys()[ind]]['triangleArea'])))
         ax.add_patch(t1)
         del t1
         #### Add mirror patch
         if 'triangleCornerPointsXYZlatlon2' in tDict[tDict.keys()[ind]].keys():
             #DELETE print 'HasKey!'
-            t2 = Polygon(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon2'], color=cmap(norm(tDict[tDict.keys()[ind]]['count'])/tDict[tDict.keys()[ind]]['triangleArea']))
+            t2 = plt.Polygon(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon2'], color=cmap(norm(tDict[tDict.keys()[ind]]['count'])/tDict[tDict.keys()[ind]]['triangleArea']))
             ax.add_patch(t2)
             del t2
 
@@ -778,12 +803,21 @@ def plotSkyScheduledObservationCountDistribution(tDict,fignum=96993):
 
     sc = ax.scatter([-1000,-1000],[-1000,-1000],c=[norm.vmin,norm.vmax],cmap=cmap,vmin=0.,vmax=norm.vmax) #spoof colorbar
     cbar = fig.colorbar(sc) #spoof colorbar
-    cbar.set_label('Star Count per Fraction Of Sky')
-    fig.text(0.62,0.11,r'$\sum$# stars='+str(cnt))
+    cbar.set_label('Star Count per Fraction Of Sky',weight='bold')
+    fig.text(0.60,0.09,r'$\sum$# stars='+str(cnt))
+    #Save Plots
+    # Save to a File
+    date = unicode(datetime.datetime.now())
+    date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+
+    fname = 'skyObsCNTdistribution_' + folder.split('/')[-1] + '_' + date
+    plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
+    plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
+    plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='png', dpi=500)
     plt.show(block=False)
     return fig
 
-def plotSkyScheduledObservationCompletenessDistribution(tDict,fignum=96994):
+def plotSkyScheduledObservationCompletenessDistribution(tDict,fignum=96994, PPoutpath='./'):
     """ Plots Distribution of Star Completeness Scheduled to be Observed on Sky
     Args:
         tDict () - 
@@ -792,8 +826,8 @@ def plotSkyScheduledObservationCompletenessDistribution(tDict,fignum=96994):
         fig
     """
     #Each Triangle on a 2D plot with Hammer Projection
-    close(fignum)
-    fig = figure(num=fignum, figsize=(7,2.5))
+    plt.close(fignum)
+    fig = plt.figure(num=fignum, figsize=(7,2.5))
     gs = GridSpec(1,1, width_ratios=[4,], height_ratios=[1])
     gs.update(wspace=0.06, hspace=0.06) # set the spacing between axes. 
     ax = plt.subplot(gs[0],projection='mollweide')#2D histogram of planet pop
@@ -821,7 +855,7 @@ def plotSkyScheduledObservationCompletenessDistribution(tDict,fignum=96994):
                 #3 Reassign Maximum Values to that Value
                 tmp3 = np.append(tmp2,np.asarray([[tmp2[1,0],np.pi/2.]]),axis=0)
                 tmp4 = np.append(tmp3,np.asarray([[tmp2[0,0],np.pi/2.]]),axis=0)
-                t3 = Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleComp']/tDict[tDict.keys()[ind]]['triangleArea'])))
+                t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleComp']/tDict[tDict.keys()[ind]]['triangleArea'])))
                 ax.add_patch(t3)
             except:
                 pass
@@ -834,7 +868,7 @@ def plotSkyScheduledObservationCompletenessDistribution(tDict,fignum=96994):
             #3 Reassign Maximum Values to that Value
             tmp3 = np.append(tmp2,np.asarray([[tmp2[1,0],np.pi/2.]]),axis=0)
             tmp4 = np.append(tmp3,np.asarray([[tmp2[0,0],np.pi/2.]]),axis=0)
-            t3 = Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleComp']/tDict[tDict.keys()[ind]]['triangleArea'])))
+            t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleComp']/tDict[tDict.keys()[ind]]['triangleArea'])))
             ax.add_patch(t3)
             continue
 
@@ -849,7 +883,7 @@ def plotSkyScheduledObservationCompletenessDistribution(tDict,fignum=96994):
                 #3 Reassign Maximum Values to that Value
                 tmp3 = np.append(tmp2,np.asarray([[tmp2[1,0],-np.pi/2.]]),axis=0)
                 tmp4 = np.append(tmp3,np.asarray([[tmp2[0,0],-np.pi/2.]]),axis=0)
-                t3 = Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleComp']/tDict[tDict.keys()[ind]]['triangleArea'])))
+                t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleComp']/tDict[tDict.keys()[ind]]['triangleArea'])))
                 ax.add_patch(t3)
             except:
                 pass
@@ -862,17 +896,17 @@ def plotSkyScheduledObservationCompletenessDistribution(tDict,fignum=96994):
             #3 Reassign Maximum Values to that Value
             tmp3 = np.append(tmp2,np.asarray([[tmp2[1,0],-np.pi/2.]]),axis=0)
             tmp4 = np.append(tmp3,np.asarray([[tmp2[0,0],-np.pi/2.]]),axis=0)
-            t3 = Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleComp']/tDict[tDict.keys()[ind]]['triangleArea'])))
+            t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleComp']/tDict[tDict.keys()[ind]]['triangleArea'])))
             ax.add_patch(t3)
             continue
 
-        t1 = Polygon(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'], color=cmap(norm(tDict[tDict.keys()[ind]]['triangleComp']/tDict[tDict.keys()[ind]]['triangleArea'])))
+        t1 = plt.Polygon(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'], color=cmap(norm(tDict[tDict.keys()[ind]]['triangleComp']/tDict[tDict.keys()[ind]]['triangleArea'])))
         ax.add_patch(t1)
         del t1
         #### Add mirror patch
         if 'triangleCornerPointsXYZlatlon2' in tDict[tDict.keys()[ind]].keys():
             #DELETE print 'HasKey!'
-            t2 = Polygon(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon2'], color=cmap(norm(tDict[tDict.keys()[ind]]['triangleComp'])/tDict[tDict.keys()[ind]]['triangleArea']))
+            t2 = plt.Polygon(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon2'], color=cmap(norm(tDict[tDict.keys()[ind]]['triangleComp'])/tDict[tDict.keys()[ind]]['triangleArea']))
             ax.add_patch(t2)
             del t2
 
@@ -882,12 +916,21 @@ def plotSkyScheduledObservationCompletenessDistribution(tDict,fignum=96994):
 
     sc = ax.scatter([-1000,-1000],[-1000,-1000],c=[norm.vmin,norm.vmax],cmap=cmap,vmin=0.,vmax=norm.vmax) #spoof colorbar
     cbar = fig.colorbar(sc) #spoof colorbar
-    cbar.set_label(r'$\sum$ C per Fraction Of Sky')
-    fig.text(0.62,0.11,r'$\sum$C='+str(round(cntComp,2)))
+    cbar.set_label(r'$\sum$ C per Fraction Of Sky',weight='bold')
+    fig.text(0.625,0.11,r'$\sum$C='+str(round(cntComp,2)))
+    #Save Plots
+    # Save to a File
+    date = unicode(datetime.datetime.now())
+    date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+
+    fname = 'skyObsCompDistribution_' + folder.split('/')[-1] + '_' + date
+    plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
+    plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
+    plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='png', dpi=500)
     plt.show(block=False)
     return fig
 
-def plotSkyScheduledObservationIntegrationDistribution(tDict,fignum=96995):
+def plotSkyScheduledObservationIntegrationDistribution(tDict,fignum=96995, PPoutpath='./'):
     """ Plots Distribution of Stars Scheduled to be Observed on Sky
     Args:
         tDict () - 
@@ -895,8 +938,8 @@ def plotSkyScheduledObservationIntegrationDistribution(tDict,fignum=96995):
         fig
     """
     #Each Triangle on a 2D plot with Hammer Projection
-    close(fignum)
-    fig = figure(num=fignum, figsize=(7,2.5))
+    plt.close(fignum)
+    fig = plt.figure(num=fignum, figsize=(7,2.5))
     gs = GridSpec(1,1, width_ratios=[4,], height_ratios=[1])
     gs.update(wspace=0.06, hspace=0.06) # set the spacing between axes. 
     ax = plt.subplot(gs[0],projection='mollweide')#2D histogram of planet pop
@@ -924,7 +967,7 @@ def plotSkyScheduledObservationIntegrationDistribution(tDict,fignum=96995):
                 #3 Reassign Maximum Values to that Value
                 tmp3 = np.append(tmp2,np.asarray([[tmp2[1,0],np.pi/2.]]),axis=0)
                 tmp4 = np.append(tmp3,np.asarray([[tmp2[0,0],np.pi/2.]]),axis=0)
-                t3 = Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleIntTime']/tDict[tDict.keys()[ind]]['triangleArea'])))
+                t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleIntTime']/tDict[tDict.keys()[ind]]['triangleArea'])))
                 ax.add_patch(t3)
             except:
                 pass
@@ -937,7 +980,7 @@ def plotSkyScheduledObservationIntegrationDistribution(tDict,fignum=96995):
             #3 Reassign Maximum Values to that Value
             tmp3 = np.append(tmp2,np.asarray([[tmp2[1,0],np.pi/2.]]),axis=0)
             tmp4 = np.append(tmp3,np.asarray([[tmp2[0,0],np.pi/2.]]),axis=0)
-            t3 = Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleIntTime']/tDict[tDict.keys()[ind]]['triangleArea'])))
+            t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleIntTime']/tDict[tDict.keys()[ind]]['triangleArea'])))
             ax.add_patch(t3)
             continue
 
@@ -952,7 +995,7 @@ def plotSkyScheduledObservationIntegrationDistribution(tDict,fignum=96995):
                 #3 Reassign Maximum Values to that Value
                 tmp3 = np.append(tmp2,np.asarray([[tmp2[1,0],-np.pi/2.]]),axis=0)
                 tmp4 = np.append(tmp3,np.asarray([[tmp2[0,0],-np.pi/2.]]),axis=0)
-                t3 = Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleIntTime']/tDict[tDict.keys()[ind]]['triangleArea'])))
+                t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleIntTime']/tDict[tDict.keys()[ind]]['triangleArea'])))
                 ax.add_patch(t3)
             except:
                 pass
@@ -965,17 +1008,17 @@ def plotSkyScheduledObservationIntegrationDistribution(tDict,fignum=96995):
             #3 Reassign Maximum Values to that Value
             tmp3 = np.append(tmp2,np.asarray([[tmp2[1,0],-np.pi/2.]]),axis=0)
             tmp4 = np.append(tmp3,np.asarray([[tmp2[0,0],-np.pi/2.]]),axis=0)
-            t3 = Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleIntTime']/tDict[tDict.keys()[ind]]['triangleArea'])))
+            t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleIntTime']/tDict[tDict.keys()[ind]]['triangleArea'])))
             ax.add_patch(t3)
             continue
 
-        t1 = Polygon(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'], color=cmap(norm(tDict[tDict.keys()[ind]]['triangleIntTime']/tDict[tDict.keys()[ind]]['triangleArea'])))
+        t1 = plt.Polygon(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'], color=cmap(norm(tDict[tDict.keys()[ind]]['triangleIntTime']/tDict[tDict.keys()[ind]]['triangleArea'])))
         ax.add_patch(t1)
         del t1
         #### Add mirror patch
         if 'triangleCornerPointsXYZlatlon2' in tDict[tDict.keys()[ind]].keys():
             #DELETE print 'HasKey!'
-            t2 = Polygon(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon2'], color=cmap(norm(tDict[tDict.keys()[ind]]['triangleIntTime'])/tDict[tDict.keys()[ind]]['triangleArea']))
+            t2 = plt.Polygon(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon2'], color=cmap(norm(tDict[tDict.keys()[ind]]['triangleIntTime'])/tDict[tDict.keys()[ind]]['triangleArea']))
             ax.add_patch(t2)
             del t2
 
@@ -985,13 +1028,22 @@ def plotSkyScheduledObservationIntegrationDistribution(tDict,fignum=96995):
 
     sc = ax.scatter([-1000,-1000],[-1000,-1000],c=[norm.vmin,norm.vmax],cmap=cmap,vmin=0.,vmax=norm.vmax) #spoof colorbar
     cbar = fig.colorbar(sc) #spoof colorbar
-    cbar.set_label(r'$\tau$ (d) per Fraction Of Sky')
-    fig.text(0.62,0.11,r'$\sum \tau$='+str(cntIntTime) + ' (d)')
+    cbar.set_label(r'$\tau$ (d) per Fraction Of Sky',weight='bold')
+    fig.text(0.62,0.11,r'$\sum \tau$='+str(np.round(cntIntTime,1)) + ' (d)')
+    #Save Plots
+    # Save to a File
+    date = unicode(datetime.datetime.now())
+    date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+
+    fname = 'skyObsIntTimeDistribution_' + folder.split('/')[-1] + '_' + date
+    plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
+    plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
+    plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='png', dpi=500)
     plt.show(block=False)
     return fig
 
 #NEED TO REDO BECAUSE THIS DOES NOT PLOT MAX COMPLETENESS YET
-def plotSkyMaximumCompletenessDistribution(starDict,fignum=96996):
+def plotSkyMaximumCompletenessDistribution(starDict,fignum=96996, PPoutpath='./'):
     """ Plots Distribution of Star Completeness Scheduled to be Observed on Sky
     Args:
         tDict () - 
@@ -999,8 +1051,8 @@ def plotSkyMaximumCompletenessDistribution(starDict,fignum=96996):
         fig
     """
     #Each Triangle on a 2D plot with Hammer Projection
-    close(fignum)
-    fig = figure(num=fignum, figsize=(7,2.5))
+    plt.close(fignum)
+    fig = plt.figure(num=fignum, figsize=(7,2.5))
     gs = GridSpec(1,1, width_ratios=[4,], height_ratios=[1])
     gs.update(wspace=0.06, hspace=0.06) # set the spacing between axes. 
     ax = plt.subplot(gs[0],projection='mollweide')#2D histogram of planet pop
@@ -1028,7 +1080,7 @@ def plotSkyMaximumCompletenessDistribution(starDict,fignum=96996):
                 #3 Reassign Maximum Values to that Value
                 tmp3 = np.append(tmp2,np.asarray([[tmp2[1,0],np.pi/2.]]),axis=0)
                 tmp4 = np.append(tmp3,np.asarray([[tmp2[0,0],np.pi/2.]]),axis=0)
-                t3 = Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleMaxComp']/tDict[tDict.keys()[ind]]['triangleArea'])))
+                t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleMaxComp']/tDict[tDict.keys()[ind]]['triangleArea'])))
                 ax.add_patch(t3)
             except:
                 pass
@@ -1041,7 +1093,7 @@ def plotSkyMaximumCompletenessDistribution(starDict,fignum=96996):
             #3 Reassign Maximum Values to that Value
             tmp3 = np.append(tmp2,np.asarray([[tmp2[1,0],np.pi/2.]]),axis=0)
             tmp4 = np.append(tmp3,np.asarray([[tmp2[0,0],np.pi/2.]]),axis=0)
-            t3 = Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleMaxComp']/tDict[tDict.keys()[ind]]['triangleArea'])))
+            t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleMaxComp']/tDict[tDict.keys()[ind]]['triangleArea'])))
             ax.add_patch(t3)
             continue
 
@@ -1056,7 +1108,7 @@ def plotSkyMaximumCompletenessDistribution(starDict,fignum=96996):
                 #3 Reassign Maximum Values to that Value
                 tmp3 = np.append(tmp2,np.asarray([[tmp2[1,0],-np.pi/2.]]),axis=0)
                 tmp4 = np.append(tmp3,np.asarray([[tmp2[0,0],-np.pi/2.]]),axis=0)
-                t3 = Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleMaxComp']/tDict[tDict.keys()[ind]]['triangleArea'])))
+                t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleMaxComp']/tDict[tDict.keys()[ind]]['triangleArea'])))
                 ax.add_patch(t3)
             except:
                 pass
@@ -1069,17 +1121,17 @@ def plotSkyMaximumCompletenessDistribution(starDict,fignum=96996):
             #3 Reassign Maximum Values to that Value
             tmp3 = np.append(tmp2,np.asarray([[tmp2[1,0],-np.pi/2.]]),axis=0)
             tmp4 = np.append(tmp3,np.asarray([[tmp2[0,0],-np.pi/2.]]),axis=0)
-            t3 = Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleMaxComp']/tDict[tDict.keys()[ind]]['triangleArea'])))
+            t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleMaxComp']/tDict[tDict.keys()[ind]]['triangleArea'])))
             ax.add_patch(t3)
             continue
 
-        t1 = Polygon(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'], color=cmap(norm(tDict[tDict.keys()[ind]]['triangleMaxComp']/tDict[tDict.keys()[ind]]['triangleArea'])))
+        t1 = plt.Polygon(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'], color=cmap(norm(tDict[tDict.keys()[ind]]['triangleMaxComp']/tDict[tDict.keys()[ind]]['triangleArea'])))
         ax.add_patch(t1)
         del t1
         #### Add mirror patch
         if 'triangleCornerPointsXYZlatlon2' in tDict[tDict.keys()[ind]].keys():
             #DELETE print 'HasKey!'
-            t2 = Polygon(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon2'], color=cmap(norm(tDict[tDict.keys()[ind]]['triangleMaxComp'])/tDict[tDict.keys()[ind]]['triangleArea']))
+            t2 = plt.Polygon(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon2'], color=cmap(norm(tDict[tDict.keys()[ind]]['triangleMaxComp'])/tDict[tDict.keys()[ind]]['triangleArea']))
             ax.add_patch(t2)
             del t2
 
@@ -1089,8 +1141,17 @@ def plotSkyMaximumCompletenessDistribution(starDict,fignum=96996):
 
     sc = ax.scatter([-1000,-1000],[-1000,-1000],c=[norm.vmin,norm.vmax],cmap=cmap,vmin=0.,vmax=norm.vmax) #spoof colorbar
     cbar = fig.colorbar(sc) #spoof colorbar
-    cbar.set_label(r'$\sum C_{max}$ per Fraction Of Sky')
+    cbar.set_label(r'$\sum C_{max}$ per Fraction Of Sky',weight='bold')
     fig.text(0.62,0.11,r'$\sum C_{max}$ stars='+str(cntMaxC))
+    #Save Plots
+    # Save to a File
+    date = unicode(datetime.datetime.now())
+    date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+
+    fname = 'skyObsMaxCdistribution_' + folder.split('/')[-1] + '_' + date
+    plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
+    plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
+    plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='png', dpi=500)
     plt.show(block=False)
     return fig
 
@@ -1242,24 +1303,45 @@ def generatePlannedObsTimeHistHEL2(edges,tDict,fignum=2003,fname='HistogramPlann
     centers = (left_edges+right_edges)/2.
     t_bins = np.asarray(t_bins)
     widths = np.diff(edges)
-    close(fignum)
-    figure(num=fignum)
-    bar(centers,t_bins,width=widths)
-    xlabel('Heliocentric Ecliptic Longitude of Targets (rad)',weight='bold')
-    ylabel('Sum Integration Time (days)',weight='bold')
-    xlim([-np.pi,np.pi])
-    title('Histogram of Planned Total Time',weight='bold')
-    savefig(PPoutpath + fname + str(1) + '.png')
+    plt.close(fignum)
+    fig = plt.figure(num=fignum,figsize=(10,3))
+    plt.bar(centers,t_bins,width=widths,color='black')
+    plt.xlabel('Heliocentric Ecliptic Longitude of Targets (rad)',weight='bold')
+    plt.ylabel('Sum Integration Time (days)',weight='bold')
+    plt.xlim([-np.pi,np.pi])
+    plt.title('Histogram of Planned Total Time',weight='bold')
+    fig.tight_layout()
+    #Save Plots
+    # Save to a File
+    date = unicode(datetime.datetime.now())
+    date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
 
-    close(fignum+1)
-    figure(num=fignum+1)
-    out = bar(centers,t_bins2,width=widths)
-    xlabel('Heliocentric Ecliptic Longitude of Targets (rad)',weight='bold')
-    ylabel('Sum Integration Time (days)',weight='bold')
-    xlim([-np.pi,np.pi])
-    title('Histogram of Planned IntTime',weight='bold')
-    savefig(PPoutpath + fname + str(2) + '.png')
-    show(block=False)
+    fname = 'HistogramPlannedTotalTime_' + folder.split('/')[-1] + '_' + date
+    plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
+    plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
+    plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='png', dpi=500)
+    #savefig(PPoutpath + fname + str(1) + '.png')
+
+    plt.close(fignum+1)
+    fig = plt.figure(num=fignum+1,figsize=(10,3))
+    out = plt.bar(centers,t_bins2,width=widths,color='black')
+    plt.xlabel('Heliocentric Ecliptic Longitude of Targets (rad)',weight='bold')
+    plt.ylabel('Sum Integration Time (days)',weight='bold')
+    plt.xlim([-np.pi,np.pi])
+    plt.title('Histogram of Planned IntTime',weight='bold')
+    fig.tight_layout()
+    
+    #Save Plots
+    # Save to a File
+    date = unicode(datetime.datetime.now())
+    date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+
+    fname = 'HistogramPlannedintTime_' + folder.split('/')[-1] + '_' + date
+    plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
+    plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
+    plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='png', dpi=500)
+    #DELETEsavefig(PPoutpath + fname + str(2) + '.png')
+    plt.show(block=False)
 
     return {'centers':centers, 'timeInBins':np.asarray(t_bins2), 'binWidths':widths}
 
@@ -1300,8 +1382,8 @@ def periodicDist(numOB, OBdur, maxNumDays):#, missionPortion):
     return OBstartTimes, OBendTimes
 
 
-
-close('all')
+prettifyPlot()
+plt.close('all')
 
 #### Inputs ##########################################################
 exoplanetObsTime = 365.25#Maximum amount of observing time
@@ -1331,12 +1413,12 @@ OBdur2 = sort(np.asarray(OBdur2 + tmp))
 
 #Calculate Maximum number of repetitions within exoplanetObsTime
 maxNumRepTot2, maxRepsPerYear2 = maxNumRepInTime(OBdur2,exoplanetObsTime)
-fig = figure(1)
+fig = plt.figure(1)
 #loglog(OBdur2,maxNumRepTot2,marker='o')
-semilogx(OBdur2,maxNumRepTot2,marker='o')
-xlabel('Num Days',weight='bold')
-ylabel('Max Num Reps',weight='bold')
-show(block=False)
+plt.semilogx(OBdur2,maxNumRepTot2,marker='o')
+plt.xlabel('Num Days',weight='bold')
+plt.ylabel('Max Num Reps',weight='bold')
+plt.show(block=False)
 
 
 #### Create Periodic Distribution of OB ##################################
@@ -1365,7 +1447,7 @@ if writeHarmonicToOutputFiles == True:
 #######################################################################################
 #maxNumReps = maxNumYears*maxRepsPerYear2#number of Reps/ number of years #The minimum number of repetitions to go into 1 year in order to finish before 6 years
 
-figure(2)
+plt.figure(2)
 num = np.linspace(0,50,num=50)
 tmp = np.geomspace(0.0001,maxNumDays,num=50)
 frac = 0.6
@@ -1385,14 +1467,14 @@ def dfunc(x):
     return dval
 tmp5 = func(num,maxNumDays)
 
-plot(tmp,num,marker='o',color='blue')
-plot(tmp2,num,marker='o',color='black')
-plot(tmp3,num,marker='o',color='red')
-plot(tmp4,num,marker='o',color='green')
-plot(tmp5,num,marker='o',color='orange')
-ylabel('Points Number',weight='bold')
-xlabel('Start Times',weight='bold')
-show(block=False)
+plt.plot(tmp,num,marker='o',color='blue')
+plt.plot(tmp2,num,marker='o',color='black')
+plt.plot(tmp3,num,marker='o',color='red')
+plt.plot(tmp4,num,marker='o',color='green')
+plt.plot(tmp5,num,marker='o',color='orange')
+plt.ylabel('Points Number',weight='bold')
+plt.xlabel('Start Times',weight='bold')
+plt.show(block=False)
 
 
 ### DELETE THIS ?????????########################
@@ -1433,7 +1515,7 @@ show(block=False)
 import sys, os.path, EXOSIMS, EXOSIMS.MissionSim
 import astropy.units as u
 folder = os.path.normpath(os.path.expandvars('$HOME/Documents/exosims/Scripts'))#EXOSIMS/EXOSIMS/Scripts'))#EXOSIMS/EXOSIMS/Scripts'))
-filename = 'WFIRSTcycle6core.json'#'Dean3June18RS26CXXfZ01OB66PP01SU01.json'#'Dean1June18RS26CXXfZ01OB56PP01SU01.json'#'./TestScripts/04_KeplerLike_Occulter_linearJScheduler.json'#'Dean13May18RS09CXXfZ01OB01PP03SU01.json'#'sS_AYO7.json'#'ICDcontents.json'###'sS_protoTimeKeeping.json'#'sS_AYO3.json'#sS_SLSQPstatic_parallel_ensembleJTWIN.json'#'sS_JTwin.json'#'sS_AYO4.json'#'sS_AYO3.json'
+filename = 'HabEx_4m_TSDD_pop100DD_revisit_20180424.json'#'WFIRSTcycle6core.json'#'WFIRSTcycle6core.json'#'Dean3June18RS26CXXfZ01OB66PP01SU01.json'#'Dean1June18RS26CXXfZ01OB56PP01SU01.json'#'./TestScripts/04_KeplerLike_Occulter_linearJScheduler.json'#'Dean13May18RS09CXXfZ01OB01PP03SU01.json'#'sS_AYO7.json'#'ICDcontents.json'###'sS_protoTimeKeeping.json'#'sS_AYO3.json'#sS_SLSQPstatic_parallel_ensembleJTWIN.json'#'sS_JTwin.json'#'sS_AYO4.json'#'sS_AYO3.json'
 #filename = 'sS_intTime6_KeplerLike2.json'
 scriptfile = os.path.join(folder,filename)
 sim = EXOSIMS.MissionSim.MissionSim(scriptfile,nopar=True)
@@ -1474,7 +1556,7 @@ sum_comp_Cb0 = sum(comp_Cb0[comp_Cb0>0.])
 
 
 
-close('all')
+plt.close('all')
 #### Calculate Ecliptic Latitude and Longitude of Stars
 ra = sim.TargetList.coords.ra.value
 dec = sim.TargetList.coords.dec.value
@@ -1519,12 +1601,12 @@ sumTriangleArea, triangleCornerIndList, triangleAreaList, triangleCenterList = c
 ##########################################################################
 
 #### Re plot Sphere ################################
-close(500672)
-fig = figure(num=500672)
+plt.close(500672)
+fig = plt.figure(num=500672)
 ax = fig.add_subplot(111, projection='3d')
 #ax.scatter(out1kv[:,0], out1kv[:,1], out1kv[:,2], color='black',zorder=1)
-title('Plot of all point-to-point connections on sphere Corrected')
-show(block=False)
+plt.title('Plot of all point-to-point connections on sphere Corrected')
+plt.show(block=False)
 
 #Plot Edges
 plotted = list()
@@ -1542,7 +1624,7 @@ for i in np.arange(len(triangleCenterList)):
 ax.set_xlabel('X',weight='bold')
 ax.set_ylabel('Y',weight='bold')
 ax.set_zlabel('Z',weight='bold')
-show(block=False)
+plt.show(block=False)
 ######################################################################
 
 
@@ -1619,14 +1701,14 @@ for key in tDict.keys():
     lon.append((xyzTolonlat(tDict[key]['triangleCenter']))[0])
     lonIntTime.append(tDict[key]['triangleIntTime'])
     lonTotalTime.append(tDict[key]['triangleIntTime'] + 1.*tDict[key]['count'])
-close(2356)
-fig = figure(num=2356)
-scatter(lon,lonTotalTime)
-show(block=False)
+plt.close(2356)
+fig = plt.figure(num=2356)
+plt.scatter(lon,lonTotalTime)
+plt.show(block=False)
 
 
 
-#### Generat ePReferentially Distributed Integration Times ####################
+#### Generat Preferentially Distributed Integration Times ####################
 barout = generatePlannedObsTimeHistHEL2(edges,tDict)
 numOBassignedToBin, OBstartTimes, OBendTimes = generatePreferentiallyDistributedOB(barout, maxNumRepTot2[12], OBdur2[12], exoplanetObsTime, maxNumYears, loadingPreference='even')
 
@@ -1684,37 +1766,42 @@ if writePrefToOutputFiles == True:
 # plot(np.linspace(-np.pi,np.pi),365.25/(2*np.pi)*np.linspace(0.,2.*np.pi))
 # show(block=False)
 
-
-#### Find Closest Distance between two arbitrary lines ############## #See method line2linev2
-#### Test Distance between two arbitrary lines ##########################
-close(2055121)
-fig = figure(num=2055121)
-ax = fig.add_subplot(111, projection='3d')
-prettifyPlot()
-p0 = np.asarray([0., 0., 0.])
-p1 = np.asarray([1., 1., 2.])
-v0 = np.asarray([1., 0., 1.])
-v1 = np.asarray([0., 1., 0.])
-out = line2linev2(p0,v0,p1,v1)
-t0 = out[4]
-t1 = out[5]
-q0 = out[2]
-q1 = out[3]
-dP = out[1]
-ax.plot([p0[0],p0[0]-t0*v0[0]],[p0[1],p0[1]-t0*v0[1]],[p0[2],p0[2]-t0*v0[2]],color='red')
-ax.plot([p1[0],p1[0]-t1*v1[0]],[p1[1],p1[1]-t1*v1[1]],[p1[2],p1[2]-t1*v1[2]],color='blue')
-ax.scatter(p0[0],p0[1],p0[2],color='black')#starting points
-ax.scatter(p1[0],p1[1],p1[2],color='black')#starting points
-ax.plot([q0[0],q1[0]],[q0[1],q1[1]],[q0[2],q1[2]],color='purple')
-ax.scatter(q0[0],q0[1],q0[2],color='purple')#ending points
-ax.scatter(q1[0],q1[1],q1[2],color='purple')#ending points
-ax.set_xlabel('X',weight='bold')
-ax.set_ylabel('Y',weight='bold')
-ax.set_zlabel('Z',weight='bold')
-ax.scatter(-1,-1,-1,color='white')
-ax.scatter(3,3,3,color='white')
-show(block=False)
-#####################################################################
+def plotClosestDistanceBetweenTwoSkewLines():
+    """ An example plot demonstrating our ability to find the closest distance between two arbitrary
+    skew lines
+    Args:
+    Returns:
+    """
+    #### Find Closest Distance between two arbitrary lines ############## #See method line2linev2
+    #### Test Distance between two arbitrary lines ##########################
+    plt.close(2055121)
+    fig = plt.figure(num=2055121)
+    ax = fig.add_subplot(111, projection='3d')
+    prettifyPlot()
+    p0 = np.asarray([0., 0., 0.])
+    p1 = np.asarray([1., 1., 2.])
+    v0 = np.asarray([1., 0., 1.])
+    v1 = np.asarray([0., 1., 0.])
+    out = line2linev2(p0,v0,p1,v1)
+    t0 = out[4]
+    t1 = out[5]
+    q0 = out[2]
+    q1 = out[3]
+    dP = out[1]
+    ax.plot([p0[0],p0[0]-t0*v0[0]],[p0[1],p0[1]-t0*v0[1]],[p0[2],p0[2]-t0*v0[2]],color='red')
+    ax.plot([p1[0],p1[0]-t1*v1[0]],[p1[1],p1[1]-t1*v1[1]],[p1[2],p1[2]-t1*v1[2]],color='blue')
+    ax.scatter(p0[0],p0[1],p0[2],color='black')#starting points
+    ax.scatter(p1[0],p1[1],p1[2],color='black')#starting points
+    ax.plot([q0[0],q1[0]],[q0[1],q1[1]],[q0[2],q1[2]],color='purple')
+    ax.scatter(q0[0],q0[1],q0[2],color='purple')#ending points
+    ax.scatter(q1[0],q1[1],q1[2],color='purple')#ending points
+    ax.set_xlabel('X',weight='bold')
+    ax.set_ylabel('Y',weight='bold')
+    ax.set_zlabel('Z',weight='bold')
+    ax.scatter(-1,-1,-1,color='white')
+    ax.scatter(3,3,3,color='white')
+    plt.show(block=False)
+    #####################################################################
 
 
 
