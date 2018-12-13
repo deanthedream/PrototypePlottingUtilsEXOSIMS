@@ -217,7 +217,7 @@ class DRMtoTimelinePlot(object):
         ax.set_yticks(y_pos)
         ax.set_yticklabels(('Obs','OB'),fontsize=12)
         ax.set_xlabel('Current Normalized Time (days)', weight='bold',fontsize=12)
-        title('Mission Timeline for runName: ' + pkldir + '\nand pkl file: ' + pklfname, weight='bold',fontsize=12)
+        title('Mission Timeline for runName: ' + pkldir[0] + '\nand pkl file: ' + pklfname, weight='bold',fontsize=12)
         plt.tight_layout()
         plt.show(block=False)
         savefig('/'.join(pklfile.split('/')[:-1]) + '/' + pkldir + 'Timeline' + '.png')

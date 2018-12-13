@@ -154,6 +154,7 @@ if __name__ == "__main__":
         rc('font',weight='bold') 
         ax = fig.add_subplot(111)
 
+        #TURN THIS SECTION INTO A N YEAR THING
         truthArr1 = np.asarray(arrival_times) < 365.25
         arrival_times1 = [arrival_times[np.where(truthArr1)[0][ii]] for ii in np.arange(len(np.where(truthArr1)[0])) if (truthArr1)[ii]]
         det_times1 = [det_times[np.where(truthArr1)[0][ii]] for ii in np.arange(len(np.where(truthArr1)[0])) if (truthArr1)[ii]]
@@ -167,7 +168,7 @@ if __name__ == "__main__":
         det_times3 = [det_times[ii] for ii in np.where(truthArr3)[0]]
 
 
-
+        #TURN THIS SECTION INTO AN N YEAR THING
         # Plot All Detection Observations
         ind = 0
         obs = 0
