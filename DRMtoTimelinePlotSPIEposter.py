@@ -43,6 +43,7 @@ from numpy import nan
 import matplotlib.pyplot as plt
 import argparse
 import json
+import pdb
 
 
 if __name__ == "__main__":
@@ -83,6 +84,9 @@ if __name__ == "__main__":
 
     #Iterate over all pkl files
     for cnt in np.arange(len(pklPaths)):
+        
+
+
         try:
             with open(pklPaths[cnt], 'rb') as f:#load from cache
                 DRM = pickle.load(f)
@@ -105,21 +109,32 @@ if __name__ == "__main__":
 
         #det_mode = filter(lambda mode: mode['detectionMode'] == True, allModes)[0]
         #mode = det_mode
-        arrival_times = [DRM['DRM'][i]['arrival_time'].value for i in np.arange(len(DRM['DRM']))]
+        LD = np.arange(len(DRM['DRM']))
+        arrival_times = [DRM['DRM'][i]['arrival_time'].value for i in LD]
         sumOHTIME = outspec['settlingTime'] + outspec['starlightSuppressionSystems'][0]['ohTime']
-        det_times = [DRM['DRM'][i]['det_time'].value*(mode['timeMultiplier'] - 1.)+sumOHTIME for i in np.arange(len(DRM['DRM']))]
-        det_timesROUNDED = [round(DRM['DRM'][i]['det_time'].value*(mode['timeMultiplier'] - 1.)+sumOHTIME,1) for i in np.arange(len(DRM['DRM']))]
-        ObsNums = [DRM['DRM'][i]['ObsNum'] for i in np.arange(len(DRM['DRM']))]
+        det_times = [DRM['DRM'][i]['det_time'].value*(mode['timeMultiplier'])+sumOHTIME for i in LD]
+        det_timesROUNDED = [round(DRM['DRM'][i]['det_time'].value*(mode['timeMultiplier'])+sumOHTIME,1) for i in LD]
+        ObsNums = [DRM['DRM'][i]['ObsNum'] for i in LD]
         y_vals = np.zeros(len(det_times)).tolist()
-        char_times = [DRM['DRM'][i]['char_time'].value*(1.+outspec['charMargin'])+sumOHTIME*(DRM['DRM'][i]['char_time'].value > 0.) for i in np.arange(len(DRM['DRM']))]
+        char_times = [DRM['DRM'][i]['char_time'].value*(1.+outspec['charMargin'])+sumOHTIME*(DRM['DRM'][i]['char_time'].value > 0.) for i in LD]
         OBdurations = np.asarray(outspec['OBendTimes'])-np.asarray(outspec['OBstartTimes'])
         #sumOHTIME = [1 for i in np.arange(len(DRM['DRM']))]
         print(sum(det_times))
         print(sum(char_times))
 
+        from pylab import *
+        arr = [DRM['DRM'][i]['arrival_time'].value for i in np.arange(len(DRM['DRM']))]
+        dt = [DRM['DRM'][i]['det_time'].value + 1. for i in np.arange(len(DRM['DRM']))]
+
+        fig = figure()
+        ax = fig.add_subplot(111)
+        colors=['red','blue']
+        for i in np.arange(len(arr)):
+            ax.barh(1., dt[i], align='center', left=arr[i],color=colors[int(i) % len(colors)])
+        plt.show(block=False)
+
 
         #Check if plotting font #########################################################
-
         tmpfig = plt.figure(figsize=(20,5),num=0)
         ax = tmpfig.add_subplot(111)
         t = ax.text(0, 0, "Obs#   ,  d", ha='center',va='center',rotation='vertical', fontsize=8)
@@ -128,7 +143,7 @@ if __name__ == "__main__":
         Obstxtwidth = bb.width#Width of text
         Obstxtheight = bb.height#height of text
         FIGwidth, FIGheight = tmpfig.get_size_inches()*tmpfig.dpi
-        plt.show(block=False)
+        #plt.show(block=False)
         plt.close()
         daysperpixelapprox = max(arrival_times)/FIGwidth#approximate #days per pixel
         if mean(det_times)*0.8/daysperpixelapprox > Obstxtwidth:
@@ -144,7 +159,7 @@ if __name__ == "__main__":
         OBtxtwidth = bb.width#Width of text
         OBtxtheight = bb.height#height of text
         FIGwidth, FIGheight = tmpfig.get_size_inches()*tmpfig.dpi
-        plt.show(block=False)
+        #plt.show(block=False)
         plt.close()
         if mean(OBdurations)*0.8/daysperpixelapprox > OBtxtwidth:
             OBtextBool = True
@@ -153,17 +168,7 @@ if __name__ == "__main__":
         #################################################################################
 
 
-        #######################################################################
-        # Plotting 
-        colors = 'rb'#'rgbwmc'
-        patch_handles = []
-        fig = plt.figure(figsize=(20,3+int(np.ceil(max(arrival_times)/365.25))/2.),num=cnt)
-        plt.rc('axes',linewidth=2)
-        plt.rc('lines',linewidth=2)
-        plt.rcParams['axes.linewidth']=2
-        plt.rc('font',weight='bold') 
-        ax = fig.add_subplot(111)
-
+        ######################################################################
         #Finds arrival times that occur within that year
         ObsNumsL = list()
         det_timesL = list()
@@ -176,26 +181,18 @@ if __name__ == "__main__":
             det_timesL.append([det_times[ii] for ii in np.where(truthArr)[0]])
             char_timesL.append([char_times[ii] for ii in np.where(truthArr)[0]])
             ObsNumsL.append([ObsNums[ii] for ii in np.where(truthArr)[0]])
-            #arrival_timesL.append([arrival_times[np.where(truthArr)[0][ii]] for ii in np.arange(len(np.where(truthArr)[0])) if (truthArr)[ii]])
-            #det_timesL.append([det_times[np.where(truthArr)[0][ii]] for ii in np.arange(len(np.where(truthArr)[0])) if (truthArr)[ii]])
-            #char_timesL.append([char_times[np.where(truthArr)[0][ii]] for ii in np.arange(len(np.where(truthArr)[0])) if (truthArr)[ii]])
-            #ObsNumsL.append([ObsNums[np.where(truthArr)[0][ii]] for ii in np.arange(len(np.where(truthArr)[0])) if (truthArr)[ii]])
+        #######################################################################
 
-        # print saltyburrito
-
-        # #TURN THIS SECTION INTO A N YEAR THING
-        # truthArr1 = np.asarray(arrival_times) < 365.25
-        # arrival_times1 = [arrival_times[np.where(truthArr1)[0][ii]] for ii in np.arange(len(np.where(truthArr1)[0])) if (truthArr1)[ii]]
-        # det_times1 = [det_times[np.where(truthArr1)[0][ii]] for ii in np.arange(len(np.where(truthArr1)[0])) if (truthArr1)[ii]]
-
-        # truthArr2 = (np.asarray(arrival_times) >= 365.25*1.)*(np.asarray(arrival_times) < 365.25*2.)
-        # arrival_times2 = [arrival_times[ii]-365.25 for ii in np.where(truthArr2)[0]]
-        # det_times2 = [det_times[ii] for ii in np.where(truthArr2)[0]]
-
-        # truthArr3 = (np.asarray(arrival_times) >= 365.25*2.)
-        # arrival_times3 = [arrival_times[ii]-365.25*2. for ii in np.where(truthArr3)[0]]
-        # det_times3 = [det_times[ii] for ii in np.where(truthArr3)[0]]
-
+        #######################################################################
+        # Plotting 
+        colors = 'rb'#'rgbwmc'
+        patch_handles = []
+        fig = plt.figure(figsize=(20,3+int(np.ceil(max(arrival_times)/365.25))/2.),num=cnt)
+        plt.rc('axes',linewidth=2)
+        plt.rc('lines',linewidth=2)
+        plt.rcParams['axes.linewidth']=2
+        plt.rc('font',weight='bold') 
+        ax = fig.add_subplot(111)
 
         char_color=(0./255.,128/255.,0/255.)
 
@@ -219,86 +216,7 @@ if __name__ == "__main__":
                 if ObstextBool: 
                     ax.text(x, y, "Obs#%d, %dd" % (l,det_time), ha='center',va='center',rotation='vertical', fontsize=8)
 
-
-
-        # #TURN THIS SECTION INTO AN N YEAR THING
-        # # Plot All Detection Observations
-        # ind = 0
-        # obs = 0
-        # for (det_time, l, char_time) in zip(det_times1, ObsNums, char_times):
-        #     #print det_time, l
-        #     patch_handles.append(ax.barh(3, det_time, align='center', left=arrival_times1[ind],
-        #         color=colors[int(obs) % len(colors)]))
-        #     if not char_time == 0.:
-        #         ax.barh(3, char_time, align='center', left=arrival_times1[ind]+det_time,color=(0./255.,128/255.,0/255.))
-        #     ind += 1
-        #     obs += 1
-        #     patch = patch_handles[-1][0] 
-        #     bl = patch.get_xy()
-        #     x = 0.5*patch.get_width() + bl[0]
-        #     y = 0.5*patch.get_height() + bl[1]
-        #     plt.rc('axes',linewidth=2)
-        #     plt.rc('lines',linewidth=2)
-        #     plt.rcParams['axes.linewidth']=2
-        #     plt.rc('font',weight='bold')
-        #     if ObstextBool: 
-        #         ax.text(x, y, "Obs#%d, %dd" % (l,det_time), ha='center',va='center',rotation='vertical', fontsize=8)
-
-        # ind = 0
-        # obs = 0
-        # for (det_time, l, char_time) in zip(det_times2, ObsNums, char_times):
-        #     #print det_time, l
-        #     patch_handles.append(ax.barh(2, det_time, align='center', left=arrival_times2[ind],
-        #         color=colors[int(obs) % len(colors)]))
-        #     if not char_time == 0.:
-        #         ax.barh(2, char_time, align='center', left=arrival_times2[ind]+det_time,color=(0./255.,128/255.,0/255.))
-        #     ind += 1
-        #     obs += 1
-        #     patch = patch_handles[-1][0] 
-        #     bl = patch.get_xy()
-        #     x = 0.5*patch.get_width() + bl[0]
-        #     y = 0.5*patch.get_height() + bl[1]
-        #     plt.rc('axes',linewidth=2)
-        #     plt.rc('lines',linewidth=2)
-        #     plt.rcParams['axes.linewidth']=2
-        #     plt.rc('font',weight='bold')
-        #     if ObstextBool: 
-        #         ax.text(x, y, "Obs#%d, %dd" % (l,det_time), ha='center',va='center',rotation='vertical', fontsize=8)
-
-        # ind = 0
-        # obs = 0
-        # for (det_time, l, char_time) in zip(det_times3, ObsNums, char_times):
-        #     #print det_time, l
-        #     patch_handles.append(ax.barh(1, det_time, align='center', left=arrival_times3[ind],
-        #         color=colors[int(obs) % len(colors)]))
-        #     if not char_time == 0.:
-        #         ax.barh(1, char_time, align='center', left=arrival_times3[ind]+det_time,color=(0./255.,128/255.,0/255.))
-        #     ind += 1
-        #     obs += 1
-        #     patch = patch_handles[-1][0] 
-        #     bl = patch.get_xy()
-        #     x = 0.5*patch.get_width() + bl[0]
-        #     y = 0.5*patch.get_height() + bl[1]
-        #     plt.rc('axes',linewidth=2)
-        #     plt.rc('lines',linewidth=2)
-        #     plt.rcParams['axes.linewidth']=2
-        #     plt.rc('font',weight='bold')
-        #     if ObstextBool: 
-        #         ax.text(x, y, "Obs#%d, %dd" % (l,det_time), ha='center',va='center',rotation='vertical', fontsize=8)
-
-        # # Plot Observation Blocks
-        # patch_handles2 = []
-        # for (OBnum, OBdur, OBstart) in zip(xrange(len(outspec['OBendTimes'])), OBdurations, np.asarray(outspec['OBstartTimes'])):
-        #     patch_handles2.append(ax.barh(1, OBdur, align='center', left=OBstart, hatch='//',linewidth=2.0, edgecolor='black'))
-        #     patch = patch_handles2[-1][0] 
-        #     bl = patch.get_xy()
-        #     x = 0.5*patch.get_width() + bl[0]
-        #     y = 0.5*patch.get_height() + bl[1]
-        #     if OBtextBool:
-        #         ax.text(x, y, "OB#%d, dur.= %dd" % (OBnum,OBdur), ha='center',va='center',rotation='horizontal',fontsize=12)
-
         #Set Plot Xlimit so the end of the timeline is at the end of the figure box
-        # ax.set_xlim([None, outspec['missionLife']*365.25])
         ax.set_xlim([None, 365.25])
 
 
@@ -348,7 +266,3 @@ if __name__ == "__main__":
         # savefig('/'.join(pklPaths[cnt].split('/')[:-1]) + '/' + dirs[cnt] + 'SkyCoverage' + '.png')
         # savefig('/'.join(pklPaths[cnt].split('/')[:-1]) + '/' + dirs[cnt] + 'SkyCoverage' + '.svg')
         # savefig('/'.join(pklPaths[cnt].split('/')[:-1]) + '/' + dirs[cnt] + 'SkyCoverage' + '.eps')
-
-
-        
-
