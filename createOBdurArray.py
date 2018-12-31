@@ -412,7 +412,7 @@ def removeCoplanarConnectingLines(inds_of_closest, out1kv):
 
                             #All of these should intersect
                             pts = out1kv[list(all4)] #Each of the points
-                            thresh = 1e-3 # intersection criteria choosen for points
+                            thresh = 1.5*1e-3 # intersection criteria choosen for points
                             if min(np.abs(np.linalg.norm(out1kv[list(all4)] - q0,axis=1))) < thresh: #If the lines intersect at a point
                                 continue
                             elif np.abs(np.dot(v0Hat,v1Hat)) > 0.8: # The lines are approximately parallel
@@ -572,27 +572,37 @@ def createTriangleCornerSets(sInds,comp,hEclipLat,hEclipLon,out1kv,triangleCorne
         set(relevantCornersArr).intersection(set())
         relevantTriangles2 = deepcopy([tri for tri in relevantTriangles if len(tri.intersection(set([edgePT]))) > 0]) # sort out triangles with center and edgePT
         assert len([True for tri in relevantTriangles2 if len(tri) < 3]) == 0, 'All sets in relevantTriangles must have length 3'
-        #print 'rT2: ' + str(relevantTriangles2)
-        relevantTriangles2[0].remove(edgePT)
-        relevantTriangles2[1].remove(edgePT)
-        relevantTriangles2[0].remove(indOfMin)
-        relevantTriangles2[1].remove(indOfMin)
-
-        # Want vectors from edgePT to both items in relvantTriangles2
-        cornerInd0 = np.where(relevantCornersArr==list(relevantTriangles2[0])[0])[0][0] #projected_r0i are tied to relevantCornersArr, need that index
-        cornerInd1 = np.where(relevantCornersArr==list(relevantTriangles2[1])[0])[0][0]
-        oc0 = projected_r0i[cornerInd0] - projected_r0i[indClosestEdge]
-        oc1 = projected_r0i[cornerInd1] - projected_r0i[indClosestEdge]
-
-        # 3rd Corner is whichever vector dot perpendicular is positive (should only be 1)
-        if np.dot(oc0,r0iToPTDist[indClosestEdge]) > 0:
+        
+        #Check if there are 2 relevant triangles or 1
+        if len(relevantTriangles2) == 1:
+            relevantTriangles2[0].remove(edgePT)
+            relevantTriangles2[0].remove(indOfMin)
+            cornerInd0 = np.where(relevantCornersArr==list(relevantTriangles2[0])[0])[0][0] #projected_r0i are tied to relevantCornersArr, need that index
+            oc0 = projected_r0i[cornerInd0] - projected_r0i[indClosestEdge]
+            #hmmm was an error imposing this line assert np.dot(oc0,r0iToPTDist[indClosestEdge]) > 0, 'Only 1 Triangle so this must be true'
             starAssignedTriangleCorners.append(set([indOfMin, edgePT, relevantCornersArr[cornerInd0]]))
-            #return
-        elif np.dot(oc1,r0iToPTDist[indClosestEdge]) > 0:
-            starAssignedTriangleCorners.append(set([indOfMin, edgePT, relevantCornersArr[cornerInd1]]))
-            #return
-        else:
-            print saltyburrito # there was some kind of error I didn't  anticipate
+        elif len(relevantTriangles2) == 2:
+            #print 'rT2: ' + str(relevantTriangles2)
+            relevantTriangles2[0].remove(edgePT)
+            relevantTriangles2[1].remove(edgePT)
+            relevantTriangles2[0].remove(indOfMin)
+            relevantTriangles2[1].remove(indOfMin)
+
+            # Want vectors from edgePT to both items in relvantTriangles2
+            cornerInd0 = np.where(relevantCornersArr==list(relevantTriangles2[0])[0])[0][0] #projected_r0i are tied to relevantCornersArr, need that index
+            cornerInd1 = np.where(relevantCornersArr==list(relevantTriangles2[1])[0])[0][0]
+            oc0 = projected_r0i[cornerInd0] - projected_r0i[indClosestEdge]
+            oc1 = projected_r0i[cornerInd1] - projected_r0i[indClosestEdge]
+
+            # 3rd Corner is whichever vector dot perpendicular is positive (should only be 1)
+            if np.dot(oc0,r0iToPTDist[indClosestEdge]) > 0:
+                starAssignedTriangleCorners.append(set([indOfMin, edgePT, relevantCornersArr[cornerInd0]]))
+                #return
+            elif np.dot(oc1,r0iToPTDist[indClosestEdge]) > 0:
+                starAssignedTriangleCorners.append(set([indOfMin, edgePT, relevantCornersArr[cornerInd1]]))
+                #return
+            else:
+                print saltyburrito # there was some kind of error I didn't  anticipate
     return starAssignedTriangleCorners
     ######################################################################
 
@@ -729,6 +739,10 @@ def plotSkyScheduledObservationCountDistribution(tDict,fignum=96993, PPoutpath='
     #ax.set_ylim(bottom=ymin,top=ymax)
     cmap = cm.viridis
     norm = mpl.colors.Normalize(vmin=0,vmax=max([tDict[key]['count']/tDict[key]['triangleArea'] for key in tDict.keys()]))
+    tmp4 = np.asarray([[-np.pi,-np.pi/2.],[-np.pi,np.pi/2.],[np.pi,np.pi/2.],[np.pi,-np.pi/2.]])
+    t3 = plt.Polygon(tmp4,color=cmap(0))
+    ax.add_patch(t3)
+    del t3
     #### Plot Each Surface with specific color scaled based on max(countsForColoring)
     for ind in np.arange(len(tDict.keys())):
         #Make Exceptions and Spoof North Pole Plotting ()
@@ -842,6 +856,10 @@ def plotSkyScheduledObservationCompletenessDistribution(tDict,fignum=96994, PPou
     #ax.set_ylim(bottom=ymin,top=ymax)
     cmap = cm.viridis
     norm = mpl.colors.Normalize(vmin=0,vmax=max([tDict[key]['triangleComp']/tDict[key]['triangleArea'] for key in tDict.keys()]))
+    tmp4 = np.asarray([[-np.pi,-np.pi/2.],[-np.pi,np.pi/2.],[np.pi,np.pi/2.],[np.pi,-np.pi/2.]])
+    t3 = plt.Polygon(tmp4,color=cmap(0))
+    ax.add_patch(t3)
+    del t3
     #### Plot Each Surface with specific color scaled based on max(countsForColoring)
     for ind in np.arange(len(tDict.keys())):
         #Make Exceptions and Spoof North Pole Plotting ()
@@ -903,6 +921,8 @@ def plotSkyScheduledObservationCompletenessDistribution(tDict,fignum=96994, PPou
         t1 = plt.Polygon(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'], color=cmap(norm(tDict[tDict.keys()[ind]]['triangleComp']/tDict[tDict.keys()[ind]]['triangleArea'])))
         ax.add_patch(t1)
         del t1
+        #plt.show(block=False)
+        #raw_input()
         #### Add mirror patch
         if 'triangleCornerPointsXYZlatlon2' in tDict[tDict.keys()[ind]].keys():
             #DELETE print 'HasKey!'
@@ -954,6 +974,11 @@ def plotSkyScheduledObservationIntegrationDistribution(tDict,fignum=96995, PPout
     #ax.set_ylim(bottom=ymin,top=ymax)
     cmap = cm.viridis
     norm = mpl.colors.Normalize(vmin=0,vmax=max([tDict[key]['triangleIntTime']/tDict[key]['triangleArea'] for key in tDict.keys()]))
+    tmp4 = np.asarray([[-np.pi,-np.pi/2.],[-np.pi,np.pi/2.],[np.pi,np.pi/2.],[np.pi,-np.pi/2.]])
+    t3 = plt.Polygon(tmp4,color=cmap(0))
+    ax.add_patch(t3)
+    del t3
+
     #### Plot Each Surface with specific color scaled based on max(countsForColoring)
     for ind in np.arange(len(tDict.keys())):
         #Make Exceptions and Spoof North Pole Plotting ()
@@ -1067,6 +1092,10 @@ def plotSkyMaximumCompletenessDistribution(starDict,fignum=96996, PPoutpath='./'
     #ax.set_ylim(bottom=ymin,top=ymax)
     cmap = cm.viridis
     norm = mpl.colors.Normalize(vmin=0,vmax=max([tDict[key]['triangleMaxComp']/tDict[key]['triangleArea'] for key in tDict.keys()]))
+    tmp4 = np.asarray([[-np.pi,-np.pi/2.],[-np.pi,np.pi/2.],[np.pi,np.pi/2.],[np.pi,-np.pi/2.]])
+    t3 = plt.Polygon(tmp4,color=cmap(0))
+    ax.add_patch(t3)
+    del t3
     #### Plot Each Surface with specific color scaled based on max(countsForColoring)
     for ind in np.arange(len(tDict.keys())):
         #Make Exceptions and Spoof North Pole Plotting ()
@@ -1514,8 +1543,8 @@ plt.show(block=False)
 #### Calculate the Maximum Star Completeness of all 651 Targets under Consideration #####################
 import sys, os.path, EXOSIMS, EXOSIMS.MissionSim
 import astropy.units as u
-folder = os.path.normpath(os.path.expandvars('$HOME/Documents/exosims/Scripts'))#EXOSIMS/EXOSIMS/Scripts'))#EXOSIMS/EXOSIMS/Scripts'))
-filename = 'HabEx_4m_TSDD_pop100DD_revisit_20180424.json'#'WFIRSTcycle6core.json'#'WFIRSTcycle6core.json'#'Dean3June18RS26CXXfZ01OB66PP01SU01.json'#'Dean1June18RS26CXXfZ01OB56PP01SU01.json'#'./TestScripts/04_KeplerLike_Occulter_linearJScheduler.json'#'Dean13May18RS09CXXfZ01OB01PP03SU01.json'#'sS_AYO7.json'#'ICDcontents.json'###'sS_protoTimeKeeping.json'#'sS_AYO3.json'#sS_SLSQPstatic_parallel_ensembleJTWIN.json'#'sS_JTwin.json'#'sS_AYO4.json'#'sS_AYO3.json'
+folder = os.path.normpath(os.path.expandvars('$HOME/Documents/exosims/Scripts/WFIRSTCompSpecPriors_WFIRSTcycle6core_3momaxC'))#EXOSIMS/EXOSIMS/Scripts'))#EXOSIMS/EXOSIMS/Scripts'))
+filename = 'WFIRSTcycle6core_CSAG13_PPSAG13.json'#'HabEx_4m_TSDD_pop100DD_revisit_20180424.json'#'WFIRSTcycle6core.json'#'WFIRSTcycle6core.json'#'Dean3June18RS26CXXfZ01OB66PP01SU01.json'#'Dean1June18RS26CXXfZ01OB56PP01SU01.json'#'./TestScripts/04_KeplerLike_Occulter_linearJScheduler.json'#'Dean13May18RS09CXXfZ01OB01PP03SU01.json'#'sS_AYO7.json'#'ICDcontents.json'###'sS_protoTimeKeeping.json'#'sS_AYO3.json'#sS_SLSQPstatic_parallel_ensembleJTWIN.json'#'sS_JTwin.json'#'sS_AYO4.json'#'sS_AYO3.json'
 #filename = 'sS_intTime6_KeplerLike2.json'
 scriptfile = os.path.join(folder,filename)
 sim = EXOSIMS.MissionSim.MissionSim(scriptfile,nopar=True)
@@ -1584,7 +1613,7 @@ x0 = v.flatten() # takes v and converts it into [x0,y0,z0,x1,y1,z1,...,xn,yn,zn]
 out1k = minimize(f,x0, method='SLSQP',constraints=(con), options={'ftol':1e-4, 'maxiter':1000}) # run optimization problem for 1000 iterations
 out1kx, out1ky, out1kz = splitOut(out1k)
 out1kv = np.asarray([[out1kx[i], out1ky[i], out1kz[i]] for i in np.arange(len(out1kx))]) #These are the points of each ind
-dist1k = pt_pt_distances(out1kv) # for informational purposes: distances between points on sphere
+dist1k, inds1k = pt_pt_distances(out1kv) # for informational purposes: distances between points on sphere
 ####################################################################
 
 #### Calculate closest points to each point on unit sphere ################
@@ -1640,12 +1669,20 @@ tDict = createtDict(triangleCornerIndList,triangleAreaList,triangleCenterList,ou
 tDict = distributeStarsIntoBins(tDict,starAssignedTriangleCorners,sInds[comp>0])
 ######################################################################
 
+# #### Zero Fill tDict ################################################
+# tDict = zeroFilltDict(tDict)
+# #####################################################################
+
 #### Plot Observation Schedule Sky Count Distribution ################
 fig = plotSkyScheduledObservationCountDistribution(tDict)
 ######################################################################
 
 #### Distribut Optimized Star Completeness Into Bins #################
 for key in tDict.keys():#Iterate over triangles
+    if tDict[key]['sIndsWithin'] == []:
+        tDict[key]['triangleComp'] = 0.
+        tDict[key]['triangleIntTime'] = 0.
+        tDict[key]['triangleMaxComp'] = 0.
     for sInd in tDict[key]['sIndsWithin']:#iterate over sIndsWithin
         try:
             tDict[key]['triangleComp'] += comp[sInd]
@@ -1659,6 +1696,7 @@ for key in tDict.keys():#Iterate over triangles
             tDict[key]['triangleMaxComp'] += comp_inf[sInd]
         except:
             tDict[key]['triangleMaxComp'] = comp_inf[sInd]
+
 ######################################################################
 
 #### Plot Observation Schedule Sky Completeness Distribution #########
@@ -1804,5 +1842,12 @@ def plotClosestDistanceBetweenTwoSkewLines():
     #####################################################################
 
 
-
+##################################
+####  Print out Observation Stats
+lines = []
+lines.append('min: ' + str(min(t_dets[t_dets.value>1e-10])) + '\n')
+lines.append('max: ' + str(max(t_dets[t_dets.value>1e-10])) + '\n')
+lines.append('mean: ' + str(mean(t_dets[t_dets.value>1e-10])) + '\n')
+lines.append('sum(IntTime+OHTime): ' + str(len(t_dets[t_dets.value>1e-10])*1.+sum(t_dets.value)) + '\n')
+lines.append()
 
