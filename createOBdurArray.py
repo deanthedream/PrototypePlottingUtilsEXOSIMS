@@ -1281,66 +1281,108 @@ def generatePlannedObsTimeHistHEL2(edges,tDict,fignum=2003,fname='HistogramPlann
     lon = list() # contains traingel longitudes
     lonIntTime = list() # contains intTimes in each traingle
     lonTotalTime = list() # contains totalTimes in each triangle
+    starCount = list() # contains starCount
+    starComps = list()
     for key in tDict.keys():
         lon.append((xyzTolonlat(tDict[key]['triangleCenter']))[0])
         lonIntTime.append(tDict[key]['triangleIntTime'])
         lonTotalTime.append(tDict[key]['triangleIntTime'] + 1.*tDict[key]['count'])
+        starCount.append(1.*tDict[key]['count'])
+        starComps.append(tDict[key]['triangleComp'])
     lonTotalTime = np.asarray(lonTotalTime)
     lonIntTime = np.asarray(lonIntTime)
+    starCount = np.asarray(starCount)
+    starComps = np.asarray(starComps)
     #####################################################################
 
     #### distribute totalTime and intTime into bins #####################
     t_bins = list()
     t_bins2 = list()
+    scBins = list()
+    scompBins = list()
     for i in np.arange(len(edges)-1):
-        t_bins.append(sum(lonTotalTime[np.where((edges[i] <= lon)*(lon <= edges[i+1]))[0]]))
-        t_bins2.append(sum(lonIntTime[np.where((edges[i] <= lon)*(lon <= edges[i+1]))[0]]))
+        t_bins.append(sum(lonTotalTime[np.where((edges[i] <= lon)*(lon < edges[i+1]))[0]]))
+        t_bins2.append(sum(lonIntTime[np.where((edges[i] <= lon)*(lon < edges[i+1]))[0]]))
+        scBins.append(sum(starCount[np.where((edges[i] <= lon)*(lon < edges[i+1]))[0]]))
+        scompBins.append(sum(starComps[np.where((edges[i] <= lon)*(lon < edges[i+1]))[0]]))
     #####################################################################
 
-    #Plot t_bins in Histogram
+    #### intTime + target overhead
     left_edges = edges[:-1]
     right_edges = edges[1:]
     centers = (left_edges+right_edges)/2.
     t_bins = np.asarray(t_bins)
     widths = np.diff(edges)
     plt.close(fignum)
-    fig = plt.figure(num=fignum,figsize=(10,3))
+    fig = plt.figure(num=fignum,figsize=(10,2))
     plt.bar(centers,t_bins,width=widths,color='black')
     plt.xlabel('Heliocentric Ecliptic Longitude of Targets (rad)',weight='bold')
-    plt.ylabel('Sum Integration Time (days)',weight='bold')
+    plt.ylabel('Integration\nTime (days)',weight='bold')
     plt.xlim([-np.pi,np.pi])
-    plt.title('Histogram of Planned Total Time',weight='bold')
+    plt.title('Histogram of Planned Int Time and Overhead Time',weight='bold')
     fig.tight_layout()
     #Save Plots
-    # Save to a File
     date = unicode(datetime.datetime.now())
     date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
-
-    fname = 'HistogramPlannedTotalTime_' + folder.split('/')[-1] + '_' + date
+    fname = 'HistogramPlannedIntTimeandOHtime_' + folder.split('/')[-1] + '_' + date
     plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
     plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
     plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='png', dpi=500)
-    #savefig(PPoutpath + fname + str(1) + '.png')
+    
 
+    #### Planned Int Time only
     plt.close(fignum+1)
-    fig = plt.figure(num=fignum+1,figsize=(10,3))
+    fig = plt.figure(num=fignum+1,figsize=(10,2))
     out = plt.bar(centers,t_bins2,width=widths,color='black')
     plt.xlabel('Heliocentric Ecliptic Longitude of Targets (rad)',weight='bold')
-    plt.ylabel('Sum Integration Time (days)',weight='bold')
+    plt.ylabel('Integration\nTime (days)',weight='bold')
     plt.xlim([-np.pi,np.pi])
     plt.title('Histogram of Planned IntTime',weight='bold')
     fig.tight_layout()
-    
     #Save Plots
-    # Save to a File
     date = unicode(datetime.datetime.now())
     date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
-
     fname = 'HistogramPlannedintTime_' + folder.split('/')[-1] + '_' + date
     plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
     plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
     plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='png', dpi=500)
-    #DELETEsavefig(PPoutpath + fname + str(2) + '.png')
+
+    #### Plot Target Count
+    plt.close(fignum+2)
+    fig = plt.figure(num=fignum+2,figsize=(10,2))
+    out = plt.bar(centers,scBins,width=widths,color='black')
+    plt.xlabel('Heliocentric Ecliptic Longitude of Targets (rad)',weight='bold')
+    plt.ylabel('Targets',weight='bold')
+    plt.xlim([-np.pi,np.pi])
+    plt.title('Histogram of Planned Targets',weight='bold')
+    fig.tight_layout()
+    #Save Plots
+    date = unicode(datetime.datetime.now())
+    date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+    fname = 'HistogramPlannedTargets_' + folder.split('/')[-1] + '_' + date
+    plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
+    plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
+    plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='png', dpi=500)
+    
+    #### Plot Target Comp
+    plt.close(fignum+3)
+    fig = plt.figure(num=fignum+3,figsize=(10,2))
+    out = plt.bar(centers,scompBins,width=widths,color='black')
+    plt.xlabel('Heliocentric Ecliptic Longitude of Targets (rad)',weight='bold')
+    plt.ylabel('Completeness',weight='bold')
+    plt.xlim([-np.pi,np.pi])
+    plt.title('Histogram of Planned Completeness',weight='bold')
+    fig.tight_layout()
+    #Save Plots
+    date = unicode(datetime.datetime.now())
+    date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+    fname = 'HistogramPlannedComp_' + folder.split('/')[-1] + '_' + date
+    plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
+    plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
+    plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='png', dpi=500)
+
+    ####
+
     plt.show(block=False)
 
     return {'centers':centers, 'timeInBins':np.asarray(t_bins2), 'binWidths':widths}
@@ -1515,7 +1557,7 @@ plt.show(block=False)
 import sys, os.path, EXOSIMS, EXOSIMS.MissionSim
 import astropy.units as u
 folder = os.path.normpath(os.path.expandvars('$HOME/Documents/exosims/Scripts'))#EXOSIMS/EXOSIMS/Scripts'))#EXOSIMS/EXOSIMS/Scripts'))
-filename = 'HabEx_4m_TSDD_pop100DD_revisit_20180424.json'#'WFIRSTcycle6core.json'#'WFIRSTcycle6core.json'#'Dean3June18RS26CXXfZ01OB66PP01SU01.json'#'Dean1June18RS26CXXfZ01OB56PP01SU01.json'#'./TestScripts/04_KeplerLike_Occulter_linearJScheduler.json'#'Dean13May18RS09CXXfZ01OB01PP03SU01.json'#'sS_AYO7.json'#'ICDcontents.json'###'sS_protoTimeKeeping.json'#'sS_AYO3.json'#sS_SLSQPstatic_parallel_ensembleJTWIN.json'#'sS_JTwin.json'#'sS_AYO4.json'#'sS_AYO3.json'
+filename = 'HabEx_4m_TSDD_pop100DD_revisit_20180424.json'##'WFIRSTcycle6core.json'#'Dean3June18RS26CXXfZ01OB66PP01SU01.json'#'Dean1June18RS26CXXfZ01OB56PP01SU01.json'#'./TestScripts/04_KeplerLike_Occulter_linearJScheduler.json'#'Dean13May18RS09CXXfZ01OB01PP03SU01.json'#'sS_AYO7.json'#'ICDcontents.json'###'sS_protoTimeKeeping.json'#'sS_AYO3.json'#sS_SLSQPstatic_parallel_ensembleJTWIN.json'#'sS_JTwin.json'#'sS_AYO4.json'#'sS_AYO3.json'
 #filename = 'sS_intTime6_KeplerLike2.json'
 scriptfile = os.path.join(folder,filename)
 sim = EXOSIMS.MissionSim.MissionSim(scriptfile,nopar=True)
@@ -1738,6 +1780,7 @@ if writePrefToOutputFiles == True:
 ###############################################################################
 
 
+####
 
 
 
