@@ -6,6 +6,48 @@ from astropy.io import fits
 import scipy.interpolate
 import astropy.units as u
 import numpy as np
+from EXOSIMS.MissionSim import MissionSim
+
+outspec = {"modules": {
+    "PlanetPopulation": " ",
+    "StarCatalog": " ",
+    "OpticalSystem": " ",
+    "ZodiacalLight": " ",
+    "BackgroundSources": " ",
+    "PlanetPhysicalModel": " ",
+    "Observatory": " ",
+    "TimeKeeping": " ",
+    "PostProcessing": " ",
+    "Completeness": " ",
+    "TargetList": " ",
+    "SimulatedUniverse": " ",
+    "SurveySimulation": " ",
+    "SurveyEnsemble": " "
+  }}
+
+sim = MissionSim(scriptfile=None,nopar=False, verbose=True,**outspec)
+
+SSS = [{ "name": "HLC-565",
+      "optics": 0.983647,
+      "lam": 565,
+      "BW": 0.10,
+      "IWA": 0.15,
+      "ohTime": 0.5,
+      "occ_trans": "$HOME/Documents/exosims/fitFilesFolder/WFIRST_cycle6/G22_FIT_565/G22_FIT_565_occ_trans.fits",
+      "core_thruput": "$HOME/Documents/exosims/fitFilesFolder/WFIRST_cycle6/G22_FIT_565/G22_FIT_565_thruput.fits",
+      "core_mean_intensity": "$HOME/Documents/exosims/fitFilesFolder/WFIRST_cycle6/G22_FIT_565/G22_FIT_565_mean_intensity.fits",
+      "core_area": "$HOME/Documents/exosims/fitFilesFolder/WFIRST_cycle6/G22_FIT_565/G22_FIT_565_area.fits",
+      "core_platescale": 0.30
+    }]
+
+
+
+OS = OpticalSystem(starlightSuppressionSystems=SSS)
+SSS.get_coro_param(syst,param_name)
+pth = '/home/dean/Documents/exosims/fitFilesFolder/WFIRST_cycle6/B22_FIT_565/B22_FIT_565_contrast.fits'
+dat = fits.open(pth)[0].data
+
+print saltyburrito
 
 
 #### occ_trans
