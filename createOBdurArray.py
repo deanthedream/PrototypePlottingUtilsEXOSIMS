@@ -1,4 +1,8 @@
-#Written
+"""
+Written by: Dean Keithly
+Written on: 10/18/2018
+Last Updated: 2/10/2019
+"""
 
 
 import numpy as np
@@ -21,10 +25,7 @@ import json
 from EXOSIMS.util.vprint import vprint
 from scipy.stats import gaussian_kde
 from scipy.ndimage import gaussian_filter
-#from physt import *
-#import physt
 from mpl_toolkits.mplot3d import Axes3D #required for 3d plot
-#import seaborn as sns
 from scipy.interpolate import interp1d
 from scipy.interpolate import CubicSpline
 from copy import deepcopy
@@ -33,6 +34,8 @@ import itertools
 import matplotlib as mpl
 import datetime
 import re
+import sys, os.path, EXOSIMS, EXOSIMS.MissionSim
+import astropy.units as u
 
 
 def generateEquadistantPointsOnSphere(N=100,PPoutpath='./'):
@@ -131,6 +134,7 @@ def generateHistHEL(hEclipLon,PPoutpath='./'):
 
     targUnderSpline = numVsLonInterp2.integrate(-np.pi,np.pi)/xdiff#Integral of spline, tells how many targets are under spline
     sumh = sum(h[1:-1])#*xdiff[0]
+    plt.close('all')
     return numVsLonInterp2, targUnderSpline, sumh, xdiff, edges
 
 def generatePlannedObsTimeHistHEL(edges,t_dets,comp,hEclipLon,PPoutpath='./'):
@@ -169,6 +173,7 @@ def generatePlannedObsTimeHistHEL(edges,t_dets,comp,hEclipLon,PPoutpath='./'):
     plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
     plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='png', dpi=500)
     plt.show(block=False)
+    plt.close('all')
 
 def line2linev2(p0,v0,p1,v1):
     """ Find the closest points between two arbitrary lines, and the distance between them
@@ -259,7 +264,7 @@ def sphericalArea(A,B,C,a,b,c,r=1.):
     return areaNominal# + areaDelta
 
 def latlonToxyz(lat,lon):
-    """
+    """ Converts a Latitude and Longitude into XYZ points on unit sphere
     Args:
         lat (radians) - should be from -np.pi/2 to np.pi/2
         lon (radians) - should be from 0 to 2*np.pi
@@ -272,7 +277,7 @@ def latlonToxyz(lat,lon):
     return np.asarray([x,y,z])
 
 def xyzTolonlat(pt):
-    """
+    """ Converts a set of x,y,z points into a latitude and longitude on a unit sphere
     Args:
         pt (numpy array) - numpy array of xyz point
     Returns:
@@ -1452,6 +1457,115 @@ def periodicDist(numOB, OBdur, maxNumDays):#, missionPortion):
         OBendTimes = np.append(OBendTimes,np.linspace(0.,365.25,num=numOBperYear, endpoint=False)+float(i*daysInYear+OBdur))
     return OBstartTimes, OBendTimes
 
+def plotClosestDistanceBetweenTwoSkewLines():
+    """ An example plot demonstrating our ability to find the closest distance between two arbitrary
+    skew lines
+    Args: None
+    Returns: None
+    """
+    #### Find Closest Distance between two arbitrary lines ############## #See method line2linev2
+    #### Test Distance between two arbitrary lines ##########################
+    plt.close(2055121)
+    fig = plt.figure(num=2055121)
+    ax = fig.add_subplot(111, projection='3d')
+    prettifyPlot()
+    p0 = np.asarray([0., 0., 0.])
+    p1 = np.asarray([1., 1., 2.])
+    v0 = np.asarray([1., 0., 1.])
+    v1 = np.asarray([0., 1., 0.])
+    out = line2linev2(p0,v0,p1,v1)
+    t0 = out[4]
+    t1 = out[5]
+    q0 = out[2]
+    q1 = out[3]
+    dP = out[1]
+    ax.plot([p0[0],p0[0]-t0*v0[0]],[p0[1],p0[1]-t0*v0[1]],[p0[2],p0[2]-t0*v0[2]],color='red')
+    ax.plot([p1[0],p1[0]-t1*v1[0]],[p1[1],p1[1]-t1*v1[1]],[p1[2],p1[2]-t1*v1[2]],color='blue')
+    ax.scatter(p0[0],p0[1],p0[2],color='black')#starting points
+    ax.scatter(p1[0],p1[1],p1[2],color='black')#starting points
+    ax.plot([q0[0],q1[0]],[q0[1],q1[1]],[q0[2],q1[2]],color='purple')
+    ax.scatter(q0[0],q0[1],q0[2],color='purple')#ending points
+    ax.scatter(q1[0],q1[1],q1[2],color='purple')#ending points
+    ax.set_xlabel('X',weight='bold')
+    ax.set_ylabel('Y',weight='bold')
+    ax.set_zlabel('Z',weight='bold')
+    ax.scatter(-1,-1,-1,color='white')
+    ax.scatter(3,3,3,color='white')
+    plt.show(block=False)
+    #####################################################################
+
+def writeOutPrefDist(PPoutpath, OBdur2, prefDistOB):
+    """ Write out preferential distribution for varying OB durations
+    Args:
+        PPoutpath (string) - 
+        OBdur2 () - 
+        prefDistOB () - 
+    """
+    path = PPoutpath
+    for i in np.arange(len(OBdur2)):
+        myList = list()
+        for j in range(len(prefDistOB[i][0])):
+            myList.append(str(prefDistOB[i][0][j]) + ',' + str(prefDistOB[i][1][j]) + '\n')
+        outString = ''.join(myList)
+        fname = path + 'prefDistOB' + str(i) + '.csv'
+        with open(fname, "w") as f:
+            f.write(outString)
+        print '"' + fname.split('/')[-1] + '",'
+
+def writeHarmonicOutputFiles(PPoutpath, OBdur2, periodicDistOB):
+    """ Write out harmonic distribution for varying OB durations
+    Args:
+        PPoutpath (string) - 
+        OBdur2 () - 
+        periodicDistOB () - 
+    """
+
+    path = PPoutpath
+    for i in np.arange(len(OBdur2)):
+        myList = list()
+        for j in range(len(periodicDistOB[i][0])):
+            myList.append(str(periodicDistOB[i][0][j]) + ',' + str(periodicDistOB[i][1][j]) + '\n')
+        outString = ''.join(myList)
+        #print outString
+        fname = path + 'periodicDistOB' + str(i) + '.csv'
+        f = open(fname, "w")
+        f.write(outString)
+        print '"' + fname.split('/')[-1] + '",'
+
+def genObservingBlockDurationsArray():
+    #Create List of OB durations
+    OBdur2 = list(set(np.logspace(np.log10(0.1),np.log10(365.),num=50,base=10.).astype(int))) # a list of different observing block durations
+    tmp = list(np.asarray(range(10))+1.5) # create an array of observing block durations to augment the logscale set above
+    OBdur2.remove(0) # removes the first one because it is too small
+    OBdur2 = np.sort(np.asarray(OBdur2 + tmp)) # combine the two observing block arrays together
+    return OBdur2
+
+def plotMaxNumOBReps(OBdur2,maxNumRepTot2,PPoutpath='./', fignum=88563):
+    fig = plt.figure(fignum)
+    plt.semilogx(OBdur2,maxNumRepTot2,marker='o',color='black')
+    plt.xlabel('Num Days',weight='bold')
+    plt.ylabel('Max Num Reps',weight='bold')
+    plt.show(block=False)
+
+#################################################################################
+#################################################################################
+folder = '/home/dean/Documents/SIOSlab/EXOSIMSres/WFIRSTCompSpecPriors_WFIRSTcycle6core_3mo/WFIRSTcycle6core_CKL2_PPKL2'#os.path.normpath(os.path.expandvars('$HOME/Documents/exosims/Scripts/WFIRSTCompSpecPriors_WFIRSTcycle6core_3mo/'))
+PPoutpath = folder
+if not os.path.exists(folder):#Folder must exist
+    raise ValueError('%s not found'%folder)
+if not os.path.exists(PPoutpath):#PPoutpath must exist
+    raise ValueError('%s not found'%PPoutpath) 
+outspecfile = os.path.join(folder,'outspec.json')
+if not os.path.exists(outspecfile):#outspec file not found
+    raise ValueError('%s not found'%outspecfile) 
+outspecPath = os.path.join(folder,'outspec.json')
+try:
+    with open(outspecPath, 'rb') as g:
+        outspec = json.load(g)
+except:
+    vprint('Failed to open outspecfile %s'%outspecPath)
+    pass
+
 
 prettifyPlot()
 plt.close('all')
@@ -1474,22 +1588,12 @@ def maxNumRepInTime(OBdur,Time):
 
 missionPortion = exoplanetObsTime/(maxNumYears*365.25) # This is constrained
 
-
-#Create List of OB durations
-OBdur2 = list(set(np.logspace(np.log10(0.1),np.log10(365.),num=50,base=10.).astype(int)))
-tmp = list(np.asarray(range(10))+1.5)
-OBdur2.remove(0)
-OBdur2 = sort(np.asarray(OBdur2 + tmp))
-
+OBdur2 = genObservingBlockDurationsArray()
 
 #Calculate Maximum number of repetitions within exoplanetObsTime
 maxNumRepTot2, maxRepsPerYear2 = maxNumRepInTime(OBdur2,exoplanetObsTime)
-fig = plt.figure(1)
-#loglog(OBdur2,maxNumRepTot2,marker='o')
-plt.semilogx(OBdur2,maxNumRepTot2,marker='o')
-plt.xlabel('Num Days',weight='bold')
-plt.ylabel('Max Num Reps',weight='bold')
-plt.show(block=False)
+plotMaxNumOBReps(OBdur2,maxNumRepTot2,PPoutpath=PPoutpath, fignum=88563)
+
 
 
 #### Create Periodic Distribution of OB ##################################
@@ -1500,18 +1604,7 @@ for i in np.arange(len(OBdur2)):
 
 writeHarmonicToOutputFiles = False#Change this to true to create each of these start and end time Observing Blocks as .csv files
 if writeHarmonicToOutputFiles == True:
-    path = '/home/dean/Documents/exosims/Scripts/'
-    tmp = ''
-    for i in np.arange(len(OBdur2)):
-        myList = list()
-        for j in range(len(periodicDistOB[i][0])):
-            myList.append(str(periodicDistOB[i][0][j]) + ',' + str(periodicDistOB[i][1][j]) + '\n')
-        outString = ''.join(myList)
-        #print outString
-        fname = path + 'periodicDistOB' + str(i) + '.csv'
-        f = open(fname, "w")
-        f.write(outString)
-        print '"' + fname.split('/')[-1] + '",'
+    writeHarmonicOutputFiles(PPoutpath, OBdur2, periodicDistOB)
 #####################################################################
 
 
@@ -1583,13 +1676,13 @@ plt.show(block=False)
 
 
 #### Calculate the Maximum Star Completeness of all 651 Targets under Consideration #####################
-import sys, os.path, EXOSIMS, EXOSIMS.MissionSim
-import astropy.units as u
-folder = os.path.normpath(os.path.expandvars('$HOME/Documents/exosims/Scripts/WFIRSTCompSpecPriors_WFIRSTcycle6core_3momaxC'))#EXOSIMS/EXOSIMS/Scripts'))#EXOSIMS/EXOSIMS/Scripts'))
-filename = 'WFIRSTcycle6core_CSAG13_PPSAG13.json'#'HabEx_4m_TSDD_pop100DD_revisit_20180424.json'#'WFIRSTcycle6core.json'#'WFIRSTcycle6core.json'#'Dean3June18RS26CXXfZ01OB66PP01SU01.json'#'Dean1June18RS26CXXfZ01OB56PP01SU01.json'#'./TestScripts/04_KeplerLike_Occulter_linearJScheduler.json'#'Dean13May18RS09CXXfZ01OB01PP03SU01.json'#'sS_AYO7.json'#'ICDcontents.json'###'sS_protoTimeKeeping.json'#'sS_AYO3.json'#sS_SLSQPstatic_parallel_ensembleJTWIN.json'#'sS_JTwin.json'#'sS_AYO4.json'#'sS_AYO3.json'
+#folder = os.path.normpath(os.path.expandvars('$HOME/Documents/exosims/Scripts/WFIRSTCompSpecPriors_WFIRSTcycle6core_3momaxC'))#EXOSIMS/EXOSIMS/Scripts'))#EXOSIMS/EXOSIMS/Scripts'))
+#filename = 'WFIRSTcycle6core_CSAG13_PPSAG13.json'#'HabEx_4m_TSDD_pop100DD_revisit_20180424.json'#'WFIRSTcycle6core.json'#'WFIRSTcycle6core.json'#'Dean3June18RS26CXXfZ01OB66PP01SU01.json'#'Dean1June18RS26CXXfZ01OB56PP01SU01.json'#'./TestScripts/04_KeplerLike_Occulter_linearJScheduler.json'#'Dean13May18RS09CXXfZ01OB01PP03SU01.json'#'sS_AYO7.json'#'ICDcontents.json'###'sS_protoTimeKeeping.json'#'sS_AYO3.json'#sS_SLSQPstatic_parallel_ensembleJTWIN.json'#'sS_JTwin.json'#'sS_AYO4.json'#'sS_AYO3.json'
 #filename = 'sS_intTime6_KeplerLike2.json'
-scriptfile = os.path.join(folder,filename)
-sim = EXOSIMS.MissionSim.MissionSim(scriptfile,nopar=True)
+#scriptfile = os.path.join(folder,filename)
+
+sim = EXOSIMS.MissionSim.MissionSim(outspecPath,nopar=True)
+#sim = EXOSIMS.MissionSim.MissionSim(scriptfile,nopar=True)
 
 TL = sim.TargetList#OK
 ZL = sim.ZodiacalLight#OK
@@ -1788,10 +1881,11 @@ plt.show(block=False)
 
 
 
-#### Generat Preferentially Distributed Integration Times ####################
+#INPUTS TO BELOW: edges, tDict, maxNumRepTot[12], OBdur[12], exoplanetOBsTime, maxNumYears, PPoutpath
+
+#### Generate Preferentially Distributed Integration Times ####################
 barout = generatePlannedObsTimeHistHEL2(edges,tDict)
 numOBassignedToBin, OBstartTimes, OBendTimes = generatePreferentiallyDistributedOB(barout, maxNumRepTot2[12], OBdur2[12], exoplanetObsTime, maxNumYears, loadingPreference='even')
-
 
 
 prefDistOB = list()
@@ -1802,28 +1896,9 @@ for i in np.arange(len(OBdur2)):
 
 writePrefToOutputFiles = False#Change this to true to create each of these start and end time Observing Blocks as .csv files
 if writePrefToOutputFiles == True:
-    path = '/home/dean/Documents/exosims/Scripts/'
-    tmp = ''
-    for i in np.arange(len(OBdur2)):
-        myList = list()
-        for j in range(len(prefDistOB[i][0])):
-            myList.append(str(prefDistOB[i][0][j]) + ',' + str(prefDistOB[i][1][j]) + '\n')
-        outString = ''.join(myList)
-        #print outString
-        fname = path + 'prefDistOB' + str(i) + '.csv'
-        f = open(fname, "w")
-        f.write(outString)
-        print '"' + fname.split('/')[-1] + '",'
+    writeOutPrefDist(PPoutpath, OBdur2, prefDistOB)
 
 ###############################################################################
-
-
-####
-
-
-
-
-
 # #### Plottung cumulative sum of integration time needed
 # sortInds = np.argsort(lon)
 # lonSorted = [lon[ind] for ind in sortInds]
@@ -1846,42 +1921,4 @@ if writePrefToOutputFiles == True:
 # plot(lonSorted,f1)
 # plot(np.linspace(-np.pi,np.pi),365.25/(2*np.pi)*np.linspace(0.,2.*np.pi))
 # show(block=False)
-
-def plotClosestDistanceBetweenTwoSkewLines():
-    """ An example plot demonstrating our ability to find the closest distance between two arbitrary
-    skew lines
-    Args:
-    Returns:
-    """
-    #### Find Closest Distance between two arbitrary lines ############## #See method line2linev2
-    #### Test Distance between two arbitrary lines ##########################
-    plt.close(2055121)
-    fig = plt.figure(num=2055121)
-    ax = fig.add_subplot(111, projection='3d')
-    prettifyPlot()
-    p0 = np.asarray([0., 0., 0.])
-    p1 = np.asarray([1., 1., 2.])
-    v0 = np.asarray([1., 0., 1.])
-    v1 = np.asarray([0., 1., 0.])
-    out = line2linev2(p0,v0,p1,v1)
-    t0 = out[4]
-    t1 = out[5]
-    q0 = out[2]
-    q1 = out[3]
-    dP = out[1]
-    ax.plot([p0[0],p0[0]-t0*v0[0]],[p0[1],p0[1]-t0*v0[1]],[p0[2],p0[2]-t0*v0[2]],color='red')
-    ax.plot([p1[0],p1[0]-t1*v1[0]],[p1[1],p1[1]-t1*v1[1]],[p1[2],p1[2]-t1*v1[2]],color='blue')
-    ax.scatter(p0[0],p0[1],p0[2],color='black')#starting points
-    ax.scatter(p1[0],p1[1],p1[2],color='black')#starting points
-    ax.plot([q0[0],q1[0]],[q0[1],q1[1]],[q0[2],q1[2]],color='purple')
-    ax.scatter(q0[0],q0[1],q0[2],color='purple')#ending points
-    ax.scatter(q1[0],q1[1],q1[2],color='purple')#ending points
-    ax.set_xlabel('X',weight='bold')
-    ax.set_ylabel('Y',weight='bold')
-    ax.set_zlabel('Z',weight='bold')
-    ax.scatter(-1,-1,-1,color='white')
-    ax.scatter(3,3,3,color='white')
-    plt.show(block=False)
-    #####################################################################
-
 
