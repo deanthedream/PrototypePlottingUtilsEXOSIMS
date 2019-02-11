@@ -350,7 +350,7 @@ def plotClosestPoints(inds_of_closest, out1kv, fignum=50067, PPoutpath='./', fol
     plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
     return fig, ax
 
-def removeCoplanarConnectingLines(inds_of_closest, out1kv):
+def removeCoplanarConnectingLines(inds_of_closest, out1kv, PPoutpath=PPoutpath, folder=folder):
     """
     Problem: At least 4 points on the surface appear to be coplanar and ~equidistant causing the 6 closest connecting policy to fail
     #Solution For all points that share two connecting points and are NOT directly connected, IF the two points they share are connected, 
@@ -364,7 +364,7 @@ def removeCoplanarConnectingLines(inds_of_closest, out1kv):
         inds_of_closest (list of numpy arrays) - list of numpy arrays with length #points on sphere where each numpy array
             are the 7 closest connecting points that DO NOT HAVE intersecting lines
     """
-    fig, ax = plotClosestPoints(inds_of_closest, out1kv)
+    fig, ax = plotClosestPoints(inds_of_closest, out1kv, PPoutpath=PPoutpath, folder=folder)
     ind_ind_observed = list()
     connectionsToDelete = list() # list of sets containing links to delete
     for ind0_1 in np.arange(len(inds_of_closest)):#iterate over all points
@@ -1816,7 +1816,7 @@ fig, ax = plotClosestPoints(inds_of_closest, out1kv)
 ###########################################################################
 
 #### Remove Coplanar Connecting Lines (lines that cross)
-inds_of_closest = removeCoplanarConnectingLines(inds_of_closest, out1kv)
+inds_of_closest = removeCoplanarConnectingLines(inds_of_closest, out1kv, PPoutpath=PPoutpath, folder=folder)
 ########################################################
 
 #### Calculate Triangle Areas, Corners indices, and triangle centers #####
@@ -1852,11 +1852,11 @@ tDict = distributeTDICTintoBins(tDict, comp, t_dets, comp_inf)
 ######################################################################
 
 #### Plot Observation Schedule Sky Completeness Distribution #########
-fig = plotSkyScheduledObservationCompletenessDistribution(tDict)
+fig = plotSkyScheduledObservationCompletenessDistribution(tDict, PPoutpath=PPoutpath, folder=folder)
 ######################################################################
 
 #### Plot Observation Schedule Sky Integration Time Distribution #####
-fig = plotSkyScheduledObservationIntegrationDistribution(tDict)
+fig = plotSkyScheduledObservationIntegrationDistribution(tDict, PPoutpath=PPoutpath, folder=folder)
 ######################################################################
 
 #### Plot Sky Maximum Completeness Distribution ######################
@@ -1868,7 +1868,7 @@ fig = plotSkyScheduledObservationCountDistribution(starDict,fignum=1124, PPoutpa
 
 
 #### Histograms of Star Count vs Heliocentric Ecliptic Longitude ##################################
-histInterp, targUnderSpline, sumh, xdiff, edges = generateHistHEL(hEclipLon)
+histInterp, targUnderSpline, sumh, xdiff, edges = generateHistHEL(hEclipLon, PPoutpath=PPoutpath, folder=folder)
 #histIntep is a periodic interpolant from -pi to pi of planned observation planet occurence frequency
 #targUnderSpline and sumh are here to ensure consistency of the integral
 ###################################################################################
