@@ -36,6 +36,8 @@ import datetime
 import re
 import sys, os.path, EXOSIMS, EXOSIMS.MissionSim
 import astropy.units as u
+from EXOSIMS.util.evenlyDistributePointsOnSphere import splitOut, nlcon2, f, pt_pt_distances, secondSmallest, setupConstraints, initialXYZpoints
+from scipy.optimize import minimize
 
 
 def generateEquadistantPointsOnSphere(N=100,PPoutpath='./'):
@@ -86,9 +88,11 @@ def generateEquadistantPointsOnSphere(N=100,PPoutpath='./'):
     plt.show(block=False)
 
     fname = 'PointsEvenlyDistributedOnaUnitSphere'
-    plt.savefig(PPoutpath + fname + '.png')
+    plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
     plt.savefig(PPoutpath + fname + '.svg')
-    plt.savefig(PPoutpath + fname + '.eps')
+    plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
+    plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
+
 
     #output of form ra_dec[ind,ra/dec]
     return xyzpoint, ra_dec
@@ -128,8 +132,8 @@ def generateHistHEL(hEclipLon,PPoutpath='./'):
     fname = 'HistogramPlannedTargetsToObserve_' + folder.split('/')[-1] + '_' + date
     plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
     plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
-    plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='png', dpi=500)
-    #DELETEplt.savefig(PPoutpath + fname + '.png')
+    plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
+    plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
     plt.show(block=False)
 
     targUnderSpline = numVsLonInterp2.integrate(-np.pi,np.pi)/xdiff#Integral of spline, tells how many targets are under spline
@@ -171,7 +175,8 @@ def generatePlannedObsTimeHistHEL(edges,t_dets,comp,hEclipLon,PPoutpath='./'):
     fname = 'HistogramPlannedTargetTimeToObserve_' + folder.split('/')[-1] + '_' + date
     plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
     plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
-    plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='png', dpi=500)
+    plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
+    plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
     plt.show(block=False)
     plt.close('all')
 
@@ -832,7 +837,8 @@ def plotSkyScheduledObservationCountDistribution(tDict,fignum=96993, PPoutpath='
     fname = 'skyObsCNTdistribution_' + folder.split('/')[-1] + '_' + date
     plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
     plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
-    plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='png', dpi=500)
+    plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
+    plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
     plt.show(block=False)
     return fig
 
@@ -951,7 +957,8 @@ def plotSkyScheduledObservationCompletenessDistribution(tDict,fignum=96994, PPou
     fname = 'skyObsCompDistribution_' + folder.split('/')[-1] + '_' + date
     plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
     plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
-    plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='png', dpi=500)
+    plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
+    plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
     plt.show(block=False)
     return fig
 
@@ -1068,7 +1075,8 @@ def plotSkyScheduledObservationIntegrationDistribution(tDict,fignum=96995, PPout
     fname = 'skyObsIntTimeDistribution_' + folder.split('/')[-1] + '_' + date
     plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
     plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
-    plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='png', dpi=500)
+    plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
+    plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
     plt.show(block=False)
     return fig
 
@@ -1185,7 +1193,8 @@ def plotSkyMaximumCompletenessDistribution(starDict,fignum=96996, PPoutpath='./'
     fname = 'skyObsMaxCdistribution_' + folder.split('/')[-1] + '_' + date
     plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
     plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
-    plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='png', dpi=500)
+    plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
+    plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
     plt.show(block=False)
     return fig
 
@@ -1361,7 +1370,8 @@ def generatePlannedObsTimeHistHEL2(edges,tDict,fignum=2003,fname='HistogramPlann
     fname = 'HistogramPlannedIntTimeandOHtime_' + folder.split('/')[-1] + '_' + date
     plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
     plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
-    plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='png', dpi=500)
+    plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
+    plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
     
 
     #### Planned Int Time only
@@ -1379,7 +1389,8 @@ def generatePlannedObsTimeHistHEL2(edges,tDict,fignum=2003,fname='HistogramPlann
     fname = 'HistogramPlannedintTime_' + folder.split('/')[-1] + '_' + date
     plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
     plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
-    plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='png', dpi=500)
+    plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
+    plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
 
     #### Plot Target Count
     plt.close(fignum+2)
@@ -1396,7 +1407,8 @@ def generatePlannedObsTimeHistHEL2(edges,tDict,fignum=2003,fname='HistogramPlann
     fname = 'HistogramPlannedTargets_' + folder.split('/')[-1] + '_' + date
     plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
     plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
-    plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='png', dpi=500)
+    plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
+    plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
     
     #### Plot Target Comp
     plt.close(fignum+3)
@@ -1413,7 +1425,8 @@ def generatePlannedObsTimeHistHEL2(edges,tDict,fignum=2003,fname='HistogramPlann
     fname = 'HistogramPlannedComp_' + folder.split('/')[-1] + '_' + date
     plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
     plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
-    plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='png', dpi=500)
+    plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
+    plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
 
     ####
 
@@ -1547,6 +1560,38 @@ def plotMaxNumOBReps(OBdur2,maxNumRepTot2,PPoutpath='./', fignum=88563):
     plt.ylabel('Max Num Reps',weight='bold')
     plt.show(block=False)
 
+def plotVestigalOBspacingAttempts(maxNumDays):
+    """
+    """
+    plt.figure(68612135)
+    num = np.linspace(0,50,num=50)
+    tmp = np.geomspace(0.0001,maxNumDays,num=50)
+    frac = 0.6
+    tmp2 = frac*np.geomspace(0.0001,maxNumDays,num=50) + (1-frac)*np.linspace(0,maxNumDays,num=50)
+    tmp3 = frac*np.geomspace(0.0001,maxNumDays,num=50) + (1-frac)*np.linspace(0,maxNumDays,num=50)*np.geomspace(0.0001,maxNumDays,num=50)/maxNumDays
+    tmp4 = np.linspace(0,maxNumDays,num=50)
+    def func(x,valMax):
+        m=200.
+        frac = 0.8
+        val1 = m*x
+        val2 = x**3#12*x**2#np.exp(x)
+        val = frac*val1 + (1-frac)*val2
+        val = val*valMax/max(val)
+        return val
+    def dfunc(x):
+        dval = 0.8*200 + 3*(1-0.8)*x**2.
+        return dval
+    tmp5 = func(num,maxNumDays)
+
+    plt.plot(tmp,num,marker='o',color='blue')
+    plt.plot(tmp2,num,marker='o',color='black')
+    plt.plot(tmp3,num,marker='o',color='red')
+    plt.plot(tmp4,num,marker='o',color='green')
+    plt.plot(tmp5,num,marker='o',color='orange')
+    plt.ylabel('Points Number',weight='bold')
+    plt.xlabel('Start Times',weight='bold')
+    plt.show(block=False)
+
 #################################################################################
 #################################################################################
 folder = '/home/dean/Documents/SIOSlab/EXOSIMSres/WFIRSTCompSpecPriors_WFIRSTcycle6core_3mo/WFIRSTcycle6core_CKL2_PPKL2'#os.path.normpath(os.path.expandvars('$HOME/Documents/exosims/Scripts/WFIRSTCompSpecPriors_WFIRSTcycle6core_3mo/'))
@@ -1594,8 +1639,6 @@ OBdur2 = genObservingBlockDurationsArray()
 maxNumRepTot2, maxRepsPerYear2 = maxNumRepInTime(OBdur2,exoplanetObsTime)
 plotMaxNumOBReps(OBdur2,maxNumRepTot2,PPoutpath=PPoutpath, fignum=88563)
 
-
-
 #### Create Periodic Distribution of OB ##################################
 periodicDistOB = list()
 for i in np.arange(len(OBdur2)):
@@ -1609,85 +1652,16 @@ if writeHarmonicToOutputFiles == True:
 
 
 #######################################################################################
-#maxNumReps = maxNumYears*maxRepsPerYear2#number of Reps/ number of years #The minimum number of repetitions to go into 1 year in order to finish before 6 years
-
-plt.figure(2)
-num = np.linspace(0,50,num=50)
-tmp = np.geomspace(0.0001,maxNumDays,num=50)
-frac = 0.6
-tmp2 = frac*np.geomspace(0.0001,maxNumDays,num=50) + (1-frac)*np.linspace(0,maxNumDays,num=50)
-tmp3 = frac*np.geomspace(0.0001,maxNumDays,num=50) + (1-frac)*np.linspace(0,maxNumDays,num=50)*np.geomspace(0.0001,maxNumDays,num=50)/maxNumDays
-tmp4 = np.linspace(0,maxNumDays,num=50)
-def func(x,valMax):
-    m=200.
-    frac = 0.8
-    val1 = m*x
-    val2 = x**3#12*x**2#np.exp(x)
-    val = frac*val1 + (1-frac)*val2
-    val = val*valMax/max(val)
-    return val
-def dfunc(x):
-    dval = 0.8*200 + 3*(1-0.8)*x**2.
-    return dval
-tmp5 = func(num,maxNumDays)
-
-plt.plot(tmp,num,marker='o',color='blue')
-plt.plot(tmp2,num,marker='o',color='black')
-plt.plot(tmp3,num,marker='o',color='red')
-plt.plot(tmp4,num,marker='o',color='green')
-plt.plot(tmp5,num,marker='o',color='orange')
-plt.ylabel('Points Number',weight='bold')
-plt.xlabel('Start Times',weight='bold')
-plt.show(block=False)
-
-
-### DELETE THIS ?????????########################
-# import scipy.integrate as integrate
-# tmp5L = integrate.quad(dfunc,0,max(num))#This is the total length of the path from (0,0) to (num,maxNumDays)
-
-# minNumReps = 0
-
-# numRep = 10#number of repetitions in 1 year
-# assert numRep <= 365.25/OBdur - 365.25%OBdur, 'numRep too large'
-# missionPortion = numRep*OBdur/365.25
-# missionLife = exoplanetObsTime/missionPortion
-
-# def isoMissionDuration(mL,mP,mdur):
-#     #missionLife,missionPortion,mission duration
-#     #mdur = mL*mP #total amount of time to elapse during the mission
-#     if mL is None:
-#         mL = mdur/mP
-#     elif mP is None:
-#         mP = mdur/mL
-#     return mL, mP
-
-
-# tmp = np.asarray(range(30))*12.
-# tmp1 = np.asarray(range(30))
-# tmp2 = np.asarray(range(12))+0.5
-# denom = np.asarray(range(30),)+1.
-# tmp3 = 365.25/denom
-
-# OBdurs = list()
-# [OBdurs.append(x) for x in tmp.tolist()]
-# [OBdurs.append(x) for x in tmp1.tolist()]
-# [OBdurs.append(x) for x in tmp2.tolist()]
-# [OBdurs.append(x) for x in tmp3.tolist()]
+plotVestigalOBspacingAttempts(maxNumDays)
 
 
 #### Calculate the Maximum Star Completeness of all 651 Targets under Consideration #####################
-#folder = os.path.normpath(os.path.expandvars('$HOME/Documents/exosims/Scripts/WFIRSTCompSpecPriors_WFIRSTcycle6core_3momaxC'))#EXOSIMS/EXOSIMS/Scripts'))#EXOSIMS/EXOSIMS/Scripts'))
-#filename = 'WFIRSTcycle6core_CSAG13_PPSAG13.json'#'HabEx_4m_TSDD_pop100DD_revisit_20180424.json'#'WFIRSTcycle6core.json'#'WFIRSTcycle6core.json'#'Dean3June18RS26CXXfZ01OB66PP01SU01.json'#'Dean1June18RS26CXXfZ01OB56PP01SU01.json'#'./TestScripts/04_KeplerLike_Occulter_linearJScheduler.json'#'Dean13May18RS09CXXfZ01OB01PP03SU01.json'#'sS_AYO7.json'#'ICDcontents.json'###'sS_protoTimeKeeping.json'#'sS_AYO3.json'#sS_SLSQPstatic_parallel_ensembleJTWIN.json'#'sS_JTwin.json'#'sS_AYO4.json'#'sS_AYO3.json'
-#filename = 'sS_intTime6_KeplerLike2.json'
-#scriptfile = os.path.join(folder,filename)
-
 sim = EXOSIMS.MissionSim.MissionSim(outspecPath,nopar=True)
-#sim = EXOSIMS.MissionSim.MissionSim(scriptfile,nopar=True)
 
 TL = sim.TargetList#OK
 ZL = sim.ZodiacalLight#OK
 sInds = np.arange(TL.nStars)#OK
-fZ = sim.ZodiacalLight.fEZ0#fZmin/u.arcsec**2#
+fZ = sim.ZodiacalLight.fZ0#fZmin/u.arcsec**2#
 fEZ = ZL.fEZ0
 OS = sim.OpticalSystem
 WA = OS.WA0
@@ -1740,8 +1714,6 @@ hEclipLon = np.arctan2(r_stars_eclip[:,1],r_stars_eclip[:,0])
 
 #### Create Set of Evenly distributed Points on Sphere ##############
 # From EXOSIMS/util/evenlyDistributePointsOnSphere.py
-from EXOSIMS.util.evenlyDistributePointsOnSphere import splitOut, nlcon2, f, pt_pt_distances, secondSmallest, setupConstraints, initialXYZpoints
-from scipy.optimize import minimize
 x, y, z, v = initialXYZpoints(num_pts=30) # Generate Initial Set of XYZ Points
 con = setupConstraints(v,nlcon2) # Define constraints on each point of the sphere
 x0 = v.flatten() # takes v and converts it into [x0,y0,z0,x1,y1,z1,...,xn,yn,zn]
@@ -1812,7 +1784,7 @@ tDict = distributeStarsIntoBins(tDict,starAssignedTriangleCorners,sInds[comp>0])
 fig = plotSkyScheduledObservationCountDistribution(tDict)
 ######################################################################
 
-#### Distribut Optimized Star Completeness Into Bins #################
+#### Distribute Optimized Star Completeness Into Bins #################
 for key in tDict.keys():#Iterate over triangles
     if tDict[key]['sIndsWithin'] == []:
         tDict[key]['triangleComp'] = 0.
@@ -1831,6 +1803,8 @@ for key in tDict.keys():#Iterate over triangles
             tDict[key]['triangleMaxComp'] += comp_inf[sInd]
         except:
             tDict[key]['triangleMaxComp'] = comp_inf[sInd]
+
+tDict = distributeTDICTintoBins(tDict, comp, t_dets, comp_inf)
 
 ######################################################################
 
@@ -1882,7 +1856,6 @@ plt.show(block=False)
 
 
 #INPUTS TO BELOW: edges, tDict, maxNumRepTot[12], OBdur[12], exoplanetOBsTime, maxNumYears, PPoutpath
-
 #### Generate Preferentially Distributed Integration Times ####################
 barout = generatePlannedObsTimeHistHEL2(edges,tDict)
 numOBassignedToBin, OBstartTimes, OBendTimes = generatePreferentiallyDistributedOB(barout, maxNumRepTot2[12], OBdur2[12], exoplanetObsTime, maxNumYears, loadingPreference='even')
