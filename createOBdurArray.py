@@ -40,7 +40,7 @@ from EXOSIMS.util.evenlyDistributePointsOnSphere import splitOut, nlcon2, f, pt_
 from scipy.optimize import minimize
 
 
-def generateEquadistantPointsOnSphere(N=100,PPoutpath='./'):
+def generateEquadistantPointsOnSphere(N=100, fignum=5000, PPoutpath='./', folder='./'):
     """Generate uniform points on a sphere
     #https://www.cmu.edu/biolphys/deserno/pdf/sphere_equi.pdf
     Args
@@ -75,7 +75,7 @@ def generateEquadistantPointsOnSphere(N=100,PPoutpath='./'):
             ra_dec.append([theta,phi])
             Ncount += 1
 
-    fig = figure(num=5000)
+    fig = figure(num=fignum)
     ax = fig.add_subplot(111, projection='3d')
     xyzpoint = np.asarray(point)
     ra_dec = np.asarray(ra_dec)
@@ -87,7 +87,9 @@ def generateEquadistantPointsOnSphere(N=100,PPoutpath='./'):
     ax.set_zlabel('z',weight='bold')
     plt.show(block=False)
 
-    fname = 'PointsEvenlyDistributedOnaUnitSphere'
+    date = unicode(datetime.datetime.now())
+    date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+    fname = 'PointsEvenlyDistributedOnaUnitSphere_' + folder.split('/')[-1] + '_' + date
     plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
     plt.savefig(PPoutpath + fname + '.svg')
     plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
@@ -97,13 +99,13 @@ def generateEquadistantPointsOnSphere(N=100,PPoutpath='./'):
     #output of form ra_dec[ind,ra/dec]
     return xyzpoint, ra_dec
 
-def generateHistHEL(hEclipLon,PPoutpath='./'):
+def generateHistHEL(hEclipLon, fignum=2000, PPoutpath='./', folder='./'):
     """ Generates a Heliocentric Ecliptic Longitude Histogram
     Returns:
         numVsLonInterp2 - (interpolant) - this is the interpolant of the histogram of stars 
             located along the heliocentric ecliptic longitude
     """
-    plt.figure(num=2000)
+    plt.figure(num=fignum)
     prettifyPlot()
     h, edges = np.histogram(hEclipLon)
     xdiff = np.diff(edges)
@@ -128,8 +130,7 @@ def generateHistHEL(hEclipLon,PPoutpath='./'):
     # Save to a File
     date = unicode(datetime.datetime.now())
     date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
-
-    fname = 'HistogramPlannedTargetsToObserve_' + folder.split('/')[-1] + '_' + date
+    fname = 'HistPlannedTargetsToObserve_' + folder.split('/')[-1] + '_' + date
     plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
     plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
     plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
@@ -141,7 +142,7 @@ def generateHistHEL(hEclipLon,PPoutpath='./'):
     plt.close('all')
     return numVsLonInterp2, targUnderSpline, sumh, xdiff, edges
 
-def generatePlannedObsTimeHistHEL(edges,t_dets,comp,hEclipLon,PPoutpath='./'):
+def generatePlannedObsTimeHistHEL(edges,t_dets,comp,hEclipLon, fignum=2002, PPoutpath='./', folder='./'):
     edges[0] = -np.pi#Force edges to -pi and pi
     edges[-1] = np.pi
     t_bins = list()
@@ -158,7 +159,7 @@ def generatePlannedObsTimeHistHEL(edges,t_dets,comp,hEclipLon,PPoutpath='./'):
     centers = (left_edges+right_edges)/2.
     t_bins = np.asarray(t_bins)
     widths = np.diff(edges)
-    fig = plt.figure(num=2002,figsize=(10,3))
+    fig = plt.figure(num=fignum,figsize=(10,3))
     prettifyPlot()
     plt.bar(centers,t_bins,width=widths,color='black')
     plt.xlabel('Heliocentric Ecliptic Longitude of Targets (rad)',weight='bold')
@@ -171,8 +172,7 @@ def generatePlannedObsTimeHistHEL(edges,t_dets,comp,hEclipLon,PPoutpath='./'):
     # Save to a File
     date = unicode(datetime.datetime.now())
     date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
-
-    fname = 'HistogramPlannedTargetTimeToObserve_' + folder.split('/')[-1] + '_' + date
+    fname = 'HistPlannedTargetTimeToObserve_' + folder.split('/')[-1] + '_' + date
     plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
     plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
     plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
@@ -322,11 +322,11 @@ def calculateClosestPoints(out1kv):
     d_diff_pts_array = np.asarray(d_diff_pts_array)
     return d_diff_pts_array, inds_of_closest, diff_closest
 
-def plotClosestPoints(inds_of_closest, out1kv):
+def plotClosestPoints(inds_of_closest, out1kv, fignum=50067, PPoutpath='./', folder='./'):
     """ Plots a unit sphere with all lines connecting points
     """
-    plt.close(50067)
-    fig = plt.figure(num=50067)
+    plt.close(fignum)
+    fig = plt.figure(num=fignum)
     ax = fig.add_subplot(111, projection='3d')
     plt.title('Plot of all point-to-point connections on sphere')
     for i in np.arange(len(out1kv)):
@@ -341,6 +341,13 @@ def plotClosestPoints(inds_of_closest, out1kv):
     ax.set_ylabel('Y',weight='bold')
     ax.set_zlabel('Z',weight='bold')
     plt.show(block=False)
+    date = unicode(datetime.datetime.now())
+    date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+    fname = 'plotClosestPoints_' + folder.split('/')[-1] + '_' + date
+    plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
+    plt.savefig(PPoutpath + fname + '.svg')
+    plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
+    plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
     return fig, ax
 
 def removeCoplanarConnectingLines(inds_of_closest, out1kv):
@@ -724,7 +731,7 @@ def prettifyPlot():
     plt.rcParams['axes.linewidth']=2
     plt.rc('font',weight='bold')
 
-def plotSkyScheduledObservationCountDistribution(tDict,fignum=96993, PPoutpath='./'):
+def plotSkyScheduledObservationCountDistribution(tDict,fignum=96993, PPoutpath='./', folder='./'):
     """ Plots Distribution of Stars Scheduled to be Observed on Sky
     Args:
         tDict () - 
@@ -833,7 +840,6 @@ def plotSkyScheduledObservationCountDistribution(tDict,fignum=96993, PPoutpath='
     # Save to a File
     date = unicode(datetime.datetime.now())
     date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
-
     fname = 'skyObsCNTdistribution_' + folder.split('/')[-1] + '_' + date
     plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
     plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
@@ -842,7 +848,7 @@ def plotSkyScheduledObservationCountDistribution(tDict,fignum=96993, PPoutpath='
     plt.show(block=False)
     return fig
 
-def plotSkyScheduledObservationCompletenessDistribution(tDict,fignum=96994, PPoutpath='./'):
+def plotSkyScheduledObservationCompletenessDistribution(tDict,fignum=96994, PPoutpath='./', folder='./'):
     """ Plots Distribution of Star Completeness Scheduled to be Observed on Sky
     Args:
         tDict () - 
@@ -953,8 +959,7 @@ def plotSkyScheduledObservationCompletenessDistribution(tDict,fignum=96994, PPou
     # Save to a File
     date = unicode(datetime.datetime.now())
     date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
-
-    fname = 'skyObsCompDistribution_' + folder.split('/')[-1] + '_' + date
+    fname = 'skyObsCompDist_' + folder.split('/')[-1] + '_' + date
     plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
     plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
     plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
@@ -962,7 +967,7 @@ def plotSkyScheduledObservationCompletenessDistribution(tDict,fignum=96994, PPou
     plt.show(block=False)
     return fig
 
-def plotSkyScheduledObservationIntegrationDistribution(tDict,fignum=96995, PPoutpath='./'):
+def plotSkyScheduledObservationIntegrationDistribution(tDict, fignum=96995, PPoutpath='./', folder='./'):
     """ Plots Distribution of Stars Scheduled to be Observed on Sky
     Args:
         tDict () - 
@@ -1071,8 +1076,7 @@ def plotSkyScheduledObservationIntegrationDistribution(tDict,fignum=96995, PPout
     # Save to a File
     date = unicode(datetime.datetime.now())
     date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
-
-    fname = 'skyObsIntTimeDistribution_' + folder.split('/')[-1] + '_' + date
+    fname = 'skyObsIntTimeDist_' + folder.split('/')[-1] + '_' + date
     plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
     plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
     plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
@@ -1081,7 +1085,7 @@ def plotSkyScheduledObservationIntegrationDistribution(tDict,fignum=96995, PPout
     return fig
 
 #NEED TO REDO BECAUSE THIS DOES NOT PLOT MAX COMPLETENESS YET
-def plotSkyMaximumCompletenessDistribution(starDict,fignum=96996, PPoutpath='./'):
+def plotSkyMaximumCompletenessDistribution(starDict,fignum=96996, PPoutpath='./', folder='./'):
     """ Plots Distribution of Star Completeness Scheduled to be Observed on Sky
     Args:
         tDict () - 
@@ -1189,8 +1193,7 @@ def plotSkyMaximumCompletenessDistribution(starDict,fignum=96996, PPoutpath='./'
     # Save to a File
     date = unicode(datetime.datetime.now())
     date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
-
-    fname = 'skyObsMaxCdistribution_' + folder.split('/')[-1] + '_' + date
+    fname = 'skyObsMaxCDist_' + folder.split('/')[-1] + '_' + date
     plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
     plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
     plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
@@ -1310,7 +1313,7 @@ def generatePreferentiallyDistributedOB(barout, numOB, OBdur, exoplanetObsTime, 
     OBendTimes = np.concatenate(OBendTimes)
     return numOBassignedToBin, OBstartTimes, OBendTimes
 
-def generatePlannedObsTimeHistHEL2(edges,tDict,fignum=2003,fname='HistogramPlannedTotalTimes', PPoutpath='./'):
+def generatePlannedObsTimeHistHEL2(edges,tDict,fignum=2003, PPoutpath='./', folder='./'):
     """ Finds bin centers, binwidths, and total time in each bin, plots time vs HEL histograms
     Args:
         edges (numpy array) - edges of the histogram to use
@@ -1367,7 +1370,7 @@ def generatePlannedObsTimeHistHEL2(edges,tDict,fignum=2003,fname='HistogramPlann
     #Save Plots
     date = unicode(datetime.datetime.now())
     date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
-    fname = 'HistogramPlannedIntTimeandOHtime_' + folder.split('/')[-1] + '_' + date
+    fname = 'HistPlannedIntTimeandOHtime_' + folder.split('/')[-1] + '_' + date
     plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
     plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
     plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
@@ -1386,7 +1389,7 @@ def generatePlannedObsTimeHistHEL2(edges,tDict,fignum=2003,fname='HistogramPlann
     #Save Plots
     date = unicode(datetime.datetime.now())
     date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
-    fname = 'HistogramPlannedintTime_' + folder.split('/')[-1] + '_' + date
+    fname = 'HistPlannedintTime_' + folder.split('/')[-1] + '_' + date
     plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
     plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
     plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
@@ -1404,7 +1407,7 @@ def generatePlannedObsTimeHistHEL2(edges,tDict,fignum=2003,fname='HistogramPlann
     #Save Plots
     date = unicode(datetime.datetime.now())
     date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
-    fname = 'HistogramPlannedTargets_' + folder.split('/')[-1] + '_' + date
+    fname = 'HistPlannedTargets_' + folder.split('/')[-1] + '_' + date
     plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
     plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
     plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
@@ -1422,7 +1425,7 @@ def generatePlannedObsTimeHistHEL2(edges,tDict,fignum=2003,fname='HistogramPlann
     #Save Plots
     date = unicode(datetime.datetime.now())
     date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
-    fname = 'HistogramPlannedComp_' + folder.split('/')[-1] + '_' + date
+    fname = 'HistPlannedComp_' + folder.split('/')[-1] + '_' + date
     plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
     plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
     plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
@@ -1470,16 +1473,17 @@ def periodicDist(numOB, OBdur, maxNumDays):#, missionPortion):
         OBendTimes = np.append(OBendTimes,np.linspace(0.,365.25,num=numOBperYear, endpoint=False)+float(i*daysInYear+OBdur))
     return OBstartTimes, OBendTimes
 
-def plotClosestDistanceBetweenTwoSkewLines():
+def plotClosestDistanceBetweenTwoSkewLines(fignum=2055121, PPoutpath='./', folder='./'):
     """ An example plot demonstrating our ability to find the closest distance between two arbitrary
+    NON-ESSENTIAL to plotting utility
     skew lines
     Args: None
     Returns: None
     """
     #### Find Closest Distance between two arbitrary lines ############## #See method line2linev2
     #### Test Distance between two arbitrary lines ##########################
-    plt.close(2055121)
-    fig = plt.figure(num=2055121)
+    plt.close(fignum)
+    fig = plt.figure(num=fignum)
     ax = fig.add_subplot(111, projection='3d')
     prettifyPlot()
     p0 = np.asarray([0., 0., 0.])
@@ -1505,6 +1509,11 @@ def plotClosestDistanceBetweenTwoSkewLines():
     ax.scatter(-1,-1,-1,color='white')
     ax.scatter(3,3,3,color='white')
     plt.show(block=False)
+    #Save Plots
+    date = unicode(datetime.datetime.now())
+    date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+    fname = 'twoSkewLines_' + folder.split('/')[-1] + '_' + date
+    plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
     #####################################################################
 
 def writeOutPrefDist(PPoutpath, OBdur2, prefDistOB):
@@ -1545,25 +1554,35 @@ def writeHarmonicOutputFiles(PPoutpath, OBdur2, periodicDistOB):
         f.write(outString)
         print '"' + fname.split('/')[-1] + '",'
 
-def genObservingBlockDurationsArray():
+def genObservingBlockDurationsArray(minLog=0.1,maxLog=365.,numLog=50,minLin=1.0,deltaLin=1.5,numLin=10):
+    """ Create Array of Observing Block Durations
+    Args: None
+    Returns: OBdur2 (numpy array)
+    """
     #Create List of OB durations
-    OBdur2 = list(set(np.logspace(np.log10(0.1),np.log10(365.),num=50,base=10.).astype(int))) # a list of different observing block durations
-    tmp = list(np.asarray(range(10))+1.5) # create an array of observing block durations to augment the logscale set above
+    OBdur2 = list(set(np.logspace(np.log10(minLog),np.log10(maxLog),num=numLog,base=10.).astype(int))) # a list of different observing block durations
+    tmp = list(np.linspace(start=minLin,stop=numLin*deltaLin+minLin,num=numLin+1)) # create an array of observing block durations to augment the logscale set above
     OBdur2.remove(0) # removes the first one because it is too small
     OBdur2 = np.sort(np.asarray(OBdur2 + tmp)) # combine the two observing block arrays together
     return OBdur2
 
-def plotMaxNumOBReps(OBdur2,maxNumRepTot2,PPoutpath='./', fignum=88563):
+def plotMaxNumOBReps(OBdur2,maxNumRepTot2, fignum=88563, PPoutpath='./', folder='./'):
     fig = plt.figure(fignum)
     plt.semilogx(OBdur2,maxNumRepTot2,marker='o',color='black')
     plt.xlabel('Num Days',weight='bold')
     plt.ylabel('Max Num Reps',weight='bold')
     plt.show(block=False)
+    #Save Plots
+    date = unicode(datetime.datetime.now())
+    date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+    fname = 'twoSkewLines_' + folder.split('/')[-1] + '_' + date
+    plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
 
-def plotVestigalOBspacingAttempts(maxNumDays):
+
+def plotVestigalOBspacingAttempts(maxNumDays, fignum=68612135, PPoutpath='./', folder='./'):
     """
     """
-    plt.figure(68612135)
+    plt.figure(fignum)
     num = np.linspace(0,50,num=50)
     tmp = np.geomspace(0.0001,maxNumDays,num=50)
     frac = 0.6
@@ -1591,6 +1610,74 @@ def plotVestigalOBspacingAttempts(maxNumDays):
     plt.ylabel('Points Number',weight='bold')
     plt.xlabel('Start Times',weight='bold')
     plt.show(block=False)
+    #Save Plots
+    date = unicode(datetime.datetime.now())
+    date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+    fname = 'obSpacing_' + folder.split('/')[-1] + '_' + date
+    plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
+
+def plotSphereCentersandTriangleEdges(out1kv, inds_of_closest, triangleCenterList, fignum=500672, PPoutpath='./', folder='./'):
+    """Plots Sphere of Sky with Bin Centers and Triangle Bin Edges
+    Args:
+        out1kv (numpy array) - n x 3 array of 
+        inds_of_closest (list of numpy array) - n x Y where Y are the number of vertices connected to a verticie
+        triangleCenterList (list of numpy array) - n x (x,y,z) which are the xyz points of triangle center n on the unit sphere
+    """
+    plt.close(fignum)
+    fig = plt.figure(num=fignum)
+    ax = fig.add_subplot(111, projection='3d')
+    plt.title('Plot of all point-to-point connections on sphere Corrected')
+
+    #Plot Edges
+    plotted = list()
+    for i in np.arange(len(out1kv)):
+        xyzpoint = out1kv[i] # extract a single xyz point on sphere
+        #plotted = list() #keeps track of index-to-index lines plotted
+        for j in inds_of_closest[i]:#np.delete(inds_of_closest[i],0):
+            if [i,j] in plotted or [j,i] in plotted:
+                continue
+            ax.plot([xyzpoint[0],out1kv[j,0]],[xyzpoint[1],out1kv[j,1]],[xyzpoint[2],out1kv[j,2]],color='red',zorder=1)
+            plotted.append([i,j])
+    #Plot Centroids
+    for i in np.arange(len(triangleCenterList)):
+        ax.scatter(triangleCenterList[i][0],triangleCenterList[i][1],triangleCenterList[i][2],color='purple', zorder=2)
+    ax.set_xlabel('X',weight='bold')
+    ax.set_ylabel('Y',weight='bold')
+    ax.set_zlabel('Z',weight='bold')
+    plt.show(block=False)
+    #Save Plots
+    date = unicode(datetime.datetime.now())
+    date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+    fname = 'sphereCentTriEdges_' + folder.split('/')[-1] + '_' + date
+    plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
+
+def distributeTDICTintoBins(tDict, comp, t_dets, comp_inf):
+    """ Sums completeness, integration time into bins
+    Args:
+    Returns:
+        tDict (struct) - returns tDict with triangleComp, triangleIntTime, and triangleMaxComp
+    """
+    for key in tDict.keys():#Iterate over triangles
+        if tDict[key]['sIndsWithin'] == []:
+            tDict[key]['triangleComp'] = 0.
+            tDict[key]['triangleIntTime'] = 0.
+            tDict[key]['triangleMaxComp'] = 0.
+        for sInd in tDict[key]['sIndsWithin']:#iterate over sIndsWithin
+            try:
+                tDict[key]['triangleComp'] += comp[sInd]
+            except:
+                tDict[key]['triangleComp'] = comp[sInd]
+            try:
+                tDict[key]['triangleIntTime'] += t_dets[sInd].value
+            except:
+                tDict[key]['triangleIntTime'] = t_dets[sInd].value
+            try:
+                tDict[key]['triangleMaxComp'] += comp_inf[sInd]
+            except:
+                tDict[key]['triangleMaxComp'] = comp_inf[sInd]
+    return tDict
+
+
 
 #################################################################################
 #################################################################################
@@ -1637,7 +1724,7 @@ OBdur2 = genObservingBlockDurationsArray()
 
 #Calculate Maximum number of repetitions within exoplanetObsTime
 maxNumRepTot2, maxRepsPerYear2 = maxNumRepInTime(OBdur2,exoplanetObsTime)
-plotMaxNumOBReps(OBdur2,maxNumRepTot2,PPoutpath=PPoutpath, fignum=88563)
+plotMaxNumOBReps(OBdur2,maxNumRepTot2, fignum=88563, PPoutpath=PPoutpath, folder=folder)
 
 #### Create Periodic Distribution of OB ##################################
 periodicDistOB = list()
@@ -1652,7 +1739,7 @@ if writeHarmonicToOutputFiles == True:
 
 
 #######################################################################################
-plotVestigalOBspacingAttempts(maxNumDays)
+plotVestigalOBspacingAttempts(maxNumDays, PPoutpath=PPoutpath, folder=folder)
 
 
 #### Calculate the Maximum Star Completeness of all 651 Targets under Consideration #####################
@@ -1696,11 +1783,11 @@ sum_comp_Cb0 = sum(comp_Cb0[comp_Cb0>0.])
 
 plt.close('all')
 #### Calculate Ecliptic Latitude and Longitude of Stars
-ra = sim.TargetList.coords.ra.value
-dec = sim.TargetList.coords.dec.value
-ra = ra*np.pi/180. -np.pi#The right ascension of the stars in the heliocentric ecliptic fixed frame
+#ra = sim.TargetList.coords.ra.value
+#dec = sim.TargetList.coords.dec.value
+ra = sim.TargetList.coords.ra.value*np.pi/180. -np.pi#The right ascension of the stars in the heliocentric ecliptic fixed frame
 ra2 = ra[comp > 0.]
-dec = dec*np.pi/180.#The declinations of the stars in the heliocentric ecliptic fixed frame
+dec = sim.TargetList.coords.dec.value*np.pi/180.#The declinations of the stars in the heliocentric ecliptic fixed frame
 dec2 = dec[comp > 0.]
 x = np.cos(dec2)*np.cos(ra2)#When dec2 =0, x/y=1
 y = np.cos(dec2)*np.sin(ra2)
@@ -1737,32 +1824,8 @@ sumTriangleArea, triangleCornerIndList, triangleAreaList, triangleCenterList = c
 ##########################################################################
 
 #### Re plot Sphere ################################
-plt.close(500672)
-fig = plt.figure(num=500672)
-ax = fig.add_subplot(111, projection='3d')
-#ax.scatter(out1kv[:,0], out1kv[:,1], out1kv[:,2], color='black',zorder=1)
-plt.title('Plot of all point-to-point connections on sphere Corrected')
-plt.show(block=False)
-
-#Plot Edges
-plotted = list()
-for i in np.arange(len(out1kv)):
-    xyzpoint = out1kv[i] # extract a single xyz point on sphere
-    #plotted = list() #keeps track of index-to-index lines plotted
-    for j in inds_of_closest[i]:#np.delete(inds_of_closest[i],0):
-        if [i,j] in plotted or [j,i] in plotted:
-            continue
-        ax.plot([xyzpoint[0],out1kv[j,0]],[xyzpoint[1],out1kv[j,1]],[xyzpoint[2],out1kv[j,2]],color='red',zorder=1)
-        plotted.append([i,j])
-#Plot Centroids
-for i in np.arange(len(triangleCenterList)):
-    ax.scatter(triangleCenterList[i][0],triangleCenterList[i][1],triangleCenterList[i][2],color='purple', zorder=2)
-ax.set_xlabel('X',weight='bold')
-ax.set_ylabel('Y',weight='bold')
-ax.set_zlabel('Z',weight='bold')
-plt.show(block=False)
+plotSphereCentersandTriangleEdges(out1kv, inds_of_closest, triangleCenterList, PPoutpath=PPoutpath, folder=folder)
 ######################################################################
-
 
 #### Create sets of triangle corners #################################
 starAssignedTriangleCorners = createTriangleCornerSets(sInds,comp,hEclipLat,hEclipLon,out1kv,triangleCornerIndList)
@@ -1781,31 +1844,11 @@ tDict = distributeStarsIntoBins(tDict,starAssignedTriangleCorners,sInds[comp>0])
 # #####################################################################
 
 #### Plot Observation Schedule Sky Count Distribution ################
-fig = plotSkyScheduledObservationCountDistribution(tDict)
+fig = plotSkyScheduledObservationCountDistribution(tDict, PPoutpath=PPoutpath, folder=folder)
 ######################################################################
 
 #### Distribute Optimized Star Completeness Into Bins #################
-for key in tDict.keys():#Iterate over triangles
-    if tDict[key]['sIndsWithin'] == []:
-        tDict[key]['triangleComp'] = 0.
-        tDict[key]['triangleIntTime'] = 0.
-        tDict[key]['triangleMaxComp'] = 0.
-    for sInd in tDict[key]['sIndsWithin']:#iterate over sIndsWithin
-        try:
-            tDict[key]['triangleComp'] += comp[sInd]
-        except:
-            tDict[key]['triangleComp'] = comp[sInd]
-        try:
-            tDict[key]['triangleIntTime'] += t_dets[sInd].value
-        except:
-            tDict[key]['triangleIntTime'] = t_dets[sInd].value
-        try:
-            tDict[key]['triangleMaxComp'] += comp_inf[sInd]
-        except:
-            tDict[key]['triangleMaxComp'] = comp_inf[sInd]
-
 tDict = distributeTDICTintoBins(tDict, comp, t_dets, comp_inf)
-
 ######################################################################
 
 #### Plot Observation Schedule Sky Completeness Distribution #########
@@ -1820,7 +1863,7 @@ fig = plotSkyScheduledObservationIntegrationDistribution(tDict)
 #fig = plotSkyMaximumCompletenessDistribution(tDict)
 starDict = createtDict(triangleCornerIndList,triangleAreaList,triangleCenterList,out1kv)
 starDict = distributeStarsIntoBins(starDict,starAssignedTriangleCorners,sInds)
-fig = plotSkyScheduledObservationCountDistribution(starDict,fignum=1124)
+fig = plotSkyScheduledObservationCountDistribution(starDict,fignum=1124, PPoutpath=PPoutpath, folder=folder)
 ######################################################################
 
 
@@ -1833,11 +1876,8 @@ histInterp, targUnderSpline, sumh, xdiff, edges = generateHistHEL(hEclipLon)
 #### Generate Random OB distributions #####################
 # 1 Use Observing Block Durations Previously Defined OBdur2
 # 2 Determine 
-generatePlannedObsTimeHistHEL(edges,t_dets,comp,hEclipLon)
+generatePlannedObsTimeHistHEL(edges,t_dets,comp,hEclipLon, PPoutpath=PPoutpath, folder=folder)
 ###########################################################
-
-
-
 
 
 #lonGrabPts = np.linspace(-np.pi,np.pi,num=100) # the points to grab along longitude
@@ -1852,12 +1892,17 @@ plt.close(2356)
 fig = plt.figure(num=2356)
 plt.scatter(lon,lonTotalTime)
 plt.show(block=False)
+#Save Plots
+date = unicode(datetime.datetime.now())
+date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+fname = 'simpleTimeScatter_' + folder.split('/')[-1] + '_' + date
+plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
 
 
 
 #INPUTS TO BELOW: edges, tDict, maxNumRepTot[12], OBdur[12], exoplanetOBsTime, maxNumYears, PPoutpath
 #### Generate Preferentially Distributed Integration Times ####################
-barout = generatePlannedObsTimeHistHEL2(edges,tDict)
+barout = generatePlannedObsTimeHistHEL2(edges,tDict, PPoutpath=PPoutpath, folder=folder)
 numOBassignedToBin, OBstartTimes, OBendTimes = generatePreferentiallyDistributedOB(barout, maxNumRepTot2[12], OBdur2[12], exoplanetObsTime, maxNumYears, loadingPreference='even')
 
 
