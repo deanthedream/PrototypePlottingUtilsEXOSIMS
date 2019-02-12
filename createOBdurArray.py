@@ -1707,7 +1707,26 @@ def distributeTDICTintoBins(tDict, comp, t_dets, comp_inf):
                 tDict[key]['triangleMaxComp'] = comp_inf[sInd]
     return tDict
 
-
+def simpleTimeLonScatter(tDict, PPoutpath='./', folder='./'):
+    """ Plots a simple scatter plot of summed time for each triangle vs Heliocentric Ecliptic Longitude
+    """
+    lon = list()
+    lonIntTime = list()
+    lonTotalTime = list()
+    for key in tDict.keys():
+        lon.append((xyzTolonlat(tDict[key]['triangleCenter']))[0])
+        lonIntTime.append(tDict[key]['triangleIntTime'])
+        lonTotalTime.append(tDict[key]['triangleIntTime'] + 1.*tDict[key]['count'])
+    plt.close(2356)
+    fig = plt.figure(num=2356)
+    plt.scatter(lon,lonTotalTime)
+    #plt.show(block=False)
+    #Save Plots
+    date = unicode(datetime.datetime.now())
+    date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+    fname = 'simpleTimeScatter_' + folder.split('/')[-1] + '_' + date
+    plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
+    plt.close(fignum)
 
 #################################################################################
 #################################################################################
@@ -1917,24 +1936,7 @@ generatePlannedObsTimeHistHEL(edges,t_dets,comp,hEclipLon, PPoutpath=PPoutpath, 
 
 
 #lonGrabPts = np.linspace(-np.pi,np.pi,num=100) # the points to grab along longitude
-lon = list()
-lonIntTime = list()
-lonTotalTime = list()
-for key in tDict.keys():
-    lon.append((xyzTolonlat(tDict[key]['triangleCenter']))[0])
-    lonIntTime.append(tDict[key]['triangleIntTime'])
-    lonTotalTime.append(tDict[key]['triangleIntTime'] + 1.*tDict[key]['count'])
-plt.close(2356)
-fig = plt.figure(num=2356)
-plt.scatter(lon,lonTotalTime)
-#plt.show(block=False)
-#Save Plots
-date = unicode(datetime.datetime.now())
-date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
-fname = 'simpleTimeScatter_' + folder.split('/')[-1] + '_' + date
-plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
-plt.close(fignum)
-
+simpleTimeLonScatter(tDict,PPoutpath=PPoutpath,folder=folder)
 
 
 #INPUTS TO BELOW: edges, tDict, maxNumRepTot[12], OBdur[12], exoplanetOBsTime, maxNumYears, PPoutpath
