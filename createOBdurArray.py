@@ -85,7 +85,7 @@ def generateEquadistantPointsOnSphere(N=100, fignum=5000, PPoutpath='./', folder
     ax.set_xlabel('x',weight='bold')
     ax.set_ylabel('y',weight='bold')
     ax.set_zlabel('z',weight='bold')
-    plt.show(block=False)
+    #plt.show(block=False)
 
     date = unicode(datetime.datetime.now())
     date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
@@ -94,7 +94,7 @@ def generateEquadistantPointsOnSphere(N=100, fignum=5000, PPoutpath='./', folder
     plt.savefig(PPoutpath + fname + '.svg')
     plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
     plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
-
+    plt.close(fignum)
 
     #output of form ra_dec[ind,ra/dec]
     return xyzpoint, ra_dec
@@ -135,11 +135,11 @@ def generateHistHEL(hEclipLon, fignum=2000, PPoutpath='./', folder='./'):
     plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
     plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
     plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
-    plt.show(block=False)
+    #plt.show(block=False)
 
     targUnderSpline = numVsLonInterp2.integrate(-np.pi,np.pi)/xdiff#Integral of spline, tells how many targets are under spline
     sumh = sum(h[1:-1])#*xdiff[0]
-    plt.close('all')
+    plt.close(fignum)
     return numVsLonInterp2, targUnderSpline, sumh, xdiff, edges
 
 def generatePlannedObsTimeHistHEL(edges,t_dets,comp,hEclipLon, fignum=2002, PPoutpath='./', folder='./'):
@@ -177,8 +177,8 @@ def generatePlannedObsTimeHistHEL(edges,t_dets,comp,hEclipLon, fignum=2002, PPou
     plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
     plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
     plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
-    plt.show(block=False)
-    plt.close('all')
+    #plt.show(block=False)
+    plt.close(fignum)
 
 def line2linev2(p0,v0,p1,v1):
     """ Find the closest points between two arbitrary lines, and the distance between them
@@ -243,8 +243,6 @@ def sphericalAngles(ah,bh,ch,R=1.):
     #                (np.abs(np.linalg.norm(np.cross(ah,bh)))*np.abs(np.linalg.norm(np.cross(ah,ch))))) # cosines rule for sides Smart 1960
     B = np.arcsin(np.sin(A)/np.sin(a)*np.sin(b)) # spherical triangle analagous law of sines
     C = np.arcsin(np.sin(A)/np.sin(a)*np.sin(c))
-    # if A+B+C < np.pi:
-    #     print saltyburrito
     return A, B, C
 
 def sphericalArea(A,B,C,a,b,c,r=1.):
@@ -340,7 +338,7 @@ def plotClosestPoints(inds_of_closest, out1kv, fignum=50067, PPoutpath='./', fol
     ax.set_xlabel('X',weight='bold')
     ax.set_ylabel('Y',weight='bold')
     ax.set_zlabel('Z',weight='bold')
-    plt.show(block=False)
+    #plt.show(block=False)
     date = unicode(datetime.datetime.now())
     date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
     fname = 'plotClosestPoints_' + folder.split('/')[-1] + '_' + date
@@ -348,9 +346,10 @@ def plotClosestPoints(inds_of_closest, out1kv, fignum=50067, PPoutpath='./', fol
     plt.savefig(PPoutpath + fname + '.svg')
     plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
     plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
+    plt.close(fignum)
     return fig, ax
 
-def removeCoplanarConnectingLines(inds_of_closest, out1kv, PPoutpath=PPoutpath, folder=folder):
+def removeCoplanarConnectingLines(inds_of_closest, out1kv, PPoutpath='./', folder='./'):
     """
     Problem: At least 4 points on the surface appear to be coplanar and ~equidistant causing the 6 closest connecting policy to fail
     #Solution For all points that share two connecting points and are NOT directly connected, IF the two points they share are connected, 
@@ -745,19 +744,15 @@ def plotSkyScheduledObservationCountDistribution(tDict,fignum=96993, PPoutpath='
     gs = GridSpec(1,1, width_ratios=[4,], height_ratios=[1])
     gs.update(wspace=0.06, hspace=0.06) # set the spacing between axes. 
     ax = plt.subplot(gs[0],projection='mollweide')#2D histogram of planet pop
-    #ax = fig.add_subplot(111, projection="mollweide")#"hammer")
     prettifyPlot()
-    #grid(axis='both',which='major') # Dmitry says this makes it look too crowded
     ymin = min([min(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'][:,1]) for ind in np.arange(len(tDict.keys()))])
     ymax = max([max(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'][:,1]) for ind in np.arange(len(tDict.keys()))])
     xmin = min([min(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'][:,0]) for ind in np.arange(len(tDict.keys()))])
     xmax = max([max(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'][:,0]) for ind in np.arange(len(tDict.keys()))])
-    #ax.set_xlim(left=xmin,right=xmax) #used for error checking on non-projected plot
-    #ax.set_ylim(bottom=ymin,top=ymax)
     cmap = cm.viridis
     norm = mpl.colors.Normalize(vmin=0,vmax=max([tDict[key]['count']/tDict[key]['triangleArea'] for key in tDict.keys()]))
     tmp4 = np.asarray([[-np.pi,-np.pi/2.],[-np.pi,np.pi/2.],[np.pi,np.pi/2.],[np.pi,-np.pi/2.]])
-    t3 = plt.Polygon(tmp4,color=cmap(0))
+    t3 = plt.Polygon(tmp4,color=cmap(0), edgecolor=None, joinstyle='round')
     ax.add_patch(t3)
     del t3
     #### Plot Each Surface with specific color scaled based on max(countsForColoring)
@@ -773,7 +768,7 @@ def plotSkyScheduledObservationCountDistribution(tDict,fignum=96993, PPoutpath='
                 #3 Reassign Maximum Values to that Value
                 tmp3 = np.append(tmp2,np.asarray([[tmp2[1,0],np.pi/2.]]),axis=0)
                 tmp4 = np.append(tmp3,np.asarray([[tmp2[0,0],np.pi/2.]]),axis=0)
-                t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['count']/tDict[tDict.keys()[ind]]['triangleArea'])))
+                t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['count']/tDict[tDict.keys()[ind]]['triangleArea'])), edgecolor=None, joinstyle='round')
                 ax.add_patch(t3)
             except:
                 pass
@@ -786,7 +781,7 @@ def plotSkyScheduledObservationCountDistribution(tDict,fignum=96993, PPoutpath='
             #3 Reassign Maximum Values to that Value
             tmp3 = np.append(tmp2,np.asarray([[tmp2[1,0],np.pi/2.]]),axis=0)
             tmp4 = np.append(tmp3,np.asarray([[tmp2[0,0],np.pi/2.]]),axis=0)
-            t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['count']/tDict[tDict.keys()[ind]]['triangleArea'])))
+            t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['count']/tDict[tDict.keys()[ind]]['triangleArea'])), edgecolor=None, joinstyle='round')
             ax.add_patch(t3)
             continue
 
@@ -801,7 +796,7 @@ def plotSkyScheduledObservationCountDistribution(tDict,fignum=96993, PPoutpath='
                 #3 Reassign Maximum Values to that Value
                 tmp3 = np.append(tmp2,np.asarray([[tmp2[1,0],-np.pi/2.]]),axis=0)
                 tmp4 = np.append(tmp3,np.asarray([[tmp2[0,0],-np.pi/2.]]),axis=0)
-                t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['count']/tDict[tDict.keys()[ind]]['triangleArea'])))
+                t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['count']/tDict[tDict.keys()[ind]]['triangleArea'])), edgecolor=None, joinstyle='round')
                 ax.add_patch(t3)
             except:
                 pass
@@ -814,17 +809,16 @@ def plotSkyScheduledObservationCountDistribution(tDict,fignum=96993, PPoutpath='
             #3 Reassign Maximum Values to that Value
             tmp3 = np.append(tmp2,np.asarray([[tmp2[1,0],-np.pi/2.]]),axis=0)
             tmp4 = np.append(tmp3,np.asarray([[tmp2[0,0],-np.pi/2.]]),axis=0)
-            t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['count']/tDict[tDict.keys()[ind]]['triangleArea'])))
+            t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['count']/tDict[tDict.keys()[ind]]['triangleArea'])), edgecolor=None, joinstyle='round')
             ax.add_patch(t3)
             continue
 
-        t1 = plt.Polygon(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'], color=cmap(norm(tDict[tDict.keys()[ind]]['count']/tDict[tDict.keys()[ind]]['triangleArea'])))
+        t1 = plt.Polygon(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'], color=cmap(norm(tDict[tDict.keys()[ind]]['count']/tDict[tDict.keys()[ind]]['triangleArea'])), edgecolor=None, joinstyle='round')
         ax.add_patch(t1)
         del t1
         #### Add mirror patch
         if 'triangleCornerPointsXYZlatlon2' in tDict[tDict.keys()[ind]].keys():
-            #DELETE print 'HasKey!'
-            t2 = plt.Polygon(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon2'], color=cmap(norm(tDict[tDict.keys()[ind]]['count'])/tDict[tDict.keys()[ind]]['triangleArea']))
+            t2 = plt.Polygon(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon2'], color=cmap(norm(tDict[tDict.keys()[ind]]['count'])/tDict[tDict.keys()[ind]]['triangleArea']), edgecolor=None, joinstyle='round')
             ax.add_patch(t2)
             del t2
 
@@ -833,8 +827,15 @@ def plotSkyScheduledObservationCountDistribution(tDict,fignum=96993, PPoutpath='
         cnt += tDict[tDict.keys()[ind]]['count']
 
     sc = ax.scatter([-1000,-1000],[-1000,-1000],c=[norm.vmin,norm.vmax],cmap=cmap,vmin=0.,vmax=norm.vmax) #spoof colorbar
+    ax.set_xlabel(r'Heliocentric Ecliptic Lon. ($\degree$)', weight='bold')
+    ax.xaxis.label.set_fontsize(8)
+    ax.xaxis.label.set_weight('bold')
+    ax.set_ylabel(r'Heliocentric Ecliptic Lat. ($\degree$)', weight='bold')
+    ax.yaxis.label.set_fontsize(8)
+    ax.yaxis.label.set_weight('bold')
+    ax.tick_params(axis='both', labelsize=8, pad=4)
     cbar = fig.colorbar(sc) #spoof colorbar
-    cbar.set_label('Star Count per Fraction Of Sky',weight='bold')
+    cbar.set_label('Targets per Fraction Of Sky', size=8, weight='bold')
     fig.text(0.60,0.09,r'$\sum$# stars='+str(cnt))
     #Save Plots
     # Save to a File
@@ -845,7 +846,8 @@ def plotSkyScheduledObservationCountDistribution(tDict,fignum=96993, PPoutpath='
     plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
     plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
     plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
-    plt.show(block=False)
+    #plt.show(block=False)
+    plt.close(fignum)
     return fig
 
 def plotSkyScheduledObservationCompletenessDistribution(tDict,fignum=96994, PPoutpath='./', folder='./'):
@@ -874,7 +876,7 @@ def plotSkyScheduledObservationCompletenessDistribution(tDict,fignum=96994, PPou
     cmap = cm.viridis
     norm = mpl.colors.Normalize(vmin=0,vmax=max([tDict[key]['triangleComp']/tDict[key]['triangleArea'] for key in tDict.keys()]))
     tmp4 = np.asarray([[-np.pi,-np.pi/2.],[-np.pi,np.pi/2.],[np.pi,np.pi/2.],[np.pi,-np.pi/2.]])
-    t3 = plt.Polygon(tmp4,color=cmap(0))
+    t3 = plt.Polygon(tmp4,color=cmap(0), edgecolor=None, joinstyle='round')
     ax.add_patch(t3)
     del t3
     #### Plot Each Surface with specific color scaled based on max(countsForColoring)
@@ -890,7 +892,7 @@ def plotSkyScheduledObservationCompletenessDistribution(tDict,fignum=96994, PPou
                 #3 Reassign Maximum Values to that Value
                 tmp3 = np.append(tmp2,np.asarray([[tmp2[1,0],np.pi/2.]]),axis=0)
                 tmp4 = np.append(tmp3,np.asarray([[tmp2[0,0],np.pi/2.]]),axis=0)
-                t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleComp']/tDict[tDict.keys()[ind]]['triangleArea'])))
+                t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleComp']/tDict[tDict.keys()[ind]]['triangleArea'])), edgecolor=None, joinstyle='round')
                 ax.add_patch(t3)
             except:
                 pass
@@ -903,7 +905,7 @@ def plotSkyScheduledObservationCompletenessDistribution(tDict,fignum=96994, PPou
             #3 Reassign Maximum Values to that Value
             tmp3 = np.append(tmp2,np.asarray([[tmp2[1,0],np.pi/2.]]),axis=0)
             tmp4 = np.append(tmp3,np.asarray([[tmp2[0,0],np.pi/2.]]),axis=0)
-            t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleComp']/tDict[tDict.keys()[ind]]['triangleArea'])))
+            t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleComp']/tDict[tDict.keys()[ind]]['triangleArea'])), edgecolor=None, joinstyle='round')
             ax.add_patch(t3)
             continue
 
@@ -918,7 +920,7 @@ def plotSkyScheduledObservationCompletenessDistribution(tDict,fignum=96994, PPou
                 #3 Reassign Maximum Values to that Value
                 tmp3 = np.append(tmp2,np.asarray([[tmp2[1,0],-np.pi/2.]]),axis=0)
                 tmp4 = np.append(tmp3,np.asarray([[tmp2[0,0],-np.pi/2.]]),axis=0)
-                t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleComp']/tDict[tDict.keys()[ind]]['triangleArea'])))
+                t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleComp']/tDict[tDict.keys()[ind]]['triangleArea'])), edgecolor=None, joinstyle='round')
                 ax.add_patch(t3)
             except:
                 pass
@@ -931,11 +933,11 @@ def plotSkyScheduledObservationCompletenessDistribution(tDict,fignum=96994, PPou
             #3 Reassign Maximum Values to that Value
             tmp3 = np.append(tmp2,np.asarray([[tmp2[1,0],-np.pi/2.]]),axis=0)
             tmp4 = np.append(tmp3,np.asarray([[tmp2[0,0],-np.pi/2.]]),axis=0)
-            t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleComp']/tDict[tDict.keys()[ind]]['triangleArea'])))
+            t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleComp']/tDict[tDict.keys()[ind]]['triangleArea'])), edgecolor=None, joinstyle='round')
             ax.add_patch(t3)
             continue
 
-        t1 = plt.Polygon(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'], color=cmap(norm(tDict[tDict.keys()[ind]]['triangleComp']/tDict[tDict.keys()[ind]]['triangleArea'])))
+        t1 = plt.Polygon(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'], color=cmap(norm(tDict[tDict.keys()[ind]]['triangleComp']/tDict[tDict.keys()[ind]]['triangleArea'])), edgecolor=None, joinstyle='round')
         ax.add_patch(t1)
         del t1
         #plt.show(block=False)
@@ -943,7 +945,7 @@ def plotSkyScheduledObservationCompletenessDistribution(tDict,fignum=96994, PPou
         #### Add mirror patch
         if 'triangleCornerPointsXYZlatlon2' in tDict[tDict.keys()[ind]].keys():
             #DELETE print 'HasKey!'
-            t2 = plt.Polygon(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon2'], color=cmap(norm(tDict[tDict.keys()[ind]]['triangleComp'])/tDict[tDict.keys()[ind]]['triangleArea']))
+            t2 = plt.Polygon(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon2'], color=cmap(norm(tDict[tDict.keys()[ind]]['triangleComp'])/tDict[tDict.keys()[ind]]['triangleArea']), edgecolor=None, joinstyle='round')
             ax.add_patch(t2)
             del t2
 
@@ -952,8 +954,15 @@ def plotSkyScheduledObservationCompletenessDistribution(tDict,fignum=96994, PPou
         cntComp += tDict[tDict.keys()[ind]]['triangleComp']
 
     sc = ax.scatter([-1000,-1000],[-1000,-1000],c=[norm.vmin,norm.vmax],cmap=cmap,vmin=0.,vmax=norm.vmax) #spoof colorbar
+    ax.set_xlabel(r'Heliocentric Ecliptic Lon. ($\degree$)', weight='bold')
+    ax.xaxis.label.set_fontsize(8)
+    ax.xaxis.label.set_weight('bold')
+    ax.set_ylabel(r'Heliocentric Ecliptic Lat. ($\degree$)', weight='bold')
+    ax.yaxis.label.set_fontsize(8)
+    ax.yaxis.label.set_weight('bold')
+    ax.tick_params(axis='both', labelsize=8, pad=4)
     cbar = fig.colorbar(sc) #spoof colorbar
-    cbar.set_label(r'$\sum$ C per Fraction Of Sky',weight='bold')
+    cbar.set_label(r'$\sum$ C per Fraction Of Sky', size=8, weight='bold')
     fig.text(0.625,0.11,r'$\sum$C='+str(round(cntComp,2)))
     #Save Plots
     # Save to a File
@@ -964,7 +973,8 @@ def plotSkyScheduledObservationCompletenessDistribution(tDict,fignum=96994, PPou
     plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
     plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
     plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
-    plt.show(block=False)
+    #plt.show(block=False)
+    plt.close(fignum)
     return fig
 
 def plotSkyScheduledObservationIntegrationDistribution(tDict, fignum=96995, PPoutpath='./', folder='./'):
@@ -992,7 +1002,7 @@ def plotSkyScheduledObservationIntegrationDistribution(tDict, fignum=96995, PPou
     cmap = cm.viridis
     norm = mpl.colors.Normalize(vmin=0,vmax=max([tDict[key]['triangleIntTime']/tDict[key]['triangleArea'] for key in tDict.keys()]))
     tmp4 = np.asarray([[-np.pi,-np.pi/2.],[-np.pi,np.pi/2.],[np.pi,np.pi/2.],[np.pi,-np.pi/2.]])
-    t3 = plt.Polygon(tmp4,color=cmap(0))
+    t3 = plt.Polygon(tmp4,color=cmap(0), edgecolor=None, joinstyle='round')
     ax.add_patch(t3)
     del t3
 
@@ -1009,7 +1019,7 @@ def plotSkyScheduledObservationIntegrationDistribution(tDict, fignum=96995, PPou
                 #3 Reassign Maximum Values to that Value
                 tmp3 = np.append(tmp2,np.asarray([[tmp2[1,0],np.pi/2.]]),axis=0)
                 tmp4 = np.append(tmp3,np.asarray([[tmp2[0,0],np.pi/2.]]),axis=0)
-                t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleIntTime']/tDict[tDict.keys()[ind]]['triangleArea'])))
+                t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleIntTime']/tDict[tDict.keys()[ind]]['triangleArea'])), edgecolor=None, joinstyle='round')
                 ax.add_patch(t3)
             except:
                 pass
@@ -1022,7 +1032,7 @@ def plotSkyScheduledObservationIntegrationDistribution(tDict, fignum=96995, PPou
             #3 Reassign Maximum Values to that Value
             tmp3 = np.append(tmp2,np.asarray([[tmp2[1,0],np.pi/2.]]),axis=0)
             tmp4 = np.append(tmp3,np.asarray([[tmp2[0,0],np.pi/2.]]),axis=0)
-            t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleIntTime']/tDict[tDict.keys()[ind]]['triangleArea'])))
+            t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleIntTime']/tDict[tDict.keys()[ind]]['triangleArea'])), edgecolor=None, joinstyle='round')
             ax.add_patch(t3)
             continue
 
@@ -1037,7 +1047,7 @@ def plotSkyScheduledObservationIntegrationDistribution(tDict, fignum=96995, PPou
                 #3 Reassign Maximum Values to that Value
                 tmp3 = np.append(tmp2,np.asarray([[tmp2[1,0],-np.pi/2.]]),axis=0)
                 tmp4 = np.append(tmp3,np.asarray([[tmp2[0,0],-np.pi/2.]]),axis=0)
-                t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleIntTime']/tDict[tDict.keys()[ind]]['triangleArea'])))
+                t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleIntTime']/tDict[tDict.keys()[ind]]['triangleArea'])), edgecolor=None, joinstyle='round')
                 ax.add_patch(t3)
             except:
                 pass
@@ -1050,17 +1060,17 @@ def plotSkyScheduledObservationIntegrationDistribution(tDict, fignum=96995, PPou
             #3 Reassign Maximum Values to that Value
             tmp3 = np.append(tmp2,np.asarray([[tmp2[1,0],-np.pi/2.]]),axis=0)
             tmp4 = np.append(tmp3,np.asarray([[tmp2[0,0],-np.pi/2.]]),axis=0)
-            t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleIntTime']/tDict[tDict.keys()[ind]]['triangleArea'])))
+            t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleIntTime']/tDict[tDict.keys()[ind]]['triangleArea'])), edgecolor=None, joinstyle='round')
             ax.add_patch(t3)
             continue
 
-        t1 = plt.Polygon(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'], color=cmap(norm(tDict[tDict.keys()[ind]]['triangleIntTime']/tDict[tDict.keys()[ind]]['triangleArea'])))
+        t1 = plt.Polygon(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'], color=cmap(norm(tDict[tDict.keys()[ind]]['triangleIntTime']/tDict[tDict.keys()[ind]]['triangleArea'])), edgecolor=None, joinstyle='round')
         ax.add_patch(t1)
         del t1
         #### Add mirror patch
         if 'triangleCornerPointsXYZlatlon2' in tDict[tDict.keys()[ind]].keys():
             #DELETE print 'HasKey!'
-            t2 = plt.Polygon(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon2'], color=cmap(norm(tDict[tDict.keys()[ind]]['triangleIntTime'])/tDict[tDict.keys()[ind]]['triangleArea']))
+            t2 = plt.Polygon(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon2'], color=cmap(norm(tDict[tDict.keys()[ind]]['triangleIntTime'])/tDict[tDict.keys()[ind]]['triangleArea']), edgecolor=None, joinstyle='round')
             ax.add_patch(t2)
             del t2
 
@@ -1069,8 +1079,15 @@ def plotSkyScheduledObservationIntegrationDistribution(tDict, fignum=96995, PPou
         cntIntTime += tDict[tDict.keys()[ind]]['triangleIntTime']
 
     sc = ax.scatter([-1000,-1000],[-1000,-1000],c=[norm.vmin,norm.vmax],cmap=cmap,vmin=0.,vmax=norm.vmax) #spoof colorbar
+    ax.set_xlabel(r'Heliocentric Ecliptic Lon. ($\degree$)', weight='bold')
+    ax.xaxis.label.set_fontsize(8)
+    ax.xaxis.label.set_weight('bold')
+    ax.set_ylabel(r'Heliocentric Ecliptic Lat. ($\degree$)', weight='bold')
+    ax.yaxis.label.set_fontsize(8)
+    ax.yaxis.label.set_weight('bold')
+    ax.tick_params(axis='both', labelsize=8, pad=4)
     cbar = fig.colorbar(sc) #spoof colorbar
-    cbar.set_label(r'$\tau$ (d) per Fraction Of Sky',weight='bold')
+    cbar.set_label(r'$\sum\tau_{0,i}$ (d) per Fraction Of Sky', size=8, weight='bold')
     fig.text(0.62,0.11,r'$\sum \tau$='+str(np.round(cntIntTime,1)) + ' (d)')
     #Save Plots
     # Save to a File
@@ -1081,7 +1098,8 @@ def plotSkyScheduledObservationIntegrationDistribution(tDict, fignum=96995, PPou
     plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
     plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
     plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
-    plt.show(block=False)
+    #plt.show(block=False)
+    plt.close(fignum)
     return fig
 
 #NEED TO REDO BECAUSE THIS DOES NOT PLOT MAX COMPLETENESS YET
@@ -1110,7 +1128,7 @@ def plotSkyMaximumCompletenessDistribution(starDict,fignum=96996, PPoutpath='./'
     cmap = cm.viridis
     norm = mpl.colors.Normalize(vmin=0,vmax=max([tDict[key]['triangleMaxComp']/tDict[key]['triangleArea'] for key in tDict.keys()]))
     tmp4 = np.asarray([[-np.pi,-np.pi/2.],[-np.pi,np.pi/2.],[np.pi,np.pi/2.],[np.pi,-np.pi/2.]])
-    t3 = plt.Polygon(tmp4,color=cmap(0))
+    t3 = plt.Polygon(tmp4,color=cmap(0), edgecolor=None, joinstyle='round')
     ax.add_patch(t3)
     del t3
     #### Plot Each Surface with specific color scaled based on max(countsForColoring)
@@ -1126,7 +1144,7 @@ def plotSkyMaximumCompletenessDistribution(starDict,fignum=96996, PPoutpath='./'
                 #3 Reassign Maximum Values to that Value
                 tmp3 = np.append(tmp2,np.asarray([[tmp2[1,0],np.pi/2.]]),axis=0)
                 tmp4 = np.append(tmp3,np.asarray([[tmp2[0,0],np.pi/2.]]),axis=0)
-                t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleMaxComp']/tDict[tDict.keys()[ind]]['triangleArea'])))
+                t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleMaxComp']/tDict[tDict.keys()[ind]]['triangleArea'])), edgecolor=None, joinstyle='round')
                 ax.add_patch(t3)
             except:
                 pass
@@ -1139,7 +1157,7 @@ def plotSkyMaximumCompletenessDistribution(starDict,fignum=96996, PPoutpath='./'
             #3 Reassign Maximum Values to that Value
             tmp3 = np.append(tmp2,np.asarray([[tmp2[1,0],np.pi/2.]]),axis=0)
             tmp4 = np.append(tmp3,np.asarray([[tmp2[0,0],np.pi/2.]]),axis=0)
-            t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleMaxComp']/tDict[tDict.keys()[ind]]['triangleArea'])))
+            t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleMaxComp']/tDict[tDict.keys()[ind]]['triangleArea'])), edgecolor=None, joinstyle='round')
             ax.add_patch(t3)
             continue
 
@@ -1154,7 +1172,7 @@ def plotSkyMaximumCompletenessDistribution(starDict,fignum=96996, PPoutpath='./'
                 #3 Reassign Maximum Values to that Value
                 tmp3 = np.append(tmp2,np.asarray([[tmp2[1,0],-np.pi/2.]]),axis=0)
                 tmp4 = np.append(tmp3,np.asarray([[tmp2[0,0],-np.pi/2.]]),axis=0)
-                t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleMaxComp']/tDict[tDict.keys()[ind]]['triangleArea'])))
+                t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleMaxComp']/tDict[tDict.keys()[ind]]['triangleArea'])), edgecolor=None, joinstyle='round')
                 ax.add_patch(t3)
             except:
                 pass
@@ -1167,17 +1185,17 @@ def plotSkyMaximumCompletenessDistribution(starDict,fignum=96996, PPoutpath='./'
             #3 Reassign Maximum Values to that Value
             tmp3 = np.append(tmp2,np.asarray([[tmp2[1,0],-np.pi/2.]]),axis=0)
             tmp4 = np.append(tmp3,np.asarray([[tmp2[0,0],-np.pi/2.]]),axis=0)
-            t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleMaxComp']/tDict[tDict.keys()[ind]]['triangleArea'])))
+            t3 = plt.Polygon(tmp4,color=cmap(norm(tDict[tDict.keys()[ind]]['triangleMaxComp']/tDict[tDict.keys()[ind]]['triangleArea'])), edgecolor=None, joinstyle='round')
             ax.add_patch(t3)
             continue
 
-        t1 = plt.Polygon(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'], color=cmap(norm(tDict[tDict.keys()[ind]]['triangleMaxComp']/tDict[tDict.keys()[ind]]['triangleArea'])))
+        t1 = plt.Polygon(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon'], color=cmap(norm(tDict[tDict.keys()[ind]]['triangleMaxComp']/tDict[tDict.keys()[ind]]['triangleArea'])), edgecolor=None, joinstyle='round')
         ax.add_patch(t1)
         del t1
         #### Add mirror patch
         if 'triangleCornerPointsXYZlatlon2' in tDict[tDict.keys()[ind]].keys():
             #DELETE print 'HasKey!'
-            t2 = plt.Polygon(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon2'], color=cmap(norm(tDict[tDict.keys()[ind]]['triangleMaxComp'])/tDict[tDict.keys()[ind]]['triangleArea']))
+            t2 = plt.Polygon(tDict[tDict.keys()[ind]]['triangleCornerPointsXYZlatlon2'], color=cmap(norm(tDict[tDict.keys()[ind]]['triangleMaxComp'])/tDict[tDict.keys()[ind]]['triangleArea']), edgecolor=None, joinstyle='round')
             ax.add_patch(t2)
             del t2
 
@@ -1186,8 +1204,15 @@ def plotSkyMaximumCompletenessDistribution(starDict,fignum=96996, PPoutpath='./'
         cntMaxC += tDict[tDict.keys()[ind]]['triangleMaxComp']
 
     sc = ax.scatter([-1000,-1000],[-1000,-1000],c=[norm.vmin,norm.vmax],cmap=cmap,vmin=0.,vmax=norm.vmax) #spoof colorbar
+    ax.set_xlabel(r'Heliocentric Ecliptic Lon. ($\degree$)', weight='bold')
+    ax.xaxis.label.set_fontsize(8)
+    ax.xaxis.label.set_weight('bold')
+    ax.set_ylabel(r'Heliocentric Ecliptic Lat. ($\degree$)', weight='bold')
+    ax.yaxis.label.set_fontsize(8)
+    ax.yaxis.label.set_weight('bold')
+    ax.tick_params(axis='both', labelsize=8, pad=4)
     cbar = fig.colorbar(sc) #spoof colorbar
-    cbar.set_label(r'$\sum C_{max}$ per Fraction Of Sky',weight='bold')
+    cbar.set_label(r'$\sum C_{max}$ per Fraction Of Sky', size=8, weight='bold')
     fig.text(0.62,0.11,r'$\sum C_{max}$ stars='+str(cntMaxC))
     #Save Plots
     # Save to a File
@@ -1198,7 +1223,8 @@ def plotSkyMaximumCompletenessDistribution(starDict,fignum=96996, PPoutpath='./'
     plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
     plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
     plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
-    plt.show(block=False)
+    #plt.show(block=False)
+    plt.close(fignum)
     return fig
 
 def generatePreferentiallyDistributedOB(barout, numOB, OBdur, exoplanetObsTime, numYears, loadingPreference='even'):
@@ -1433,7 +1459,7 @@ def generatePlannedObsTimeHistHEL2(edges,tDict,fignum=2003, PPoutpath='./', fold
 
     ####
 
-    plt.show(block=False)
+    #plt.show(block=False)
 
     return {'centers':centers, 'timeInBins':np.asarray(t_bins2), 'binWidths':widths}
 
@@ -1508,12 +1534,13 @@ def plotClosestDistanceBetweenTwoSkewLines(fignum=2055121, PPoutpath='./', folde
     ax.set_zlabel('Z',weight='bold')
     ax.scatter(-1,-1,-1,color='white')
     ax.scatter(3,3,3,color='white')
-    plt.show(block=False)
+    #plt.show(block=False)
     #Save Plots
     date = unicode(datetime.datetime.now())
     date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
     fname = 'twoSkewLines_' + folder.split('/')[-1] + '_' + date
     plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
+    plt.close(fignum)
     #####################################################################
 
 def writeOutPrefDist(PPoutpath, OBdur2, prefDistOB):
@@ -1571,16 +1598,17 @@ def plotMaxNumOBReps(OBdur2,maxNumRepTot2, fignum=88563, PPoutpath='./', folder=
     plt.semilogx(OBdur2,maxNumRepTot2,marker='o',color='black')
     plt.xlabel('Num Days',weight='bold')
     plt.ylabel('Max Num Reps',weight='bold')
-    plt.show(block=False)
+    #plt.show(block=False)
     #Save Plots
     date = unicode(datetime.datetime.now())
     date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
     fname = 'twoSkewLines_' + folder.split('/')[-1] + '_' + date
     plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
-
+    plt.close(fignum)
 
 def plotVestigalOBspacingAttempts(maxNumDays, fignum=68612135, PPoutpath='./', folder='./'):
-    """
+    """ Uses a combination of logscale and linearscale to plot observing block starting points at various points of the mission schedule
+    Simply a demonstration and needs work to be functional
     """
     plt.figure(fignum)
     num = np.linspace(0,50,num=50)
@@ -1607,14 +1635,15 @@ def plotVestigalOBspacingAttempts(maxNumDays, fignum=68612135, PPoutpath='./', f
     plt.plot(tmp3,num,marker='o',color='red')
     plt.plot(tmp4,num,marker='o',color='green')
     plt.plot(tmp5,num,marker='o',color='orange')
-    plt.ylabel('Points Number',weight='bold')
-    plt.xlabel('Start Times',weight='bold')
-    plt.show(block=False)
+    plt.ylabel('Observing Block Number (#)',weight='bold')
+    plt.xlabel('Observing Block Start Time (d)',weight='bold')
+    #plt.show(block=False)
     #Save Plots
     date = unicode(datetime.datetime.now())
     date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
     fname = 'obSpacing_' + folder.split('/')[-1] + '_' + date
     plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
+    plt.close(fignum)
 
 def plotSphereCentersandTriangleEdges(out1kv, inds_of_closest, triangleCenterList, fignum=500672, PPoutpath='./', folder='./'):
     """Plots Sphere of Sky with Bin Centers and Triangle Bin Edges
@@ -1644,12 +1673,13 @@ def plotSphereCentersandTriangleEdges(out1kv, inds_of_closest, triangleCenterLis
     ax.set_xlabel('X',weight='bold')
     ax.set_ylabel('Y',weight='bold')
     ax.set_zlabel('Z',weight='bold')
-    plt.show(block=False)
+    #plt.show(block=False)
     #Save Plots
     date = unicode(datetime.datetime.now())
     date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
     fname = 'sphereCentTriEdges_' + folder.split('/')[-1] + '_' + date
     plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
+    plt.close(fignum)
 
 def distributeTDICTintoBins(tDict, comp, t_dets, comp_inf):
     """ Sums completeness, integration time into bins
@@ -1711,8 +1741,14 @@ OBdur = 1.
 #####################################################################
 
 def maxNumRepInTime(OBdur,Time):
-    #Time in days
-    #OBdur in days
+    """ Finds Maximum number of OB that can be squeezed into a time
+    Args:
+        OBdur (iterable) - OBdurations to calculate for in (d)
+        Time (float) - total amount of integration time "exoplanetObsTime" in (d)
+    Returns:
+        maxNumRepInTime (numpy array) - Maximum number of Observing blocks needed to fill the Time
+        maxRepsPerYear (numpy array) - Maxumim number of Observing Block Repetitions that fit in a Year
+    """
     maxNumRepInTime = np.asarray([math.ceil(Time/OBduri) for OBduri in OBdur])#.astype('int')
     maxRepsPerYear = np.asarray([math.ceil(365.25/OBduri) for OBduri in OBdur])#.astype('int')
     return maxNumRepInTime, maxRepsPerYear
@@ -1812,7 +1848,7 @@ dist1k, inds1k = pt_pt_distances(out1kv) # for informational purposes: distances
 
 #### Calculate closest points to each point on unit sphere ################
 d_diff_pts_array, inds_of_closest, diff_closest = calculateClosestPoints(out1kv)
-fig, ax = plotClosestPoints(inds_of_closest, out1kv)
+fig, ax = plotClosestPoints(inds_of_closest, out1kv, PPoutpath=PPoutpath, folder=folder)
 ###########################################################################
 
 #### Remove Coplanar Connecting Lines (lines that cross)
@@ -1891,12 +1927,13 @@ for key in tDict.keys():
 plt.close(2356)
 fig = plt.figure(num=2356)
 plt.scatter(lon,lonTotalTime)
-plt.show(block=False)
+#plt.show(block=False)
 #Save Plots
 date = unicode(datetime.datetime.now())
 date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
 fname = 'simpleTimeScatter_' + folder.split('/')[-1] + '_' + date
 plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
+plt.close(fignum)
 
 
 
