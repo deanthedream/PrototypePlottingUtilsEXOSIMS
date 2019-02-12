@@ -1707,7 +1707,7 @@ def distributeTDICTintoBins(tDict, comp, t_dets, comp_inf):
                 tDict[key]['triangleMaxComp'] = comp_inf[sInd]
     return tDict
 
-def simpleTimeLonScatter(tDict, PPoutpath='./', folder='./'):
+def simpleTimeLonScatter(tDict, fignum=2356, PPoutpath='./', folder='./'):
     """ Plots a simple scatter plot of summed time for each triangle vs Heliocentric Ecliptic Longitude
     """
     lon = list()
@@ -1717,8 +1717,8 @@ def simpleTimeLonScatter(tDict, PPoutpath='./', folder='./'):
         lon.append((xyzTolonlat(tDict[key]['triangleCenter']))[0])
         lonIntTime.append(tDict[key]['triangleIntTime'])
         lonTotalTime.append(tDict[key]['triangleIntTime'] + 1.*tDict[key]['count'])
-    plt.close(2356)
-    fig = plt.figure(num=2356)
+    plt.close(fignum)
+    fig = plt.figure(num=fignum)
     plt.scatter(lon,lonTotalTime)
     #plt.show(block=False)
     #Save Plots
