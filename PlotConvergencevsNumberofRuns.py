@@ -16,8 +16,8 @@ import argparse
 import json
 
 
-runDir = '/home/dean/Documents/SIOSlab/Dean22May18RS09CXXfZ01OB01PP01SU01/'
-saveFolder = '/home/dean/Documents/SIOSlab/SPIE2018Journal/'
+runDir = '/home/dean/Documents/SIOSlab/EXOSIMSres/Dean22May18RS09CXXfZ01OB01PP01SU01/'
+saveFolder = './'#'/home/dean/Documents/SIOSlab/SPIE2018Journal/'
 
 
 #Given Filepath for pklfile, Plot a pkl from each testrun in subdir
@@ -63,7 +63,7 @@ plt.rc('axes',linewidth=2)
 plt.rc('lines',linewidth=2)
 plt.rcParams['axes.linewidth']=2
 plt.rc('font',weight='bold') 
-plt.#rcParams['axes.titlepad']=-50
+#rcParams['axes.titlepad']=-50
 plt.plot(abs(np.asarray(meanNumDets) - meanNumDets[:-1]), color='purple')
 
 plt.plot([100,100],[abs(np.asarray(meanNumDets[99]) - meanNumDets[-1]),max(abs(np.asarray(meanNumDets) - meanNumDets[-1]))], linewidth=1, color='k')
