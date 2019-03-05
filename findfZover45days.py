@@ -13,7 +13,7 @@ for i in np.arange(sim.SurveySimulation.fZ_startSaved.shape[1]-45):
     delta[:,i] = abs(sim.SurveySimulation.fZ_startSaved[:,i+45]-sim.SurveySimulation.fZ_startSaved[:,i])
 maxDeltafZ = np.zeros(sim.SurveySimulation.fZ_startSaved.shape[0])
 for j in np.arange(delta.shape[0]):
-    maxDeltafZ[j] = max(delta[j,:])
+    maxDeltafZ[j] = np.max(delta[j,:])
 
 sim.SurveySimulation.ZodiacalLight.fEZ0
 
