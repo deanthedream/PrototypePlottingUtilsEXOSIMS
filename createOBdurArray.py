@@ -143,6 +143,9 @@ def generateHistHEL(hEclipLon, fignum=2000, PPoutpath='./', folder='./'):
     return numVsLonInterp2, targUnderSpline, sumh, xdiff, edges
 
 def generatePlannedObsTimeHistHEL(edges,t_dets,comp,hEclipLon, fignum=2002, PPoutpath='./', folder='./'):
+    """ Generates HistPlanTargetTimeToObserveStraight_ which takes integration times directly from SS.t0
+    DOES NOT INCLUDE OVERHEAD TIME
+    """
     edges[0] = -np.pi#Force edges to -pi and pi
     edges[-1] = np.pi
     t_bins = list()
@@ -172,7 +175,7 @@ def generatePlannedObsTimeHistHEL(edges,t_dets,comp,hEclipLon, fignum=2002, PPou
     # Save to a File
     date = unicode(datetime.datetime.now())
     date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
-    fname = 'HistPlannedTargetTimeToObserve_' + folder.split('/')[-1] + '_' + date
+    fname = 'HistPlanTargetTimeToObserveStraight_' + folder.split('/')[-1] + '_' + date
     plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
     plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
     plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
@@ -1339,8 +1342,12 @@ def generatePreferentiallyDistributedOB(barout, numOB, OBdur, exoplanetObsTime, 
     OBendTimes = np.concatenate(OBendTimes)
     return numOBassignedToBin, OBstartTimes, OBendTimes
 
-def generatePlannedObsTimeHistHEL2(edges,tDict,fignum=2003, PPoutpath='./', folder='./'):
+def generatePlanHistsHEL(edges,tDict,fignum=2003, PPoutpath='./', folder='./'):
     """ Finds bin centers, binwidths, and total time in each bin, plots time vs HEL histograms
+    HistPlanIntTimeandOHtime_ which takes integration time from Triangle Bins and Includes Overhead
+    HistPlanintTime_ which takes integration time from Triangle Bins
+    HistPlannedTargets_ which takes count of targets in Triangle Bins
+    HistPlannedComp_ which takes completeness of targets in Triangle Bins
     Args:
         edges (numpy array) - edges of the histogram to use
         tDict (dict) - dictionary of triangles, on the celestial sphere, stars in those triangles
@@ -1396,11 +1403,12 @@ def generatePlannedObsTimeHistHEL2(edges,tDict,fignum=2003, PPoutpath='./', fold
     #Save Plots
     date = unicode(datetime.datetime.now())
     date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
-    fname = 'HistPlannedIntTimeandOHtime_' + folder.split('/')[-1] + '_' + date
+    fname = 'HistPlanIntTimeandOHtime_' + folder.split('/')[-1] + '_' + date
     plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
     plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
     plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
     plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
+    plt.close(fignum)
     
 
     #### Planned Int Time only
@@ -1415,11 +1423,12 @@ def generatePlannedObsTimeHistHEL2(edges,tDict,fignum=2003, PPoutpath='./', fold
     #Save Plots
     date = unicode(datetime.datetime.now())
     date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
-    fname = 'HistPlannedintTime_' + folder.split('/')[-1] + '_' + date
+    fname = 'HistPlanintTime_' + folder.split('/')[-1] + '_' + date
     plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
     plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
     plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
     plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
+    plt.close(fignum+1)
 
     #### Plot Target Count
     plt.close(fignum+2)
@@ -1433,11 +1442,12 @@ def generatePlannedObsTimeHistHEL2(edges,tDict,fignum=2003, PPoutpath='./', fold
     #Save Plots
     date = unicode(datetime.datetime.now())
     date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
-    fname = 'HistPlannedTargets_' + folder.split('/')[-1] + '_' + date
+    fname = 'HistPlanTargets_' + folder.split('/')[-1] + '_' + date
     plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
     plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
     plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
     plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
+    plt.close(fignum+2)
     
     #### Plot Target Comp
     plt.close(fignum+3)
@@ -1456,6 +1466,7 @@ def generatePlannedObsTimeHistHEL2(edges,tDict,fignum=2003, PPoutpath='./', fold
     plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
     plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
     plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
+    plt.close(fignum+3)
 
     ####
 
@@ -1731,6 +1742,7 @@ def simpleTimeLonScatter(tDict, fignum=2356, PPoutpath='./', folder='./'):
 #################################################################################
 #################################################################################
 folder = '/home/dean/Documents/SIOSlab/EXOSIMSres/WFIRSTCompSpecPriors_WFIRSTcycle6core_3mo/WFIRSTcycle6core_CKL2_PPKL2'#os.path.normpath(os.path.expandvars('$HOME/Documents/exosims/Scripts/WFIRSTCompSpecPriors_WFIRSTcycle6core_3mo/'))
+folder = '/home/dean/Documents/SIOSlab/EXOSIMSres/HabExCompSpecPriors_HabEx_4m_TSDD_pop100DD_revisit_20190203/HabEx_CSAG13_PPSAG13'
 PPoutpath = folder
 if not os.path.exists(folder):#Folder must exist
     raise ValueError('%s not found'%folder)
@@ -1941,7 +1953,7 @@ simpleTimeLonScatter(tDict,PPoutpath=PPoutpath,folder=folder)
 
 #INPUTS TO BELOW: edges, tDict, maxNumRepTot[12], OBdur[12], exoplanetOBsTime, maxNumYears, PPoutpath
 #### Generate Preferentially Distributed Integration Times ####################
-barout = generatePlannedObsTimeHistHEL2(edges,tDict, PPoutpath=PPoutpath, folder=folder)
+barout = generatePlanHistsHEL(edges,tDict, PPoutpath=PPoutpath, folder=folder)
 numOBassignedToBin, OBstartTimes, OBendTimes = generatePreferentiallyDistributedOB(barout, maxNumRepTot2[12], OBdur2[12], exoplanetObsTime, maxNumYears, loadingPreference='even')
 
 
