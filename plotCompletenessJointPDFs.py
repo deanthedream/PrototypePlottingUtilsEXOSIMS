@@ -1,5 +1,6 @@
+# -*- coding: utf-8 -*-
 """
-Plotting planet population properties
+Plotting planet population Joint PDF
 
 Written By: Dean Keithly
 2/1/2019
@@ -38,83 +39,95 @@ import numbers
 from scipy import interpolate
 from matplotlib import ticker, cm
 
-import sys, os.path, EXOSIMS, EXOSIMS.MissionSim
-folder = os.path.normpath(os.path.expandvars('$HOME/Documents/exosims/Scripts/WFIRSTCompSpecPriors_WFIRSTcycle6core_3mo'))#HabExCompSpecPriors_HabEx_4m_TSDD_pop100DD_revisit_20180424'))#prefDistOBdursweep_WFIRSTcycle6core'))
-filename = 'tmp.json'#'WFIRSTcycle6core_CKL2_PPKL2.json'#'HabEx_CKL2_PPSAG13.json'#'auto_2018_11_03_15_09__prefDistOBdursweep_WFIRSTcycle6core_9.json'#'./TestScripts/02_KnownRV_FAP=1_WFIRSTObs_staticEphem.json'#'Dean17Apr18RS05C01fZ01OB01PP01SU01.json'#'sS_SLSQP.json'#'sS_AYO4.json'#'sS_differentPopJTwin.json'#AYO4.json'
-#filename = 'sS_intTime6_KeplerLike2.json'
-scriptfile = os.path.join(folder,filename)
-sim = EXOSIMS.MissionSim.MissionSim(scriptfile,nopar=True)
-#sim.run_sim()
 
-xnew = sim.SurveySimulation.Completeness.xnew
-dMag = np.linspace(start=15.,stop=50.,num=200)
-xmin = min(xnew)
-xmax = max(xnew)
-ymin = min(dMag)
-ymax = max(dMag)
-xlims = [xmin,sim.SurveySimulation.PlanetPopulation.rrange[1].to('AU').value]
-ylims = [ymin,ymax]
-f = list()
-for k, dm in enumerate(dMag):
-    f.append(sim.SurveySimulation.Completeness.EVPOCpdf(xnew,dm)[:,0])
-f = np.asarray(f)
-f[ 10**-5 > f] = np.nan
+class plotCompletenessJointPDFs(object):
+    """Plotting utility to reproduce Completeness Joint PDF
+    """
+    _modtype = 'util'
 
-plt.close('all')
-plt.rc('axes',linewidth=2)
-plt.rc('lines',linewidth=2)
-plt.rcParams['axes.linewidth']=2
-plt.rc('font',weight='bold')
-fig = plt.figure()
-ax1 = plt.subplot(111)
-CS = ax1.contour(xnew,dMag,f,15, extent=[xlims[0], xlims[1], ylims[0], ylims[1]], linewidths=0.5,colors='k')
-CS = ax1.contourf(xnew,dMag,f,15, extent=[xlims[0], xlims[1], ylims[0], ylims[1]], cmap='jet', intepolation='nearest', locator=ticker.LogLocator())
-ax1.set_xlim(xlims)
-ax1.set_ylim(ylims)
-#CS = plt.contour(X,Y,Z,15, extent=[xmin, xmax, ymin, ymax], linewidths=0.5,colors='k')
-#CS = plt.contourf(X,Y,Z,15, extent=[xmin, xmax, ymin, ymax], cmap='jet', intepolation='nearest', locator=ticker.LogLocator())
-cbar = fig.colorbar(CS)
-plt.xlabel(r'$s$ (AU)',weight='bold')
-plt.ylabel(r'$\Delta$mag',weight='bold')
-#plt.cm.jet
-#plt.scatter(rows,cols,marker='o',c='b',s=5)
-plt.show(block=False)
+    def __init__(self, args=None):
+        vprint(args)
+        vprint('plotCompletenessJointPDFs done')
+        pass
 
+    def singleRunPostProcessing(self, PPoutpath, folder):
+        """Generates a single yield histogram for the run_type
+        Args:
+            PPoutpath (string) - output path to place data in
+            folder (string) - full filepath to folder containing runs
+        """
+        #Get name of pkl file
+        if not os.path.exists(folder):
+            raise ValueError('%s not found'%folder)
+        outspecPath = os.path.join(folder,'outspec.json')
+        try:
+            with open(outspecPath, 'rb') as g:
+                outspec = json.load(g)
+        except:
+            vprint('Failed to open outspecfile %s'%outspecPath)
+            pass
 
-#Redo with Garrett Completeness???
-outspec = sim.SurveySimulation.genOutSpec()
-outspec['modules']['Completeness'] = 'GarrettCompleteness'
+        #Create Simulation Object
+        sim = EXOSIMS.MissionSim.MissionSim(scriptfile=None, nopar=True, **outspec)
 
-sim2 = EXOSIMS.MissionSim.MissionSim(**outspec)
-xnew = sim.SurveySimulation.Completeness.xnew
-dMag = np.linspace(start=15.,stop=50.,num=200)
-xmin = min(xnew)
-xmax = max(xnew)
-ymin = min(dMag)
-ymax = max(dMag)
-xlims = [xmin,sim.SurveySimulation.PlanetPopulation.rrange[1].to('AU').value]
-ylims = [ymin,ymax]
-f = list()
-for k, dm in enumerate(dMag):
-    f.append(sim.SurveySimulation.Completeness.EVPOCpdf(xnew,dm)[:,0])
-f = np.asarray(f)
-f[ 10**-5 > f] = np.nan
+        self.plotJointPDF(sim,PPoutpath,folder)
 
-plt.rc('axes',linewidth=2)
-plt.rc('lines',linewidth=2)
-plt.rcParams['axes.linewidth']=2
-plt.rc('font',weight='bold')
-fig = plt.figure()
-ax1 = plt.subplot(111)
-CS = ax1.contour(xnew,dMag,f,15, extent=[xlims[0], xlims[1], ylims[0], ylims[1]], linewidths=0.5,colors='k')
-CS = ax1.contourf(xnew,dMag,f,15, extent=[xlims[0], xlims[1], ylims[0], ylims[1]], cmap='jet', intepolation='nearest', locator=ticker.LogLocator())
-ax1.set_xlim(xlims)
-ax1.set_ylim(ylims)
-#CS = plt.contour(X,Y,Z,15, extent=[xmin, xmax, ymin, ymax], linewidths=0.5,colors='k')
-#CS = plt.contourf(X,Y,Z,15, extent=[xmin, xmax, ymin, ymax], cmap='jet', intepolation='nearest', locator=ticker.LogLocator())
-cbar = fig.colorbar(CS)
-plt.xlabel(r'$s$ (AU)',weight='bold')
-plt.ylabel(r'$\Delta$mag',weight='bold')
-#plt.cm.jet
-#plt.scatter(rows,cols,marker='o',c='b',s=5)
-plt.show(block=False)
+    def plotJointPDF(self, sim, PPoutpath, folder):
+        """
+        Args:
+            sim
+            PPoutpath
+            folder
+        Returns:
+            None
+        """
+
+        xnew = sim.SurveySimulation.Completeness.xnew
+        dMag = np.linspace(start=15.,stop=50.,num=200)
+        xmin = np.min(xnew)
+        xmax = np.max(xnew)
+        ymin = np.min(dMag)
+        ymax = np.max(dMag)
+
+        f = list()
+        for k, dm in enumerate(dMag):
+            f.append(sim.SurveySimulation.Completeness.EVPOCpdf(xnew,dm)[:,0])
+        f = np.asarray(f)
+        f[ 10**-5. >= f] = np.nan
+        maxf = np.ceil(np.log10(np.nanmax(f)))
+        minf = np.floor(np.log10(np.nanmin(f)))
+        levelList = [10**x for x in np.linspace(start=minf,stop=maxf,num=maxf-minf+1, endpoint=True)]
+
+        #xlims = [xmin,sim.SurveySimulation.PlanetPopulation.rrange[1].to('AU').value] # largest possible planet orbital radius
+        maxXIndinRows = [np.max(np.where(f[i,:]>=1e-5)) for i in np.arange(len(f)) if any(f[i,:]>=1e-5)]
+        maxYIndinCols = [np.max(np.where(f[:,j]>=1e-5)) for j in np.arange(len(f[0,:]))  if any(f[:,j]>=1e-5)]
+        xlims = [xmin,xnew[np.max(maxXIndinRows)]] # based on where furthest right of 1e-5 occurs
+        ylims = [ymin,dMag[np.max(maxYIndinCols)]]#ymax]
+
+        plt.close(351687)
+        plt.rc('axes',linewidth=2)
+        plt.rc('lines',linewidth=2)
+        plt.rcParams['axes.linewidth']=2
+        plt.rc('font',weight='bold')
+        fig = plt.figure(351687)
+        ax1 = plt.subplot(111)
+
+        CS = ax1.contourf(xnew,dMag,f, levels=levelList, extent=[xlims[0], xlims[1], ylims[0], ylims[1]], cmap='bwr', intepolation='nearest', locator=ticker.LogLocator())
+        CS2 = ax1.contour(CS, levels=levelsList, extent=[xlims[0], xlims[1], ylims[0], ylims[1]], linewidths=2.0,colors='k')
+        #ATTEMPTING TO ADD CONTOUR LABELS plt.clabel(CS2, fmt='%2.1f', colors='k', fontsize=12)
+
+        ax1.set_xlim(xlims)
+        ax1.set_ylim(ylims)
+        cbar = fig.colorbar(CS)
+        plt.xlabel(r'$s$ (AU)',weight='bold')
+        plt.ylabel(r'$\Delta$mag',weight='bold')
+        plt.show(block=False)
+
+        # Save to a File
+        date = unicode(datetime.datetime.now())
+        date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+        fname = 'completenessJoinfPDF_' + folder.split('/')[-1] + '_' + date
+        plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
+        plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
+        plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
+        plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
