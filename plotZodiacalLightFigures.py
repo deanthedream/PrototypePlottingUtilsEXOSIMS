@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 """
-Template Plotting utility for post processing automation
+Plotting utility for the production of Zodiacal Light Related Plots
 Written by: Dean Keithly
 Written on: 10/11/2018
 """
@@ -115,15 +115,15 @@ plt.rc('axes',linewidth=2)
 plt.rc('lines',linewidth=2)
 plt.rcParams['axes.linewidth']=2
 plt.rc('font',weight='bold') 
-out1 = plt.hist(minmagfZ2,label=r'$magfZ_{min}$',color='b',alpha=0.5,bins=np.arange(np.min(minmagfZ2), np.max(minmagfZ2) + 0.1, 0.1))
-out2 = plt.hist(maxmagfZ2,label=r'$magfZ_{max}$',color='r',alpha=0.5,bins=np.arange(np.min(maxmagfZ2), np.max(maxmagfZ2) + 0.1, 0.1))
+out1 = plt.hist(minmagfZ2,label=r'$Z_{\mathrm{min}}$',color='b',alpha=0.5,bins=np.arange(np.min(minmagfZ2), np.max(minmagfZ2) + 0.1, 0.1))
+out2 = plt.hist(maxmagfZ2,label=r'$Z_{\mathrm{max}}$',color='r',alpha=0.5,bins=np.arange(np.min(maxmagfZ2), np.max(maxmagfZ2) + 0.1, 0.1))
 magfZ0 = -2.5*np.log10(ZL.fZ0.value)
 maxCNT = np.max([np.max(out1[0]),np.max(out2[0])])
-out3 = plt.plot([magfZ0,magfZ0],[0,1.1*maxCNT],color='k',label=r'$magfZ_0$')
-out4 = plt.plot([np.mean(minmagfZ2),np.mean(minmagfZ2)],[0,1.1*maxCNT],color='b',label=r'$mean(magfZ_{min})$',linestyle='--')
-out5 = plt.plot([np.mean(maxmagfZ2),np.mean(maxmagfZ2)],[0,1.1*maxCNT],color='r',label=r'$mean(magfZ_{max})$',linestyle='--')
-plt.title('Histogram of '+r'$magfZ_{min}$'+' and '+r'$magfZ_{max}$',weight='bold',fontsize=12)
-plt.xlabel('Zodiacal Light in Magnitudes',weight='bold',fontsize=12)
+out3 = plt.plot([magfZ0,magfZ0],[0,1.1*maxCNT],color='k',label=r'$Z_0$')
+out4 = plt.plot([np.mean(minmagfZ2),np.mean(minmagfZ2)],[0,1.1*maxCNT],color='b',label=r'$\mu_{Z_{\mathrm{min}}}}$',linestyle='--')
+out5 = plt.plot([np.mean(maxmagfZ2),np.mean(maxmagfZ2)],[0,1.1*maxCNT],color='r',label=r'$\mu_{Z_{\mathrm{max}}}}$',linestyle='--')
+#plt.title('Histogram of '+r'$magfZ_{min}$'+' and '+r'$magfZ_{max}$',weight='bold',fontsize=12)
+plt.xlabel('Zodiacal Light in Magnitudes, Z',weight='bold',fontsize=12)
 plt.ylabel('# of Targets',weight='bold',fontsize=12)
 
 plt.ylim([0,1.1*maxCNT])
@@ -132,10 +132,14 @@ plt.legend()
 plt.show(block=False)
 #red_patch = matplotlib.mpatches.Patch(color='red', label=r'$magfZ){max}$')
 #plt.legend(handles=[red_patch])
-figfZminmaxHist.savefig(os.path.join(PPoutpath,'figfZminmaxHist'+'.png'))
-figfZminmaxHist.savefig(os.path.join(PPoutpath,'figfZminmaxHist'+'.svg'))
-figfZminmaxHist.savefig(os.path.join(PPoutpath,'figfZminmaxHist'+'.eps'))
-figfZminmaxHist.savefig(os.path.join(PPoutpath,'figfZminmaxHist'+'.pdf'))
+
+date = unicode(datetime.datetime.now())
+date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+fname = 'figfZminmaxHist_' + folder.split('/')[-1] + '_' + date
+plt.savefig(os.path.join(PPoutpath, fname + '.png'))
+plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
+plt.savefig(os.path.join(PPoutpath, fname + '.eps'))
+plt.savefig(os.path.join(PPoutpath, fname + '.pdf'))
 
 
 
@@ -163,14 +167,27 @@ plt.plot(time,magfZ2[c2minInd,:], label='min(c)')
 
 
 plt.xlabel('Mission Elasped Time (d)', weight='bold')
-plt.ylabel('Zodiacal Light in Magnitudes', weight='bold')
+plt.ylabel('Zodiacal Light in Magnitudes, Z', weight='bold')
 plt.legend()
 plt.show(block=False)
-figfZvsTime.savefig(os.path.join(PPoutpath,'figfZvsTime'+'.pdf'))
+date = unicode(datetime.datetime.now())
+date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+fname = 'figfZvsTime_' + folder.split('/')[-1] + '_' + date
+plt.savefig(os.path.join(PPoutpath, fname + '.png'))
+plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
+plt.savefig(os.path.join(PPoutpath, fname + '.eps'))
+plt.savefig(os.path.join(PPoutpath, fname + '.pdf'))
+
 
 plt.xlim([0.,365.25*2.])
 plt.show(block=False)
-figfZvsTime.savefig(os.path.join(PPoutpath,'figfZvsTime_ReasonableLimits'+'.pdf'))
+date = unicode(datetime.datetime.now())
+date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+fname = 'figfZvsTime_ReasonableLimits_' + folder.split('/')[-1] + '_' + date
+plt.savefig(os.path.join(PPoutpath, fname + '.png'))
+plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
+plt.savefig(os.path.join(PPoutpath, fname + '.eps'))
+plt.savefig(os.path.join(PPoutpath, fname + '.pdf'))
 
 
 
@@ -184,7 +201,7 @@ maxDeltafZ = np.zeros(ZL.fZ_startSaved.shape[0])
 for j in np.arange(delta.shape[0]):
     maxDeltafZ[j] = np.max(delta[j,:])
 
-#Plot 45 day delta vs time
+#### Plot 45 day delta vs time
 plt.close(32198652)
 figMaxfZ45Days = plt.figure(32198652)
 plt.plot(-2.5*np.log10(delta[sInds[c2maxInd],:]), label='max(c)', color='red')
@@ -193,14 +210,27 @@ plt.plot(-2.5*np.log10(delta[sInds[c2minInd],:]), label='min(c)', color='blue')
 plt.legend()
 plt.ylabel('Maximum Variation in Zodiacal Light Magnitude over 45 Days')
 plt.show(block=False)
-figMaxfZ45Days.savefig(os.path.join(PPoutpath,'figMaxfZ45Days'+'.pdf'))
+date = unicode(datetime.datetime.now())
+date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+fname = 'figMaxfZ45Days_' + folder.split('/')[-1] + '_' + date
+plt.savefig(os.path.join(PPoutpath, fname + '.png'))
+plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
+plt.savefig(os.path.join(PPoutpath, fname + '.eps'))
+plt.savefig(os.path.join(PPoutpath, fname + '.pdf'))
 
-#Plot Histogram of maximum 45 day deltas
+
+#### Plot Histogram of maximum 45 day deltas
 plt.close(548962)
 figHistMaxfZ45Days = plt.figure(548962)
 plt.hist(maxDeltafZ)
-plt.xlabel(r'Maximum Zodiacal Light $\delta$ in Magnitudes')
+plt.xlabel(r'Maximum Zodiacal Light $\delta$ in Magnitudes, Z')
 plt.show(block=False)
-figHistMaxfZ45Days.savefig(os.path.join(PPoutpath,'figHistMaxfZ45Days'+'.pdf'))
+date = unicode(datetime.datetime.now())
+date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+fname = 'figHistMaxfZ45Days_' + folder.split('/')[-1] + '_' + date
+plt.savefig(os.path.join(PPoutpath, fname + '.png'))
+plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
+plt.savefig(os.path.join(PPoutpath, fname + '.eps'))
+plt.savefig(os.path.join(PPoutpath, fname + '.pdf'))
 
 
