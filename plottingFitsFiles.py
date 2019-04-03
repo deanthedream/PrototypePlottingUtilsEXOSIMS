@@ -26,8 +26,6 @@ from copy import deepcopy
 
 from astropy.io import fits
 import scipy.interpolate
-import astropy.units as u
-import numpy as np
 from EXOSIMS.MissionSim import MissionSim
 import numbers
 
@@ -274,7 +272,8 @@ def plotParam(param, syst,fignum=1):
   lamMin = 400.0
   lamMax = 1200.0
   lams = np.linspace(lamMin,lamMax,num=6)#*u.nm#syst['lam']
-  WA = np.linspace(syst['IWA'],syst['OWA'],num=100)#*u.arcsec
+  ### TODO ADD LAMS
+  WA = np.linspace(syst['IWA'],syst['OWA'],num=100, endpoint=True)#*u.arcsec
   core_contrast = []
   for l2 in lams:
     lcon = []
@@ -286,12 +285,21 @@ def plotParam(param, syst,fignum=1):
     core_contrast.append(lcon)
 
   fig = plt.figure(num=fignum)
+  ax = plt.subplot(1,1,1)
+
+  plt.subplots_adjust(left=0.2)
+  plt.rc('axes',linewidth=2)
+  plt.rc('lines',linewidth=2)
+  plt.rcParams['axes.linewidth']=2
+  plt.rc('font',weight='bold')
   for i in np.arange(len(lams)):
-    plt.semilogy(WA,core_contrast[i],label=r'$\lambda$: ' + str(lams[i]))
+    plt.semilogy(WA,core_contrast[i],label=r'$\lambda$: ' + str(np.round(lams[i])))
+  plt.plot([WA[0],WA[0]],[0.5*np.min(core_contrast),1.5*np.max(core_contrast)],color='black',label='IWA')
+  plt.plot([WA[-1],WA[-1]],[0.5*np.min(core_contrast),1.5*np.max(core_contrast)],color='black',label='OWA')
   #plt.contour(lams,WA,core_contrast)
-  plt.ylabel(param)
+  plt.ylabel(param, weight='bold')
   #plt.xlabel(r'$\lambda$ (nm)')
-  plt.xlabel('Working Angle (arcsec)')
+  plt.xlabel('Working Angle (arcsec)', weight='bold')
   plt.legend()
   plt.show(block=False)
   return core_contrast
