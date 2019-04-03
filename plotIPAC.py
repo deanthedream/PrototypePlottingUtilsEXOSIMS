@@ -10,7 +10,9 @@ import matplotlib.pyplot as plt
 import numpy as np
 from astropy import constants as const
 from astropy import units as u
-from scipy.integrate import cumtrapz
+#from scipy.integrate import cumtrapz
+import datetime
+import re
 
 
 def constructIPACurl(tableInput="exoplanets", columnsInputList=['pl_hostname','ra','dec','pl_discmethod','pl_pnum','pl_orbper','pl_orbsmax','pl_orbeccen',\
@@ -85,6 +87,9 @@ def setOfStarsWithKnownPlanets(data):
 
 
 data = constructIPACurl()
+PPoutpath = ''
+folder = ''
+
 
 
 #### Plot "Penny Plot" as Rp vs SMA
@@ -227,8 +232,8 @@ n2, bins2, patches2 = ax2.hist(np.asarray(pl_orbeccen),zorder=8,color='black')
 ax2.set_xlabel('Oribital Eccentricity', weight='bold')
 ax3 = ax2.twinx()
 ax3.plot(bins[:-1],cdf*100.,zorder=10, color='red')
-ax2.set_ylabel('Eccentricty Frequency', weight='bold')
-ax3.set_ylabel('Eccentricty CDF', weight='bold')
+ax2.set_ylabel('Eccentricty Frequency (count)', weight='bold')
+ax3.set_ylabel('Eccentricty CDF (%)', weight='bold')
 ax2.set_xlim(left=0.,right=1.)
 ax2.set_ylim(bottom=0.,top=np.sum(n2))
 ax3.set_ylim(bottom=0.,top=100.)
@@ -247,12 +252,15 @@ plt.savefig(os.path.join(PPoutpath, fname + '.pdf'))
 len(plt_orbeccenISNONE)
 len(data)
 
-'From the data table downloaded from IPAC on ' + str(date) + ' the following summaries apply'
-'pl_orbsmax has ' + str(len(nanpl_orbsmaxInds)) + ' None or nan data fields'
-'st_mass has ' + str(len(nanst_massInds)) + ' None or nan data fields'
-'nanpl_orbperInds has ' + str(len(nanpl_orbperInds)) + ' None or nan data fields'
-'pl_radj has ' + str(len(pl_radj)) + ' None or nan data fields'
-'pl_orbeccen has ' + str(len(plt_orbeccenISNONE)) + ' None or nan data fileds'
+lines = list()
+lines.append('From the confirmed exoplanet data table downloaded from IPAC on ' + str(date) + ' the following summaries apply')
+lines.append('The table contains ' + str(len(data)) + ' lines')
+lines.append('pl_orbsmax has ' + str(len(nanpl_orbsmaxInds)) + ' None or nan data fields')
+lines.append('st_mass has ' + str(len(nanst_massInds)) + ' None or nan data fields')
+lines.append('nanpl_orbperInds has ' + str(len(nanpl_orbperInds)) + ' None or nan data fields')
+lines.append('pl_radj has ' + str(len(nanpl_radjInds)) + ' None or nan data fields')
+lines.append('pl_orbeccen has ' + str(len(plt_orbeccenISNONE)) + ' None or nan data fileds')
+
 
 
 starsWithPlanets = setOfStarsWithKnownPlanets(data)
