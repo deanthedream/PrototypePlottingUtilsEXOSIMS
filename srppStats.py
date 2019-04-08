@@ -23,6 +23,7 @@ import random
 import datetime
 import re
 from EXOSIMS.util.vprint import vprint
+from EXOSIMS.util.read_ipcluster_ensemble import read_all
 
 """Generates a single yield histogram for the run_type
 Args:
@@ -47,13 +48,18 @@ folder = '/home/dean/Documents/SIOSlab/EXOSIMSres/HabExCompSpecPriors_HabEx_4m_T
 
 
 
-#Load pkl and outspec files
-try:
-    with open(fullPathPKL, 'rb') as f:#load from cache
-        DRM = pickle.load(f)
-except:
-    vprint('Failed to open fullPathPKL %s'%fullPathPKL)
-    pass
+
+folder = '/home/dean/Documents/SIOSlab/EXOSIMSres/WFIRSTCompSpecPriors_WFIRSTcycle6core_3mo_40319_2/WFIRSTcycle6core_CKL2_PPKL2'
+if not os.path.exists(folder):#Folder must exist
+    raise ValueError('%s not found'%folder)
+allres = read_all(folder)# contains all drm from all missions in folder. Length of number of pkl files in folder
+
+#### Generate Ensemble Wide Properties
+# For each parameter P, gather min, mean, and max
+P = ['']
+
+
+
 outspecPath = os.path.join(folder,'outspec.json')
 try:
     with open(outspecPath, 'rb') as g:
@@ -61,14 +67,6 @@ try:
 except:
     vprint('Failed to open outspecfile %s'%outspecPath)
     pass
-
-
-
-#lines.append('comp min: ' + str(min(comp[t_dets.value>1e-10])) + '\n')
-#lines.append('comp max: ' + str(max(t_dets[t_dets.value>1e-10])) + '\n')
-#lines.append('comp mean: ' + str(mean(t_dets[t_dets.value>1e-10])) + '\n')
-
-
 #Create Simulation Object
 sim = EXOSIMS.MissionSim.MissionSim(scriptfile=None, nopar=True, **outspec)
 SS = sim.SurveySimulation
@@ -80,6 +78,42 @@ TL = SS.TargetList
 TK = SS.TimeKeeping
 totOH = Obs.settlingTime.value + OS.observingModes[0]['syst']['ohTime'].value
 
+
+
+data = list()
+for i in [0]:#np.arange(len(allres)):
+    #allres[i]['systems'] # contains all information relating to planets and stars
+    #allres[i]['DRM'] #has length number of detection observations
+    dataElement = {}
+    dataElement['det_times'] = [allres[i]['DRM'][j]['det_time'].value for j in np.arange(len(allres[i]['DRM']))]
+    dataElement['anydet'] = [np.any(allres[i]['DRM'][j]['det_status'] == 1) for j in np.arange(len(allres[i]['DRM']))] #were there any detections in this observations
+    dataElement['madedet_times'] = [allres[i]['DRM'][j]['det_time'].value for j in np.arange(len(allres[i]['DRM'])) if dataElement['anydet'][i] == True]
+    dataElement['numDetsPerTarget'] = [(allres[i]['DRM'][j]['det_status'] == 1).tolist().count(True) for j in np.arange(len(allres[i]['DRM']))] # number of detections per target
+    dataElement['star_inds'] = [allres[i]['DRM'][j]['star_ind'] for j in np.arange(len(allres[i]['DRM'])) if dataElement['anydet'][i] == True] # All star indices
+    dataElement['plan_inds'] = [[allres[i]['DRM'][j]['plan_inds'][ii] for ii in np.arange(len(allres[i]['DRM'][j])) if allres[i]['DRM'][j]['det_status'][ii] == 1]\
+                                    for j in np.arange(len(allres[i]['DRM']))] # double iterator. Iterates over planets around star ii. Iterates over targets stars j
+                                    # keeps planet inds of positive detections
+    dataElement['star_indsCorrePlanInds'] = [[allres[i]['DRM'][j]['star_ind'] for ii in np.arange(len(allres[i]['DRM'][j])) if allres[i]['DRM'][j]['det_status'][ii] == 1]\
+                                    for j in np.arange(len(allres[i]['DRM']))] # double iterator. Iterates over planets around star ii. Iterates over targets stars j
+                                    # keeps stars associated with planet inds of positive detections
+    #for j in np.arange(len(allres[i]['DRM'])):# iterate over all observations in DRM   
+    #allres[i]['DRM'][j]
+    data.append(dataElement)
+
+
+
+
+#Load pkl and outspec files
+try:
+    with open(fullPathPKL, 'rb') as f:#load from cache
+        DRM = pickle.load(f)
+except:
+    vprint('Failed to open fullPathPKL %s'%fullPathPKL)
+    pass
+
+#lines.append('comp min: ' + str(min(comp[t_dets.value>1e-10])) + '\n')
+#lines.append('comp max: ' + str(max(t_dets[t_dets.value>1e-10])) + '\n')
+#lines.append('comp mean: ' + str(mean(t_dets[t_dets.value>1e-10])) + '\n')
 
 #### Extract Data from PKL file
 det_times = [DRM['DRM'][i]['det_time'].value for i in np.arange(len(DRM['DRM']))]
@@ -93,8 +127,8 @@ star_inds = [DRM['DRM'][i]['star_ind'] for i in np.arange(len(DRM['DRM'])) if an
 plan_inds = []
 star_indsCorrePlanInds = []
 earthLike_sInds = []
-for i in np.arange(len(DRM['DRM'])):
-    for ii in np.arange(len(DRM['DRM'][i]['plan_inds'])):
+for i in np.arange(len(DRM['DRM'])):#iterates over stars observed
+    for ii in np.arange(len(DRM['DRM'][i]['plan_inds'])):# iterates over planets around a star
         if DRM['DRM'][i]['det_status'][ii] == 1:
             plan_inds.append(DRM['DRM'][i]['plan_inds'][ii])
             star_indsCorrePlanInds.append(DRM['DRM'][i]['star_ind'])
