@@ -28,14 +28,16 @@ from astropy.io import fits
 import scipy.interpolate
 from EXOSIMS.MissionSim import MissionSim
 import numbers
+from matplotlib import ticker, cm
+
 
 
 # fullPathPKL = '/home/dean/Documents/SIOSlab/EXOSIMSres/HabExCompSpecPriors_HabEx_4m_TSDD_pop100DD_revisit_20180424/HabEx_CSAG13_PPSAG13/run94611245591.pkl'
 # inputScript = '/home/dean/Documents/SIOSlab/EXOSIMSres/HabExCompSpecPriors_HabEx_4m_TSDD_pop100DD_revisit_20180424/HabEx_CSAG13_PPSAG13/HabEx_CSAG13_PPSAG13.json'
 # folder = '/home/dean/Documents/SIOSlab/EXOSIMSres/HabExCompSpecPriors_HabEx_4m_TSDD_pop100DD_revisit_20180424/HabEx_CSAG13_PPSAG13'
 #WFIRST pkl
-fullPathPKL = '/home/dean/Documents/SIOSlab/EXOSIMSres/WFIRSTCompSpecPriors_WFIRSTcycle6core_3momaxC/WFIRSTcycle6core_CSAG13_PPSAG13/tmp/run56546329770.pkl'
-folder = '/home/dean/Documents/SIOSlab/EXOSIMSres/WFIRSTCompSpecPriors_WFIRSTcycle6core_3momaxC/WFIRSTcycle6core_CSAG13_PPSAG13'
+fullPathPKL = '/home/dean/Documents/SIOSlab/EXOSIMSres/WFIRSTCompSpecPriors_WFIRSTcycle6core_3mo_405_19/WFIRSTcycle6core_CKL2_PPKL2/run16348297762.pkl'
+folder = '/home/dean/Documents/SIOSlab/EXOSIMSres/WFIRSTCompSpecPriors_WFIRSTcycle6core_3mo_405_19/WFIRSTcycle6core_CKL2_PPKL2'
 
 
 
@@ -261,13 +263,22 @@ syst = get_coro_param(syst, 'core_area')
 
 
 #### Plot core_contrast
-def plotParam(param, syst,fignum=1):
+def plotParam(param, syst, sLambda, sWA, fignum=1, PPoutpath='./', folder='./'):
   """
   Args:
     param (string) - 'core_contrast', 'core_thruput', 'core_mean_intensity',
                       'core_area', 'occ_trans'
 
   """
+  if param == 'core_thruput':
+    return plotCoreThruput(syst, sLambda, sWA)
+  if param == 'core_mean_intensity':
+    return plotCoreMeanIntensity(syst, sLambda, sWA)
+  if param == 'core_area':
+    return plotCoreArea(syst, sLambda, sWA)
+  if param == 'occ_trans':
+    return plotOCCTRANS(syst, sLambda, sWA)
+
   plt.close(fignum)
   lamMin = 400.0
   lamMax = 1200.0
@@ -297,22 +308,238 @@ def plotParam(param, syst,fignum=1):
   plt.plot([WA[0],WA[0]],[0.5*np.min(core_contrast),1.5*np.max(core_contrast)],color='black',label='IWA')
   plt.plot([WA[-1],WA[-1]],[0.5*np.min(core_contrast),1.5*np.max(core_contrast)],color='black',label='OWA')
   #plt.contour(lams,WA,core_contrast)
+  if param == 'core_contrast':
+    param = r'Contrast $\zeta$'
+  # if param == 'core_thruput':
+  #   param = 'Throughput T'
+  # if param == 'core_mean_intensity':
+  #   param = 'Core Mean Intensity'
+  # if param == 'core_area':
+  #   param = 'Core Area'
+  # if param == 'occ_trans':
+  #   param = 'occ trans'
   plt.ylabel(param, weight='bold')
   #plt.xlabel(r'$\lambda$ (nm)')
-  plt.xlabel('Working Angle (arcsec)', weight='bold')
+  plt.xlabel('Working Angle (WA) in arcsec', weight='bold')
   plt.legend()
   plt.show(block=False)
   return core_contrast
 
+def plotCoreThruput(syst, sLambda, sWA, fignum=65496832, PPoutpath='./', folder='./'):
+  plt.close(fignum)
+  lamMin = 400.0
+  lamMax = 1200.0
+  lams = np.linspace(lamMin, lamMax, num=500, endpoint=True)#*u.nm#syst['lam']
+  WA = np.linspace(syst['IWA'], syst['OWA'], num=500, endpoint=True)#*u.arcsec
+  core_thruput = []
+  for l2 in lams:
+    lcon = []
+    for wa in WA:
+      tmp = syst['core_thruput'](l2,wa)[0]
+      if tmp == 1.:
+        tmp = np.nan
+      lcon.append(tmp)
+    core_thruput.append(lcon)
+  core_thruput = np.asarray(core_thruput)
 
-CC = plotParam(fignum=1,param='core_contrast',syst=syst)
-CT = plotParam(fignum=2,param='core_thruput',syst=syst)
-CMI = plotParam(fignum=3,param='core_mean_intensity',syst=syst)
-CA = plotParam(fignum=4,param='core_area',syst=syst)
-OT = plotParam(fignum=5,param='occ_trans',syst=syst)
+  fig = plt.figure(num=fignum)
+  plt.rc('axes',linewidth=2)
+  plt.rc('lines',linewidth=2)
+  plt.rcParams['axes.linewidth']=2
+  plt.rc('font',weight='bold')
+
+  CS = plt.contourf(lams, WA, core_thruput, cmap='bwr')
+  plt.plot([np.min(lams), sLambda],[sWA, sWA], color='black')
+  plt.plot([sLambda, sLambda],[np.min(WA), sWA], color='black')
+  plt.scatter(sLambda,sWA, marker='o',facecolors='white', edgecolors='black',zorder=3)
+  plt.xlabel(r'Wavelength, $\lambda$ (nm)', weight='bold')
+  #plt.xlabel(r'$\lambda$ (nm)')
+  plt.ylabel(r'Working Angle, $WA$ in arcsec', weight='bold')
+  cbar = plt.colorbar(CS)
+  cbar.set_label(r'Throughput, $T$', weight='bold')
+  plt.show(block=False)
+
+  date = unicode(datetime.datetime.now())
+  date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+  fname = 'Throughput_' + folder.split('/')[-1] + '_' + date
+  plt.savefig(os.path.join(PPoutpath,fname+'.png'))
+  plt.savefig(os.path.join(PPoutpath,fname+'.svg'))
+  plt.savefig(os.path.join(PPoutpath,fname+'.eps'))
+  plt.savefig(os.path.join(PPoutpath,fname+'.pdf'))
+
+  return core_thruput
+
+def plotCoreMeanIntensity(syst, sLambda, sWA, fignum=458845, PPoutpath='./', folder='./'):
+  plt.close(fignum)
+  lamMin = 400.0
+  lamMax = 1200.0
+  lams = np.linspace(lamMin, lamMax, num=500, endpoint=True)#*u.nm#syst['lam']
+  WA = np.linspace(syst['IWA'], syst['OWA'], num=500, endpoint=True)#*u.arcsec
+  core_mean_intensity = []
+  for l2 in lams:
+    lcon = []
+    for wa in WA:
+      tmp = syst['core_mean_intensity'](l2,wa)[0]
+      if tmp == 1.:
+        tmp = np.nan
+      lcon.append(tmp)
+    core_mean_intensity.append(lcon)
+  core_mean_intensity = np.asarray(core_mean_intensity)
+
+  fig = plt.figure(num=fignum)
+  plt.rc('axes',linewidth=2)
+  plt.rc('lines',linewidth=2)
+  plt.rcParams['axes.linewidth']=2
+  plt.rc('font',weight='bold')
+
+  CS = plt.contourf(lams, WA, core_mean_intensity, cmap='bwr')
+  plt.plot([np.min(lams), sLambda],[sWA, sWA], color='black')
+  plt.plot([sLambda, sLambda],[np.min(WA), sWA], color='black')
+  plt.scatter(sLambda,sWA, marker='o',facecolors='white', edgecolors='black',zorder=3)
+  plt.xlabel(r'Wavelength, $\lambda$ (nm)', weight='bold')
+  #plt.xlabel(r'$\lambda$ (nm)')
+  plt.ylabel(r'Working Angle, $WA$ in arcsec', weight='bold')
+  cbar = plt.colorbar(CS)
+  cbar.set_label(r'Core Mean Intensity, $\Psi$', weight='bold')
+  plt.show(block=False)
+
+  date = unicode(datetime.datetime.now())
+  date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+  fname = 'MeanIntensity_' + folder.split('/')[-1] + '_' + date
+  plt.savefig(os.path.join(PPoutpath,fname+'.png'))
+  plt.savefig(os.path.join(PPoutpath,fname+'.svg'))
+  plt.savefig(os.path.join(PPoutpath,fname+'.eps'))
+  plt.savefig(os.path.join(PPoutpath,fname+'.pdf'))
+
+  return core_mean_intensity
+
+def plotCoreArea(syst, sLambda, sWA, fignum=89129, PPoutpath='./', folder='./'):
+  plt.close(fignum)
+  lamMin = 400.0
+  lamMax = 1200.0
+  lams = np.linspace(lamMin, lamMax, num=500, endpoint=True)#*u.nm#syst['lam']
+  WA = np.linspace(syst['IWA'], syst['OWA'], num=500, endpoint=True)#*u.arcsec
+  core_area = []
+  for l2 in lams:
+    lcon = []
+    for wa in WA:
+      tmp = syst['core_area'](l2,wa)[0]
+      if tmp == 1.:
+        tmp = np.nan
+      lcon.append(tmp)
+    core_area.append(lcon)
+  core_area = np.asarray(core_area)
+
+  fig = plt.figure(num=fignum)
+  plt.rc('axes',linewidth=2)
+  plt.rc('lines',linewidth=2)
+  plt.rcParams['axes.linewidth']=2
+  plt.rc('font',weight='bold')
+
+  CS = plt.contourf(lams, WA, core_area, cmap='bwr')
+  plt.plot([np.min(lams), sLambda],[sWA, sWA], color='black')
+  plt.plot([sLambda, sLambda],[np.min(WA), sWA], color='black')
+  plt.scatter(sLambda,sWA, marker='o',facecolors='white', edgecolors='black',zorder=3)
+  plt.xlabel(r'Wavelength, $\lambda$ (nm)', weight='bold')
+  #plt.xlabel(r'$\lambda$ (nm)')
+  plt.ylabel(r'Working Angle, $WA$ in arcsec', weight='bold')
+  cbar = plt.colorbar(CS)
+  cbar.set_label(r'Core Area, $\Gamma$', weight='bold')
+  plt.show(block=False)
+
+  date = unicode(datetime.datetime.now())
+  date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+  fname = 'CoreArea_' + folder.split('/')[-1] + '_' + date
+  plt.savefig(os.path.join(PPoutpath,fname+'.png'))
+  plt.savefig(os.path.join(PPoutpath,fname+'.svg'))
+  plt.savefig(os.path.join(PPoutpath,fname+'.eps'))
+  plt.savefig(os.path.join(PPoutpath,fname+'.pdf'))
+
+  return core_area
+
+def plotOCCTRANS(syst, sLambda, sWA, fignum=12380, PPoutpath='./', folder='./'):
+  """
+  Plot Intensity transmission of extended background sources such as zodiacal light.
+  Includes pupil mask, occulter, Lyot stop, and polarizer
+  """
+  plt.close(fignum)
+  lamMin = 400.0
+  lamMax = 1200.0
+  lams = np.linspace(lamMin, lamMax, num=500, endpoint=True)#*u.nm#syst['lam']
+  WA = np.linspace(syst['IWA'], syst['OWA'], num=500, endpoint=True)#*u.arcsec
+  occ_trans = []
+  for l2 in lams:
+    lcon = []
+    for wa in WA:
+      tmp = syst['occ_trans'](l2,wa)[0]
+      if tmp == 1.:
+        tmp = np.nan
+      lcon.append(tmp)
+    occ_trans.append(lcon)
+  occ_trans = np.asarray(occ_trans)
+
+  fig = plt.figure(num=fignum)
+  plt.rc('axes',linewidth=2)
+  plt.rc('lines',linewidth=2)
+  plt.rcParams['axes.linewidth']=2
+  plt.rc('font',weight='bold')
+
+  CS = plt.contourf(lams, WA, occ_trans, cmap='bwr')
+  plt.plot([np.min(lams), sLambda],[sWA, sWA], color='black')
+  plt.plot([sLambda, sLambda],[np.min(WA), sWA], color='black')
+  plt.scatter(sLambda,sWA, marker='o',facecolors='white', edgecolors='black',zorder=3)
+  plt.xlabel(r'Wavelength, $\lambda$ (nm)', weight='bold')
+  #plt.xlabel(r'$\lambda$ (nm)')
+  plt.ylabel(r'Working Angle, $WA$ in arcsec', weight='bold')
+  cbar = plt.colorbar(CS)
+  cbar.set_label(r'Intensity Transmission of Extended\nBackground Sources, $\Upsilon$', weight='bold')
+  plt.show(block=False)
+
+  date = unicode(datetime.datetime.now())
+  date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+  fname = 'occtrans_' + folder.split('/')[-1] + '_' + date
+  plt.savefig(os.path.join(PPoutpath,fname+'.png'))
+  plt.savefig(os.path.join(PPoutpath,fname+'.svg'))
+  plt.savefig(os.path.join(PPoutpath,fname+'.eps'))
+  plt.savefig(os.path.join(PPoutpath,fname+'.pdf'))
+
+  return occ_trans
+
+CC = plotParam(fignum=1,param='core_contrast',syst=syst, sWA=sim.SurveySimulation.WAint[0].value, sLambda=sim.SurveySimulation.detmode['lam'].value)
+CT = plotParam(fignum=2,param='core_thruput',syst=syst, sWA=sim.SurveySimulation.WAint[0].value, sLambda=sim.SurveySimulation.detmode['lam'].value)
+CMI = plotParam(fignum=3,param='core_mean_intensity',syst=syst, sWA=sim.SurveySimulation.WAint[0].value, sLambda=sim.SurveySimulation.detmode['lam'].value)
+CA = plotParam(fignum=4,param='core_area',syst=syst, sWA=sim.SurveySimulation.WAint[0].value, sLambda=sim.SurveySimulation.detmode['lam'].value)
+OT = plotParam(fignum=5,param='occ_trans',syst=syst, sWA=sim.SurveySimulation.WAint[0].value, sLambda=sim.SurveySimulation.detmode['lam'].value)
 
 minCC = min([cc for cc in CC[1] if not np.isnan(cc)])
 minCMI = min([cc for cc in CMI[1] if not np.isnan(cc) and not (cc == np.asarray([0.]))[0]])
+
+
+def plotSpectralFluxDensity(sim, PPoutpath='./', folder='./'):
+  #### Plot Spectral Flux Density vs Lambda #########################
+  plt.figure(6548631)
+  lams = np.linspace(start=400.0,stop=1000.0,num=1000-400+1)
+  plt.plot(lams,sim.OpticalSystem.F0(lams*u.nm).value, color='blue', label='')
+  plt.plot([np.min(lams), np.min(lams)],[0.9*np.min(sim.OpticalSystem.F0(lams*u.nm).value), 1.1*np.max(sim.OpticalSystem.F0(lams*u.nm).value)],color='black', label=r'$\lambda$ Bounds')
+  plt.plot([np.max(lams), np.max(lams)],[0.9*np.min(sim.OpticalSystem.F0(lams*u.nm).value), 1.1*np.max(sim.OpticalSystem.F0(lams*u.nm).value)],color='black')
+  plt.xlim(left=0.9*np.min(lams),right=1.1*np.max(lams))
+  plt.ylim(bottom=0.9*np.min(sim.OpticalSystem.F0(lams*u.nm).value),top=1.1*np.max(sim.OpticalSystem.F0(lams*u.nm).value))
+  plt.xlabel(r'$\lambda$ in (nm)', weight='bold')
+  plt.ylabel(r'Spectral Flux Density      in $(ph/s/m^2/nm)$', weight='bold', usetex=False)
+  alignment = {'horizontalalignment': 'center', 'verticalalignment': 'baseline'}
+  plt.text((1.-0.5-0.1)*(np.max(lams)+np.min(lams))/2., (1.+0.15)*(np.max(sim.OpticalSystem.F0(lams*u.nm).value)+np.min(sim.OpticalSystem.F0(lams*u.nm).value))/2., r'$\mathcal{F}_0$', family='normal', rotation=90, usetex=True, **alignment)
+  plt.show(block=False)
+  date = unicode(datetime.datetime.now())
+  date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+  fname = 'PowerSpectralFluxDensity_' + folder.split('/')[-1] + '_' + date
+  plt.savefig(os.path.join(PPoutpath,fname+'.png'))
+  plt.savefig(os.path.join(PPoutpath,fname+'.svg'))
+  #plt.savefig(os.path.join(PPoutpath,fname),format='eps')
+  plt.savefig(os.path.join(PPoutpath,fname+'.pdf'))
+  ###################################################################
+plotSpectralFluxDensity(sim, PPoutpath='./', folder='./')
+
+
 
 
 print saltyburrito
