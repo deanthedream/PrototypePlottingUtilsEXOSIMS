@@ -348,7 +348,9 @@ def plotCoreThruput(syst, sLambda, sWA, fignum=65496832, PPoutpath='./', folder=
   plt.rcParams['axes.linewidth']=2
   plt.rc('font',weight='bold')
 
-  CS = plt.contourf(lams, WA, core_thruput, cmap='bwr')
+  #core_thruput[core_thruput==0.0] = np.nan
+  #levels=np.logspace(start=np.log10(np.nanmin(core_thruput)),stop=np.log10(np.nanmax(core_thruput)),num=20, base=10.0, endpoint=True)
+  CS = plt.contourf(lams, WA, core_thruput, 20, cmap='bwr')#, levels=levels, locator=ticker.LogLocator())#levels=20, 
   plt.plot([np.min(lams), sLambda],[sWA, sWA], color='black')
   plt.plot([sLambda, sLambda],[np.min(WA), sWA], color='black')
   plt.scatter(sLambda,sWA, marker='o',facecolors='white', edgecolors='black',zorder=3)
@@ -392,7 +394,7 @@ def plotCoreMeanIntensity(syst, sLambda, sWA, fignum=458845, PPoutpath='./', fol
   plt.rcParams['axes.linewidth']=2
   plt.rc('font',weight='bold')
 
-  CS = plt.contourf(lams, WA, core_mean_intensity, cmap='bwr')
+  CS = plt.contourf(lams, WA, core_mean_intensity, 20, cmap='bwr')
   plt.plot([np.min(lams), sLambda],[sWA, sWA], color='black')
   plt.plot([sLambda, sLambda],[np.min(WA), sWA], color='black')
   plt.scatter(sLambda,sWA, marker='o',facecolors='white', edgecolors='black',zorder=3)
@@ -436,7 +438,9 @@ def plotCoreArea(syst, sLambda, sWA, fignum=89129, PPoutpath='./', folder='./'):
   plt.rcParams['axes.linewidth']=2
   plt.rc('font',weight='bold')
 
-  CS = plt.contourf(lams, WA, core_area, cmap='bwr')
+  #core_area[core_area==0.0] = np.nan
+  #levels=np.logspace(start=np.log10(np.nanmin(core_area)),stop=np.log10(np.nanmax(core_area)),num=20, base=10.0, endpoint=True)
+  CS = plt.contourf(lams, WA, core_area, 20, cmap='bwr')#, levels=levels, locator=ticker.LogLocator())
   plt.plot([np.min(lams), sLambda],[sWA, sWA], color='black')
   plt.plot([sLambda, sLambda],[np.min(WA), sWA], color='black')
   plt.scatter(sLambda,sWA, marker='o',facecolors='white', edgecolors='black',zorder=3)
@@ -484,7 +488,7 @@ def plotOCCTRANS(syst, sLambda, sWA, fignum=12380, PPoutpath='./', folder='./'):
   plt.rcParams['axes.linewidth']=2
   plt.rc('font',weight='bold')
 
-  CS = plt.contourf(lams, WA, occ_trans, cmap='bwr')
+  CS = plt.contourf(lams, WA, occ_trans, 20, cmap='bwr')
   plt.plot([np.min(lams), sLambda],[sWA, sWA], color='black')
   plt.plot([sLambda, sLambda],[np.min(WA), sWA], color='black')
   plt.scatter(sLambda,sWA, marker='o',facecolors='white', edgecolors='black',zorder=3)
@@ -492,7 +496,7 @@ def plotOCCTRANS(syst, sLambda, sWA, fignum=12380, PPoutpath='./', folder='./'):
   #plt.xlabel(r'$\lambda$ (nm)')
   plt.ylabel(r'Working Angle, $WA$ in arcsec', weight='bold')
   cbar = plt.colorbar(CS)
-  cbar.set_label(r'Intensity Transmission of Extended\nBackground Sources, $\Upsilon$', weight='bold')
+  cbar.set_label('Intensity Transmission of Extended\nBackground Sources, ' + r'$\Upsilon$', weight='bold')
   plt.show(block=False)
 
   date = unicode(datetime.datetime.now())
@@ -542,61 +546,61 @@ plotSpectralFluxDensity(sim, PPoutpath='./', folder='./')
 
 
 
-print saltyburrito
-#sim.OpticalSystem.get_coro_param(syst,'core_thruput')
-            # syst = self.get_coro_param(syst, 'occ_trans')
-            # syst = self.get_coro_param(syst, 'core_thruput')
-            # syst = self.get_coro_param(syst, 'core_contrast', fill=1.)
-            # syst = self.get_coro_param(syst, 'core_mean_intensity')
-            # syst = self.get_coro_param(syst, 'core_area')
+# print saltyburrito
+# #sim.OpticalSystem.get_coro_param(syst,'core_thruput')
+#             # syst = self.get_coro_param(syst, 'occ_trans')
+#             # syst = self.get_coro_param(syst, 'core_thruput')
+#             # syst = self.get_coro_param(syst, 'core_contrast', fill=1.)
+#             # syst = self.get_coro_param(syst, 'core_mean_intensity')
+#             # syst = self.get_coro_param(syst, 'core_area')
 
-pth = '/home/dean/Documents/exosims/fitFilesFolder/WFIRST_cycle6/B22_FIT_565/B22_FIT_565_contrast.fits'
-dat = fits.open(pth)[0].data
+# pth = '/home/dean/Documents/exosims/fitFilesFolder/WFIRST_cycle6/B22_FIT_565/B22_FIT_565_contrast.fits'
+# dat = fits.open(pth)[0].data
 
-print saltyburrito
-
-
-#### occ_trans
-pth = '/home/dean/Documents/exosims/fitFilesFolder/HabExMay3/G_VC6_occ_trans_asec.fits'
-dat = fits.open(pth)[0].data
-WA, D = (dat[0], dat[1]) if dat.shape[0] == 2 else (dat[:,0], dat[:,1])
-Dinterp = scipy.interpolate.interp1d(WA.astype(float), D.astype(float),
-                    kind='cubic', fill_value=fill, bounds_error=False)
-WAint = np.asarray([0.045     , 0.045     , 0.19756445, 0.18430155, 0.13013536,
-           0.045     , 0.045     , 1.41807054, 0.045     , 0.76020878,
-           0.06810318, 0.0556777 , 0.045     , 0.045     , 0.045     ,
-           0.045     , 0.045     , 0.045     , 0.045     , 0.045     ,
-           0.045     , 0.045     , 0.045     , 0.045     , 0.045     ,
-           0.045     , 0.63738941, 0.10301575, 0.09035079, 0.07160575,
-           0.045     , 0.13248153, 0.045     , 0.045     , 0.045     ,
-           0.06097561])*u.arcsec
-
-lam = 500.*u.nm
-syst_occ_trans = lambda l, s: np.array(Dinterp((s*lam/l).to('arcsec').value), ndmin=1)
-#NO
-
-#### core_thruput
-pth = "/home/dean/Documents/exosims/fitFilesFolder/HabExMay3/G_VC6_core_thruput_asec.fits"
-dat = fits.open(pth)[0].data
-WA, D = (dat[0], dat[1]) if dat.shape[0] == 2 else (dat[:,0], dat[:,1])
-Dinterp = scipy.interpolate.interp1d(WA.astype(float), D.astype(float),
-                    kind='cubic', fill_value=fill, bounds_error=False)
-syst_core_thruput = lambda l, s: np.array(Dinterp((s*lam/l).to('arcsec').value), ndmin=1)
-
-#### mean_intensity
-pth = "/home/dean/Documents/exosims/fitFilesFolder/HabExMay3/G_VC6_core_mean_intensity_asec.fits"
-dat = fits.open(pth)[0].data
-WA, D = (dat[0], dat[1]) if dat.shape[0] == 2 else (dat[:,0], dat[:,1])
-Dinterp = scipy.interpolate.interp1d(WA.astype(float), D.astype(float),
-                    kind='cubic', fill_value=fill, bounds_error=False)
-syst_core_mean_intensity = lambda l, s: np.array(Dinterp((s*lam/l).to('arcsec').value), ndmin=1)
+# print saltyburrito
 
 
-# #### core_area
-# pth = 
+# #### occ_trans
+# pth = '/home/dean/Documents/exosims/fitFilesFolder/HabExMay3/G_VC6_occ_trans_asec.fits'
 # dat = fits.open(pth)[0].data
 # WA, D = (dat[0], dat[1]) if dat.shape[0] == 2 else (dat[:,0], dat[:,1])
 # Dinterp = scipy.interpolate.interp1d(WA.astype(float), D.astype(float),
 #                     kind='cubic', fill_value=fill, bounds_error=False)
-# syst_core_area = lambda l, s: np.array(Dinterp((s*lam/l).to('arcsec').value), ndmin=1)
+# WAint = np.asarray([0.045     , 0.045     , 0.19756445, 0.18430155, 0.13013536,
+#            0.045     , 0.045     , 1.41807054, 0.045     , 0.76020878,
+#            0.06810318, 0.0556777 , 0.045     , 0.045     , 0.045     ,
+#            0.045     , 0.045     , 0.045     , 0.045     , 0.045     ,
+#            0.045     , 0.045     , 0.045     , 0.045     , 0.045     ,
+#            0.045     , 0.63738941, 0.10301575, 0.09035079, 0.07160575,
+#            0.045     , 0.13248153, 0.045     , 0.045     , 0.045     ,
+#            0.06097561])*u.arcsec
+
+# lam = 500.*u.nm
+# syst_occ_trans = lambda l, s: np.array(Dinterp((s*lam/l).to('arcsec').value), ndmin=1)
+# #NO
+
+# #### core_thruput
+# pth = "/home/dean/Documents/exosims/fitFilesFolder/HabExMay3/G_VC6_core_thruput_asec.fits"
+# dat = fits.open(pth)[0].data
+# WA, D = (dat[0], dat[1]) if dat.shape[0] == 2 else (dat[:,0], dat[:,1])
+# Dinterp = scipy.interpolate.interp1d(WA.astype(float), D.astype(float),
+#                     kind='cubic', fill_value=fill, bounds_error=False)
+# syst_core_thruput = lambda l, s: np.array(Dinterp((s*lam/l).to('arcsec').value), ndmin=1)
+
+# #### mean_intensity
+# pth = "/home/dean/Documents/exosims/fitFilesFolder/HabExMay3/G_VC6_core_mean_intensity_asec.fits"
+# dat = fits.open(pth)[0].data
+# WA, D = (dat[0], dat[1]) if dat.shape[0] == 2 else (dat[:,0], dat[:,1])
+# Dinterp = scipy.interpolate.interp1d(WA.astype(float), D.astype(float),
+#                     kind='cubic', fill_value=fill, bounds_error=False)
+# syst_core_mean_intensity = lambda l, s: np.array(Dinterp((s*lam/l).to('arcsec').value), ndmin=1)
+
+
+# # #### core_area
+# # pth = 
+# # dat = fits.open(pth)[0].data
+# # WA, D = (dat[0], dat[1]) if dat.shape[0] == 2 else (dat[:,0], dat[:,1])
+# # Dinterp = scipy.interpolate.interp1d(WA.astype(float), D.astype(float),
+# #                     kind='cubic', fill_value=fill, bounds_error=False)
+# # syst_core_area = lambda l, s: np.array(Dinterp((s*lam/l).to('arcsec').value), ndmin=1)
 
