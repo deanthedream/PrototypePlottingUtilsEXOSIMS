@@ -169,6 +169,24 @@ lines.append('obs distance furthest star with Earthlike detection (pc): ' + str(
 
 
 
+#### Calculate Maximum Theoretical Completeness ###########################################################
+lines.append('#### Maximum Theoretical Completeness #############################################################################')
+sInds = np.arange(TL.nStars)
+intTimes = (np.zeros(TL.nStars) + 1.0e10)*u.d
+mode = filter(lambda mode: mode['detectionMode'] == True, OS.observingModes)[0]
+dMag_max = TL.OpticalSystem.calc_dMag_per_intTime(intTimes,TL,sInds,SS.valfZmin,ZL.fEZ0,OS.WA0,mode,C_b,C_sp)
+
+Observable_dMagsMax = dMag_max[np.where(SS.t0.value>1e-10)[0]]
+min_dMag_lim = np.min(Observable_dMagsMax)
+max_dMag_lim = np.max(Observable_dMagsMax)
+###########################################################################################################
+
+
+
+
+
+
+
 # #IF SurveySimulation module is SLSQPScheduler
 # initt0 = None
 # comp0 = None
