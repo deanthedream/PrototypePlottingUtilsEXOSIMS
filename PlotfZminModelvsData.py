@@ -222,7 +222,8 @@ plt.rc('font',weight='bold')
 fZ2[fZ2>=1e-8*1.000001]= np.nan
 #CS = plt.contourf(lon, lat, np.transpose(fZ2), locator=ticker.LogLocator())#xi[:,0],xi[:,1]
 #CS = plt.imshow(np.flip(fZ2,axis=1), extent=[lon.min(), lon.max(), lat.min(), lat.max()], norm=LogNorm(vmin=np.nanmin(fZ2), vmax=np.nanmax(fZ2)))
-CS = plt.pcolormesh(lon, lat, np.transpose(fZ2), norm=LogNorm(vmin=np.nanmin(fZ2), vmax=1e-8))#vmin=np.nanmin(fZ2), vmax=np.nanmax(fZ2))#, locator=ticker.LogLocator())
+CS = plt.pcolormesh(lon, lat, np.transpose(fZ2), norm=LogNorm(vmin=np.nanmin(fZ2), vmax=1e-8),linewidth=0,rasterized=True)#vmin=np.nanmin(fZ2), vmax=np.nanmax(fZ2))#, locator=ticker.LogLocator())
+CS.set_edgecolor('face')
 plt.scatter(ra_diff, dec_diff, color='black', alpha=0.5, s=2)
 plt.scatter(lon[fZlaminInds],lat, color='red',marker='s', alpha=0.5, s=2)
 cbar = plt.colorbar(CS)
