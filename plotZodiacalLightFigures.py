@@ -57,7 +57,7 @@ from EXOSIMS.util.vprint import vprint
 #         pass
 
 PPoutpath = './'#'/home/dean/Documents/SIOSlab/EXOSIMSres/WFIRSTCompSpecPriors_WFIRSTcycle6core_3mo/WFIRSTcycle6core_CKL2_PPKL2'
-folder = '/home/dean/Documents/SIOSlab/EXOSIMSres/WFIRSTCompSpecPriors_WFIRSTcycle6core_3mo/WFIRSTcycle6core_CKL2_PPKL2'
+folder = '/home/dean/Documents/SIOSlab/EXOSIMSres/WFIRSTCompSpecPriors_WFIRSTcycle6core_3mo_405_19/WFIRSTcycle6core_CKL2_PPKL2'
 #folder = '/home/dean/Documents/SIOSlab/EXOSIMSres/HabExCompSpecPriors_HabEx_4m_TSDD_pop100DD_revisit_20190203/HabEx_CSAG13_PPSAG13'
 
 if not os.path.exists(folder):#Folder must exist
@@ -120,10 +120,10 @@ out2 = plt.hist(maxmagfZ2,label=r'$Z_{\mathrm{max}}$',color='r',alpha=0.5,bins=n
 magfZ0 = -2.5*np.log10(ZL.fZ0.value)
 maxCNT = np.max([np.max(out1[0]),np.max(out2[0])])
 out3 = plt.plot([magfZ0,magfZ0],[0,1.1*maxCNT],color='k',label=r'$Z_0$')
-out4 = plt.plot([np.mean(minmagfZ2),np.mean(minmagfZ2)],[0,1.1*maxCNT],color='b',label=r'$\mu_{Z_{\mathrm{min}}}}$',linestyle='--')
-out5 = plt.plot([np.mean(maxmagfZ2),np.mean(maxmagfZ2)],[0,1.1*maxCNT],color='r',label=r'$\mu_{Z_{\mathrm{max}}}}$',linestyle='--')
+out4 = plt.plot([-2.5*np.log10(np.mean(10**(np.asarray(minmagfZ2)/-2.5))),-2.5*np.log10(np.mean(10**(np.asarray(minmagfZ2)/-2.5)))],[0,1.1*maxCNT],color='b',label=r'$\mu_{fZ_{\mathrm{max}}}}$',linestyle='--')
+out5 = plt.plot([-2.5*np.log10(np.mean(10**(np.asarray(maxmagfZ2)/-2.5))),-2.5*np.log10(np.mean(10**(np.asarray(maxmagfZ2)/-2.5)))],[0,1.1*maxCNT],color='r',label=r'$\mu_{fZ_{\mathrm{min}}}}$',linestyle='--')
 #plt.title('Histogram of '+r'$magfZ_{min}$'+' and '+r'$magfZ_{max}$',weight='bold',fontsize=12)
-plt.xlabel('Zodiacal Light in Magnitudes, Z',weight='bold',fontsize=12)
+plt.xlabel('Local Zodiacal Light in Magnitudes, Z',weight='bold',fontsize=12)
 plt.ylabel('# of Targets',weight='bold',fontsize=12)
 
 plt.ylim([0,1.1*maxCNT])
@@ -170,8 +170,6 @@ plt.xlabel('Mission Elasped Time (d)', weight='bold')
 plt.ylabel('Zodiacal Light in Magnitudes, Z', weight='bold')
 plt.legend()
 plt.show(block=False)
-date = unicode(datetime.datetime.now())
-date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
 fname = 'figfZvsTime_' + folder.split('/')[-1] + '_' + date
 plt.savefig(os.path.join(PPoutpath, fname + '.png'))
 plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
@@ -181,8 +179,6 @@ plt.savefig(os.path.join(PPoutpath, fname + '.pdf'))
 
 plt.xlim([0.,365.25*2.])
 plt.show(block=False)
-date = unicode(datetime.datetime.now())
-date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
 fname = 'figfZvsTime_ReasonableLimits_' + folder.split('/')[-1] + '_' + date
 plt.savefig(os.path.join(PPoutpath, fname + '.png'))
 plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
@@ -194,9 +190,9 @@ plt.savefig(os.path.join(PPoutpath, fname + '.pdf'))
 #### Maximum Zodiacal Light Variation over 45 Days
 boxesPerDay = 1000./365.25#box per day
 numBoxes = np.floor(45*boxesPerDay)
-delta = np.zeros([ZL.fZ_startSaved.shape[0],ZL.fZ_startSaved.shape[1]-45])
-for i in np.arange(ZL.fZ_startSaved.shape[1]-45):
-    delta[:,i] = abs(ZL.fZ_startSaved[:,i+45]-ZL.fZ_startSaved[:,i])
+delta = np.zeros([ZL.fZ_startSaved.shape[0],ZL.fZ_startSaved.shape[1]-123])
+for i in np.arange(ZL.fZ_startSaved.shape[1]-123):
+    delta[:,i] = abs(ZL.fZ_startSaved[:,i+123]-ZL.fZ_startSaved[:,i])
 maxDeltafZ = np.zeros(ZL.fZ_startSaved.shape[0])
 for j in np.arange(delta.shape[0]):
     maxDeltafZ[j] = np.max(delta[j,:])
@@ -208,10 +204,8 @@ plt.plot(-2.5*np.log10(delta[sInds[c2maxInd],:]), label='max(c)', color='red')
 plt.plot(-2.5*np.log10(delta[sInds[c2minInd],:]), label='min(c)', color='blue')
 
 plt.legend()
-plt.ylabel('Maximum Variation in Zodiacal Light Magnitude over 45 Days')
+plt.ylabel('Maximum Variation in Z over 45 Days', weight='bold')
 plt.show(block=False)
-date = unicode(datetime.datetime.now())
-date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
 fname = 'figMaxfZ45Days_' + folder.split('/')[-1] + '_' + date
 plt.savefig(os.path.join(PPoutpath, fname + '.png'))
 plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
@@ -222,11 +216,9 @@ plt.savefig(os.path.join(PPoutpath, fname + '.pdf'))
 #### Plot Histogram of maximum 45 day deltas
 plt.close(548962)
 figHistMaxfZ45Days = plt.figure(548962)
-plt.hist(maxDeltafZ)
-plt.xlabel(r'Maximum Zodiacal Light $\delta$ in Magnitudes, Z')
+plt.hist(maxDeltafZ, color='black')
+plt.xlabel(r'Maximum Zodiacal Light $\Delta$ in Magnitudes, Z', weight='bold')
 plt.show(block=False)
-date = unicode(datetime.datetime.now())
-date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
 fname = 'figHistMaxfZ45Days_' + folder.split('/')[-1] + '_' + date
 plt.savefig(os.path.join(PPoutpath, fname + '.png'))
 plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
@@ -234,3 +226,16 @@ plt.savefig(os.path.join(PPoutpath, fname + '.eps'))
 plt.savefig(os.path.join(PPoutpath, fname + '.pdf'))
 
 
+
+
+#### WRITTEN DATA FILE
+lines = list()
+lines.append("mean Z_min (calculated as mean fZ_max) in 1/arcsec2: " + str(-2.5*np.log10(np.mean(10**(np.asarray(minmagfZ2)/-2.5)))))
+lines.append("mean Z_max (calculated as mean fZ_min) in 1/arcsec2: " + str(-2.5*np.log10(np.mean(10**(np.asarray(maxmagfZ2)/-2.5)))))
+
+
+#### Save Data File
+fname = 'ZLDATA_' + folder.split('/')[-1] + '_' + date
+with open(os.path.join(PPoutpath, fname + '.txt'), 'w') as g:
+    g.write("\n".join(lines))
+# end main
