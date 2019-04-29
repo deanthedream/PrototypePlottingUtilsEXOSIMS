@@ -45,6 +45,7 @@ def minWaitTime_EdgeOn(sInd, s, dmag, pType, wavelength=565., D=4., angUncert=3*
     Return:
         wt (float) - minimum time to wait in days
     """
+    
     #Figuring out what to do here
     #wt
     return None

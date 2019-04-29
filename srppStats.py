@@ -46,10 +46,17 @@ folder = '/home/dean/Documents/SIOSlab/EXOSIMSres/HabExCompSpecPriors_HabEx_4m_T
 #fullPathPKL = '/home/dean/Documents/SIOSlab/EXOSIMSres/WFIRSTCompSpecPriors_WFIRSTcycle6core_3momaxC/WFIRSTcycle6core_CSAG13_PPSAG13/tmp/run56546329770.pkl'
 #folder = '/home/dean/Documents/SIOSlab/EXOSIMSres/WFIRSTCompSpecPriors_WFIRSTcycle6core_3momaxC/WFIRSTcycle6core_CSAG13_PPSAG13'
 
+folder = '/home/dean/Documents/SIOSlab/EXOSIMSres/WFIRSTCompSpecPriors_WFIRSTcycle6core_3mo_405_19/WFIRSTcycle6core_CKL2_PPKL2'
+fullPathPKL = '/home/dean/Documents/SIOSlab/EXOSIMSres/WFIRSTCompSpecPriors_WFIRSTcycle6core_3mo_405_19/WFIRSTcycle6core_CKL2_PPKL2/run20723778539.pkl'
+# folder = '/home/dean/Documents/SIOSlab/EXOSIMSres/WFIRSTCompSpecPriors_WFIRSTcycle6core_3mo_405_19/WFIRSTcycle6core_CKL2_PPSAG13'
+# fullPathPKL = '/home/dean/Documents/SIOSlab/EXOSIMSres/WFIRSTCompSpecPriors_WFIRSTcycle6core_3mo_405_19/WFIRSTcycle6core_CKL2_PPSAG13/run33858749594.pkl'
+# folder = '/home/dean/Documents/SIOSlab/EXOSIMSres/WFIRSTCompSpecPriors_WFIRSTcycle6core_3mo_405_19/WFIRSTcycle6core_CSAG13_PPKL2'
+# fullPathPKL = '/home/dean/Documents/SIOSlab/EXOSIMSres/WFIRSTCompSpecPriors_WFIRSTcycle6core_3mo_405_19/WFIRSTcycle6core_CSAG13_PPKL2/run15237625146.pkl'
+# folder = '/home/dean/Documents/SIOSlab/EXOSIMSres/WFIRSTCompSpecPriors_WFIRSTcycle6core_3mo_405_19/WFIRSTcycle6core_CSAG13_PPSAG13'
+# fullPathPKL = '/home/dean/Documents/SIOSlab/EXOSIMSres/WFIRSTCompSpecPriors_WFIRSTcycle6core_3mo_405_19/WFIRSTcycle6core_CSAG13_PPSAG13/run41600872127.pkl'
 
 
 
-folder = '/home/dean/Documents/SIOSlab/EXOSIMSres/WFIRSTCompSpecPriors_WFIRSTcycle6core_3mo_40319_2/WFIRSTcycle6core_CKL2_PPKL2'
 if not os.path.exists(folder):#Folder must exist
     raise ValueError('%s not found'%folder)
 allres = read_all(folder)# contains all drm from all missions in folder. Length of number of pkl files in folder
@@ -90,10 +97,10 @@ for i in [0]:#np.arange(len(allres)):
     dataElement['madedet_times'] = [allres[i]['DRM'][j]['det_time'].value for j in np.arange(len(allres[i]['DRM'])) if dataElement['anydet'][i] == True]
     dataElement['numDetsPerTarget'] = [(allres[i]['DRM'][j]['det_status'] == 1).tolist().count(True) for j in np.arange(len(allres[i]['DRM']))] # number of detections per target
     dataElement['star_inds'] = [allres[i]['DRM'][j]['star_ind'] for j in np.arange(len(allres[i]['DRM'])) if dataElement['anydet'][i] == True] # All star indices
-    dataElement['plan_inds'] = [[allres[i]['DRM'][j]['plan_inds'][ii] for ii in np.arange(len(allres[i]['DRM'][j])) if allres[i]['DRM'][j]['det_status'][ii] == 1]\
+    dataElement['plan_inds'] = [[allres[i]['DRM'][j]['plan_inds'][ii] for ii in np.arange(len(allres[i]['DRM'][j]['plan_inds'])) if allres[i]['DRM'][j]['det_status'][ii] == 1]\
                                     for j in np.arange(len(allres[i]['DRM']))] # double iterator. Iterates over planets around star ii. Iterates over targets stars j
                                     # keeps planet inds of positive detections
-    dataElement['star_indsCorrePlanInds'] = [[allres[i]['DRM'][j]['star_ind'] for ii in np.arange(len(allres[i]['DRM'][j])) if allres[i]['DRM'][j]['det_status'][ii] == 1]\
+    dataElement['star_indsCorrePlanInds'] = [[allres[i]['DRM'][j]['star_ind'] for ii in np.arange(len(allres[i]['DRM'][j]['plan_inds'])) if allres[i]['DRM'][j]['det_status'][ii] == 1]\
                                     for j in np.arange(len(allres[i]['DRM']))] # double iterator. Iterates over planets around star ii. Iterates over targets stars j
                                     # keeps stars associated with planet inds of positive detections
     #for j in np.arange(len(allres[i]['DRM'])):# iterate over all observations in DRM   
@@ -164,8 +171,19 @@ lines.append('obs max num Detections: ' + str(max(numDetsPerTarget)) + '\n')
 numDetsPerTarget_whereDet = [numDetsPerTarget[i] for i in np.arange(len(DRM['DRM'])) if anydet[i] == True]
 lines.append('obs mean num Detections: ' + str(np.mean(numDetsPerTarget_whereDet)) + '\n')
 lines.append('obs distance closest star with detection (pc): ' + str(min(star_distances)) + '\n')
-lines.append('obs distance closest star with Earthlike detection (pc): ' + str(min(earthLike_sDistances)) + '\n')
-lines.append('obs distance furthest star with Earthlike detection (pc): ' + str(max(earthLike_sDistances)) + '\n')
+if not len(earthLike_sDistances) == 0:
+    lines.append('obs distance closest star with Earthlike detection (pc): ' + str(min(earthLike_sDistances)) + '\n')
+    lines.append('obs distance furthest star with Earthlike detection (pc): ' + str(max(earthLike_sDistances)) + '\n')
+
+
+#### Count characterizations ####
+charCNT = 0 # total number of characterizations
+for i in np.arange(len(allres)):
+    for j in np.arange(len(allres[i]['DRM'])):
+        charCNT = charCNT + list(allres[i]['DRM'][j]['char_status']).count(1)
+avgCharCNT = float(charCNT)/len(allres)
+#################################
+
 
 
 
