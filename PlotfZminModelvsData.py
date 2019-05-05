@@ -156,17 +156,17 @@ for i in np.arange(absTimefZmin.shape[0]):
 #path = os.path.split(inspect.getfile(self.__class__))[0]
 lon = np.linspace(start=0.,stop=180.,num=361)
 lat = np.linspace(start=0.,stop=90.,num=181)
-path = '/home/dean/Documents/exosims/EXOSIMS/EXOSIMS/ZodiacalLight/'
-Izod = np.loadtxt(os.path.join(path, 'Leinert98_table17.txt'))*1e-8 # W/m2/sr/um
+#DELETEpath = '/home/dean/Documents/exosims/EXOSIMS/EXOSIMS/ZodiacalLight/'
+#DELETEIzod = np.loadtxt(os.path.join(path, 'Leinert98_table17.txt'))*1e-8 # W/m2/sr/um
 # create data point coordinates
-lon_pts = np.array([0., 5., 10., 15., 20., 25., 30., 35., 40., 45., 60., 75., 90.,
-        105., 120., 135., 150., 165., 180.]) # deg
-lat_pts = np.array([0., 5., 10., 15., 20., 25., 30., 45., 60., 75., 90.]) # deg
-y_pts, x_pts = np.meshgrid(lat_pts, lon_pts)
-points = np.array(zip(np.concatenate(x_pts), np.concatenate(y_pts)))
+#DELETElon_pts = np.array([0., 5., 10., 15., 20., 25., 30., 35., 40., 45., 60., 75., 90.,
+        #DELETE105., 120., 135., 150., 165., 180.]) # deg
+#DELETElat_pts = np.array([0., 5., 10., 15., 20., 25., 30., 45., 60., 75., 90.]) # deg
+#DELETEy_pts, x_pts = np.meshgrid(lat_pts, lon_pts)
+#DELETEpoints = np.array(zip(np.concatenate(x_pts), np.concatenate(y_pts)))
 # create data values, normalized by (90,0) value
-z = Izod/Izod[12,0]
-values = z.reshape(z.size)
+#DELETEz = Izod/Izod[12,0]
+#DELETEvalues = z.reshape(z.size)
 
 fZ = np.zeros([len(lon),len(lat)])
 xi = list()
@@ -176,7 +176,14 @@ for lo in np.arange(len(lon)):
 xi = np.asarray(xi)
 fZ = np.zeros([len(xi), 2])
 # interpolates 2D
-fbeta = griddata(points, values, xi)#zip([lon[lo]], [lat[la]]))#lon[lo], lat[la]))
+#DELETE fbeta = griddata(points, values, xi)#zip([lon[lo]], [lat[la]]))#lon[lo], lat[la]))
+
+
+ZL = sim2.ZodiacalLight
+logf = ZL.calclogf()
+points, values = ZL.calcfbetaInput()
+#Interpolates 2D
+fbeta = griddata(points, values, xi)#zip(lon, lat))
 
 # wavelength dependence, from Table 19 in Leinert et al 1998
 # interpolated w/ a quadratic in log-log space
@@ -227,11 +234,11 @@ CS.set_edgecolor('face')
 plt.scatter(ra_diff, dec_diff, color='black', alpha=0.5, s=2)
 plt.scatter(lon[fZlaminInds],lat, color='red',marker='s', alpha=0.5, s=2)
 cbar = plt.colorbar(CS)
-cbar.set_label('Zodiacal Light Intensity\n' + r'$f_Z(l,b)$ in $W m^{-2} sr^{-1} \mu m^{-1}$', weight='bold')
+cbar.set_label('Zodiacal Light Intensity\n' + r'$f_Z(l,b,\lambda=565nm)$ in $W m^{-2} sr^{-1} \mu m^{-1}$', weight='bold')
   
 
-plt.xlabel('Geocentric Ecliptic Longitude, ' + r'$l$' + '\n' + r'$\ |l_{i/SC} - l_{SC/\odot}|$ ($^\circ$)', weight='bold')
-plt.ylabel('Geocentric Ecliptic Latitude, ' + r'$b$' + '\n' + r'$\ |b_{i/SC} - b_{SC/\odot}|$ ($^\circ$)', weight='bold')
+plt.xlabel('Geocentric Ecliptic Longitude, ' + r'$l$' + '\n' + r'$\ |l_{i/SC} - l_{SC/\odot}|$ (deg)', weight='bold')
+plt.ylabel('Geocentric Ecliptic Latitude, ' + r'$b$' + '\n' + r'$\ |b_{i/SC} - b_{SC/\odot}|$ (deg)', weight='bold')
 plt.xlim(0,180)
 plt.ylim(0,90)
 plt.subplots_adjust(bottom=0.2)
