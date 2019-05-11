@@ -1,4 +1,10 @@
-#Plotting Fits Files
+"""
+Plotting Fits Files
+TODO: # UPGRADE so we can plot for all science instruments
+Written by: Dean Keithly
+Written on: 4/25/2019
+"""
+
 
 try:
     import cPickle as pickle
@@ -542,6 +548,44 @@ def plotSpectralFluxDensity(sim, PPoutpath='./', folder='./'):
   plt.savefig(os.path.join(PPoutpath,fname+'.pdf'))
   ###################################################################
 plotSpectralFluxDensity(sim, PPoutpath='./', folder='./')
+
+
+#### Plot Quantum Efficiency
+def plotQE(sim, syst, fignum=937182, PPoutpath='./', folder='./'):
+  sLambda = sim.SurveySimulation.detmode['lam'].value
+  plt.close(fignum)
+  lamMin = 400.0
+  lamMax = 1200.0
+  lams = np.linspace(lamMin, lamMax, num=500, endpoint=True)#*u.nm#syst['lam']
+  WA = np.linspace(syst['IWA'], syst['OWA'], num=500, endpoint=True)#*u.arcsec
+  QE = []
+  for l2 in lams:
+    tmp = sim.OpticalSystem.scienceInstruments[0]['QE'](l2*u.nm)
+    if tmp == 1.:
+      tmp = np.nan
+    QE.append(tmp)
+  QE = np.asarray(QE)
+
+  fig = plt.figure(num=fignum)
+  plt.rc('axes',linewidth=2)
+  plt.rc('lines',linewidth=2)
+  plt.rcParams['axes.linewidth']=2
+  plt.rc('font',weight='bold')
+
+  CS = plt.plot(lams, QE, color='black')
+  plt.scatter(sLambda,(sim.OpticalSystem.scienceInstruments[0]['QE'](sLambda*u.nm)).value, marker='o',facecolors='white', edgecolors='black',zorder=3)
+  plt.xlabel(r'Wavelength, $\lambda$ (nm)', weight='bold')
+  plt.ylabel(r'Quantum Efficiency, $\epsilon_q$ in photons$^{-1}$', weight='bold')
+  plt.show(block=False)
+
+  date = unicode(datetime.datetime.now())
+  date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+  fname = 'QE_' + folder.split('/')[-1] + '_' + date
+  plt.savefig(os.path.join(PPoutpath,fname+'.png'))
+  plt.savefig(os.path.join(PPoutpath,fname+'.svg'))
+  plt.savefig(os.path.join(PPoutpath,fname+'.eps'))
+  plt.savefig(os.path.join(PPoutpath,fname+'.pdf'))
+plotQE(sim, syst, fignum=937182)
 
 
 

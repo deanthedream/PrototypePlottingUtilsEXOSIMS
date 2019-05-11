@@ -227,6 +227,45 @@ plt.savefig(os.path.join(PPoutpath, fname + '.pdf'))
 
 
 
+#Log(Izod) vs wavelength semilog 1111111111111111111111111 #########################
+#ZL.fZ(Obs, TL, [1], TK.currentTimeAbs, SS.detmode)
+fignum = 56895113
+plt.close(fignum)
+fig2 = plt.figure(fignum)
+plt.subplots_adjust(left=0.2)
+plt.rc('axes',linewidth=2)
+plt.rc('lines',linewidth=2)
+plt.rcParams['axes.linewidth']=2
+plt.rc('font',weight='bold') 
+#plt.title('Current Model Fit Produces This LogScale',weight='bold')
+x = np.logspace(-0.69,2.14,num=100,base=10.0)#I create a nice range of test Lambdas to span the set
+#y = ZL.logf(np.log10(x))#Calculate the logf for these
+y = ZL.logf(np.log10(x))#Calculate the logf for these
+plt.semilogx(x*1000., y, color='b',linestyle='--',label='quadratic interpolant')
+#y2 = ZL.logf(np.log10(x))#Calculate the logf2 for these
+#plt.semilogx(x, np.log10(y2), color='r',linestyle='--',label='cubic interpolant')
+plt.semilogx([2.19*1000.,2.19*1000.],[min(y),max(y)],'ks-',label='U-Band')#Plot maximum lambda uses
+plt.semilogx([0.365*1000.,0.365*1000.],[min(y),max(y)],'kd-',label='K-Band')#Plot minimum lambda uses
+plt.semilogx(ZL.zodi_lam*1000.,np.log10(ZL.zodi_Blam),'kx',label='Leinert98 points')
+
+plt.xlabel(r'Wavelength, $\lambda$ in nm',weight='bold')
+plt.ylabel('Zodiacal Light Intensity Wavelength\nCorrection' + r'$f_\lambda(\lambda)$ in $W m^{-2} sr^{-1} \mu m^{-1}$', weight='bold')
+#At lambda = 90deg or epsilon = 90deg (90deg from sun in ecliptic along ecliptic)
+plt.legend()
+
+date = unicode(datetime.datetime.now())
+date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+fname = 'logfZvsLamStarFit_' + folder.split('/')[-1] + '_' + date
+plt.savefig(os.path.join(PPoutpath,fname+'.png'))
+plt.savefig(os.path.join(PPoutpath,fname+'.svg'))
+plt.savefig(os.path.join(PPoutpath,fname+'.eps'))
+plt.savefig(os.path.join(PPoutpath,fname+'.pdf'))
+plt.show(block=False)
+#########################################################################
+
+
+
+
 
 #### WRITTEN DATA FILE
 lines = list()
