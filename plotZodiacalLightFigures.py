@@ -123,8 +123,8 @@ out3 = plt.plot([magfZ0,magfZ0],[0,1.1*maxCNT],color='k',label=r'$Z_0$')
 out4 = plt.plot([-2.5*np.log10(np.mean(10**(np.asarray(minmagfZ2)/-2.5))),-2.5*np.log10(np.mean(10**(np.asarray(minmagfZ2)/-2.5)))],[0,1.1*maxCNT],color='b',label=r'$\mu_{fZ_{\mathrm{max}}}}$',linestyle='--')
 out5 = plt.plot([-2.5*np.log10(np.mean(10**(np.asarray(maxmagfZ2)/-2.5))),-2.5*np.log10(np.mean(10**(np.asarray(maxmagfZ2)/-2.5)))],[0,1.1*maxCNT],color='r',label=r'$\mu_{fZ_{\mathrm{min}}}}$',linestyle='--')
 #plt.title('Histogram of '+r'$magfZ_{min}$'+' and '+r'$magfZ_{max}$',weight='bold',fontsize=12)
-plt.xlabel('Local Zodiacal Light in Magnitudes, Z',weight='bold',fontsize=12)
-plt.ylabel('# of Targets',weight='bold',fontsize=12)
+plt.xlabel(r'Local Zodiacal Light, Z in mag arcsec$^-2$',weight='bold',fontsize=12)
+plt.ylabel('Number of Targets',weight='bold',fontsize=12)
 
 plt.ylim([0,1.1*maxCNT])
 #plt.rc('axes',prop_cycle=(cycler('color',['red','blue','black','purple'])))
@@ -241,17 +241,28 @@ plt.rc('font',weight='bold')
 x = np.logspace(-0.69,2.14,num=100,base=10.0)#I create a nice range of test Lambdas to span the set
 #y = ZL.logf(np.log10(x))#Calculate the logf for these
 y = ZL.logf(np.log10(x))#Calculate the logf for these
-plt.semilogx(x*1000., y, color='b',linestyle='--',label='quadratic interpolant')
+plt.loglog(x*1000., 10.**y, color='black',linestyle='--',label='quadratic interpolant')
 #y2 = ZL.logf(np.log10(x))#Calculate the logf2 for these
 #plt.semilogx(x, np.log10(y2), color='r',linestyle='--',label='cubic interpolant')
-plt.semilogx([2.19*1000.,2.19*1000.],[min(y),max(y)],'ks-',label='U-Band')#Plot maximum lambda uses
-plt.semilogx([0.365*1000.,0.365*1000.],[min(y),max(y)],'kd-',label='K-Band')#Plot minimum lambda uses
-plt.semilogx(ZL.zodi_lam*1000.,np.log10(ZL.zodi_Blam),'kx',label='Leinert98 points')
+plt.loglog([2.19*1000.,2.19*1000.],[0.5*10.**min(y),1.5*10.**max(y)],'--', color='blue')#,label='U-Band')#Plot maximum lambda uses
+plt.text(2.19*1000., 10.**(min(y))*10., 'U-band',
+         rotation=-90,
+         horizontalalignment='left',
+         verticalalignment='top')#,
+         #multialignment='center')
+plt.loglog([0.365*1000.,0.365*1000.],[0.5*10.**min(y),1.5*10.**max(y)],'--',color='red')#,label='K-Band')#Plot minimum lambda uses
+plt.text(0.365*1000., 10.**(min(y))*10., 'K-band',
+         rotation=-90,
+         horizontalalignment='left',
+         verticalalignment='top')#,
+         #multialignment='center')
+plt.loglog(ZL.zodi_lam*1000.,10.**np.log10(ZL.zodi_Blam),'kx',label='Leinert98 points')
 
 plt.xlabel(r'Wavelength, $\lambda$ in nm',weight='bold')
-plt.ylabel('Zodiacal Light Intensity Wavelength\nCorrection' + r'$f_\lambda(\lambda)$ in $W m^{-2} sr^{-1} \mu m^{-1}$', weight='bold')
+plt.ylabel('Zodiacal Light Intensity Wavelength\nCorrection, ' + r'$f_\lambda(\lambda)$ in $W m^{-2} sr^{-1} \mu m^{-1}$', weight='bold')
 #At lambda = 90deg or epsilon = 90deg (90deg from sun in ecliptic along ecliptic)
 plt.legend()
+plt.ylim(0.5*10.**min(y),1.5*10.**max(y))
 
 date = unicode(datetime.datetime.now())
 date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date

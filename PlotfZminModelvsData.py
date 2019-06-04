@@ -237,8 +237,8 @@ cbar = plt.colorbar(CS)
 cbar.set_label('Zodiacal Light Intensity\n' + r'$f_Z(l,b,\lambda=565nm)$ in $W m^{-2} sr^{-1} \mu m^{-1}$', weight='bold')
   
 
-plt.xlabel('Geocentric Ecliptic Longitude, ' + r'$l$' + '\n' + r'$\ |l_{i/SC} - l_{SC/\odot}|$ (deg)', weight='bold')
-plt.ylabel('Geocentric Ecliptic Latitude, ' + r'$b$' + '\n' + r'$\ |b_{i/SC} - b_{SC/\odot}|$ (deg)', weight='bold')
+plt.xlabel(r'$|l(\hat{r}_{i/SC}) - l(\hat{r}_{\odot/SC})|$ in deg', weight='bold')
+plt.ylabel(r'$|b(\hat{r}_{i/SC}) - b(\hat{r}_{\odot/SC})|$ in deg', weight='bold')
 plt.xlim(0,180)
 plt.ylim(0,90)
 plt.subplots_adjust(bottom=0.2)
