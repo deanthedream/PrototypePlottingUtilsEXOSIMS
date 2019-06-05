@@ -4,9 +4,30 @@
 
 import numpy as np
 #from astroquery.jplhorizons import Horizons #vestigal
-import urllib2
+#import urllib2 as urllib # python2
+import urllib.request as urllib
 import json
 #import re #vestigal
+#JPL Horizons query fields defined in ftp://ssd.jpl.nasa.gov/pub/ssd/horizons_batch_example.long
+
+def extractPositions(bodyName, START_TIME, STOP_TIME, STEP_SIZE, OBJ_DATA):
+    """Extracts body positions over the specified time range with the specified step sizes
+    Args:
+        bodyName (string) - one of the set of body names in bodyNametoNAIFID
+        START_TIME (string) - of form 'yyyy-mm-dd' 
+        STOP_TIME (string) - of form 'yyyy-mm-dd'
+    Returns:
+        times (numpy array) - numpy array of times with dims [num times]
+        r_body_sun (numpy array) - numpy array of coordinates with dims [num times][3]
+    """
+    DATA =  {'body_name':bodyName}#Create Data Structure
+    DATA['naifID'] = bodyNametoNAIFID(bodyName)#Grab NAIF ID
+    html = queryJPLHorizons(DATA['naifID'], START_TIME, STOP_TIME, STEP_SIZE, OBJ_DATA)#Query JPL Horizons
+    #Extract Times
+    #Extract r_body_sun
+    return times, r_body_sun
+
+#MIGHT NEED TO CREATE A FUNCTION TO SPLINE THE ABOVE FOR INTERPOLATION PURPOSES...
 
 def extractParams(paramNames,bodyName):
     # """Extracts parameter from JPL Horizons Data Page
@@ -38,8 +59,8 @@ def extractParams(paramNames,bodyName):
                     if len(tmp) == 3:
                         DATA[param] = {'Aphelion':tmp[0],'Perihelion':tmp[0], 'Mean':tmp[0]}
                 if param == 'Solar Constant (W/m^2)' and bodyName == 'MERCURY':
-                    print data
-                    print DATA
+                    print(data)
+                    print(DATA)
     return DATA
 
 def bodyNametoNAIFID(bodyName):
@@ -69,7 +90,7 @@ def bodyNametoNAIFID(bodyName):
     naifID = naifIDS[bodyName]
     return naifID
 
-def queryJPLHorizons(naifID):
+def queryJPLHorizons(naifID, START_TIME='2000-01-01', STOP_TIME='2000-12-31', STEP_SIZE='15%20d', OBJ_DATA='YES'):
     # """Queries JPL Horizons for Object Data Page DATA
     # Args:
     #     naifID (int) - naif ID of body
@@ -80,7 +101,8 @@ def queryJPLHorizons(naifID):
     inputNames = ['COMMAND','OBJ_DATA','MAKE_EPHEM','TABLE_TYPE','START_TIME','STOP_TIME','STEP_SIZE','QUANTITIES','CSV_FORMAT']
 
     #Struct of Coded Inputs
-    inputs = {'COMMAND': str(naifID), 'OBJ_DATA' : 'YES' ,'MAKE_EPHEM': 'NO', 'TABLE_TYPE': 'OBSERVER', 'START_TIME': '2000-01-01', 'STOP_TIME': '2000-12-31', 'STEP_SIZE':'15%20d', 'QUANTITIES': '1,9,20,23,24', 'CSV_FORMAT': 'YES'}
+    inputs = {'COMMAND': str(naifID), 'OBJ_DATA' : OBJ_DATA ,'MAKE_EPHEM': 'NO', 'TABLE_TYPE': 'OBSERVER', 'START_TIME': START_TIME,
+            'STOP_TIME': STOP_TIME, 'STEP_SIZE':STEP_SIZE, 'QUANTITIES': '1,9,20,23,24', 'CSV_FORMAT': 'YES'}
 
     #Static Components of URL
     staticString = ["https://ssd.jpl.nasa.gov/horizons_batch.cgi?batch=1&COMMAND='","'&OBJ_DATA='","'&MAKE_EPHEM='","'&TABLE_TYPE='","'&START_TIME='","'&STOP_TIME='","'&STEP_SIZE='","'&QUANTITIES='","'&CSV_FORMAT='","'"]
@@ -94,8 +116,8 @@ def queryJPLHorizons(naifID):
     #print myURL#Display URL for Verification
 
     #### Submit URL Request
-    response = urllib2.urlopen(myURL)
-    html = response.read()
+    response = urllib.urlopen(myURL)
+    html = response.read().decode('utf-8')
 
     #print html #Here I print the output from the HTML query
     return html
@@ -183,7 +205,7 @@ def extractParamFromLine(param,line):
         data.append(parseDataString(dataString,multiplier))
     elif stringContainsNumber(line_paramEndToEnd.split()[0]):#There is nothing between end of param and number
         if any(not stringContainsNumber(word) for word in line_paramEndToEnd.split()): # A word does not contain number
-            print 'A word in line does not contain number'
+            print('A word in line does not contain number')
             #This means the aphelion, perihelion, mean section of JPL Horizons is seisitive to format and no non-numbers should follow
         else:
             for dataString in line_paramEndToEnd.split():#Iterate over all values 
@@ -224,8 +246,8 @@ def parseDataString(dataString,multiplier=1.):
         if stringIsFloat(dataString):
             return [float(dataString)*multiplier,None,None]
         else:
-            print 'string to Handle'
-            print dataString
+            print('string to Handle')
+            print(dataString)
             assert False,'there is some parsing error'
 
 def findMultiplier(myActualParamString):
@@ -253,11 +275,11 @@ def checkMissingFields(paramNames,bodyDATA,body_names):
                 if isParamInLine(param,key):
                     break
             else:
-                print 'body_name ' + body_name + ' is missing field ' + param
+                print('body_name ' + body_name + ' is missing field ' + param)
 
 #Check of body_names is an input to this model
 try:
-    print body_names
+    print(body_names)
     body_names = [str(name) for name in body_names]
 except Exception:
     #body_names = ['MERCURY','VENUS','EARTH','MOON','MARS','PHOBOS','DEIMOS','JUPITER']
@@ -267,10 +289,10 @@ if len([name for name in body_names if not str(name) in [u'','']]) == 0:#IF ANY 
     body_names = ['MERCURY','VENUS','EARTH','MOON','MARS','PHOBOS','DEIMOS','JUPITER','IO','EUROPA','GANYMEDE',\
         'SATURN','TITAN','NEPTUNE','URANUS','TRITON','PLUTO']
 
-print body_names
+print(body_names)
 #Check of paramNames is an input to this model
 try:
-    print paramNames
+    print(paramNames)
     paramNames = [str(param) for param in paramNames]
 except Exception:
     paramNames = ['Vol. Mean Radius (km)',\
@@ -296,7 +318,7 @@ if len([param for param in paramNames if not str(param) in [u'','']]) == 0:#IF A
     'Mass XX (kg)',\
     'Surface emissivity',\
     'Geometric Albedo']
-print paramNames
+print(paramNames)
 
 bodyDATA= {}#will contain all the information for each body
 for lmn in np.arange(len(body_names)):
@@ -306,6 +328,14 @@ for lmn in np.arange(len(body_names)):
     #Uncomment to view missing parameters in JPL Horizons
     #checkMissingFields(paramNames,bodyDATA,[body_name])#Check for parameters missing
 
-
 #The output of this function is bodyDATA
 bodyDATA = json.dumps(bodyDATA)
+
+
+#GRABBING PLANET POSITIONS AT SPECIFIC TIMES
+#synthetic times for testing purposes
+# NOTE COULD USE TLIST to get discrete times for query which would need times in MJD
+START_TIME = '2019-04-25'
+STOP_TIME = '2019-04-30'
+STEP_SIZE = '1%d'
+extractPositions(body_name, START_TIME, STOP_TIME, STEP_SIZE, 'NO')
