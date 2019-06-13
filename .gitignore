@@ -3,3 +3,7 @@
 *.aux
 *.synctex.gz
 *.bbl
+*.png
+*.pdf
+*.svg
+*.eps
