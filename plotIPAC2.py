@@ -224,7 +224,7 @@ ax.legend(loc='lower right')
 plt.show(block=False)
 
 
-date = datetime.datetime.now().strftime("%d_%b_%Y_%H_%M_%S_%f")
+date = str(strdatetime.datetime.now())
 #date = str(datetime.datetime.now(),'utf-8')#Python3.5 unicode(datetime.datetime.now())
 date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
 fname = 'pennyPlot_' + folder.split('/')[-1] + '_' + date
