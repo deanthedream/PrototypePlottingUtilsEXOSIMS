@@ -7,7 +7,7 @@
 #pip install pymysql
 from sqlalchemy import create_engine
 
-engine = create_engine('mysql+pymysql://drk94@127.0.0.1/dsavrans_plandb',echo=False)
+engine = create_engine('mysql+pymysql://drk94@127.0.0.1/dsavrans_plandb?charset=utf8',echo=False)
 
 result = engine.execute('SELECT * from Aliases')
 data = result.fetchall()     
@@ -17,7 +17,7 @@ import numpy as np
 arrayData = np.vstack(data)
 
 import pickle
-pklPath = './alias_4_11_2019.pkl'
+pklPath = './alias_10_07_2019.pkl'
 with open(pklPath, 'wb') as f: pickle.dump(np.vstack(data),f)
 
 #Boom array of aliases saved to computer
