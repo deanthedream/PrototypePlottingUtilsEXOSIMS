@@ -360,7 +360,7 @@ plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=200)
 #levels2 = np.tile([-5./2., 5./2., -3./2., 3./2., -1./2., 1./2.], int(np.ceil(len(VmagList2)/6.)))[:len(VmagList2)]
 levels2 = np.tile([-1./4., 1./4.], int(np.ceil(len(VmagList2))))[:len(VmagList2)]
 markerline2, stemline2, baseline2 = ax.stem(VmagList2, levels2, linefmt="k-", basefmt="k-", use_line_collection=True)
-plt.setp(markerline2, mec="k", mfc="w", zorder=3)
+plt.setp(markerline2, mec="k", mfc="red", zorder=3)#was "w"
 markerline2.set_ydata(np.zeros(len(VmagList2)))
 kwargs2 = {'weight':'bold'}
 ax.xaxis.set_ticks([-30.,-20.,-10.,0.,10.,20.,30.,40.,50])
