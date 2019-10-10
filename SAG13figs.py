@@ -17,10 +17,10 @@ def SAG13jcdf(P, R):
     f = np.zeros((P.shape[0] - 1, P.shape[1] - 1))
     # section below Ri
     Rb = R[R <= Ri]
-    Rb = Rb.reshape((len(Rb) / 7, 7))
+    Rb = Rb.reshape((int(len(Rb) / 7), 7))
 
     Pb = P[R <= Ri]
-    Pb = Pb.reshape((len(Pb) / 7, 7))
+    Pb = Pb.reshape((int(len(Pb) / 7), 7))
     Rl = Rb[:-1, :-1]
     Ru = Rb[1:, :-1]
     Pl = Pb[:-1, :-1]
@@ -28,9 +28,9 @@ def SAG13jcdf(P, R):
     f1 = g[0] / r[0] / b[0] * (Ru ** r[0] - Rl ** r[0]) * (Pu ** b[0] - Pl ** b[0])
     # section above Ri
     Rb = R[R >= Ri]
-    Rb = Rb.reshape((len(Rb) / 7, 7))
+    Rb = Rb.reshape((int(len(Rb) / 7), 7))
     Pb = P[R >= Ri]
-    Pb = Pb.reshape((len(Pb) / 7, 7))
+    Pb = Pb.reshape((int(len(Pb) / 7), 7))
     Rl = Rb[:-1, :-1]
     Ru = Rb[1:, :-1]
     Pl = Pb[:-1, :-1]
