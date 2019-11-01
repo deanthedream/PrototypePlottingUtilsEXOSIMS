@@ -9,6 +9,8 @@ from EXOSIMS.util.deltaMag import *
 #DELETimport EXOSIMS.PlanetPhysicalModel as PPM#calc_Phi
 from scipy.optimize import fsolve
 import astropy.units as u
+from scipy.interpolate import interp1d, PchipInterpolator
+
 
 folder = os.path.normpath(os.path.expandvars('$HOME/Documents/exosims/Scripts/WFIRSTCompSpecPriors_WFIRSTcycle6core_3mo_40419/'))#/WFIRSTCompSpecPriors_WFIRSTcycle6core'))#HabExCompSpecPriors_HabEx_4m_TSDD_pop100DD_revisit_20180424'))#prefDistOBdursweep_WFIRSTcycle6core'))
 filename = 'WFIRSTcycle6core_CKL2_PPKL2.json'#'HabEx_CKL2_PPSAG13.json'#'auto_2018_11_03_15_09__prefDistOBdursweep_WFIRSTcycle6core_9.json'#'./TestScripts/02_KnownRV_FAP=1_WFIRSTObs_staticEphem.json'#'Dean17Apr18RS05C01fZ01OB01PP01SU01.json'#'sS_SLSQP.json'#'sS_AYO4.json'#'sS_differentPopJTwin.json'#AYO4.json'
@@ -66,13 +68,31 @@ def calc_Phi(beta):
 #### Plot Phase function value
 plt.close(11112233)
 plt.figure(num=11112233)
-betas = np.linspace(start=0.,stop=np.pi,num=100,endpoint=True)*u.rad
-plt.plot(betas,calc_Phi(betas),color='blue')
+betas = np.linspace(start=0.,stop=np.pi,num=1000,endpoint=True)*u.rad
+Phis = calc_Phi(betas)
+plt.plot(betas,Phis,color='blue')
 plt.show(block=False)
 
-# def calc_beta(Phi):
-#     Phi*np.pi = np.sin(beta) + (np.pi - beta)*np.cos(beta)
-#     return beta
+betaFunction2 = interp1d(Phis,betas,kind='quadratic') # NOT USED
+betaFunction = PchipInterpolator(-Phis,betas) #the -Phis ensure the function monotonically increases
+def calc_beta(Phi):
+    """ Calculates the Phase angle based on the assumed planet phase function
+    Args:
+        Phi (float) - Phase angle function value ranging from 0 to 1
+    Returns:
+        beta (float) - Phase angle from 0 rad to pi rad
+    """
+    beta = betaFunction(-Phi)
+    #Note: the - is because betaFunction uses -Phi when calculating the Phase Function
+    #This is because PchipInterpolator used requires monotonically increasing function
+    return beta
+
+#### Plot Phase Function Inverse Function
+plt.close(22221113655)
+plt.figure(num=22221113655)
+plt.plot(betaFunction2(Phis),Phis, color='blue')
+plt.plot(calc_beta(Phis),Phis, color='black',linestyle='--')
+plt.show(block=False)
 
 #### Planet Properties #####################################
 R_venus = 6051.8*1000.*u.m #m
