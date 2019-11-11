@@ -14,7 +14,7 @@ import astropy.units as u
 from scipy.interpolate import interp1d, PchipInterpolator
 
 
-folder = os.path.normpath(os.path.expandvars('$HOME/Documents/exosims/Scripts/WFIRSTCompSpecPriors_WFIRSTcycle6core_3mo_40419/'))#/WFIRSTCompSpecPriors_WFIRSTcycle6core'))#HabExCompSpecPriors_HabEx_4m_TSDD_pop100DD_revisit_20180424'))#prefDistOBdursweep_WFIRSTcycle6core'))
+folder = os.path.normpath(os.path.expandvars('$HOME/Documents/exosims/Scripts/WFIRSTCompSpecPriors_WFIRSTcycle6core_3mo_40519/'))#/WFIRSTCompSpecPriors_WFIRSTcycle6core'))#HabExCompSpecPriors_HabEx_4m_TSDD_pop100DD_revisit_20180424'))#prefDistOBdursweep_WFIRSTcycle6core'))
 filename = 'WFIRSTcycle6core_CKL2_PPKL2.json'#'HabEx_CKL2_PPSAG13.json'#'auto_2018_11_03_15_09__prefDistOBdursweep_WFIRSTcycle6core_9.json'#'./TestScripts/02_KnownRV_FAP=1_WFIRSTObs_staticEphem.json'#'Dean17Apr18RS05C01fZ01OB01PP01SU01.json'#'sS_SLSQP.json'#'sS_AYO4.json'#'sS_differentPopJTwin.json'#AYO4.json'
 #filename = 'sS_intTime6_KeplerLike2.json'
 scriptfile = os.path.join(folder,filename)
@@ -312,8 +312,12 @@ beta_earth_min, beta_earth_max = beta_range_s_circular(tx_min,a_s[1].value)
 Ratio = calc_Phi(beta_venus_max*u.rad)/calc_Phi(beta_earth_min*u.rad)
 FluxRatios[0]*Ratio
 
-print("The planet-star separation resulting in Earth and Venus having the same visual magnitude is")
-print(tx_min*u.m.to('AU'))
+#DELETE
+# print("The planet-star separation resulting in Earth and Venus having the same visual magnitude is")
+# print(tx_min*u.m.to('AU'))
+
+print('Venus has the same visual magnitude as Earth at (AU): ' + str(tx_min*u.m.to('AU')))
+print('Venus average Orbital Radius (AU): ' + str(a_s[0].to('AU').value))
 
 
 #### Jupiter 
@@ -451,8 +455,8 @@ plt.ylabel('uranus Phi/Earth Phi')
 plt.title('uranus')
 plt.show(block=False)
 
-print('Uranus has the same visual magnitude as Earth at ')
-print(tx4_min*u.m.to('AU'))
+print('Uranus has the same visual magnitude as Earth at (AU): ' + str(tx4_min*u.m.to('AU')))
+print('Uranus average Orbital Radius (AU): ' + str(a_s[5].to('AU').value))
 print(Ratio)
 
 
@@ -501,6 +505,76 @@ plt.ylabel('neptune Phi/Earth Phi')
 plt.title('neptune')
 plt.show(block=False)
 
-print('neptune has the same visual magnitude as Earth at ')
-print(tx5_min*u.m.to('AU'))
+print('Neptune has the same visual magnitude as Earth at (AU): ' + str(tx5_min*u.m.to('AU')))
+print('Neptune average Orbital Radius (AU): ' + str(a_s[6].to('AU').value))
 print(Ratio)
+
+
+
+#### Planet Orbital Radius Plot
+plt.close(999922222244444)
+plt.figure(num=999922222244444)
+ax = plt.gca()
+ax.set_yscale('symlog')
+#ax.set_xscale('log')
+#plt.yscale('symlog')
+ax.set_xlim([4.*1e-1,a_s[1].to('AU').value])
+ax.set_ylim([-1.1*1e2,1.1*1e0])
+#plt.scatter(np.zeros(len(a_s)),a_s,color='blue')
+x_earth = np.linspace(start=0.,stop=a_s[1].to('AU').value,num=300,endpoint=True)
+x_venus1 = np.linspace(start=0.,stop=a_s[0].to('AU').value,num=300,endpoint=True)
+y_venus1 = np.sqrt(a_s[0].to('AU').value**2. - x_venus1**2.)
+plt.plot(x_venus1,y_venus1,color='orange')
+plt.plot(x_venus1,-y_venus1,color='orange')
+plt.scatter(tx_min*u.m.to('AU'), -np.sqrt(a_s[0].to('AU').value**2. - (tx_min*u.m.to('AU'))**2.), color='orange', marker='o')
+plt.plot(np.zeros(2)+tx_min*u.m.to('AU'),np.linspace(start=-1e2,stop=np.sqrt(a_s[1].to('AU').value**2. - (tx_min*u.m.to('AU'))**2.),num=2,endpoint=True),linestyle='--',color='k')
+y_earth1 = np.sqrt(a_s[1].to('AU').value**2. - x_earth**2.)
+plt.plot(x_earth,y_earth1,color='green')
+plt.plot(x_earth,-y_earth1,color='green')
+plt.scatter(tx5_min*u.m.to('AU'), -np.sqrt(a_s[1].to('AU').value**2. - (tx5_min*u.m.to('AU'))**2.), color='green', marker='o')
+plt.scatter(tx4_min*u.m.to('AU'), -np.sqrt(a_s[1].to('AU').value**2. - (tx4_min*u.m.to('AU'))**2.), color='green', marker='o')
+plt.scatter(tx_min*u.m.to('AU'), np.sqrt(a_s[1].to('AU').value**2. - (tx_min*u.m.to('AU'))**2.), color='green', marker='o')
+y_neptune1 = np.sqrt(a_s[6].to('AU').value**2. - x_earth**2.)
+plt.plot(x_earth,-y_neptune1,color='blue')
+plt.scatter(tx5_min*u.m.to('AU'), -np.sqrt(a_s[6].to('AU').value**2. - (tx5_min*u.m.to('AU'))**2.), color='blue',marker='o')
+plt.plot(np.zeros(2)+tx5_min*u.m.to('AU'),np.linspace(start=-np.sqrt(a_s[1].to('AU').value**2. - (tx5_min*u.m.to('AU'))**2.),stop=-1e2,num=2,endpoint=True),linestyle='--',color='k')
+y_uranus1 = np.sqrt(a_s[5].to('AU').value**2. - x_earth**2.)
+plt.plot(x_earth,-y_uranus1,color='cyan')
+plt.scatter(tx4_min*u.m.to('AU'),-np.sqrt(a_s[5].to('AU').value**2. - (tx4_min*u.m.to('AU'))**2.), color='cyan', marker='o')
+plt.plot(np.zeros(2)+tx4_min*u.m.to('AU'),np.linspace(start=-np.sqrt(a_s[1].to('AU').value**2. - (tx4_min*u.m.to('AU'))**2.) ,stop=-1e2,num=2,endpoint=True),linestyle='--',color='k')
+
+plt.xlabel('Semi-Major Axis (AU)')
+plt.show(block=False)
+
+#### Planet Orbital Radius Plot 2
+plt.close(111999922222244444)
+plt.figure(num=111999922222244444)
+plt.xlim([4.*1e-1,a_s[1].to('AU').value])
+plt.ylim([-np.log10(1.1*1e2),np.log10(1.1*1e0)])
+x_earth = np.linspace(start=0.,stop=a_s[1].to('AU').value,num=300,endpoint=True)
+x_venus1 = np.linspace(start=0.,stop=a_s[0].to('AU').value,num=300,endpoint=True)
+y_venus1 = np.sqrt(a_s[0].to('AU').value**2. - x_venus1**2.)
+plt.plot(x_venus1,np.log10(y_venus1),color='orange')
+plt.plot(x_venus1,-np.log10(y_venus1),color='orange')
+plt.scatter(tx_min*u.m.to('AU'), -np.log10(np.sqrt(a_s[0].to('AU').value**2. - (tx_min*u.m.to('AU'))**2.)), color='orange', marker='o')
+plt.plot(np.zeros(2)+tx_min*u.m.to('AU'),np.linspace(start=-np.log10(1e2),stop=np.log10(np.sqrt(a_s[1].to('AU').value**2. - (tx_min*u.m.to('AU'))**2.)),num=2,endpoint=True),linestyle='--',color='k')
+y_earth1 = np.sqrt(a_s[1].to('AU').value**2. - x_earth**2.)
+plt.plot(x_earth,np.log10(y_earth1),color='green')
+plt.plot(x_earth,-np.log10(y_earth1),color='green')
+plt.scatter(tx5_min*u.m.to('AU'), -np.log10(np.sqrt(a_s[1].to('AU').value**2. - (tx5_min*u.m.to('AU'))**2.)), color='green', marker='o')
+plt.scatter(tx4_min*u.m.to('AU'), -np.log10(np.sqrt(a_s[1].to('AU').value**2. - (tx4_min*u.m.to('AU'))**2.)), color='green', marker='o')
+plt.scatter(tx_min*u.m.to('AU'), np.log10(np.sqrt(a_s[1].to('AU').value**2. - (tx_min*u.m.to('AU'))**2.)), color='green', marker='o')
+y_neptune1 = np.sqrt(a_s[6].to('AU').value**2. - x_earth**2.)
+plt.plot(x_earth,-np.log10(y_neptune1),color='blue')
+plt.scatter(tx5_min*u.m.to('AU'), -np.log10(np.sqrt(a_s[6].to('AU').value**2. - (tx5_min*u.m.to('AU'))**2.)), color='blue',marker='o')
+plt.plot(np.zeros(2)+tx5_min*u.m.to('AU'),np.linspace(start=-np.log10(np.sqrt(a_s[1].to('AU').value**2. - (tx5_min*u.m.to('AU'))**2.)),stop=-np.log10(1e2),num=2,endpoint=True),linestyle='--',color='k')
+y_uranus1 = np.sqrt(a_s[5].to('AU').value**2. - x_earth**2.)
+plt.plot(x_earth,-np.log10(y_uranus1),color='cyan')
+plt.scatter(tx4_min*u.m.to('AU'),-np.log10(np.sqrt(a_s[5].to('AU').value**2. - (tx4_min*u.m.to('AU'))**2.)), color='cyan', marker='o')
+plt.plot(np.zeros(2)+tx4_min*u.m.to('AU'),np.linspace(start=-np.log10(np.sqrt(a_s[1].to('AU').value**2. - (tx4_min*u.m.to('AU'))**2.)) ,stop=-np.log10(1e2),num=2,endpoint=True),linestyle='--',color='k')
+
+
+plt.xlabel('Semi-Major Axis (AU)')
+plt.show(block=False)
+
+
