@@ -6,6 +6,8 @@ Written By: Dean Keithly
 """
 import numpy as np
 import numpy.random as random
+import matplotlib.pyplot as plt
+import itertools
 
 
 pe = 0.15 #this is the probability of a patch going extinct (becoming unoccupied)
@@ -22,14 +24,14 @@ def stateChangeProb(pe,pr):
     P11_P11 = (1.-pe)**2. # probability both planets remain occupied
     P11_P10 = 2.*(1.-pe)*pe #probability one planet goes to unoccupied state
     P11_P00 = pe**2. #probability both planets got to unoccupied
-    print(P11_P11 + P11_P10 + P11_P00)
+    #print(P11_P11 + P11_P10 + P11_P00)
 
     #### Starting at state 10 (only 1 occupied)
     P10_P11 = pr*(1.-pe) #probability the one occupied planet re-inhabits the other occupied planet and the occupied planet does not go extinct
     P10_P10 = (1.-pe)*(1.-pr) + pe*pr 
         # prob the occupied planet stays occupied and the other is not colonized + # prob the occupied planets goes extinct and the other is colonized
     P10_P00 = pe*(1.-pr) #probability the occupied planet goes exinct and the other planet was not colonized
-    print(P10_P11 + P10_P10 + P10_P00)
+    #print(P10_P11 + P10_P10 + P10_P00)
     return P11_P11, P11_P10, P11_P00, P10_P11, P10_P10, P10_P00
 P11_P11, P11_P10, P11_P00, P10_P11, P10_P10, P10_P00 = stateChangeProb(pe,pr)
 
@@ -39,9 +41,9 @@ N=10.
 #### Assuming single patch with no recolonization
 print('Single Planet Life Probability: ' + str((1.-pe)**N))
 
-#Assumes starting state of 11 and assuming re-colonization
-p11 = 1.
-p10 = 0.
+#Assumes starting state of 10 and assuming re-colonization
+p11 = 0.
+p10 = 1.
 p00 = 0.
 for i in np.arange(N):
     tp11 = p11#save initial values
@@ -55,9 +57,9 @@ print('p11: ' + str(p11))
 print('p10: ' + str(p10))
 print('p00: ' + str(p00))
 
-#Assumes starting state of 11 and assuming NO re-colonization
-p11 = 1.
-p10 = 0.
+#Assumes starting state of 10 and assuming NO re-colonization
+p11 = 0.
+p10 = 1.
 p00 = 0.
 pr=0.
 P11_P11, P11_P10, P11_P00, P10_P11, P10_P10, P10_P00 = stateChangeProb(pe,pr)
@@ -74,6 +76,53 @@ print('p10: ' + str(p10))
 print('p00: ' + str(p00))
 
 
+
+
+def runStocasticDP(pe,pr,N,x0):
+    p11 = x0[0]
+    p10 = x0[1]
+    p00 = x0[1]
+    P11_P11, P11_P10, P11_P00, P10_P11, P10_P10, P10_P00 = stateChangeProb(pe,pr)
+    for i in np.arange(N):
+        tp11 = p11#save initial values
+        tp10 = p10
+        tp00 = p00
+        p11 = tp11*P11_P11 + tp10*P10_P11#the probability of ending in state P11
+        p10 = tp11*P11_P10 + tp10*P10_P10#the probability of staying in state P10
+        p00 = tp00 + tp11*P11_P00 + tp10*P10_P00#the probability of going to state P00 from either state plus previous p00
+    return p00, p10, p11
+
+#Sweep over pe, pr
+pes = np.linspace(start=0.,stop=1.,num=40)
+prs = np.linspace(start=0.,stop=1.,num=40)
+out = dict()
+#out[0,0]
+out['p00'] = np.zeros((len(pes),len(prs)))
+out['p10'] = np.zeros((len(pes),len(prs)))
+out['p11'] = np.zeros((len(pes),len(prs)))
+N=10
+x0 = [0,1,0]
+for ii,j in itertools.product(np.arange(len(pes)),np.arange(len(prs))):
+    out[ii,j] = runStocasticDP(pes[ii],prs[j],N,x0)
+    out['p00'][ii,j] = out[ii,j][0]
+    out['p10'][ii,j] = out[ii,j][1]
+    out['p11'][ii,j] = out[ii,j][2]
+
+plt.close(1)
+plt.figure(num=1)
+plt.rc('axes',linewidth=2)
+plt.rc('lines',linewidth=2)
+plt.rcParams['axes.linewidth']=2
+plt.rc('font',weight='bold')
+plt.contourf(pes,prs,out['p10']+out['p11'],cmap='bwr')
+plt.xlabel('Probability of Extinction in Epoch',weight='bold')
+plt.ylabel('Probability of Migration in Epoch',weight='bold')
+plt.title('Probability an Earth is Occupied at ' + str(N) + ' Epochs', weight='bold')
+plt.colorbar()
+plt.show(block=False)
+
+
+print(saltyburrito)
 
 
 
@@ -179,6 +228,7 @@ def colonizeEvent(time_c, toIndex, planetStates, eventStack, fromIndex, planetIn
             # toIndex was just colonized and is the "fromIndex" for the colonization events added
 
     return eventStack, planetStates
+
 
 #DONE
 def eventSwitch(time_c, eventDict, eventStack, planetStates, planetIndices):

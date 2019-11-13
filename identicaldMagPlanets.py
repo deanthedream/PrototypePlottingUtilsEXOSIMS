@@ -578,3 +578,32 @@ plt.xlabel('Semi-Major Axis (AU)')
 plt.show(block=False)
 
 
+
+
+
+
+#### Plot dMag vs S for Solar System Planets ####################################################################################
+plt.close(1)
+plt.figure(num=1)
+plt.rc('axes',linewidth=2)
+plt.rc('lines',linewidth=2)
+plt.rcParams['axes.linewidth']=2
+plt.rc('font',weight='bold')
+betas = np.linspace(start=0.,stop=np.pi,num=1000,endpoint=True)*u.rad
+Phis = calc_Phi(betas)
+dMag_s = np.zeros((len(R_s),len(Phis)))
+s_s = np.zeros((len(R_s),len(Phis)))
+for i in np.arange(len(R_s)):
+    for j in np.arange(len(Phis)):
+        dMag_s[i,j] = deltaMag(p_s[i],R_s[i],a_s[i],Phis[j])
+        s_s[i,j] = a_s[i].to('AU').value*np.sin(betas[j])
+    plt.plot(s_s[i,:],dMag_s[i,:],color=color_s[i],label=label_s[i])
+plt.xlabel('Planet-star Sepatation ' + r'$(s)$' + ' in AU',weight='bold')
+plt.ylabel('Planet-star ' + r'$\Delta\mathrm{mag}$',weight='bold')
+plt.xlim([0.,1.1*np.max(s_s)])
+plt.ylim([20.,50.])
+plt.legend()
+plt.show(block=False)
+#################################################################################################################################
+
+
