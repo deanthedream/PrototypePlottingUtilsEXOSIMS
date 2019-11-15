@@ -607,3 +607,56 @@ plt.show(block=False)
 #################################################################################################################################
 
 
+#### Planet Visual Magnitudes From Mallama 2018
+#Mercury
+#r distance of planet from sun
+#d distance of planet from Earth
+V = 5.*np.log10(r*d) - 0.613 + 6.3280e-02*alpha - 1.6336e-03*alpha**2. + 3.3644e-05*alpha**3. - 3.4265e-07*alpha**4. + 1.6893e-09*alpha**5. - 3.0334e-12*alpha**6.
+
+#Venus
+#0<alpha<163.7
+V = 5.*np.log10(r*d) - 4.384 - 1.044e-03*alpha + 3.687e-04*alpha**2. - 2.814e-06*alpha**3. + 8.938e-09*alpha**4.
+#163.7<alpha<179
+V = 5.*np.log10(r*d) + 236.05828 - 2.81914e-00*alpha + 8.39034e-03*alpha**2.
+
+#Earth
+V = 5.*np.log10(r*d) - 3.99 - 1.060e-3*alpha + 2.054e-4*alpha**2.
+
+#Mars
+#alpha<=50
+V = 5.*np.log10(r*d) - 1.601 + 0.02267*alpha - 0.0001302*alpha**2.+ L(λe) + L(LS)
+#alpha > 50 approximated by average dimming magnitudes for mercury and Earth
+V = 5.*np.log10(r*d) - 0.367 - 0.02573*alpha + 0.0003445*alpha**2. + L(λe) + L(Ls)
+#Find L
+
+
+#Jupiter
+#alpha<12
+V = 5.*np.log10(r*d) - 9.395 - 3.7e-04*alpha + 6.16e-04*alpha**2.
+#12<alpha<130
+V = 5.*np.log10(r*d) - 9.428 - 2.5*np.log10(1.0 - 1.507*(alpha/180.)\
+    - 0.363*(alpha/180.)**2. - 0.062*(alpha/180.)**3.\
+    + 2.809*(alpha/180.)**4. - 1.876*(alpha/180.)**5.)
+#no data beyond 130 deg
+
+#Saturn
+V = 5.*np.log10(r*d) - 8.914 - 1.825*np.sin(beta) + 0.026*alpha\
+    - 0.378*np.sin(beta)*np.exp(-2.25*alpha)
+
+#6<alpha<150 this approximates the globe of saturn only, not the rings
+V = 5.*np.log10(r*d) - 8.94 + 2.446e-4*alpha
+    + 2.672e-4*alpha**2. - 1.505e-6*alpha**3. + 4.767e-9*alpha**4.
+
+#Not enough data to include saturn's rings for alpha>6.5
+
+
+#Uranus
+f = 0.0022927 #flattening of the planet
+#phi = #planetocentric latitude
+#Phi ranges from -82 to 82
+phi_prime = np.arctan2(np.tan(phi),(1.-f)**2.) #planetographic latitude
+V = 5log10(rd) − 7.110 − 8.4E-04 ϕ
+′ + 6.587E-3 α
++ 1.045E-4 α
+2
+
