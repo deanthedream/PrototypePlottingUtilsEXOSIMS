@@ -28,13 +28,13 @@ comp = sim.Completeness
 #### Plot Population JPDF
 plt.close(983098098203845)
 plt.figure(num=983098098203845)
-plt.contourf(comp.xnew,comp.ynew,comp.Cpdf_pop,cmap='jet',intepolation='nearest', locator=ticker.LogLocator())
+plt.contourf(comp.xnew,comp.ynew,comp.Cpdf_pop,cmap='jet', locator=ticker.LogLocator())
 plt.show(block=False)
 
 #### Plot EarthLike JPDF
 plt.close(88853333333111)
 plt.figure(num=88853333333111)
-plt.contourf(comp.xnew,comp.ynew,comp.Cpdf_earthLike,cmap='jet',intepolation='nearest', locator=ticker.LogLocator())
+plt.contourf(comp.xnew,comp.ynew,comp.Cpdf_earthLike,cmap='jet', locator=ticker.LogLocator())
 plt.show(block=False)
 
 
@@ -46,7 +46,7 @@ for ii,j in itertools.product(np.arange(len(comp.Rp_hi)),np.arange(len(comp.L_lo
     plt.close(88853333333111+int(ii)*len(comp.Rp_hi)+int(j))
     plt.figure(num=88853333333111+int(ii)*len(comp.Rp_hi)+int(j))
     plt.title(str(ii) + ',' + str(j))
-    plt.contourf(comp.xnew,comp.ynew,comp.Cpdf_hs[ii,j],cmap='jet',intepolation='nearest', locator=ticker.LogLocator())
+    plt.contourf(comp.xnew,comp.ynew,comp.Cpdf_hs[ii,j],cmap='jet', locator=ticker.LogLocator())
     plt.show(block=False)
 
 plt.close('all')
@@ -98,7 +98,7 @@ axij = dict()
 for ii,j in itertools.product(np.arange(len(comp.Rp_hi)),np.arange(len(comp.L_lo[0,:]))):
     #DELETE axij[ii,j] = plt.subplot(gs[5+j+ii*len(comp.L_lo[0,:])]) #old mapping
     axij[ii,j] = plt.subplot(gs[5+j+(len(comp.Rp_hi)-1-ii)*len(comp.L_lo[0,:])])#5 from cbar, j is 
-    axij[ii,j].contourf(comp.xnew,comp.ynew,comp.Cpdf_hs[ii,j],cmap='jet',intepolation='nearest', levels=levels, norm = LogNorm())
+    axij[ii,j].contourf(comp.xnew,comp.ynew,comp.Cpdf_hs[ii,j],cmap='jet', levels=levels, norm = LogNorm())
     axij[ii,j].set_xlim([xmin,xmax])
     axij[ii,j].set_ylim([ymin,ymax])
     axij[ii,j].text(18.5,45,'(i:' + str(ii) + ',j:' + str(j) + ')', weight='bold')
@@ -224,7 +224,7 @@ axij = dict()
 for ii,j in itertools.product(np.arange(len(comp.Rp_hi)),np.arange(len(comp.L_lo[0,:]))):
     #DELETE axij[ii,j] = plt.subplot(gs[5+j+ii*len(comp.L_lo[0,:])]) #old mapping
     axij[ii,j] = plt.subplot(gs[5+j+(len(comp.Rp_hi)-1-ii)*len(comp.L_lo[0,:])])#5 from cbar, j is 
-    axij[ii,j].contourf(comp.xnew,comp.ynew,comp.Cpdf_hs[ii,j],cmap='jet',intepolation='nearest', levels=levels, norm = LogNorm())
+    axij[ii,j].contourf(comp.xnew,comp.ynew,comp.Cpdf_hs[ii,j],cmap='jet', levels=levels, norm = LogNorm())
     axij[ii,j].set_xlim([xmin,xmax])
     axij[ii,j].set_ylim([ymin,ymax])
     axij[ii,j].text(18.5,45,'(i:' + str(ii) + ',j:' + str(j) + ')', weight='bold')
