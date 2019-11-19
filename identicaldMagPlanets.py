@@ -97,6 +97,16 @@ plt.plot(calc_beta(Phis),Phis, color='black',linestyle='--')
 plt.show(block=False)
 
 #### Planet Properties #####################################
+planProp = dict()
+planProp['mercury'] = {'R':2439.7*1000.,'a':57.91*10.**9.,'p':0.142}
+planProp['venus'] = {'R':6051.8*1000.,'a':108.21*10.**9.,'p':0.689}
+planProp['earth'] = {'R':6371.0*1000.,'a':149.60*10.**9.,'p':0.434}
+planProp['mars'] = {'R':3389.92*1000.,'a':227.92*10.**9.,'p':0.150}
+planProp['jupiter'] = {'R':69911.*1000.,'a':778.57*10.**9.,'p':0.538}
+planProp['saturn'] = {'R':58232.*1000.,'a':1433.53*10.**9.,'p':0.499}
+planProp['uranus'] = {'R':25362.*1000.,'a':2872.46*10.**9.,'p':0.488}
+planProp['neptune'] = {'R':24622.*1000.,'a':4495.*10.**9.,'p':0.442}
+
 R_venus = 6051.8*1000. #m
 a_venus = 108.21*10.**9. #m
 p_venus = 0.689
@@ -611,33 +621,41 @@ plt.show(block=False)
 #Mercury
 #r distance of planet from sun
 #d distance of planet from Earth
-V = 5.*np.log10(r*d) - 0.613 + 6.3280e-02*alpha - 1.6336e-03*alpha**2. + 3.3644e-05*alpha**3. - 3.4265e-07*alpha**4. + 1.6893e-09*alpha**5. - 3.0334e-12*alpha**6.
+#V = 5.*np.log10(r*d) - 0.613 + 6.3280e-02*alpha - 1.6336e-03*alpha**2. + 3.3644e-05*alpha**3. - 3.4265e-07*alpha**4. + 1.6893e-09*alpha**5. - 3.0334e-12*alpha**6.
+planProp['mercury'] = {'numV':1,'alpha_mins':[0.],'alpha_maxs':[180.],'V':[5.*np.log10(r*d) - 0.613 + 6.3280e-02*alpha - 1.6336e-03*alpha**2. + 3.3644e-05*alpha**3. - 3.4265e-07*alpha**4. + 1.6893e-09*alpha**5. - 3.0334e-12*alpha**6.]}
 
 #Venus
 #0<alpha<163.7
-V = 5.*np.log10(r*d) - 4.384 - 1.044e-03*alpha + 3.687e-04*alpha**2. - 2.814e-06*alpha**3. + 8.938e-09*alpha**4.
+#V = 5.*np.log10(r*d) - 4.384 - 1.044e-03*alpha + 3.687e-04*alpha**2. - 2.814e-06*alpha**3. + 8.938e-09*alpha**4.
 #163.7<alpha<179
-V = 5.*np.log10(r*d) + 236.05828 - 2.81914e-00*alpha + 8.39034e-03*alpha**2.
+#V = 5.*np.log10(r*d) + 236.05828 - 2.81914e-00*alpha + 8.39034e-03*alpha**2.
+planProp['venus'] = {'numV':2,'alpha_mins':[0.,163.7],'alpha_maxs':[163.7,179.],'V':[5.*np.log10(r*d) - 4.384 - 1.044e-03*alpha + 3.687e-04*alpha**2. - 2.814e-06*alpha**3. + 8.938e-09*alpha**4.,\
+    5.*np.log10(r*d) + 236.05828 - 2.81914e-00*alpha + 8.39034e-03*alpha**2.]}
 
 #Earth
-V = 5.*np.log10(r*d) - 3.99 - 1.060e-3*alpha + 2.054e-4*alpha**2.
+#V = 5.*np.log10(r*d) - 3.99 - 1.060e-3*alpha + 2.054e-4*alpha**2.
+planProp['earth'] = {'numV':1,'alpha_mins':[0.],'alpha_maxs':[180.],'V':[5.*np.log10(r*d) - 3.99 - 1.060e-3*alpha + 2.054e-4*alpha**2.]}
 
 #Mars
 #alpha<=50
-V = 5.*np.log10(r*d) - 1.601 + 0.02267*alpha - 0.0001302*alpha**2.+ L(λe) + L(LS)
+#V = 5.*np.log10(r*d) - 1.601 + 0.02267*alpha - 0.0001302*alpha**2.+ L(λe) + L(LS)
 #alpha > 50 approximated by average dimming magnitudes for mercury and Earth
-V = 5.*np.log10(r*d) - 0.367 - 0.02573*alpha + 0.0003445*alpha**2. + L(λe) + L(Ls)
+#V = 5.*np.log10(r*d) - 0.367 - 0.02573*alpha + 0.0003445*alpha**2. + L(λe) + L(Ls)
 #Find L
+planProp['mars'] = {'numV':2,'alpha_mins':[0.,50.],'alpha_maxs':[50.,180.],'V':[5.*np.log10(r*d) - 1.601 + 0.02267*alpha - 0.0001302*alpha**2.+ L(λe) + L(LS),\
+    5.*np.log10(r*d) - 0.367 - 0.02573*alpha + 0.0003445*alpha**2. + L(λe) + L(Ls)]}
 
 
 #Jupiter
 #alpha<12
-V = 5.*np.log10(r*d) - 9.395 - 3.7e-04*alpha + 6.16e-04*alpha**2.
+# V = 5.*np.log10(r*d) - 9.395 - 3.7e-04*alpha + 6.16e-04*alpha**2.
 #12<alpha<130
-V = 5.*np.log10(r*d) - 9.428 - 2.5*np.log10(1.0 - 1.507*(alpha/180.)\
-    - 0.363*(alpha/180.)**2. - 0.062*(alpha/180.)**3.\
-    + 2.809*(alpha/180.)**4. - 1.876*(alpha/180.)**5.)
+# V = 5.*np.log10(r*d) - 9.428 - 2.5*np.log10(1.0 - 1.507*(alpha/180.)\
+#     - 0.363*(alpha/180.)**2. - 0.062*(alpha/180.)**3.\
+#     + 2.809*(alpha/180.)**4. - 1.876*(alpha/180.)**5.)
 #no data beyond 130 deg
+planProp['jupiter'] = {'numV':2,'alpha_mins':[0.,12.],'alpha_maxs':[12.,130.],'V':[5.*np.log10(r*d) - 9.395 - 3.7e-04*alpha + 6.16e-04*alpha**2.,\
+    5.*np.log10(r*d) - 9.428 - 2.5*np.log10(1.0 - 1.507*(alpha/180.) - 0.363*(alpha/180.)**2. - 0.062*(alpha/180.)**3.+ 2.809*(alpha/180.)**4. - 1.876*(alpha/180.)**5.)]}
 
 #Saturn
 V = 5.*np.log10(r*d) - 8.914 - 1.825*np.sin(beta) + 0.026*alpha\
@@ -650,6 +668,7 @@ V = 5.*np.log10(r*d) - 8.94 + 2.446e-4*alpha
 #Not enough data to include saturn's rings for alpha>6.5
 
 
+
 #Uranus
 f = 0.0022927 #flattening of the planet
 #phi = #planetocentric latitude
@@ -659,4 +678,24 @@ V = 5log10(rd) − 7.110 − 8.4E-04 ϕ
 ′ + 6.587E-3 α
 + 1.045E-4 α
 2
+
+#Saturn geometric functions
+"""The light reflected by Saturn and Saturn's rings is a combination of geometric functions.
+The central body is a sphere with, under some viewing angles, some portion of the body obstructed by Saturn's rings.
+The rings are effectively a flat disk with, under some viewing angles, some portion of the rings obstructed by Saturn.
+"""
+rings = dict()
+rings['D'] = {'widths':[66000.*1000.,74000.*1000.],'opticalDepth':10e-3,'albedo':}
+rings['C'] = {'widths':[74490.*1000.,91983.*1000.],'opticalDepth':0.1,'albedo':0.2}
+rings['B'] = {'widths':[91983.*1000.,117516.*1000.],'opticalDepth':2.75,'albedo':0.5}
+rings['CassiniDivision'] = {'widths':[117516.*1000.,122053.*1000.],'opticalDepth':0.15,'albedo':0.2}
+rings['A'] = {'widths':[122053.*1000.,136774.*1000.],'opticalDepth':0.5,'albedo':0.5}
+rings['F'] = {'widths':[140200.*1000.,140250.*1000.],'opticalDepth':0.5,'albedo':}
+rings['G'] = {'widths':[166000.*1000.,173000.*1000.],'opticalDepth':10e-6,'albedo':}
+rings['E'] = {'widths':[180000.*1000.,450000.*1000.],'opticalDepth':10e-5,'albedo':}
+#https://www.aanda.org/articles/aa/pdf/2015/11/aa26673-15.pdf
+#https://iopscience.iop.org/article/10.1086/426050/pdf
+
+
+
 
