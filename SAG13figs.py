@@ -182,7 +182,10 @@ mu = G*Msun
 #period = 2.*np.pi*np.sqrt(a**3/mu)
 a_SAG13_occurrance_bins = ((mu*( ((P*u.day).to('s')/(2.*np.pi))**2. ).decompose())**(1./3.)).to('AU')
 period = 2.*np.pi*np.sqrt((30.*u.AU)**3/mu).decompose().to('day')
+parP= (3.*np.pi)*np.sqrt(a/mu)
 
+bigP = (2.*np.pi)**(beta_0)*(a**(3./2.)/np.sqrt(mu))**(beta_0-1.)*(3./2.*np.sqrt(a)/np.sqrt(mu))
+#HERE SEE IF THE FULL EXPANSION WITH EXPONENT ENABLES ME TO CONVERT FROM P SPACE TO A SPACE AND MAKE GRIDS ON THE SMA VS R PLOT
 
 # plot marginalized pdfs
 fa = pop.dist_sma(a)
