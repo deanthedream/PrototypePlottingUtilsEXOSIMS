@@ -36,6 +36,7 @@ import datetime
 import re
 from EXOSIMS.util.vprint import vprint
 from matplotlib.colors import LogNorm
+from mpl_toolkits.mplot3d import Axes3D
 
 
 #folder = '/home/dean/Documents/SIOSlab/EXOSIMSres/HabExCompSpecPriors_HabEx_4m_TSDD_pop100DD_revisit_20180424/HabEx_CSAG13_PPSAG13'
@@ -75,9 +76,28 @@ TL = sim.TargetList
 #SU.dmag
 #SU.S
 
+def calc_az(r_init, SU):
+    """
+    Args:
+        r_init (numpy array) - array of initial planet positions
+        SU (object) - simulated universe object
+    Returns:
+        az (numpy array) - the delta in azimuth between the two vectors
+    """
+    az_init = np.arctan2(r_time[0][:,1].value.copy(), r_time[0][:,0].value.copy())
+    az_time = np.arctan2(SU.r[:,1].value.copy(),SU.r[:,0].value.copy())
+    az1 = abs(az_time-az_init) #turns into absolute angles
+    az2 = [az if az < np.pi else 2.*np.pi-az for az in az1] #converts to +/-np.pi
+    return az2
+
+# Declare Storage Arrays for dMag[planet_ind, time_ind]
+dMag_time_agg = np.asarray([])#list()
+s_time_agg = np.asarray([])#list()
+r_time_agg = np.asarray([])#list()
+az_time_agg = np.asarray([])#list()
 
 pklfiles = glob.glob(os.path.join(folder,'*.pkl'))
-for counter,f in enumerate(pklfiles[0:2]):
+for counter,f in enumerate(pklfiles[0:20]):
     print("%d/%d"%(counter,len(pklfiles)))
     with open(f, 'rb') as g:
         res = pickle.load(g, encoding='latin1')
@@ -85,35 +105,263 @@ for counter,f in enumerate(pklfiles[0:2]):
     #This must happen here bc each res will have planets around the same host star therefore causing multiple times
     #Take SU object
     #SU.init_systems
-    #requires a,e,I,O,w,M0,Mp, plan2star ,TL.MsTrue
-    SU.a = res['systems'].a
-    SU.e = res['systems'].e
-    SU.I = res['systems'].I
-    SU.O = res['systems'].O
-    SU.w = res['systems'].w
-    SU.M0 = res['systems'].M0
-    SU.Mp = res['systems'].Mp
-    SU.plan2star = res['systems'].plan2star
-    TL.MsTrue = res['systems'].MsTrue
+
+    #Figure out planet inds that have been detected. Then filter below
+    pInds = list()
+    obsInd = list() # list of observations where detections were made
+    for i in np.arange(len(res['DRM'])):#iterate over each observation
+        if len(res['DRM'][i]['det_status']) == 0:#skip if no detections
+            continue
+        obsInd.append(i)
+        for j in np.arange(len(res['DRM'][i]['det_status'])): #iterate over all det_status
+            if res['DRM'][i]['det_status'][j] == 1: #if the planet was detected
+                pInds.append(res['DRM'][i]['plan_inds'][j])#add to list of pInds detected
 
 
-    SU.init_systems()
+    ######## HERE IS THE ISSUE! I NEED TO COME UP WITH OBS CONTAINING DETECTIONS
+
+    #Extract a,e,I,O,w,M0,Mp, plan2star ,TL.MsTrue from pkl file
+    SU.a = res['systems']['a'][pInds]
+    SU.e = res['systems']['e'][pInds]
+    SU.I = res['systems']['I'][pInds]
+    SU.O = res['systems']['O'][pInds]
+    SU.w = res['systems']['w'][pInds]
+    SU.M0 = res['systems']['M0'][pInds]
+    SU.Mp = res['systems']['Mp'][pInds]
+    SU.Rp = res['systems']['Rp'][pInds]
+    SU.p = res['systems']['p'][pInds]
+    SU.plan2star = res['systems']['plan2star'][pInds]
+    TL.MsTrue = res['systems']['MsTrue']
+
+    #Keep for debugging
+    # print(len(SU.a))
+    # print(len(SU.e))
+    # print(len(SU.I))
+    # print(len(SU.O))
+    # print(len(SU.w))
+    # print(len(SU.M0))
+    # print(len(SU.Mp))
+    # print(len(SU.Rp))
+    # print(len(SU.p))
+    # print(len(SU.plan2star))
+    # print(len(TL.MsTrue))
+
+    SU.init_systems() #this should calculate self.r, self.d, ...
+    dt_i = list()
+    sInd_i = list()
     #TODO propagate each system to the time of detection
-    for i in np.arange(len(res['DRM'])):
-        dt_i.append(res['DRM'][i]['arrival_time'].value)
+    for i in obsInd:#np.arange(len(res['DRM'])):
+        dt_i.append(res['DRM'][i]['arrival_time'])
         sInd_i.append(res['DRM'][i]['star_ind']) #
         SU.propag_system(sInd_i[-1], dt_i[-1]) #propagates the system to the time of detection
         #Note all planets will be moved to position when they were
 
     #extract initial dMag and s of each planet here
+    dMag_time = [SU.dMag.copy()]
+    s_time = [SU.s.copy()]
+    r_time = [SU.r.copy()] #will be sInds x 3 x numdt
+    r_init = SU.r.copy()
+    az_time = [np.zeros(len(SU.s.copy()))]
 
-    #propagate all by a fixed time, dt, giving 
+    #propagate all by a fixed time, dt, repeatedly
+    dt = 1.*u.d
+    for i in np.arange(300): #300 was a number I pulled out of my butt
+        for j in np.arange(len(sInd_i)):
+            SU.propag_system(sInd_i[j],dt)#propagate all systems
+        dMag_time.append(SU.dMag.copy())
+        s_time.append(SU.s.copy())
+        r_time.append(SU.r.copy()) # will be sInds x 3
+
+        #calculate az too!
+        az_time.append(calc_az(r_init,SU))
+
+    #convert into numpy arrays
+    dMag_time = np.asarray(dMag_time).T
+    s_time = np.asarray(s_time).T
+    r_time = np.asarray(r_time).T
+    az_time = np.asarray(az_time).T
+
+
+    # dMag_time_agg.append(dMag_time)
+    # s_time_agg.append(s_time)
+    # r_time_agg.append(r_time)
+    # az_time_agg.append(az_time)
+    try:
+        dMag_time_agg = np.vstack((dMag_time_agg,dMag_time))
+        s_time_agg = np.vstack((s_time_agg,s_time)) #.append(s_time)
+        r_time_agg = np.concatenate((r_time_agg, r_time), axis=1)
+        az_time_agg = np.vstack((az_time_agg,az_time))
+    except:
+        print('except')
+        dMag_time_agg = dMag_time
+        s_time_agg = s_time
+        r_time_agg = r_time
+        az_time_agg = az_time
 
     #extract new dMag and s of each planet
 
+#### Astrometric and Photometric Uncertainty Assumptions######
+U_dmag = 0.1 # pulled out of butt, 1/10 of order of magnitude
+U_az = 
+U_s = 
+##############################################################
+
+
+dMag_time_agg = np.asarray(dMag_time_agg)
+s_time_agg = np.asarray(s_time_agg)
+r_time_agg = np.asarray(r_time_agg)
+az_time_agg = np.asarray(az_time_agg)
+
+########### Make Plots ##################################
+#### dMag vs s
+plt.close(10987)
+fig = plt.figure(10987,figsize=(10,10))
+plt.rc('axes',linewidth=2)
+plt.rc('lines',linewidth=2)
+plt.rcParams['axes.linewidth']=2
+plt.rc('font',weight='bold')
+ax10= fig.add_subplot(111)#, projection= '3d')
+ax10.scatter(s_time_agg[:,0],dMag_time_agg[:,0], color='red',s=5)#, alpha=1.
+#for j in np.arange(len(s_time_agg[:,0])):
+for i in np.arange(300):
+    ax10.scatter(s_time_agg[:,i],dMag_time_agg[:,i], color='blue', alpha=0.05, s=3)
+    #plt.show(block=False)
+    # plt.draw()
+    # plt.pause(0.1)
+    #input('press a key...')
+#ax10.scatter(s_time_agg[:,10],dMag_time_agg[:,10], color='orange', alpha=0.2)
+#ax10.scatter(s_time_agg[:,40],dMag_time_agg[:,40], color='red', alpha=0.2)
+
+ax10.set_xlabel('s in AU',weight='bold')
+ax10.set_ylabel(r'$\Delta \mathrm{mag}$' + ' in AU', weight='bold')
+plt.show(block=False)
+
+
+
+#### dMag vs s vs az
+plt.close(11256)
+fig1 = plt.figure(11256,figsize=(20,10))
+plt.rc('axes',linewidth=2)
+plt.rc('lines',linewidth=2)
+plt.rcParams['axes.linewidth']=2
+plt.rc('font',weight='bold')
+ax11= fig1.add_subplot(121, projection= '3d')
+ax12= fig1.add_subplot(122)#, projection= '3d')
+ax11.scatter(s_time_agg[:,0],dMag_time_agg[:,0], az_time_agg[:,0], color='red',s=5)#, alpha=1.
+ax12.scatter(s_time_agg[:,0],az_time_agg[:,0], color='red', s=5)
+ax11.set_xlabel(r'$\Delta s$')
+ax11.set_ylabel(r'$\Delta \mathrm{mag}$')
+ax11.set_zlabel(r'$\Delta \theta$')
+ax11.set_zlim([0.,2.*np.pi])
+ax11.set_xlim([0.,np.max(s_time_agg)])
+ax12.set_xlabel(r'$\Delta s$')
+ax12.set_ylabel(r'$\Delta \theta$')
+ax12.set_ylim([0.,2.*np.pi])
+ax12.set_xlim([0.,np.max(s_time_agg)])
+for i in np.arange(300):
+    ax11.scatter(s_time_agg[:,i],dMag_time_agg[:,i], az_time_agg[:,i], color='blue', alpha=0.05, s=3)
+    ax12.scatter(s_time_agg[:,i],az_time_agg[:,i], color='blue', alpha=0.05, s=3)
+    # plt.show(block=False)
+    # plt.draw()
+    # plt.pause(0.001)
+
+plt.show(block=False)
+
+
+#### dMag vs s vs t
+plt.close(35486)
+fig2 = plt.figure(35486,figsize=(30,10))
+plt.rc('axes',linewidth=2)
+plt.rc('lines',linewidth=2)
+plt.rcParams['axes.linewidth']=2
+plt.rc('font',weight='bold')
+ax21= fig2.add_subplot(131, projection= '3d')
+ax22= fig2.add_subplot(132)#, projection= '3d')
+ax23= fig2.add_subplot(133)
+ax21.scatter(s_time_agg[:,0],dMag_time_agg[:,0], az_time_agg[:,0], color='red',s=5)#, alpha=1.
+ax22.scatter(s_time_agg[:,0],az_time_agg[:,0], color='red', s=10)
+ax23.scatter(np.zeros(len(dMag_time_agg[:,0])),dMag_time_agg[:,0], color='red', s=10)
+ax21.set_xlabel(r'$s$')
+ax21.set_ylabel(r'$\Delta \mathrm{mag}$')
+ax21.set_zlabel('Time Since First Observation, ' + r'$\Delta t$' + ' in Days', weight='bold')
+ax21.set_zlim([0.,300.])
+ax21.set_xlim([0.,np.max(s_time_agg)])
+ax22.set_xlabel('Time Since First Observation, ' + r'$\Delta t$' + ' in Days', weight='bold')
+ax22.set_ylabel(r'$s$')
+ax22.set_ylim([0.,np.max(s_time_agg)])
+ax22.set_xlim([0.,300.])
+ax23.set_xlabel('Time Since First Observation, ' + r'$\Delta t$' + ' in Days', weight='bold')
+ax23.set_ylabel(r'$\Delta \mathrm{mag}$')
+ax23.set_xlim([0.,300.])
+ax23.set_ylim([0.,np.max(dMag_time_agg)])
+for i in np.arange(300):
+    ax21.scatter(s_time_agg[:,i],dMag_time_agg[:,i], i, color='blue', alpha=0.05, s=3)
+    ax22.scatter(np.zeros(len(s_time_agg[:,0]))+i,s_time_agg[:,i], color='blue', alpha=0.05, s=3)
+    ax23.scatter(np.zeros(len(dMag_time_agg[:,0]))+i,dMag_time_agg[:,i], color='blue', alpha=0.05, s=3)
+    # plt.show(block=False)
+    # plt.draw()
+    # plt.pause(0.001)
+plt.show(block=False)
+
+
+#### Calculate ddMag, ds
+ddMag_time_agg = np.zeros(list(dMag_time_agg.shape))
+ds_time_agg = np.zeros(list(s_time_agg.shape))
+for i in np.arange(s_time_agg.shape[0]):
+    ddMag_time_agg[i,:] = dMag_time_agg[i,:] - dMag_time_agg[i,0]
+    ds_time_agg[i,:] = s_time_agg[i,:] - s_time_agg[i,0]
+
+#### Plotting ddMag, ds, dTheta, dt
+plt.close(23831)
+fig3 = plt.figure(23831,figsize=(40,10))
+plt.rc('axes',linewidth=2)
+plt.rc('lines',linewidth=2)
+plt.rcParams['axes.linewidth']=2
+plt.rc('font',weight='bold')
+ax31= fig3.add_subplot(141, projection= '3d')
+ax32= fig3.add_subplot(142)#, projection= '3d')
+ax33= fig3.add_subplot(143)
+ax34= fig3.add_subplot(144)
+ax31.scatter(ds_time_agg[:,0],ddMag_time_agg[:,0], az_time_agg[:,0], color='red',s=5)#, alpha=1.
+ax32.scatter(np.zeros(len(ddMag_time_agg[:,0])),ds_time_agg[:,0], color='red', s=10)
+ax33.scatter(np.zeros(len(ddMag_time_agg[:,0])),ddMag_time_agg[:,0], color='red', s=10)
+ax34.scatter(np.zeros(len(ddMag_time_agg[:,0])),az_time_agg[:,0], color='red', s=10)
+#labels
+ax31.set_xlabel(r'$\Delta s$')
+ax31.set_ylabel(r'$\Delta \Delta \mathrm{mag}$')
+ax31.set_zlabel(r'$\Delta \Theta$')
+ax32.set_ylabel(r'$\Delta s$')
+ax32.set_xlabel('Time Since First Observation, ' + r'$\Delta t$' + ' in Days', weight='bold')
+ax33.set_ylabel(r'$\Delta \Delta \mathrm{mag}$')
+ax33.set_xlabel('Time Since First Observation, ' + r'$\Delta t$' + ' in Days', weight='bold')
+ax34.set_ylabel(r'$\Delta \Theta$')
+ax34.set_xlabel('Time Since First Observation, ' + r'$\Delta t$' + ' in Days', weight='bold')
+#limits
+ax31.set_xlim([np.min(ds_time_agg),np.max(ds_time_agg)])
+ax31.set_ylim([np.min(ddMag_time_agg),np.max(ddMag_time_agg)])
+ax31.set_zlim([0.,np.max(az_time_agg)])
+ax32.set_ylim([np.min(ds_time_agg),np.max(ds_time_agg)])
+ax32.set_xlim([0.,300.])
+ax33.set_ylim([np.min(ddMag_time_agg),np.max(ddMag_time_agg)])
+ax33.set_xlim([0.,300.])
+ax34.set_ylim([0.,np.max(az_time_agg)])
+ax34.set_xlim([0.,300.])
+#Plot trails
+for i in np.arange(300):
+    ax31.scatter(ds_time_agg[:,i],ddMag_time_agg[:,i], az_time_agg[:,i], color='blue', alpha=0.05, s=3)
+    ax32.scatter(np.zeros(len(ds_time_agg[:,0]))+i,ds_time_agg[:,i], color='blue', alpha=0.05, s=3)
+    ax33.scatter(np.zeros(len(ddMag_time_agg[:,0]))+i,ddMag_time_agg[:,i], color='blue', alpha=0.05, s=3)
+    ax34.scatter(np.zeros(len(ddMag_time_agg[:,0]))+i,az_time_agg[:,i], color='blue', alpha=0.05, s=3)
+    # plt.show(block=False)
+    # plt.draw()
+    # plt.pause(0.001)
+plt.show(block=False)
+
+
+print(salktyburrito)
 
 #1 check res for the actual data I need to reconstruct planet position
-res['seed']#useless.... unless I can recreate the simulation object!
+#res['seed']#useless.... unless I can recreate the simulation object!
 """
 ##res['DRM'] #contains
 'det_params':
@@ -169,15 +417,16 @@ Mp
 #14336
 #self.r self.v self.Mp self.d self.s self.phi self.fEZ self.dMag self.WA
 
-SU.r = out[''] # planet position x,y,z
-SU.v = out[''] #planet velocity
-SU.Mp = out['Mps'] #planet masses
-SU.d = out['rs'] #planet star distance
-SU.s = out[''] #planet star separation
-SU.phi = out['']#
-SU.fEZ = out['fEZs']
-SU.dMag = out['dMags']
-SU.WA = out['WAs']
+#DELETA?
+# SU.r = out[''] # planet position x,y,z
+# SU.v = out[''] #planet velocity
+# SU.Mp = out['Mps'] #planet masses
+# SU.d = out['rs'] #planet star distance
+# SU.s = out[''] #planet star separation
+# SU.phi = out['']#
+# SU.fEZ = out['fEZs']
+# SU.dMag = out['dMags']
+# SU.WA = out['WAs']
 
 
 
