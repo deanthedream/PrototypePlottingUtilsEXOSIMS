@@ -301,6 +301,9 @@ i.e. if 1 W/m^2 is incident on a 1 m^2 surface Area flat plate, 1 W/Sr will be e
 a_bond_ring = 0.342 #from Hanel 1983 Albedo, Internal Heat Flux, and Energy Balance of Saturn
 a_bond_body = 0.342
 #### Maximal Total Energy Incident on Ring ####
+
+MAKE USE CASES FOR ALL THESE THINGS DEPENDING UPON THE PHI ELLIPSE AND CRITICAL ELLIPSE ANGLES
+
 #1. Calculate total surface Area of ring projected onto star-planet vector plane
 A_ellipse_starproj = np.pi*R_rmin*b_Rrmin_kstar
 #2. Calculate total illuminated area obstructed by planet in star-planet vector plane
@@ -309,7 +312,7 @@ A_ringIlluminationObstructed = R**2.*(th2-th1)/2. - calc_AreaUnderEllipseSection
 #3. Calculate total incident Energy to ring
 FluxSaturn = 1366.*(1.**2.)/(9.6**2.) #Min 9AU, Max 10.1AU, AVG 9.6AU
 Qdot_ring = FluxSaturn*(A_ellipse_starproj-A_ringIlluminationObstructed)
-#4. Calculate total area of ring obstructing body - used in future
+#4. Calculate total area of ring obstructing the body - used in future
 #### Maximal Energy Reflected From Ring ####
 #1. Calculate total surface Area of ring projected onto r_view vector plane
 A_ellipse_viewproj = np.pi*R_rmin*b_Rrmin_view
