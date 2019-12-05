@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import itertools
-from quaternion import *
+#from quaternion import *
 
 #Cylinder Equation
 def planet_cyl(r_kstar,d_z,R,r_ksunbot1,r_ksunbot2,phi):
@@ -64,6 +64,31 @@ def calc_CriticalThetas(R, R_rmin, R_rmax):
     theta_crit1 = np.arccos(R/R_rmin)
     theta_crit2 = np.arccos(R/R_rmax)
     return theta_crit1, theta_crit2
+
+def calc_ellipseCircleIntersections(a,b,R):
+    """ Calculates ellipse and circle intersection angles
+    Assuming th=0 is along a semi-major axis of the ellipse
+    http://mathworld.wolfram.com/Circle-EllipseIntersection.html
+    Args:
+        a (float) - 
+        b (float) - 
+        R (float) - 
+    Returns:
+        th1 (float) - top right
+        th2 (float) - top left
+        th3 (float) - bottom left
+        th4 (float) - bottom right
+    """
+    x1 = a*np.sqrt((R**2.-b**2.)/(a**2.-b**2.))
+    x2 = -x1
+    y1 = b*np.sqrt((a**2.-R**2.)/(a**2.-b**2.))
+    y2 = -y1
+
+    th1 = np.arctan2(y1,x1)
+    th2 = np.arctan2(y1,x2)
+    th3 = np.arctan2(y2,x2)
+    th4 = np.arctan2(y2,x1)
+    return th1, th2, th3, th4
 
 #### Inputs ##################################################################################
 #Viewing direction
@@ -135,9 +160,25 @@ S_circ_viewproj = np.asarray(S_circ_viewproj)
 #NOTE THIS MUST BE GENERALIZED SO IT CAN BE USED FOR ILLUMINATION OBSTRCUTION
 theta = phi_ellipse
 theta_crit1, theta_crit1 = calc_CriticalThetas(R, R_rmin, R_rmax)
-
-
 ########################################################################################################
+
+#### Planet Obstructing Ring Points ####################################################################
+#In the viewing plane, the following angles represent the intersections in the viewing plane.
+#Orientation should not matter
+th1, th2, th3, th4 = calc_ellipseCircleIntersections(R_rmin,np.linalg.norm(r_ellipseb1_proj),R)
+intpt_viewproj1 = np.cos(th1)*r_ellipsea1_proj/np.linalg.norm(r_ellipsea1_proj)*R + np.sin(th1)*r_ellipseb1_proj/np.linalg.norm(r_ellipseb1_proj)*R
+intpt_viewproj2 = np.cos(th2)*r_ellipsea1_proj/np.linalg.norm(r_ellipsea1_proj)*R + np.sin(th2)*r_ellipseb1_proj/np.linalg.norm(r_ellipseb1_proj)*R
+intpt_viewproj3 = np.cos(th3)*r_ellipsea1_proj/np.linalg.norm(r_ellipsea1_proj)*R + np.sin(th3)*r_ellipseb1_proj/np.linalg.norm(r_ellipseb1_proj)*R
+intpt_viewproj4 = np.cos(th4)*r_ellipsea1_proj/np.linalg.norm(r_ellipsea1_proj)*R + np.sin(th4)*r_ellipseb1_proj/np.linalg.norm(r_ellipseb1_proj)*R
+########################################################################################################
+
+#### Generate Circle of sphere 
+r_Rbot1_viewproj, r_Rbot2_viewproj = generate_twoVectPerpToVect(-r_view) #Two perp vect in ring plane perp to r_r
+#for plotting
+S_circs_proj = list()
+for phi in phi2:
+    S_circs_proj.append(ring_circ(R,r_Rbot1_viewproj, r_Rbot2_viewproj,phi))
+S_circs_proj = np.asarray(S_circs_proj)
 
 
 #Bounding box edges
@@ -161,6 +202,10 @@ ax1.view_init(elev=180./np.pi*np.arcsin(r_view[2]), azim=180./np.pi*np.arcsin(r_
 ax1.plot([0.,r_ellipseb1[0]],[0.,r_ellipseb1[1]],[0.,r_ellipseb1[2]],color='cyan') #b1 in ring plane
 ax1.plot([0.,r_ellipseb1_proj[0]],[-20.,-20.],[0.,r_ellipseb1_proj[2]],color='orange') #b1 in viewing plane
 ax1.plot([0.,r_ellipsea1_proj[0]],[-20.,-20.],[0.,r_ellipsea1_proj[2]],color='orange') #a1 in viewing plane
+ax1.scatter([intpt_viewproj1[0],intpt_viewproj2[0],intpt_viewproj3[0],intpt_viewproj4[0]],\
+        [-20.,-20.,-20.,-20.],\
+        [intpt_viewproj1[2],intpt_viewproj2[2],intpt_viewproj3[2],intpt_viewproj4[2]],color='orange') #a1 in viewing plane
+ax1.plot(S_circs_proj[:,0],S_circs_proj[:,1]-20.,S_circs_proj[:,2],color='blue')
 ax1.plot(S_circ_viewproj[:,0],-20.+S_circ_viewproj[:,1],S_circ_viewproj[:,2],color='orange')
 # ax1.plot([R_r*r_ellipseb1[0],R_r*r_ellipseb1[0]+R_r*r_ellipseb1[0]],\
 #         [R_r*r_ellipseb1[1],R_r*r_ellipseb1[1]+R_r*r_ellipseb1[1]],\
