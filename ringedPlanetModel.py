@@ -52,7 +52,11 @@ def generate_twoVectPerpToVect(vect):
     return vect1, vect2
 
 def calc_CriticalThetas(R, R_rmin, R_rmax):
-    """ Calculates Critical Angles where a planet/ring will begin obstructing one another
+    """ Calculates Critical Angle between ring plane and planet
+    where a planet/ring will begin obstructing one another
+    if theta >= theta_crit1, then ring is unobstructed
+    if theta < theta_crit1 and theta >= theta_crit2, then inner ring circle obstructed and outer is not
+    if theta < theta_crit2, then the outer and inner ring cirlces are obstructed.
     Args:
         R (float) - planet radius
         R_rmin (float) - ring inner radius
@@ -192,12 +196,6 @@ for phi in phi2:
     S_circ_viewproj.append(np.cos(phi)*r_ellipseb1_proj + np.sin(phi)*r_ellipsea1_proj)
 S_circ_viewproj = np.asarray(S_circ_viewproj)
 
-#### Minimum phi_ellipse_view Angle where the planet obstructs ring visibility ##############################
-#NOTE THIS MUST BE GENERALIZED SO IT CAN BE USED FOR ILLUMINATION OBSTRCUTION
-theta = phi_ellipse_view
-theta_crit1, theta_crit1 = calc_CriticalThetas(R, R_rmin, R_rmax)
-########################################################################################################
-
 #### Planet Obstructing Ring Points ####################################################################
 #In the viewing plane, the following angles represent the intersections in the viewing plane.
 #Orientation should not matter
@@ -280,6 +278,59 @@ ax1.plot([0.,20.*r_view[0]],[0.,20.*r_view[1]],[0.,20.*r_view[2]],color='black')
 plt.show(block=False)
 
 
+#### Minimum phi_ellipse_view Angle where the planet obstructs ring visibility ##############################
+#NOTE THIS MUST BE GENERALIZED SO IT CAN BE USED FOR ILLUMINATION OBSTRCUTION
+theta = phi_ellipse_view
+theta_crit1, theta_crit1 = calc_CriticalThetas(R, R_rmin, R_rmax)
+#############################################################################################################
+
+#### Illumination Conditions ################################################################################
+if phi_ellipse_kstar >= theta_crit1:
+    #then ring is UNobstructed
+    rkstar_state = 0
+    #No cylinder/ring intersections
+    #1. Calculate total surface Area of ring projected onto star-planet vector plane
+    A_ellipse_starproj = np.pi*R_rmax*b_Rrmax_kstar - np.pi*R_rmin*b_Rrmin_kstar
+    #2. Calculate total illuminated area obstructed by planet in star-planet vector plane
+    #SKIP
+    #3. Calculate total incident Energy to ring
+    FluxSaturn = 1366.*(1.**2.)/(9.6**2.) #Min 9AU, Max 10.1AU, AVG 9.6AU
+    Qdot_ring = FluxSaturn*A_ellipse_starproj
+elif phi_ellipse_kstar < theta_crit1 and phi_ellipse_kstar >= theta_crit2:
+    #then inner ring circle obstructed and outer is not
+    rkstar_state = 1
+    #Inner ring/cylinder intersection
+    #1. Calculate total surface Area of ring projected onto star-planet vector plane
+    A_ellipse_starproj = np.pi*R_rmax*b_Rrmax_kstar - np.pi*R_rmin*b_Rrmin_kstar
+    #2. Calculate total illuminated area obstructed by planet in star-planet vector plane
+    th1, th2, th3, th4 = calc_ellipseCircleIntersections(R_rmin,b_Rrmin_kstar,R)
+    A_ringIlluminationObstructed = R**2.*(th2-th1)/2. - calc_AreaUnderEllipseSection(R_rmin,b_Rrmin_kstar,th1,th2)
+    #3. Calculate total incident Energy to ring
+    FluxSaturn = 1366.*(1.**2.)/(9.6**2.) #Min 9AU, Max 10.1AU, AVG 9.6AU
+    Qdot_ring = FluxSaturn*(A_ellipse_starproj-A_ringIlluminationObstructed)
+elif phi_ellipse_kstar < theta_crit2:
+    #then the outer and inner ring cirlces are obstructed.
+    rkstar_state = 2
+    #Inner and Outer ring/cylinder intersections
+else:
+    print(error2)
+#### Viewing Conditions #######################################
+if phi_ellipse_view >= theta_crit1:
+    #then ring is UNobstructed
+    view_state = 0
+    #No cylinder/ring intersections
+elif phi_ellipse_view < theta_crit1 and phi_ellipse_view >= theta_crit2:
+    #then inner ring circle obstructed and outer is not
+    view_state = 1
+    #Inner ring/cylinder intersection
+elif phi_ellipse_view < theta_crit2:
+    #then the outer and inner ring cirlces are obstructed.
+    view_state = 2
+    #Inner and Outer ring/cylinder intersections
+else:
+    print(error1)
+#############################################################################################################
+
 #### Ring Bond Albedo ############################################################################################################
 """Realistically, an observed reflected light intensity of a planet will vary in intensity across angle of emittance and spectrum
 We assume a lambert reflectance model that is uniform in spectrum
@@ -304,14 +355,7 @@ a_bond_body = 0.342
 
 MAKE USE CASES FOR ALL THESE THINGS DEPENDING UPON THE PHI ELLIPSE AND CRITICAL ELLIPSE ANGLES
 
-#1. Calculate total surface Area of ring projected onto star-planet vector plane
-A_ellipse_starproj = np.pi*R_rmin*b_Rrmin_kstar
-#2. Calculate total illuminated area obstructed by planet in star-planet vector plane
-th1, th2, th3, th4 = calc_ellipseCircleIntersections(R_rmin,b_Rrmin_kstar,R)
-A_ringIlluminationObstructed = R**2.*(th2-th1)/2. - calc_AreaUnderEllipseSection(R_rmin,b_Rrmin_kstar,th1,th2)
-#3. Calculate total incident Energy to ring
-FluxSaturn = 1366.*(1.**2.)/(9.6**2.) #Min 9AU, Max 10.1AU, AVG 9.6AU
-Qdot_ring = FluxSaturn*(A_ellipse_starproj-A_ringIlluminationObstructed)
+
 #4. Calculate total area of ring obstructing the body - used in future
 #### Maximal Energy Reflected From Ring ####
 #1. Calculate total surface Area of ring projected onto r_view vector plane
