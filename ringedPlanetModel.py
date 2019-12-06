@@ -117,7 +117,7 @@ def calc_AreaUnderEllipseSection(a,b,th1,th2):
         a (float) - ellipse semi-major axis
         b (float) - ellipse semi-minor axis
         th1 (float) - angle #1 defined from a direction in rad
-        th2 (float) - angle #2 defined from a direction in rad
+        th2 (float) - angle #2 defined from a direction in rad larger angle
     Returns:
         area (float) - area between two angles of ellipse
     """
@@ -289,29 +289,58 @@ if phi_ellipse_kstar >= theta_crit1:
     #then ring is UNobstructed
     rkstar_state = 0
     #No cylinder/ring intersections
-    #1. Calculate total surface Area of ring projected onto star-planet vector plane
+    #1. Calc total surface Area of ring projected onto star-planet vector plane
     A_ellipse_starproj = np.pi*R_rmax*b_Rrmax_kstar - np.pi*R_rmin*b_Rrmin_kstar
-    #2. Calculate total illuminated area obstructed by planet in star-planet vector plane
+    #2. Calc total illuminated area obstructed by planet in star-planet vector plane
     #SKIP
-    #3. Calculate total incident Energy to ring
+    #3. Calc total incident Energy to ring
     FluxSaturn = 1366.*(1.**2.)/(9.6**2.) #Min 9AU, Max 10.1AU, AVG 9.6AU
     Qdot_ring = FluxSaturn*A_ellipse_starproj
+    #4. Calc SA of planet
+    A_planet = np.pi*R**2.
+    #5. Calc total incident Energy on planet
+    Qdot_planet = FluxSaturn*A_planet
 elif phi_ellipse_kstar < theta_crit1 and phi_ellipse_kstar >= theta_crit2:
     #then inner ring circle obstructed and outer is not
     rkstar_state = 1
     #Inner ring/cylinder intersection
-    #1. Calculate total surface Area of ring projected onto star-planet vector plane
+    #1. Calc total surface Area of ring projected onto star-planet vector plane
     A_ellipse_starproj = np.pi*R_rmax*b_Rrmax_kstar - np.pi*R_rmin*b_Rrmin_kstar
-    #2. Calculate total illuminated area obstructed by planet in star-planet vector plane
+    #2. Calc total illuminated area obstructed by planet in star-planet vector plane
     th1, th2, th3, th4 = calc_ellipseCircleIntersections(R_rmin,b_Rrmin_kstar,R)
     A_ringIlluminationObstructed = R**2.*(th2-th1)/2. - calc_AreaUnderEllipseSection(R_rmin,b_Rrmin_kstar,th1,th2)
-    #3. Calculate total incident Energy to ring
+    #3. Calc total incident Energy to ring
     FluxSaturn = 1366.*(1.**2.)/(9.6**2.) #Min 9AU, Max 10.1AU, AVG 9.6AU
     Qdot_ring = FluxSaturn*(A_ellipse_starproj-A_ringIlluminationObstructed)
+    #4. Calc SA of planet
+    A_planet = np.pi*R**2. - A_ringIlluminationObstructed
+    #5. Calc total incident Energy on planet
+    Qdot_planet = FluxSaturn*A_planet
 elif phi_ellipse_kstar < theta_crit2:
     #then the outer and inner ring cirlces are obstructed.
     rkstar_state = 2
     #Inner and Outer ring/cylinder intersections
+    #1. Calc total surface Area of ring projected onto star-planet vector plane
+    A_ellipse_starproj = np.pi*R_rmax*b_Rrmax_kstar - np.pi*R_rmin*b_Rrmin_kstar
+    #2. Calc total illuminated area obstructed by planet in star-planet vector plane
+    th1_1, th2_1, th3_1, th4_1 = calc_ellipseCircleIntersections(R_rmin,b_Rrmin_kstar,R) #Thetas of inner intersections
+    th1_2, th2_2, th3_2, th4_2 = calc_ellipseCircleIntersections(R_rmax,b_Rrmax_kstar,R) #Thetas of outer intersections
+    area_1 = calc_AreaUnderEllipseSection(R_rmin,b_Rrmin_kstar,th2_2,th2_1)
+    area_1p2 = calc_AreaUnderEllipseSection(R_rmax,b_Rrmax_kstar,th2_2,th2_1)
+    area_2 = area_1p2 - area_1
+    area_3p7 = calc_AreaUnderEllipseSection(R_rmax,b_Rrmax_kstar,th1_2,th2_2)
+    area_7 = calc_AreaUnderEllipseSection(R_rmin,b_Rrmin_kstar,th2_1,th2_2)
+    area_3 = area_3p7 - area_7
+    area_6 = calc_AreaUnderEllipseSection(R_rmin,b_Rrmin_kstar,th1_1,th1_2)
+    area_5p6 = calc_AreaUnderEllipseSection(R_rmax,b_Rrmax_kstar,th1_1,th1_2)
+    area_5 = area_5p6 - area_6
+    A_ringIlluminationObstructed = R**2.*(th2-th1)/2. - (area_2+area_3+area_5)
+    #3. Calc total incident Energy to ring
+    Qdot_ring = FluxSaturn*(A_ellipse_starproj-A_ringIlluminationObstructed)
+    #4. Calc SA of planet
+    A_planet = np.pi*R**2. - A_ringIlluminationObstructed
+    #5. Calc total incident Energy on planet
+    Qdot_planet = FluxSaturn*A_planet
 else:
     print(error2)
 #### Viewing Conditions #######################################
@@ -319,6 +348,10 @@ if phi_ellipse_view >= theta_crit1:
     #then ring is UNobstructed
     view_state = 0
     #No cylinder/ring intersections
+    #1. Calc total surface Area of ring projected onto star-planet vector plane
+    A_ellipse_viewproj = np.pi*R_rmax*b_Rrmax_view - np.pi*R_rmin*b_Rrmin_view
+    #2. Calculate total viewed area obstructed by planet in r_view vector plane
+    #3. Calculate total reflected flux loss due to Lambert reflectance model
 elif phi_ellipse_view < theta_crit1 and phi_ellipse_view >= theta_crit2:
     #then inner ring circle obstructed and outer is not
     view_state = 1
@@ -342,7 +375,7 @@ i.e. if 1 W/m^2 is incident on a 1 m^2 surface Area flat plate, 1 W/Sr will be e
 #planet dmag=-2.5*np.log10(p*(Rp/d).decompose()**2*Phi).value
 #Here p is the geometric albedo, Rp is the planet radius, and Phi is the phase function value.
 #Combined, the value in the log10 is the planet flux relative to a 1 flux star
-
+ 
 #The total reflected light of the ring is complex because it is composed of a large body of non-uniform particles of varying
 #composition which absorb some light, reflect some light, and allow some light to pass through
 #Arnaldo says look at Beer-Lambert Law
@@ -360,12 +393,9 @@ MAKE USE CASES FOR ALL THESE THINGS DEPENDING UPON THE PHI ELLIPSE AND CRITICAL 
 #### Maximal Energy Reflected From Ring ####
 #1. Calculate total surface Area of ring projected onto r_view vector plane
 A_ellipse_viewproj = np.pi*R_rmin*b_Rrmin_view
-#2. Calculate total viewed area obstructed by planet in r_view vector plane
-#3. Calculate total reflected flux loss due to Lambert reflectance model
+
 #dI
 #################################################################################################################################
-
-
 
 
 #### Total Saturn + Ring Flux Calculation ########################################################################################
