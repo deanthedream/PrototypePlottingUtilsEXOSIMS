@@ -3,6 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 import itertools
+import matplotlib.gridspec as gridspec
 #from quaternion import *
 
 #Cylinder Equation
@@ -145,10 +146,12 @@ SA_ring = SA_ringOuter - SA_ringInner #Rough total area of ring in top down view
 
 #### Ring Ellipticity - Viewing Direction ####################################################
 r_r2, phi_ellipse_view = calc_ellipticityAngle(r_r,r_view)
-b_Rrmin_view = np.cos(phi_ellipse_view)*R_r #minor axis of apparent ellipse of ring
+b_Rrmin_view = np.cos(phi_ellipse_view)*R_rmin #minor axis of apparent ellipse of Rrmin ring
+b_Rrmax_view = np.cos(phi_ellipse_view)*R_rmax #minor axis of apparent ellipse of Rrmax ring
 #### Ring Ellipticity - Star Direction
 r_r3, phi_ellipse_kstar = calc_ellipticityAngle(r_r,r_kstar)
-b_Rrmin_kstar = np.cos(phi_ellipse_kstar)*R_r #minor axis of apparent ellipse of ring
+b_Rrmin_kstar = np.cos(phi_ellipse_kstar)*R_rmin#minor axis of apparent ellipse of Rrmin ring
+b_Rrmax_kstar = np.cos(phi_ellipse_kstar)*R_rmax#minor axis of apparent ellipse of Rrmax ring
 ################################################################################################
 
 #### Plot Cylinder and circle
@@ -208,6 +211,38 @@ intpt_viewproj4 = np.cos(th4)*r_ellipsea1_proj/np.linalg.norm(r_ellipsea1_proj)*
 #Calculate points on ellipse projected on the view plane
 ########################################################################################################
 
+def planeLineIntersect(r_plane, p0, r_line, D=0.):
+    """
+    Args:
+        r_plane (numpy array) - normal vector describing intersection plane (assume D=0)
+        p0 (numpy array) - Line starting point
+        r_line (numpy array) - vector describing the line
+        D (float) - RHS of plane equation
+    Returns:
+        pt (numpy array) - Intersection point between line and plane
+        t (float) - the magnitude of t to make that intersection
+    """
+    A = np.asarray([[r_plane[0],r_plane[1],r_plane[2],0.],[1.,0.,0.,-r_line[0]],[0.,1.,0,-r_line[1]],[0.,0.,1.,-r_line[2]]])
+    b = np.asarray([[D],[p0[0]],[p0[1]],[p0[2]]])
+    out = np.linalg.solve(A,b)
+    pt = out.T[0][:3]
+    t = out.T[0][-1]
+    return pt, t
+# ##Test
+# pt0, t0 = planeLineIntersect(np.asarray([2,1,-4]), np.asarray([0.,2.,0.]), np.asarray([1,3,1]), D=4.)
+# A = np.asarray([[2,1,-4,0],[1,0,0,-1],[0,1,0,-3],[0,0,1,-1]])
+# b = np.asarray([[4],[0],[2],[0]])
+# out = np.linalg.solve(A,b)
+# ######
+
+#### Planet Obstructing Ring Points In 3D ####################
+pt_rmincirc_viewproj1, t = planeLineIntersect(r_r, intpt_viewproj1, r_view)
+pt_rmincirc_viewproj2, t = planeLineIntersect(r_r, intpt_viewproj2, r_view)
+pt_rmincirc_viewproj3, t = planeLineIntersect(r_r, intpt_viewproj3, r_view)
+pt_rmincirc_viewproj4, t = planeLineIntersect(r_r, intpt_viewproj4, r_view)
+##############################################################
+
+
 #### Generate Circle of sphere 
 r_Rbot1_viewproj, r_Rbot2_viewproj = generate_twoVectPerpToVect(-r_view) #Two perp vect in ring plane perp to r_r
 #for plotting
@@ -217,71 +252,11 @@ for phi in phi2:
 S_circs_proj = np.asarray(S_circs_proj)
 
 
-#Bounding box edges
-maxBounds = np.max([np.max(np.abs(X_cyl)),np.max(np.abs(Y_cyl)),np.max(np.abs(Z_cyl)),np.max(np.abs(S_circs))])
-
-plt.close(1)
-fig1 = plt.figure(num=1)
-ax1= fig1.add_subplot(111, projection= '3d')
-#ax1.set_aspect('equal')
-ax1.plot(S_circs[:,0],S_circs[:,1],S_circs[:,2],color='red') #plot R_rmin circle
-ax1.plot(S_circs_max[:,0],S_circs_max[:,1],S_circs_max[:,2],color='red') #plot R_rmax circle
-ax1.plot_surface(X_cyl, Y_cyl, Z_cyl, alpha=0.2, color='blue')#, rstride=rstride, cstride=cstride)
-ax1.plot([-20.*r_kstar[0],0.],[-20.*r_kstar[1],0.],[-20.*r_kstar[2],0.],color='cyan') #plot sun to star vector
-ax1.scatter([maxBounds,maxBounds,maxBounds,maxBounds,-maxBounds,-maxBounds,-maxBounds,-maxBounds],\
-        [maxBounds,maxBounds,-maxBounds,-maxBounds,maxBounds,maxBounds,-maxBounds,-maxBounds],\
-        [maxBounds,-maxBounds,maxBounds,-maxBounds,maxBounds,-maxBounds,maxBounds,-maxBounds],alpha=0.)
-ax1.set_xlabel('X')
-ax1.set_ylabel('Y')
-ax1.set_zlabel('Z')
-ax1.view_init(elev=180./np.pi*np.arcsin(r_view[2]), azim=180./np.pi*np.arcsin(r_view[1]/np.sqrt(r_view[0]**2. + r_view[1]**2.)))#set viewing angle
-#ax1.plot([0.,r_ellipseb1[0]],[0.,r_ellipseb1[1]],[0.,r_ellipseb1[2]],color='cyan') #plot projected component vectors of apparent ellipse
-ax1.plot([0.,r_ellipseb1[0]],[0.,r_ellipseb1[1]],[0.,r_ellipseb1[2]],color='cyan') #b1 in ring plane
-ax1.plot([0.,r_ellipseb1_proj[0]],[-20.,-20.],[0.,r_ellipseb1_proj[2]],color='orange') #b1 in viewing plane
-ax1.plot([0.,r_ellipsea1_proj[0]],[-20.,-20.],[0.,r_ellipsea1_proj[2]],color='orange') #a1 in viewing plane
-ax1.scatter([intpt_viewproj1[0],intpt_viewproj2[0],intpt_viewproj3[0],intpt_viewproj4[0]],\
-        [-20.,-20.,-20.,-20.],\
-        [intpt_viewproj1[2],intpt_viewproj2[2],intpt_viewproj3[2],intpt_viewproj4[2]],color='orange') #a1 in viewing plane
-ax1.plot(S_circs_proj[:,0],S_circs_proj[:,1]-20.,S_circs_proj[:,2],color='blue')
-ax1.plot(S_circ_viewproj[:,0],-20.+S_circ_viewproj[:,1],S_circ_viewproj[:,2],color='orange')
-# ax1.plot([R_r*r_ellipseb1[0],R_r*r_ellipseb1[0]+R_r*r_ellipseb1[0]],\
-#         [R_r*r_ellipseb1[1],R_r*r_ellipseb1[1]+R_r*r_ellipseb1[1]],\
-#         [R_r*r_ellipseb1[2],R_r*r_ellipseb1[2]+R_r*r_ellipseb1[2]],color='cyan') #plot projected component vectors of apparent ellipse
-
-
-#### Plot Sphere For Reference ####################################################
-#### PLOT BLUE
-u = np.linspace(np.pi/2., -np.pi/2., num=100)
-v = np.linspace(0, np.pi, num=100)
-theta = np.linspace(0, 2*np.pi, num=100)
-
-x = R * np.outer(np.cos(u), np.sin(v))
-y = R * np.outer(np.sin(u), np.sin(v))
-z = R * np.outer(np.ones(np.size(u)), np.cos(v))
-ax1.plot_surface(x, y, z,  rstride=4, cstride=4, color='blue', linewidth=0, alpha=0.3)
-
-#### PLOT YELLOW
-u = np.linspace(np.pi/2., 3.*np.pi/2., num=100)
-v = np.linspace(0, np.pi, num=100)
-theta = np.linspace(0, 2*np.pi, num=100)
-
-x = R * np.outer(np.cos(u), np.sin(v))
-y = R * np.outer(np.sin(u), np.sin(v))
-z = R * np.outer(np.ones(np.size(u)), np.cos(v))
-ax1.plot_surface(x, y, z+0.0,  rstride=4, cstride=4, color='yellow', linewidth=0, alpha=0.3)
-#####################################################################
-
-
-ax1.plot([0.,5.*r_r[0]],[0.,5.*r_r[1]],[0.,5.*r_r[2]],color='black') #circle normal vector
-ax1.plot([0.,20.*r_view[0]],[0.,20.*r_view[1]],[0.,20.*r_view[2]],color='black') #viewing direction vector
-
-plt.show(block=False)
-
 
 #### Minimum phi_ellipse_view Angle where the planet obstructs ring visibility ##############################
 #NOTE THIS MUST BE GENERALIZED SO IT CAN BE USED FOR ILLUMINATION OBSTRCUTION
 theta = phi_ellipse_view
-theta_crit1, theta_crit1 = calc_CriticalThetas(R, R_rmin, R_rmax)
+theta_crit1, theta_crit2 = calc_CriticalThetas(R, R_rmin, R_rmax)
 #############################################################################################################
 
 #### Illumination Conditions ################################################################################
@@ -323,16 +298,16 @@ elif phi_ellipse_kstar < theta_crit2:
     #1. Calc total surface Area of ring projected onto star-planet vector plane
     A_ellipse_starproj = np.pi*R_rmax*b_Rrmax_kstar - np.pi*R_rmin*b_Rrmin_kstar
     #2. Calc total illuminated area obstructed by planet in star-planet vector plane
-    th1_1, th2_1, th3_1, th4_1 = calc_ellipseCircleIntersections(R_rmin,b_Rrmin_kstar,R) #Thetas of inner intersections
-    th1_2, th2_2, th3_2, th4_2 = calc_ellipseCircleIntersections(R_rmax,b_Rrmax_kstar,R) #Thetas of outer intersections
-    area_1 = calc_AreaUnderEllipseSection(R_rmin,b_Rrmin_kstar,th2_2,th2_1)
-    area_1p2 = calc_AreaUnderEllipseSection(R_rmax,b_Rrmax_kstar,th2_2,th2_1)
+    th1_min_starproj, th2_min_starproj, th3_min_starproj, th4_min_starproj = calc_ellipseCircleIntersections(R_rmin,b_Rrmin_kstar,R) #Thetas of inner intersections
+    th1_max_starproj, th2_max_starproj, th3_max_starproj, th4_max_starproj = calc_ellipseCircleIntersections(R_rmax,b_Rrmax_kstar,R) #Thetas of outer intersections
+    area_1 = calc_AreaUnderEllipseSection(R_rmin,b_Rrmin_kstar,th2_max_starproj,th2_min_starproj)
+    area_1p2 = calc_AreaUnderEllipseSection(R_rmax,b_Rrmax_kstar,th2_max_starproj,th2_min_starproj)
     area_2 = area_1p2 - area_1
-    area_3p7 = calc_AreaUnderEllipseSection(R_rmax,b_Rrmax_kstar,th1_2,th2_2)
-    area_7 = calc_AreaUnderEllipseSection(R_rmin,b_Rrmin_kstar,th2_1,th2_2)
+    area_3p7 = calc_AreaUnderEllipseSection(R_rmax,b_Rrmax_kstar,th1_max_starproj,th2_max_starproj)
+    area_7 = calc_AreaUnderEllipseSection(R_rmin,b_Rrmin_kstar,th2_min_starproj,th2_max_starproj)
     area_3 = area_3p7 - area_7
-    area_6 = calc_AreaUnderEllipseSection(R_rmin,b_Rrmin_kstar,th1_1,th1_2)
-    area_5p6 = calc_AreaUnderEllipseSection(R_rmax,b_Rrmax_kstar,th1_1,th1_2)
+    area_6 = calc_AreaUnderEllipseSection(R_rmin,b_Rrmin_kstar,th1_min_starproj,th1_max_starproj)
+    area_5p6 = calc_AreaUnderEllipseSection(R_rmax,b_Rrmax_kstar,th1_min_starproj,th1_max_starproj)
     area_5 = area_5p6 - area_6
     A_ringIlluminationObstructed = R**2.*(th2-th1)/2. - (area_2+area_3+area_5)
     #3. Calc total incident Energy to ring
@@ -386,7 +361,7 @@ a_bond_ring = 0.342 #from Hanel 1983 Albedo, Internal Heat Flux, and Energy Bala
 a_bond_body = 0.342
 #### Maximal Total Energy Incident on Ring ####
 
-MAKE USE CASES FOR ALL THESE THINGS DEPENDING UPON THE PHI ELLIPSE AND CRITICAL ELLIPSE ANGLES
+#MAKE USE CASES FOR ALL THESE THINGS DEPENDING UPON THE PHI ELLIPSE AND CRITICAL ELLIPSE ANGLES
 
 
 #4. Calculate total area of ring obstructing the body - used in future
@@ -399,8 +374,128 @@ A_ellipse_viewproj = np.pi*R_rmin*b_Rrmin_view
 
 
 #### Total Saturn + Ring Flux Calculation ########################################################################################
-totalFlux = maximal_ringFlux + maximal_saturnFlux
+#totalFlux = maximal_ringFlux + maximal_saturnFlux
 #### Vis Mag of Saturn + Ring
-dMagSaturnSystem = -2.5*np.log10(totalFlux/1.) #Assuming a 1. magnitude star this allows us to ignore the solid angle
+#dMagSaturnSystem = -2.5*np.log10(totalFlux/1.) #Assuming a 1. magnitude star this allows us to ignore the solid angle
     #d**2. division and simply keep the telescope aperture
 ##################################################################################################################################
+
+
+
+
+
+#Bounding box edges
+maxBounds = np.max([np.max(np.abs(X_cyl)),np.max(np.abs(Y_cyl)),np.max(np.abs(Z_cyl)),np.max(np.abs(S_circs))])
+
+plt.close(1)
+fig = plt.figure(num=1, figsize=(10,10))
+numRows = 2
+numCols = 2
+height_ratios = ([1,1])
+width_ratios = ([1,1])
+gs = gridspec.GridSpec(numRows,numCols, width_ratios=width_ratios, height_ratios=height_ratios)
+gs.update(wspace=0.06, hspace=0.06) # set the spacing between axes. 
+plt.rc('axes',linewidth=2)
+plt.rc('lines',linewidth=2)
+plt.rcParams['axes.linewidth']=2
+plt.rc('font',weight='bold')
+
+ax0 = plt.subplot(gs[0], projection='3d')
+ax1 = plt.subplot(gs[1], projection='3d')
+ax2 = plt.subplot(gs[2], projection='3d')
+ax3 = plt.subplot(gs[3], projection='3d')
+
+#### ax3 #########################################################################################
+ax3.plot(S_circs[:,0],S_circs[:,1],S_circs[:,2],color='red') #plot R_rmin circle
+ax3.plot(S_circs_max[:,0],S_circs_max[:,1],S_circs_max[:,2],color='red') #plot R_rmax circle
+ax3.plot_surface(X_cyl, Y_cyl, Z_cyl, alpha=0.2, color='blue')#, rstride=rstride, cstride=cstride)
+ax3.plot([-20.*r_kstar[0],0.],[-20.*r_kstar[1],0.],[-20.*r_kstar[2],0.],color='cyan') #plot sun to star vector
+ax3.scatter([maxBounds,maxBounds,maxBounds,maxBounds,-maxBounds,-maxBounds,-maxBounds,-maxBounds],\
+        [maxBounds,maxBounds,-maxBounds,-maxBounds,maxBounds,maxBounds,-maxBounds,-maxBounds],\
+        [maxBounds,-maxBounds,maxBounds,-maxBounds,maxBounds,-maxBounds,maxBounds,-maxBounds],alpha=0.)
+ax3.set_xlabel('X')
+ax3.set_ylabel('Y')
+ax3.set_zlabel('Z')
+ax3.view_init(elev=180./np.pi*np.arcsin(r_view[2]), azim=180./np.pi*np.arcsin(r_view[1]/np.sqrt(r_view[0]**2. + r_view[1]**2.)))#set viewing angle
+#ax1.plot([0.,r_ellipseb1[0]],[0.,r_ellipseb1[1]],[0.,r_ellipseb1[2]],color='cyan') #plot projected component vectors of apparent ellipse
+ax3.plot([0.,r_ellipseb1[0]],[0.,r_ellipseb1[1]],[0.,r_ellipseb1[2]],color='cyan') #b1 in ring plane
+ax3.plot([0.,r_ellipseb1_proj[0]],[-20.,-20.],[0.,r_ellipseb1_proj[2]],color='orange') #b1 in viewing plane
+ax3.plot([0.,r_ellipsea1_proj[0]],[-20.,-20.],[0.,r_ellipsea1_proj[2]],color='orange') #a1 in viewing plane
+ax3.scatter([intpt_viewproj1[0],intpt_viewproj2[0],intpt_viewproj3[0],intpt_viewproj4[0]],\
+        [-20.,-20.,-20.,-20.],\
+        [intpt_viewproj1[2],intpt_viewproj2[2],intpt_viewproj3[2],intpt_viewproj4[2]],color='orange') #a1 in viewing plane
+ax0.scatter([pt_rmincirc_viewproj1[0],pt_rmincirc_viewproj2[0],pt_rmincirc_viewproj3[0],pt_rmincirc_viewproj4[0]],\
+        [pt_rmincirc_viewproj1[1],pt_rmincirc_viewproj2[1],pt_rmincirc_viewproj3[1],pt_rmincirc_viewproj4[1]],\
+        [pt_rmincirc_viewproj1[2],pt_rmincirc_viewproj2[2],pt_rmincirc_viewproj3[2],pt_rmincirc_viewproj4[2]],color='orange',marker='x') #a1 in viewing plane
+ax3.plot(S_circs_proj[:,0],S_circs_proj[:,1]-20.,S_circs_proj[:,2],color='blue')
+ax3.plot(S_circ_viewproj[:,0],-20.+S_circ_viewproj[:,1],S_circ_viewproj[:,2],color='orange')
+#### PLOT BLUE HEMISPHERE For Reference 
+u = np.linspace(np.pi/2., -np.pi/2., num=100)
+v = np.linspace(0, np.pi, num=100)
+theta = np.linspace(0, 2*np.pi, num=100)
+x = R * np.outer(np.cos(u), np.sin(v))
+y = R * np.outer(np.sin(u), np.sin(v))
+z = R * np.outer(np.ones(np.size(u)), np.cos(v))
+ax3.plot_surface(x, y, z,  rstride=4, cstride=4, color='blue', linewidth=0, alpha=0.3)
+#### PLOT YELLOW HEMISPHERE For Reference
+u = np.linspace(np.pi/2., 3.*np.pi/2., num=100)
+v = np.linspace(0, np.pi, num=100)
+theta = np.linspace(0, 2*np.pi, num=100)
+x = R * np.outer(np.cos(u), np.sin(v))
+y = R * np.outer(np.sin(u), np.sin(v))
+z = R * np.outer(np.ones(np.size(u)), np.cos(v))
+ax3.plot_surface(x, y, z+0.0,  rstride=4, cstride=4, color='yellow', linewidth=0, alpha=0.3)
+####
+ax3.plot([0.,5.*r_r[0]],[0.,5.*r_r[1]],[0.,5.*r_r[2]],color='black') #circle normal vector
+ax3.plot([0.,20.*r_view[0]],[0.,20.*r_view[1]],[0.,20.*r_view[2]],color='black') #viewing direction vector
+ax3.set_title('Seen From Viewing Direction')
+####################################################################################################
+
+#### ax0 #########################################################################################
+ax0.plot(S_circs[:,0],S_circs[:,1],S_circs[:,2],color='red') #plot R_rmin circle
+ax0.plot(S_circs_max[:,0],S_circs_max[:,1],S_circs_max[:,2],color='red') #plot R_rmax circle
+ax0.plot_surface(X_cyl, Y_cyl, Z_cyl, alpha=0.2, color='blue')#, rstride=rstride, cstride=cstride)
+ax0.plot([-20.*r_kstar[0],0.],[-20.*r_kstar[1],0.],[-20.*r_kstar[2],0.],color='cyan') #plot sun to star vector
+ax0.scatter([maxBounds,maxBounds,maxBounds,maxBounds,-maxBounds,-maxBounds,-maxBounds,-maxBounds],\
+        [maxBounds,maxBounds,-maxBounds,-maxBounds,maxBounds,maxBounds,-maxBounds,-maxBounds],\
+        [maxBounds,-maxBounds,maxBounds,-maxBounds,maxBounds,-maxBounds,maxBounds,-maxBounds],alpha=0.)
+ax0.set_xlabel('X')
+ax0.set_ylabel('Y')
+ax0.set_zlabel('Z')
+ax0.view_init(elev=180./np.pi*np.arcsin(r_kstar[2]), azim=180./np.pi*np.arcsin(r_kstar[1]/np.sqrt(r_kstar[0]**2. + r_kstar[1]**2.)))#set viewing angle
+#ax1.plot([0.,r_ellipseb1[0]],[0.,r_ellipseb1[1]],[0.,r_ellipseb1[2]],color='cyan') #plot projected component vectors of apparent ellipse
+ax0.plot([0.,r_ellipseb1[0]],[0.,r_ellipseb1[1]],[0.,r_ellipseb1[2]],color='cyan') #b1 in ring plane
+ax0.plot([0.,r_ellipseb1_proj[0]],[-20.,-20.],[0.,r_ellipseb1_proj[2]],color='orange') #b1 in viewing plane
+ax0.plot([0.,r_ellipsea1_proj[0]],[-20.,-20.],[0.,r_ellipsea1_proj[2]],color='orange') #a1 in viewing plane
+ax0.scatter([intpt_viewproj1[0],intpt_viewproj2[0],intpt_viewproj3[0],intpt_viewproj4[0]],\
+        [-20.,-20.,-20.,-20.],\
+        [intpt_viewproj1[2],intpt_viewproj2[2],intpt_viewproj3[2],intpt_viewproj4[2]],color='orange') #a1 in viewing plane
+ax0.scatter([pt_rmincirc_viewproj1[0],pt_rmincirc_viewproj2[0],pt_rmincirc_viewproj3[0],pt_rmincirc_viewproj4[0]],\
+        [pt_rmincirc_viewproj1[1],pt_rmincirc_viewproj2[1],pt_rmincirc_viewproj3[1],pt_rmincirc_viewproj4[1]],\
+        [pt_rmincirc_viewproj1[2],pt_rmincirc_viewproj2[2],pt_rmincirc_viewproj3[2],pt_rmincirc_viewproj4[2]],color='orange',marker='x') #a1 in viewing plane
+ax0.plot(S_circs_proj[:,0],S_circs_proj[:,1]-20.,S_circs_proj[:,2],color='blue')
+ax0.plot(S_circ_viewproj[:,0],-20.+S_circ_viewproj[:,1],S_circ_viewproj[:,2],color='orange')
+#### PLOT BLUE HEMISPHERE For Reference 
+u = np.linspace(np.pi/2., -np.pi/2., num=100)
+v = np.linspace(0, np.pi, num=100)
+theta = np.linspace(0, 2*np.pi, num=100)
+x = R * np.outer(np.cos(u), np.sin(v))
+y = R * np.outer(np.sin(u), np.sin(v))
+z = R * np.outer(np.ones(np.size(u)), np.cos(v))
+ax0.plot_surface(x, y, z,  rstride=4, cstride=4, color='blue', linewidth=0, alpha=0.3)
+#### PLOT YELLOW HEMISPHERE For Reference
+u = np.linspace(np.pi/2., 3.*np.pi/2., num=100)
+v = np.linspace(0, np.pi, num=100)
+theta = np.linspace(0, 2*np.pi, num=100)
+x = R * np.outer(np.cos(u), np.sin(v))
+y = R * np.outer(np.sin(u), np.sin(v))
+z = R * np.outer(np.ones(np.size(u)), np.cos(v))
+ax0.plot_surface(x, y, z+0.0,  rstride=4, cstride=4, color='yellow', linewidth=0, alpha=0.3)
+####
+ax0.plot([0.,5.*r_r[0]],[0.,5.*r_r[1]],[0.,5.*r_r[2]],color='black') #circle normal vector
+ax0.plot([0.,20.*r_view[0]],[0.,20.*r_view[1]],[0.,20.*r_view[2]],color='black') #viewing direction vector
+ax0.set_title('Seen From Illumination Direction')
+####################################################################################################
+plt.show(block=False)
+
+
