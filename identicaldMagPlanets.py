@@ -617,12 +617,53 @@ plt.show(block=False)
 #################################################################################################################################
 
 
-#### Planet Visual Magnitudes From Mallama 2018
+def d_planet_earth(alpha,a_p):
+    """ Assuming circular orbits for the Earth and a general planet p, the earth-planet distances 
+        is directly calculable from phase angle
+    Args:
+        alpha (float) - phase angle ranging from 0 to pi in radians
+        a_p (float) - planet semi-major axis
+    Returns:
+        d (float) - Earth to planet distance at given phase angle
+    """
+    d = np.sqrt(a_p**2. + a_earth**2. - 2.*a_p*a_earth*np.cos( 180.*np.pi/180. - alpha - np.arcsin(a_p*np.sin(alpha)/a_earth)))
+    return d
+
+def phi_lambert(alpha):
+    """ Lambert phase function as presented in Garrett2016
+    Args:
+        alpha (float) - phase angle
+    Returns:
+        Phi (float) - phase function value between 0 and 1
+    """
+    phi = (np.sin(alpha) + (np.pi-alpha)*np.cos(alpha))/np.pi
+    return phi
+
+def transitionStart(x,a,b):
+    """ Smoothly transition from one 0 to 1
+    """
+    s = 0.5+0.5*np.tanh((x-a)/b)
+    return s
+def transitionEnd(x,a,b):
+    """ Smoothly transition from one 1 to 0
+    Smaller b is sharper step
+    a is midpoint, s(a)=0.5
+    """
+    s = 0.5-0.5*np.tanh((x-a)/b)
+    return s
+
+#### Planet Visual Magnitudes From Mallama 2018 #################################################################################
 #Mercury
 #r distance of planet from sun
 #d distance of planet from Earth
 #V = 5.*np.log10(r*d) - 0.613 + 6.3280e-02*alpha - 1.6336e-03*alpha**2. + 3.3644e-05*alpha**3. - 3.4265e-07*alpha**4. + 1.6893e-09*alpha**5. - 3.0334e-12*alpha**6.
 planProp['mercury'] = {'numV':1,'alpha_mins':[0.],'alpha_maxs':[180.],'V':[5.*np.log10(r*d) - 0.613 + 6.3280e-02*alpha - 1.6336e-03*alpha**2. + 3.3644e-05*alpha**3. - 3.4265e-07*alpha**4. + 1.6893e-09*alpha**5. - 3.0334e-12*alpha**6.]}
+def V_magMercury(alpha,a_p):
+    """ Valid from 0 to 180 deg
+    """
+    V = 5.*np.log10(a_p*d_planet_earth(alpha,a_p)) - 0.613 + 6.3280e-02*alpha - 1.6336e-03*alpha**2. + 3.3644e-05*alpha**3. - 3.4265e-07*alpha**4. + 1.6893e-09*alpha**5. - 3.0334e-12*alpha**6.
+    return V
+
 
 #Venus
 #0<alpha<163.7
@@ -631,10 +672,26 @@ planProp['mercury'] = {'numV':1,'alpha_mins':[0.],'alpha_maxs':[180.],'V':[5.*np
 #V = 5.*np.log10(r*d) + 236.05828 - 2.81914e-00*alpha + 8.39034e-03*alpha**2.
 planProp['venus'] = {'numV':2,'alpha_mins':[0.,163.7],'alpha_maxs':[163.7,179.],'V':[5.*np.log10(r*d) - 4.384 - 1.044e-03*alpha + 3.687e-04*alpha**2. - 2.814e-06*alpha**3. + 8.938e-09*alpha**4.,\
     5.*np.log10(r*d) + 236.05828 - 2.81914e-00*alpha + 8.39034e-03*alpha**2.]}
+def V_magVenus_1(alpha, a_p):
+    """ Valid from 0 to 163.7 deg
+    """
+    V = 5.*np.log10(a_p*d_planet_earth(alpha,a_p)) - 4.384 - 1.044e-03*alpha + 3.687e-04*alpha**2. - 2.814e-06*alpha**3. + 8.938e-09*alpha**4.
+    return V
+def V_magVenus_2(alpha, a_p):
+    """ Valid from 163.7 to 179 deg
+    """
+    V = 5.*np.log10(r*d) + 236.05828 - 2.81914e-00*alpha + 8.39034e-03*alpha**2.
+    return V
+
 
 #Earth
 #V = 5.*np.log10(r*d) - 3.99 - 1.060e-3*alpha + 2.054e-4*alpha**2.
 planProp['earth'] = {'numV':1,'alpha_mins':[0.],'alpha_maxs':[180.],'V':[5.*np.log10(r*d) - 3.99 - 1.060e-3*alpha + 2.054e-4*alpha**2.]}
+def V_magEarth(alpha,a_p):
+    """ Valid from 0 to 180 deg
+    """
+    V = 5.*np.log10(a_p*d_planet_earth(alpha,a_p)) - 3.99 - 1.060e-3*alpha + 2.054e-4*alpha**2.
+    return V
 
 #Mars
 #alpha<=50
@@ -644,7 +701,16 @@ planProp['earth'] = {'numV':1,'alpha_mins':[0.],'alpha_maxs':[180.],'V':[5.*np.l
 #Find L
 planProp['mars'] = {'numV':2,'alpha_mins':[0.,50.],'alpha_maxs':[50.,180.],'V':[5.*np.log10(r*d) - 1.601 + 0.02267*alpha - 0.0001302*alpha**2.+ L(λe) + L(LS),\
     5.*np.log10(r*d) - 0.367 - 0.02573*alpha + 0.0003445*alpha**2. + L(λe) + L(Ls)]}
-
+def V_magMars_1(alpha,a_p):
+    """ Valid from 0 to 50 deg
+    """
+    V = 5.*np.log10(a_p*d_planet_earth(alpha,a_p)) - 1.601 + 0.02267*alpha - 0.0001302*alpha**2.+ L(λe) + L(LS)
+    return V
+def V_magMars_2(alpha,a_p):
+    """ Valid from 50 to 180 deg
+    """
+    V = 5.*np.log10(a_p*d_planet_earth(alpha,a_p)) - 0.367 - 0.02573*alpha + 0.0003445*alpha**2. + 0. + 0. #L(λe) + L(Ls)
+    return V
 
 #Jupiter
 #alpha<12
@@ -657,6 +723,17 @@ planProp['mars'] = {'numV':2,'alpha_mins':[0.,50.],'alpha_maxs':[50.,180.],'V':[
 planProp['jupiter'] = {'numV':2,'alpha_mins':[0.,12.],'alpha_maxs':[12.,130.],'V':[5.*np.log10(r*d) - 9.395 - 3.7e-04*alpha + 6.16e-04*alpha**2.,\
     5.*np.log10(r*d) - 9.428 - 2.5*np.log10(1.0 - 1.507*(alpha/180.) - 0.363*(alpha/180.)**2. - 0.062*(alpha/180.)**3.+ 2.809*(alpha/180.)**4. - 1.876*(alpha/180.)**5.)]}
 
+def V_magJupiter_1(alpha,a_p):
+    """ Valid from 0 to 12 deg
+    """
+    V = 5.*np.log10(a_p*d_planet_earth(alpha,a_p)) - 9.395 - 3.7e-04*alpha + 6.16e-04*alpha**2.
+    return V
+def V_magJupiter_2(alpha,a_p):
+    """ Valid from 12 to 130 deg
+    """
+    V = 5.*np.log10(a_p*d_planet_earth(alpha,a_p)) - 9.428 - 2.5*np.log10(1.0 - 1.507*(alpha/180.) - 0.363*(alpha/180.)**2. - 0.062*(alpha/180.)**3.+ 2.809*(alpha/180.)**4. - 1.876*(alpha/180.)**5.)
+    return V
+
 #Saturn
 V = 5.*np.log10(r*d) - 8.914 - 1.825*np.sin(beta) + 0.026*alpha\
     - 0.378*np.sin(beta)*np.exp(-2.25*alpha)
@@ -666,6 +743,27 @@ V = 5.*np.log10(r*d) - 8.94 + 2.446e-4*alpha
     + 2.672e-4*alpha**2. - 1.505e-6*alpha**3. + 4.767e-9*alpha**4.
 
 #Not enough data to include saturn's rings for alpha>6.5
+def V_magSaturn_1(alpha,a_p,beta):
+    """ Valid alpha from 0 to 6.5 deg
+    Valid beta from 0 to 27
+    Globe and Rings
+    """
+    V = 5.*np.log10(a_p*d_planet_earth(alpha,a_p)) - 8.914-1.825*np.sin(beta) + 0.026*alpha - 0.378*np.sin(beta)*np.exp(-2.25*alpha)
+    return V
+def V_magSaturn_2(alpha,a_p,beta):
+    """ Valid alpha from 0 to 6.5 deg
+    Saturn Globe Only Earth Observations
+    """
+    V = 5.*np.log10(a_p*d_planet_earth(alpha,a_p)) - 8.95 - 3.7e-04*alpha +6.16e-04*alpha**2.
+    return V
+def V_magSaturn_3(alpha,a_p,beta):
+    """ Valid alpha from 6 to 150. deg
+    Saturn Globe Only Pioneer Observations
+    """
+    V = 5.*np.log10(a_p*d_planet_earth(alpha,a_p)) - 8.94 + 2.446e-4*alpha + 2.672e-4*alpha**2. - 1.505e-6*alpha**3. + 4.767e-9*alpha**2.
+    return V    
+
+
 
 
 
@@ -674,10 +772,21 @@ f = 0.0022927 #flattening of the planet
 #phi = #planetocentric latitude
 #Phi ranges from -82 to 82
 phi_prime = np.arctan2(np.tan(phi),(1.-f)**2.) #planetographic latitude
-V = 5log10(rd) − 7.110 − 8.4E-04 ϕ
-′ + 6.587E-3 α
-+ 1.045E-4 α
-2
+V = 5.*np.log10(r*d) - 7.110 - 8.4E-04*phi + 6.587E-3*alpha + 1.045E-4*alpha**2.
+
+def phiprime_phi(phi):
+    """ Valid for phi from -82 to 82 deg
+    Returns:
+        phiprime (float) - in radians
+    """
+    f = 0.0022927
+    phiprime = np.arctan2(np.tan(phi*np.pi/180.),(1.-f)**2.)
+    return phiprime
+def V_magUranus(alpha,a_p,phi):
+    """ Valid for alpha 0 to 154 deg
+    """
+    V = 5.*np.log10(a_p*d_planet_earth(alpha,a_p)) - 7.110 - 8.4e-04*phiprime_phi(phi) + 6.587e-3*alpha + 1.045e-4*alpha**2.
+    return V
 
 #Saturn geometric functions
 """The light reflected by Saturn and Saturn's rings is a combination of geometric functions.
