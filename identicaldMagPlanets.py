@@ -97,7 +97,7 @@ plt.plot(calc_beta(Phis),Phis, color='black',linestyle='--')
 plt.show(block=False)
 
 #### Planet Properties #####################################
-planProp = dict()
+planProp = dict() #all in units of meters
 planProp['mercury'] = {'R':2439.7*1000.,'a':57.91*10.**9.,'p':0.142}
 planProp['venus'] = {'R':6051.8*1000.,'a':108.21*10.**9.,'p':0.689}
 planProp['earth'] = {'R':6371.0*1000.,'a':149.60*10.**9.,'p':0.434}
@@ -615,18 +615,24 @@ plt.ylim([20.,50.])
 plt.legend()
 plt.show(block=False)
 #################################################################################################################################
+plt.close('all')
+
+
 
 
 def d_planet_earth(alpha,a_p):
     """ Assuming circular orbits for the Earth and a general planet p, the earth-planet distances 
         is directly calculable from phase angle
     Args:
-        alpha (float) - phase angle ranging from 0 to pi in radians
-        a_p (float) - planet semi-major axis
+        alpha (float) - phase angle ranging from 0 to pi in deg
+        a_p (float) - planet semi-major axis in AU
     Returns:
-        d (float) - Earth to planet distance at given phase angle
+        d (float) - Earth to planet distance at given phase angle in AU
     """
-    d = np.sqrt(a_p**2. + a_earth**2. - 2.*a_p*a_earth*np.cos( 180.*np.pi/180. - alpha - np.arcsin(a_p*np.sin(alpha)/a_earth)))
+    a_earth = 1. #in AU
+    assert np.all(a_p*np.sin(alpha*np.pi/180.)/a_earth >= -1.), 'arcsin below range'
+    assert np.all(a_p*np.sin(alpha*np.pi/180.)/a_earth <= 1.), 'arcsin above range'
+    d = np.sqrt(a_p**2. + a_earth**2. - 2.*a_p*a_earth*np.cos( 180.*np.pi/180. - alpha*np.pi/180. - np.arcsin(a_p*np.sin(alpha*np.pi/180.)/a_earth)))
     return d
 
 def phi_lambert(alpha):
@@ -657,7 +663,7 @@ def transitionEnd(x,a,b):
 #r distance of planet from sun
 #d distance of planet from Earth
 #V = 5.*np.log10(r*d) - 0.613 + 6.3280e-02*alpha - 1.6336e-03*alpha**2. + 3.3644e-05*alpha**3. - 3.4265e-07*alpha**4. + 1.6893e-09*alpha**5. - 3.0334e-12*alpha**6.
-planProp['mercury'] = {'numV':1,'alpha_mins':[0.],'alpha_maxs':[180.],'V':[5.*np.log10(r*d) - 0.613 + 6.3280e-02*alpha - 1.6336e-03*alpha**2. + 3.3644e-05*alpha**3. - 3.4265e-07*alpha**4. + 1.6893e-09*alpha**5. - 3.0334e-12*alpha**6.]}
+#planProp['mercury'] = {'numV':1,'alpha_mins':[0.],'alpha_maxs':[180.],'V':[5.*np.log10(r*d) - 0.613 + 6.3280e-02*alpha - 1.6336e-03*alpha**2. + 3.3644e-05*alpha**3. - 3.4265e-07*alpha**4. + 1.6893e-09*alpha**5. - 3.0334e-12*alpha**6.]}
 def V_magMercury(alpha,a_p):
     """ Valid from 0 to 180 deg
     """
@@ -670,8 +676,8 @@ def V_magMercury(alpha,a_p):
 #V = 5.*np.log10(r*d) - 4.384 - 1.044e-03*alpha + 3.687e-04*alpha**2. - 2.814e-06*alpha**3. + 8.938e-09*alpha**4.
 #163.7<alpha<179
 #V = 5.*np.log10(r*d) + 236.05828 - 2.81914e-00*alpha + 8.39034e-03*alpha**2.
-planProp['venus'] = {'numV':2,'alpha_mins':[0.,163.7],'alpha_maxs':[163.7,179.],'V':[5.*np.log10(r*d) - 4.384 - 1.044e-03*alpha + 3.687e-04*alpha**2. - 2.814e-06*alpha**3. + 8.938e-09*alpha**4.,\
-    5.*np.log10(r*d) + 236.05828 - 2.81914e-00*alpha + 8.39034e-03*alpha**2.]}
+#planProp['venus'] = {'numV':2,'alpha_mins':[0.,163.7],'alpha_maxs':[163.7,179.],'V':[5.*np.log10(r*d) - 4.384 - 1.044e-03*alpha + 3.687e-04*alpha**2. - 2.814e-06*alpha**3. + 8.938e-09*alpha**4.,\
+#    5.*np.log10(r*d) + 236.05828 - 2.81914e-00*alpha + 8.39034e-03*alpha**2.]}
 def V_magVenus_1(alpha, a_p):
     """ Valid from 0 to 163.7 deg
     """
@@ -680,13 +686,13 @@ def V_magVenus_1(alpha, a_p):
 def V_magVenus_2(alpha, a_p):
     """ Valid from 163.7 to 179 deg
     """
-    V = 5.*np.log10(r*d) + 236.05828 - 2.81914e-00*alpha + 8.39034e-03*alpha**2.
+    V = 5.*np.log10(a_p*d_planet_earth(alpha,a_p)) + 236.05828 - 2.81914e-00*alpha + 8.39034e-03*alpha**2.
     return V
 
 
 #Earth
 #V = 5.*np.log10(r*d) - 3.99 - 1.060e-3*alpha + 2.054e-4*alpha**2.
-planProp['earth'] = {'numV':1,'alpha_mins':[0.],'alpha_maxs':[180.],'V':[5.*np.log10(r*d) - 3.99 - 1.060e-3*alpha + 2.054e-4*alpha**2.]}
+#planProp['earth'] = {'numV':1,'alpha_mins':[0.],'alpha_maxs':[180.],'V':[5.*np.log10(r*d) - 3.99 - 1.060e-3*alpha + 2.054e-4*alpha**2.]}
 def V_magEarth(alpha,a_p):
     """ Valid from 0 to 180 deg
     """
@@ -699,12 +705,12 @@ def V_magEarth(alpha,a_p):
 #alpha > 50 approximated by average dimming magnitudes for mercury and Earth
 #V = 5.*np.log10(r*d) - 0.367 - 0.02573*alpha + 0.0003445*alpha**2. + L(λe) + L(Ls)
 #Find L
-planProp['mars'] = {'numV':2,'alpha_mins':[0.,50.],'alpha_maxs':[50.,180.],'V':[5.*np.log10(r*d) - 1.601 + 0.02267*alpha - 0.0001302*alpha**2.+ L(λe) + L(LS),\
-    5.*np.log10(r*d) - 0.367 - 0.02573*alpha + 0.0003445*alpha**2. + L(λe) + L(Ls)]}
+#planProp['mars'] = {'numV':2,'alpha_mins':[0.,50.],'alpha_maxs':[50.,180.],'V':[5.*np.log10(r*d) - 1.601 + 0.02267*alpha - 0.0001302*alpha**2.+ L(λe) + L(LS),\
+#    5.*np.log10(r*d) - 0.367 - 0.02573*alpha + 0.0003445*alpha**2. + L(λe) + L(Ls)]}
 def V_magMars_1(alpha,a_p):
     """ Valid from 0 to 50 deg
     """
-    V = 5.*np.log10(a_p*d_planet_earth(alpha,a_p)) - 1.601 + 0.02267*alpha - 0.0001302*alpha**2.+ L(λe) + L(LS)
+    V = 5.*np.log10(a_p*d_planet_earth(alpha,a_p)) - 1.601 + 0.02267*alpha - 0.0001302*alpha**2.+ 0. + 0.#L(λe) + L(LS)
     return V
 def V_magMars_2(alpha,a_p):
     """ Valid from 50 to 180 deg
@@ -720,8 +726,8 @@ def V_magMars_2(alpha,a_p):
 #     - 0.363*(alpha/180.)**2. - 0.062*(alpha/180.)**3.\
 #     + 2.809*(alpha/180.)**4. - 1.876*(alpha/180.)**5.)
 #no data beyond 130 deg
-planProp['jupiter'] = {'numV':2,'alpha_mins':[0.,12.],'alpha_maxs':[12.,130.],'V':[5.*np.log10(r*d) - 9.395 - 3.7e-04*alpha + 6.16e-04*alpha**2.,\
-    5.*np.log10(r*d) - 9.428 - 2.5*np.log10(1.0 - 1.507*(alpha/180.) - 0.363*(alpha/180.)**2. - 0.062*(alpha/180.)**3.+ 2.809*(alpha/180.)**4. - 1.876*(alpha/180.)**5.)]}
+#planProp['jupiter'] = {'numV':2,'alpha_mins':[0.,12.],'alpha_maxs':[12.,130.],'V':[5.*np.log10(r*d) - 9.395 - 3.7e-04*alpha + 6.16e-04*alpha**2.,\
+#    5.*np.log10(r*d) - 9.428 - 2.5*np.log10(1.0 - 1.507*(alpha/180.) - 0.363*(alpha/180.)**2. - 0.062*(alpha/180.)**3.+ 2.809*(alpha/180.)**4. - 1.876*(alpha/180.)**5.)]}
 
 def V_magJupiter_1(alpha,a_p):
     """ Valid from 0 to 12 deg
@@ -735,28 +741,29 @@ def V_magJupiter_2(alpha,a_p):
     return V
 
 #Saturn
-V = 5.*np.log10(r*d) - 8.914 - 1.825*np.sin(beta) + 0.026*alpha\
-    - 0.378*np.sin(beta)*np.exp(-2.25*alpha)
+#V = 5.*np.log10(r*d) - 8.914 - 1.825*np.sin(beta) + 0.026*alpha \
+#    - 0.378*np.sin(beta)*np.exp(-2.25*alpha)
 
 #6<alpha<150 this approximates the globe of saturn only, not the rings
-V = 5.*np.log10(r*d) - 8.94 + 2.446e-4*alpha
-    + 2.672e-4*alpha**2. - 1.505e-6*alpha**3. + 4.767e-9*alpha**4.
+#V = 5.*np.log10(r*d) - 8.94 + 2.446e-4*alpha \
+#    + 2.672e-4*alpha**2. - 1.505e-6*alpha**3. + 4.767e-9*alpha**4.
 
 #Not enough data to include saturn's rings for alpha>6.5
 def V_magSaturn_1(alpha,a_p,beta):
     """ Valid alpha from 0 to 6.5 deg
     Valid beta from 0 to 27
     Globe and Rings
+    beta in deg
     """
-    V = 5.*np.log10(a_p*d_planet_earth(alpha,a_p)) - 8.914-1.825*np.sin(beta) + 0.026*alpha - 0.378*np.sin(beta)*np.exp(-2.25*alpha)
+    V = 5.*np.log10(a_p*d_planet_earth(alpha,a_p)) - 8.914-1.825*np.sin(beta*np.pi/180.) + 0.026*alpha - 0.378*np.sin(beta*np.pi/180.)*np.exp(-2.25*alpha)
     return V
-def V_magSaturn_2(alpha,a_p,beta):
+def V_magSaturn_2(alpha,a_p):
     """ Valid alpha from 0 to 6.5 deg
     Saturn Globe Only Earth Observations
     """
     V = 5.*np.log10(a_p*d_planet_earth(alpha,a_p)) - 8.95 - 3.7e-04*alpha +6.16e-04*alpha**2.
     return V
-def V_magSaturn_3(alpha,a_p,beta):
+def V_magSaturn_3(alpha,a_p):
     """ Valid alpha from 6 to 150. deg
     Saturn Globe Only Pioneer Observations
     """
@@ -768,40 +775,109 @@ def V_magSaturn_3(alpha,a_p,beta):
 
 
 #Uranus
-f = 0.0022927 #flattening of the planet
+#f = 0.0022927 #flattening of the planet
 #phi = #planetocentric latitude
 #Phi ranges from -82 to 82
-phi_prime = np.arctan2(np.tan(phi),(1.-f)**2.) #planetographic latitude
-V = 5.*np.log10(r*d) - 7.110 - 8.4E-04*phi + 6.587E-3*alpha + 1.045E-4*alpha**2.
+#phi_prime = np.arctan2(np.tan(phi),(1.-f)**2.) #planetographic latitude
+#V = 5.*np.log10(r*d) - 7.110 - 8.4E-04*phi + 6.587E-3*alpha + 1.045E-4*alpha**2.
 
 def phiprime_phi(phi):
     """ Valid for phi from -82 to 82 deg
     Returns:
-        phiprime (float) - in radians
+        phiprime (float) - in deg
     """
     f = 0.0022927
     phiprime = np.arctan2(np.tan(phi*np.pi/180.),(1.-f)**2.)
     return phiprime
 def V_magUranus(alpha,a_p,phi):
     """ Valid for alpha 0 to 154 deg
+    phi in deg
     """
     V = 5.*np.log10(a_p*d_planet_earth(alpha,a_p)) - 7.110 - 8.4e-04*phiprime_phi(phi) + 6.587e-3*alpha + 1.045e-4*alpha**2.
     return V
+
+
+#Neptune
+def V_magNeptune(alpha,a_p):
+    """ Valid for alpha 0 to 133.14 deg
+    """
+    V = 5.*np.log10(a_p*d_planet_earth(alpha,a_p)) - 7.00 + 7.944e-3*alpha + 9.617e-5*alpha**2.
+    return V
+
+
+alphas_mercury = np.linspace(start=0.,stop=180.,num=np.ceil(180./3.),endpoint=True)
+alphas_venus1 = np.linspace(start=0.,stop=163.7,num=np.ceil(163.7/3.),endpoint=True)
+alphas_venus2 = np.linspace(start=163.7,stop=179.,num=np.ceil((179.-163.7)/3.),endpoint=True)
+alphas_earth = np.linspace(start=0.,stop=180.,num=np.ceil(180./3.),endpoint=True)
+alphas_mars1 = np.linspace(start=0.,stop=50.,num=np.ceil(50./3.),endpoint=True)
+alphas_mars2 = np.linspace(start=50.,stop=180.,num=np.ceil((180.-50.)/3.),endpoint=True)
+alphas_jupiter1 = np.linspace(start=0.,stop=12.,num=np.ceil(12./3.),endpoint=True)
+alphas_jupiter2 = np.linspace(start=12.,stop=130.,num=np.ceil((130.-12.)/3.),endpoint=True)
+alphas_saturn1 = np.linspace(start=0.,stop=6.5,num=np.ceil(6.5/3.),endpoint=True)
+betas_saturn1 = np.linspace(start=0.,stop=27.,num=np.ceil(27./3.),endpoint=True)
+alphas_saturn2 = np.linspace(start=0.,stop=6.5,num=np.ceil(6.5/3.),endpoint=True)
+alphas_saturn3 = np.linspace(start=0.,stop=6.5,num=np.ceil(6.5/3.),endpoint=True)
+alphas_saturn4 = np.linspace(start=6.,stop=150.,num=np.ceil((150.-6.5)/3.),endpoint=True)
+alphas_uranus = np.linspace(start=0.,stop=154.,num=np.ceil(154./3.),endpoint=True)
+phis_uranus = np.linspace(start=-82,stop=82.,num=np.ceil((82+82)/3.),endpoint=True)
+alphas_neptune = np.linspace(start=0.,stop=133.14,num=np.ceil(133.14/3.),endpoint=True)
+V_magsMercury = V_magMercury(alphas_mercury,planProp['mercury']['a']*u.m.to('AU'))
+V_magsVenus_1 = V_magVenus_1(alphas_venus1,planProp['venus']['a']*u.m.to('AU'))
+V_magsVenus_2 = V_magVenus_2(alphas_venus2,planProp['venus']['a']*u.m.to('AU'))
+V_magsEarth = V_magEarth(alphas_earth,planProp['earth']['a']*u.m.to('AU'))
+V_magsMars_1 = V_magMars_1(alphas_mars1,planProp['mars']['a']*u.m.to('AU'))
+V_magsMars_2 = V_magMars_2(alphas_mars2,planProp['mars']['a']*u.m.to('AU'))
+V_magsJupiter_1 = V_magJupiter_1(alphas_jupiter1,planProp['jupiter']['a']*u.m.to('AU'))
+V_magsJupiter_2 = V_magJupiter_2(alphas_jupiter2,planProp['jupiter']['a']*u.m.to('AU'))
+V_magsSaturn_1 = V_magSaturn_1(alphas_saturn1,planProp['saturn']['a']*u.m.to('AU'),beta=0.)
+V_magsSaturn_2 = V_magSaturn_1(alphas_saturn2,planProp['saturn']['a']*u.m.to('AU'),beta=27.)
+V_magsSaturn_3 = V_magSaturn_2(alphas_saturn3,planProp['saturn']['a']*u.m.to('AU'))
+V_magsSaturn_4 = V_magSaturn_3(alphas_saturn4,planProp['saturn']['a']*u.m.to('AU'))
+V_magsUranus_1 = V_magUranus(alphas_uranus,planProp['uranus']['a']*u.m.to('AU'),phi=-82.)
+V_magsUranus_2 = V_magUranus(alphas_uranus,planProp['uranus']['a']*u.m.to('AU'),phi=0.)
+V_magsUranus_3 = V_magUranus(alphas_uranus,planProp['uranus']['a']*u.m.to('AU'),phi=82.)
+V_magsNeptune = V_magNeptune(alphas_neptune,planProp['neptune']['a']*u.m.to('AU'))
+
+#### Plot Raw plane Visual Apparent Magnitudes ######################################################################
+plt.close(1)
+fig1 = plt.figure(num=1)
+plt.plot(alphas_mercury,V_magsMercury,color='gray')
+plt.plot(alphas_venus1,V_magsVenus_1,color='yellow', marker='x')
+plt.plot(alphas_venus2,V_magsVenus_2,color='yellow',linestyle='--')
+plt.plot(alphas_earth,V_magsEarth,color='blue')
+plt.plot(alphas_mars1,V_magsMars_1,color='red', marker='x')
+plt.plot(alphas_mars2,V_magsMars_2,color='red',linestyle='--')
+plt.plot(alphas_jupiter1,V_magsJupiter_1,color='orange', marker='x')
+plt.plot(alphas_jupiter2,V_magsJupiter_2,color='orange', linestyle='--')
+plt.plot(alphas_saturn1,V_magsSaturn_1,color='gold', marker='x')
+plt.plot(alphas_saturn2,V_magsSaturn_2,color='gold',linestyle='--')
+plt.plot(alphas_saturn3,V_magsSaturn_3,color='gold',linestyle='.')
+plt.plot(alphas_saturn4,V_magsSaturn_4,color='gold',linestyle='.-')
+plt.plot(alphas_uranus,V_magsUranus_1,color='blue', marker='x')
+plt.plot(alphas_uranus,V_magsUranus_2,color='blue', linestyle='--')
+plt.plot(alphas_uranus,V_magsUranus_3,color='blue',linestyle='.')
+plt.plot(alphas_neptune,V_magsNeptune,color='cyan')
+plt.show(block=False)
+######################################################################################################################
+
+
+
+
 
 #Saturn geometric functions
 """The light reflected by Saturn and Saturn's rings is a combination of geometric functions.
 The central body is a sphere with, under some viewing angles, some portion of the body obstructed by Saturn's rings.
 The rings are effectively a flat disk with, under some viewing angles, some portion of the rings obstructed by Saturn.
 """
-rings = dict()
-rings['D'] = {'widths':[66000.*1000.,74000.*1000.],'opticalDepth':10e-3,'albedo':}
-rings['C'] = {'widths':[74490.*1000.,91983.*1000.],'opticalDepth':0.1,'albedo':0.2}
-rings['B'] = {'widths':[91983.*1000.,117516.*1000.],'opticalDepth':2.75,'albedo':0.5}
-rings['CassiniDivision'] = {'widths':[117516.*1000.,122053.*1000.],'opticalDepth':0.15,'albedo':0.2}
-rings['A'] = {'widths':[122053.*1000.,136774.*1000.],'opticalDepth':0.5,'albedo':0.5}
-rings['F'] = {'widths':[140200.*1000.,140250.*1000.],'opticalDepth':0.5,'albedo':}
-rings['G'] = {'widths':[166000.*1000.,173000.*1000.],'opticalDepth':10e-6,'albedo':}
-rings['E'] = {'widths':[180000.*1000.,450000.*1000.],'opticalDepth':10e-5,'albedo':}
+# rings = dict()
+# rings['D'] = {'widths':[66000.*1000.,74000.*1000.],'opticalDepth':10e-3,'albedo':}
+# rings['C'] = {'widths':[74490.*1000.,91983.*1000.],'opticalDepth':0.1,'albedo':0.2}
+# rings['B'] = {'widths':[91983.*1000.,117516.*1000.],'opticalDepth':2.75,'albedo':0.5}
+# rings['CassiniDivision'] = {'widths':[117516.*1000.,122053.*1000.],'opticalDepth':0.15,'albedo':0.2}
+# rings['A'] = {'widths':[122053.*1000.,136774.*1000.],'opticalDepth':0.5,'albedo':0.5}
+# rings['F'] = {'widths':[140200.*1000.,140250.*1000.],'opticalDepth':0.5,'albedo':}
+# rings['G'] = {'widths':[166000.*1000.,173000.*1000.],'opticalDepth':10e-6,'albedo':}
+# rings['E'] = {'widths':[180000.*1000.,450000.*1000.],'opticalDepth':10e-5,'albedo':}
 #https://www.aanda.org/articles/aa/pdf/2015/11/aa26673-15.pdf
 #https://iopscience.iop.org/article/10.1086/426050/pdf
 
