@@ -620,19 +620,64 @@ plt.close('all')
 
 
 
-def d_planet_earth(alpha,a_p):
+def d_planet_earth_D(D,a_p):
     """ Assuming circular orbits for the Earth and a general planet p, the earth-planet distances 
         is directly calculable from phase angle
     Args:
-        alpha (float) - phase angle ranging from 0 to pi in deg
+        D (float) - angular position of planet around sun relative to Earth position ranging from 0 to pi in deg
         a_p (float) - planet semi-major axis in AU
     Returns:
         d (float) - Earth to planet distance at given phase angle in AU
     """
     a_earth = 1. #in AU
+    #DELETE if inner > 1.: #Angle is actually complement
+    #DELETE     inner = a_p*np.sin(np.pi - alpha*np.pi/180.)/a_earth
+    #DELETEassert np.all(a_p*np.sin(alpha*np.pi/180.)/a_earth >= -1.), 'arcsin below range'
+    #DELETEassert np.all(a_p*np.sin(alpha*np.pi/180.)/a_earth <= 1.), 'arcsin above range'
+    #DELETE d = np.sqrt(a_p**2. + a_earth**2. - 2.*a_p*a_earth*np.cos( 180.*np.pi/180. - alpha*np.pi/180. - np.arcsin(inner)))
+    d = np.sqrt(a_p**2. + a_earth**2. - 2.*a_p*a_earth*np.cos(D))
+    return d
+
+def alpha_max_fromEarth(a_p):
+    """ Calculate the maximum phase angle for an object 
+    Args:
+        a_p (float) - planet semi-major axis in AU
+    Results:
+        alpha_max (float) - maximum alpha in radians
+    """
+    a_earth = 1. #in AU
+    if a_p > a_earth:
+        alpha_max = np.arcsin(a_earth/a_p)
+    elif a_p < a_earth:
+        alpha_max = np.arctan2(a_earth,a_p)
+    else:
+        print(error)
+    return alpha_max
+
+def d_planet_earth_alpha(D,a_p):
+    """ Assuming circular orbits for the Earth and a general planet p, the earth-planet distances 
+        is directly calculable from phase angle
+    Args:
+        D (float) - angular position of planet around sun relative to Earth position ranging from 0 to pi in deg
+        a_p (float) - planet semi-major axis in AU
+    Returns:
+        d (float) - Earth to planet distance at given phase angle in AU
+    """
+    a_earth = 1. #in AU
+    alpha_crit = np.arcsin(a_earth/a_p)
+    #alpha_crit2 = np.arctan2(a_earth,a_p)
+
+    inds = np.arange(len(alpha))
+    oneEightyInds = np.where(alpha == 180.)[0]
+    zeroInds = np.where(alpha == 0.)[0]
+    inner = a_p*np.sin(alpha*np.pi/180.)/a_earth
+    inner[oneEightyInds] = 0.
+    inner[zeroInds] = 0.
+    # if inner > 1.: #Angle is actually complement
+    #     inner = a_p*np.sin(np.pi - alpha*np.pi/180.)/a_earth
     assert np.all(a_p*np.sin(alpha*np.pi/180.)/a_earth >= -1.), 'arcsin below range'
     assert np.all(a_p*np.sin(alpha*np.pi/180.)/a_earth <= 1.), 'arcsin above range'
-    d = np.sqrt(a_p**2. + a_earth**2. - 2.*a_p*a_earth*np.cos( 180.*np.pi/180. - alpha*np.pi/180. - np.arcsin(a_p*np.sin(alpha*np.pi/180.)/a_earth)))
+    d = np.sqrt(a_p**2. + a_earth**2. - 2.*a_p*a_earth*np.cos( 180.*np.pi/180. - alpha*np.pi/180. - np.arcsin(inner)))
     return d
 
 def phi_lambert(alpha):
@@ -664,10 +709,10 @@ def transitionEnd(x,a,b):
 #d distance of planet from Earth
 #V = 5.*np.log10(r*d) - 0.613 + 6.3280e-02*alpha - 1.6336e-03*alpha**2. + 3.3644e-05*alpha**3. - 3.4265e-07*alpha**4. + 1.6893e-09*alpha**5. - 3.0334e-12*alpha**6.
 #planProp['mercury'] = {'numV':1,'alpha_mins':[0.],'alpha_maxs':[180.],'V':[5.*np.log10(r*d) - 0.613 + 6.3280e-02*alpha - 1.6336e-03*alpha**2. + 3.3644e-05*alpha**3. - 3.4265e-07*alpha**4. + 1.6893e-09*alpha**5. - 3.0334e-12*alpha**6.]}
-def V_magMercury(alpha,a_p):
+def V_magMercury(alpha,a_p,d):
     """ Valid from 0 to 180 deg
     """
-    V = 5.*np.log10(a_p*d_planet_earth(alpha,a_p)) - 0.613 + 6.3280e-02*alpha - 1.6336e-03*alpha**2. + 3.3644e-05*alpha**3. - 3.4265e-07*alpha**4. + 1.6893e-09*alpha**5. - 3.0334e-12*alpha**6.
+    V = 5.*np.log10(a_p*d) - 0.613 + 6.3280e-02*alpha - 1.6336e-03*alpha**2. + 3.3644e-05*alpha**3. - 3.4265e-07*alpha**4. + 1.6893e-09*alpha**5. - 3.0334e-12*alpha**6.
     return V
 
 
@@ -681,22 +726,22 @@ def V_magMercury(alpha,a_p):
 def V_magVenus_1(alpha, a_p):
     """ Valid from 0 to 163.7 deg
     """
-    V = 5.*np.log10(a_p*d_planet_earth(alpha,a_p)) - 4.384 - 1.044e-03*alpha + 3.687e-04*alpha**2. - 2.814e-06*alpha**3. + 8.938e-09*alpha**4.
+    V = 5.*np.log10(a_p*d) - 4.384 - 1.044e-03*alpha + 3.687e-04*alpha**2. - 2.814e-06*alpha**3. + 8.938e-09*alpha**4.
     return V
 def V_magVenus_2(alpha, a_p):
     """ Valid from 163.7 to 179 deg
     """
-    V = 5.*np.log10(a_p*d_planet_earth(alpha,a_p)) + 236.05828 - 2.81914e-00*alpha + 8.39034e-03*alpha**2.
+    V = 5.*np.log10(a_p*d) + 236.05828 - 2.81914e-00*alpha + 8.39034e-03*alpha**2.
     return V
 
 
 #Earth
 #V = 5.*np.log10(r*d) - 3.99 - 1.060e-3*alpha + 2.054e-4*alpha**2.
 #planProp['earth'] = {'numV':1,'alpha_mins':[0.],'alpha_maxs':[180.],'V':[5.*np.log10(r*d) - 3.99 - 1.060e-3*alpha + 2.054e-4*alpha**2.]}
-def V_magEarth(alpha,a_p):
+def V_magEarth(alpha,a_p,d):
     """ Valid from 0 to 180 deg
     """
-    V = 5.*np.log10(a_p*d_planet_earth(alpha,a_p)) - 3.99 - 1.060e-3*alpha + 2.054e-4*alpha**2.
+    V = 5.*np.log10(a_p*d) - 3.99 - 1.060e-3*alpha + 2.054e-4*alpha**2.
     return V
 
 #Mars
@@ -707,15 +752,15 @@ def V_magEarth(alpha,a_p):
 #Find L
 #planProp['mars'] = {'numV':2,'alpha_mins':[0.,50.],'alpha_maxs':[50.,180.],'V':[5.*np.log10(r*d) - 1.601 + 0.02267*alpha - 0.0001302*alpha**2.+ L(λe) + L(LS),\
 #    5.*np.log10(r*d) - 0.367 - 0.02573*alpha + 0.0003445*alpha**2. + L(λe) + L(Ls)]}
-def V_magMars_1(alpha,a_p):
+def V_magMars_1(alpha,a_p,d):
     """ Valid from 0 to 50 deg
     """
-    V = 5.*np.log10(a_p*d_planet_earth(alpha,a_p)) - 1.601 + 0.02267*alpha - 0.0001302*alpha**2.+ 0. + 0.#L(λe) + L(LS)
+    V = 5.*np.log10(a_p*d) - 1.601 + 0.02267*alpha - 0.0001302*alpha**2.+ 0. + 0.#L(λe) + L(LS)
     return V
-def V_magMars_2(alpha,a_p):
+def V_magMars_2(alpha,a_p,d):
     """ Valid from 50 to 180 deg
     """
-    V = 5.*np.log10(a_p*d_planet_earth(alpha,a_p)) - 0.367 - 0.02573*alpha + 0.0003445*alpha**2. + 0. + 0. #L(λe) + L(Ls)
+    V = 5.*np.log10(a_p*d) - 0.367 - 0.02573*alpha + 0.0003445*alpha**2. + 0. + 0. #L(λe) + L(Ls)
     return V
 
 #Jupiter
@@ -729,15 +774,15 @@ def V_magMars_2(alpha,a_p):
 #planProp['jupiter'] = {'numV':2,'alpha_mins':[0.,12.],'alpha_maxs':[12.,130.],'V':[5.*np.log10(r*d) - 9.395 - 3.7e-04*alpha + 6.16e-04*alpha**2.,\
 #    5.*np.log10(r*d) - 9.428 - 2.5*np.log10(1.0 - 1.507*(alpha/180.) - 0.363*(alpha/180.)**2. - 0.062*(alpha/180.)**3.+ 2.809*(alpha/180.)**4. - 1.876*(alpha/180.)**5.)]}
 
-def V_magJupiter_1(alpha,a_p):
+def V_magJupiter_1(alpha,a_p,d):
     """ Valid from 0 to 12 deg
     """
-    V = 5.*np.log10(a_p*d_planet_earth(alpha,a_p)) - 9.395 - 3.7e-04*alpha + 6.16e-04*alpha**2.
+    V = 5.*np.log10(a_p*d) - 9.395 - 3.7e-04*alpha + 6.16e-04*alpha**2.
     return V
-def V_magJupiter_2(alpha,a_p):
+def V_magJupiter_2(alpha,a_p,d):
     """ Valid from 12 to 130 deg
     """
-    V = 5.*np.log10(a_p*d_planet_earth(alpha,a_p)) - 9.428 - 2.5*np.log10(1.0 - 1.507*(alpha/180.) - 0.363*(alpha/180.)**2. - 0.062*(alpha/180.)**3.+ 2.809*(alpha/180.)**4. - 1.876*(alpha/180.)**5.)
+    V = 5.*np.log10(a_p*d) - 9.428 - 2.5*np.log10(1.0 - 1.507*(alpha/180.) - 0.363*(alpha/180.)**2. - 0.062*(alpha/180.)**3.+ 2.809*(alpha/180.)**4. - 1.876*(alpha/180.)**5.)
     return V
 
 #Saturn
@@ -749,25 +794,25 @@ def V_magJupiter_2(alpha,a_p):
 #    + 2.672e-4*alpha**2. - 1.505e-6*alpha**3. + 4.767e-9*alpha**4.
 
 #Not enough data to include saturn's rings for alpha>6.5
-def V_magSaturn_1(alpha,a_p,beta):
+def V_magSaturn_1(alpha,a_p,d,beta):
     """ Valid alpha from 0 to 6.5 deg
     Valid beta from 0 to 27
     Globe and Rings
     beta in deg
     """
-    V = 5.*np.log10(a_p*d_planet_earth(alpha,a_p)) - 8.914-1.825*np.sin(beta*np.pi/180.) + 0.026*alpha - 0.378*np.sin(beta*np.pi/180.)*np.exp(-2.25*alpha)
+    V = 5.*np.log10(a_p*d) - 8.914-1.825*np.sin(beta*np.pi/180.) + 0.026*alpha - 0.378*np.sin(beta*np.pi/180.)*np.exp(-2.25*alpha)
     return V
-def V_magSaturn_2(alpha,a_p):
+def V_magSaturn_2(alpha,a_p,d):
     """ Valid alpha from 0 to 6.5 deg
     Saturn Globe Only Earth Observations
     """
-    V = 5.*np.log10(a_p*d_planet_earth(alpha,a_p)) - 8.95 - 3.7e-04*alpha +6.16e-04*alpha**2.
+    V = 5.*np.log10(a_p*d) - 8.95 - 3.7e-04*alpha +6.16e-04*alpha**2.
     return V
-def V_magSaturn_3(alpha,a_p):
+def V_magSaturn_3(alpha,a_p,d):
     """ Valid alpha from 6 to 150. deg
     Saturn Globe Only Pioneer Observations
     """
-    V = 5.*np.log10(a_p*d_planet_earth(alpha,a_p)) - 8.94 + 2.446e-4*alpha + 2.672e-4*alpha**2. - 1.505e-6*alpha**3. + 4.767e-9*alpha**2.
+    V = 5.*np.log10(a_p*d) - 8.94 + 2.446e-4*alpha + 2.672e-4*alpha**2. - 1.505e-6*alpha**3. + 4.767e-9*alpha**2.
     return V    
 
 
@@ -789,22 +834,41 @@ def phiprime_phi(phi):
     f = 0.0022927
     phiprime = np.arctan2(np.tan(phi*np.pi/180.),(1.-f)**2.)
     return phiprime
-def V_magUranus(alpha,a_p,phi):
+def V_magUranus(alpha,a_p,d,phi):
     """ Valid for alpha 0 to 154 deg
     phi in deg
     """
-    V = 5.*np.log10(a_p*d_planet_earth(alpha,a_p)) - 7.110 - 8.4e-04*phiprime_phi(phi) + 6.587e-3*alpha + 1.045e-4*alpha**2.
+    V = 5.*np.log10(a_p*d) - 7.110 - 8.4e-04*phiprime_phi(phi) + 6.587e-3*alpha + 1.045e-4*alpha**2.
     return V
 
 
 #Neptune
-def V_magNeptune(alpha,a_p):
+def V_magNeptune(alpha,a_p,d):
     """ Valid for alpha 0 to 133.14 deg
     """
-    V = 5.*np.log10(a_p*d_planet_earth(alpha,a_p)) - 7.00 + 7.944e-3*alpha + 9.617e-5*alpha**2.
+    V = 5.*np.log10(a_p*d) - 7.00 + 7.944e-3*alpha + 9.617e-5*alpha**2.
     return V
 
+#### Possible From Earth Alphas Range
+alpha_max_mercury = alpha_max_fromEarth(planProp['mercury']['a']*u.m.to('AU'))
+alphasmax_mercury = np.linspace(start=0.,stop=alpha_max_mercury,num=np.ceil(180./3.),endpoint=True)
+alpha_max_venus = alpha_max_fromEarth(planProp['venus']['a']*u.m.to('AU'))
+alphasmax_venus = np.linspace(start=0.,stop=alpha_max_venus,num=np.ceil(163.7/3.),endpoint=True)
+alpha_max_earth = alpha_max_fromEarth(planProp['earth']['a']*u.m.to('AU'))
+alphasmax_earth = np.linspace(start=0.,stop=alpha_max_earth,num=np.ceil(180./3.),endpoint=True)
+alpha_max_mars = alpha_max_fromEarth(planProp['mars']['a']*u.m.to('AU'))
+alphasmax_mars = np.linspace(start=0.,stop=alpha_max_mars,num=np.ceil(50./3.),endpoint=True)
+alpha_max_jupiter = alpha_max_fromEarth(planProp['jupiter']['a']*u.m.to('AU'))
+alphasmax_jupiter = np.linspace(start=0.,stop=alpha_max_jupiter,num=np.ceil(12./3.),endpoint=True)
+alpha_max_saturn = alpha_max_fromEarth(planProp['saturn']['a']*u.m.to('AU'))
+alphasmax_saturn = np.linspace(start=0.,stop=alpha_max_saturn,num=np.ceil(6.5/3.),endpoint=True)
+alpha_max_uranus = alpha_max_fromEarth(planProp['uranus']['a']*u.m.to('AU'))
+alphasmax_uranus = np.linspace(start=0.,stop=alpha_max_uranus,num=np.ceil(154./3.),endpoint=True)
+alpha_max_neptune = alpha_max_fromEarth(planProp['neptune']['a']*u.m.to('AU'))
+alphasmax_neptune = np.linspace(start=0.,stop=alpha_max_neptune,num=np.ceil(133.14/3.),endpoint=True)
 
+
+#### Full Range of Vmag equations in Mallama
 alphas_mercury = np.linspace(start=0.,stop=180.,num=np.ceil(180./3.),endpoint=True)
 alphas_venus1 = np.linspace(start=0.,stop=163.7,num=np.ceil(163.7/3.),endpoint=True)
 alphas_venus2 = np.linspace(start=163.7,stop=179.,num=np.ceil((179.-163.7)/3.),endpoint=True)
