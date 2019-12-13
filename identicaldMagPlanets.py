@@ -45,7 +45,6 @@ def phiD(dMag, Rp_max, p, s):
     print(saltyburrito)
     return phi, d
 
-
 def calc_Phi(beta):
     """Calculate the phase function. Prototype method uses the Lambert phase 
     function from Sobolev 1975.
@@ -630,11 +629,6 @@ def d_planet_earth_D(D,a_p):
         d (float) - Earth to planet distance at given phase angle in AU
     """
     a_earth = 1. #in AU
-    #DELETE if inner > 1.: #Angle is actually complement
-    #DELETE     inner = a_p*np.sin(np.pi - alpha*np.pi/180.)/a_earth
-    #DELETEassert np.all(a_p*np.sin(alpha*np.pi/180.)/a_earth >= -1.), 'arcsin below range'
-    #DELETEassert np.all(a_p*np.sin(alpha*np.pi/180.)/a_earth <= 1.), 'arcsin above range'
-    #DELETE d = np.sqrt(a_p**2. + a_earth**2. - 2.*a_p*a_earth*np.cos( 180.*np.pi/180. - alpha*np.pi/180. - np.arcsin(inner)))
     d = np.sqrt(a_p**2. + a_earth**2. - 2.*a_p*a_earth*np.cos(D))
     return d
 
@@ -654,17 +648,17 @@ def alpha_max_fromEarth(a_p):
         print(error)
     return alpha_max
 
-def d_planet_earth_alpha(D,a_p):
+def d_planet_earth_alpha(alpha,a_p):
     """ Assuming circular orbits for the Earth and a general planet p, the earth-planet distances 
         is directly calculable from phase angle
     Args:
-        D (float) - angular position of planet around sun relative to Earth position ranging from 0 to pi in deg
+        alpha (float) - angle formed between sun-planet and planet-Earth vectors ranging from 0 to pi in deg
         a_p (float) - planet semi-major axis in AU
     Returns:
         d (float) - Earth to planet distance at given phase angle in AU
     """
     a_earth = 1. #in AU
-    alpha_crit = np.arcsin(a_earth/a_p)
+    #alpha_crit = np.arcsin(a_earth/a_p)
     #alpha_crit2 = np.arctan2(a_earth,a_p)
 
     inds = np.arange(len(alpha))
@@ -715,7 +709,6 @@ def V_magMercury(alpha,a_p,d):
     V = 5.*np.log10(a_p*d) - 0.613 + 6.3280e-02*alpha - 1.6336e-03*alpha**2. + 3.3644e-05*alpha**3. - 3.4265e-07*alpha**4. + 1.6893e-09*alpha**5. - 3.0334e-12*alpha**6.
     return V
 
-
 #Venus
 #0<alpha<163.7
 #V = 5.*np.log10(r*d) - 4.384 - 1.044e-03*alpha + 3.687e-04*alpha**2. - 2.814e-06*alpha**3. + 8.938e-09*alpha**4.
@@ -723,12 +716,12 @@ def V_magMercury(alpha,a_p,d):
 #V = 5.*np.log10(r*d) + 236.05828 - 2.81914e-00*alpha + 8.39034e-03*alpha**2.
 #planProp['venus'] = {'numV':2,'alpha_mins':[0.,163.7],'alpha_maxs':[163.7,179.],'V':[5.*np.log10(r*d) - 4.384 - 1.044e-03*alpha + 3.687e-04*alpha**2. - 2.814e-06*alpha**3. + 8.938e-09*alpha**4.,\
 #    5.*np.log10(r*d) + 236.05828 - 2.81914e-00*alpha + 8.39034e-03*alpha**2.]}
-def V_magVenus_1(alpha, a_p):
+def V_magVenus_1(alpha, a_p, d):
     """ Valid from 0 to 163.7 deg
     """
     V = 5.*np.log10(a_p*d) - 4.384 - 1.044e-03*alpha + 3.687e-04*alpha**2. - 2.814e-06*alpha**3. + 8.938e-09*alpha**4.
     return V
-def V_magVenus_2(alpha, a_p):
+def V_magVenus_2(alpha, a_p, d):
     """ Valid from 163.7 to 179 deg
     """
     V = 5.*np.log10(a_p*d) + 236.05828 - 2.81914e-00*alpha + 8.39034e-03*alpha**2.
@@ -815,24 +808,19 @@ def V_magSaturn_3(alpha,a_p,d):
     V = 5.*np.log10(a_p*d) - 8.94 + 2.446e-4*alpha + 2.672e-4*alpha**2. - 1.505e-6*alpha**3. + 4.767e-9*alpha**2.
     return V    
 
-
-
-
-
 #Uranus
 #f = 0.0022927 #flattening of the planet
 #phi = #planetocentric latitude
 #Phi ranges from -82 to 82
 #phi_prime = np.arctan2(np.tan(phi),(1.-f)**2.) #planetographic latitude
 #V = 5.*np.log10(r*d) - 7.110 - 8.4E-04*phi + 6.587E-3*alpha + 1.045E-4*alpha**2.
-
 def phiprime_phi(phi):
     """ Valid for phi from -82 to 82 deg
     Returns:
         phiprime (float) - in deg
     """
     f = 0.0022927
-    phiprime = np.arctan2(np.tan(phi*np.pi/180.),(1.-f)**2.)
+    phiprime = np.arctan2(np.tan(phi*np.pi/180.),(1.-f)**2.)*180./np.pi
     return phiprime
 def V_magUranus(alpha,a_p,d,phi):
     """ Valid for alpha 0 to 154 deg
@@ -840,7 +828,6 @@ def V_magUranus(alpha,a_p,d,phi):
     """
     V = 5.*np.log10(a_p*d) - 7.110 - 8.4e-04*phiprime_phi(phi) + 6.587e-3*alpha + 1.045e-4*alpha**2.
     return V
-
 
 #Neptune
 def V_magNeptune(alpha,a_p,d):
@@ -851,21 +838,46 @@ def V_magNeptune(alpha,a_p,d):
 
 #### Possible From Earth Alphas Range
 alpha_max_mercury = alpha_max_fromEarth(planProp['mercury']['a']*u.m.to('AU'))
-alphasmax_mercury = np.linspace(start=0.,stop=alpha_max_mercury,num=np.ceil(180./3.),endpoint=True)
+alphasmax_mercury = np.linspace(start=0.,stop=alpha_max_mercury*180./np.pi,num=100.,endpoint=True)
 alpha_max_venus = alpha_max_fromEarth(planProp['venus']['a']*u.m.to('AU'))
-alphasmax_venus = np.linspace(start=0.,stop=alpha_max_venus,num=np.ceil(163.7/3.),endpoint=True)
+alphasmax_venus = np.linspace(start=0.,stop=alpha_max_venus*180./np.pi,num=100.,endpoint=True)
 alpha_max_earth = alpha_max_fromEarth(planProp['earth']['a']*u.m.to('AU'))
-alphasmax_earth = np.linspace(start=0.,stop=alpha_max_earth,num=np.ceil(180./3.),endpoint=True)
+alphasmax_earth = np.linspace(start=0.,stop=alpha_max_earth*180./np.pi,num=100.,endpoint=True)
 alpha_max_mars = alpha_max_fromEarth(planProp['mars']['a']*u.m.to('AU'))
-alphasmax_mars = np.linspace(start=0.,stop=alpha_max_mars,num=np.ceil(50./3.),endpoint=True)
+alphasmax_mars = np.linspace(start=0.,stop=alpha_max_mars*180./np.pi,num=100.,endpoint=True)
 alpha_max_jupiter = alpha_max_fromEarth(planProp['jupiter']['a']*u.m.to('AU'))
-alphasmax_jupiter = np.linspace(start=0.,stop=alpha_max_jupiter,num=np.ceil(12./3.),endpoint=True)
+alphasmax_jupiter = np.linspace(start=0.,stop=alpha_max_jupiter*180./np.pi,num=100.,endpoint=True)
 alpha_max_saturn = alpha_max_fromEarth(planProp['saturn']['a']*u.m.to('AU'))
-alphasmax_saturn = np.linspace(start=0.,stop=alpha_max_saturn,num=np.ceil(6.5/3.),endpoint=True)
+alphasmax_saturn = np.linspace(start=0.,stop=alpha_max_saturn*180./np.pi,num=100.,endpoint=True)
 alpha_max_uranus = alpha_max_fromEarth(planProp['uranus']['a']*u.m.to('AU'))
-alphasmax_uranus = np.linspace(start=0.,stop=alpha_max_uranus,num=np.ceil(154./3.),endpoint=True)
+alphasmax_uranus = np.linspace(start=0.,stop=alpha_max_uranus*180./np.pi,num=100.,endpoint=True)
 alpha_max_neptune = alpha_max_fromEarth(planProp['neptune']['a']*u.m.to('AU'))
-alphasmax_neptune = np.linspace(start=0.,stop=alpha_max_neptune,num=np.ceil(133.14/3.),endpoint=True)
+alphasmax_neptune = np.linspace(start=0.,stop=alpha_max_neptune*180./np.pi,num=100.,endpoint=True)
+V_magsMercury_Earth = V_magMercury(alphasmax_mercury,planProp['mercury']['a']*u.m.to('AU'),d_planet_earth_alpha(alphasmax_mercury,planProp['mercury']['a']*u.m.to('AU')))
+V_magsVenus_Earth = V_magVenus_1(alphasmax_venus,planProp['venus']['a']*u.m.to('AU'),d_planet_earth_alpha(alphasmax_venus,planProp['venus']['a']*u.m.to('AU')))
+V_magsEarth_Earth = V_magEarth(alphasmax_earth,planProp['earth']['a']*u.m.to('AU'),d_planet_earth_alpha(alphasmax_earth,planProp['earth']['a']*u.m.to('AU')))
+V_magsMars_Earth = V_magMars_1(alphasmax_mars,planProp['mars']['a']*u.m.to('AU'),d_planet_earth_alpha(alphasmax_mars,planProp['mars']['a']*u.m.to('AU')))
+V_magsJupiter_Earth = V_magJupiter_1(alphasmax_jupiter,planProp['jupiter']['a']*u.m.to('AU'),d_planet_earth_alpha(alphasmax_jupiter,planProp['jupiter']['a']*u.m.to('AU')))
+V_magsSaturn_Earth = V_magSaturn_1(alphasmax_saturn,planProp['saturn']['a']*u.m.to('AU'),d_planet_earth_alpha(alphasmax_saturn,planProp['saturn']['a']*u.m.to('AU')),beta=0.)
+V_magsUranus_Earth = V_magUranus(alphasmax_uranus,planProp['uranus']['a']*u.m.to('AU'),d_planet_earth_alpha(alphasmax_uranus,planProp['uranus']['a']*u.m.to('AU')),phi=-82.)
+V_magsNeptune_Earth = V_magNeptune(alphasmax_neptune,planProp['neptune']['a']*u.m.to('AU'),d_planet_earth_alpha(alphasmax_neptune,planProp['neptune']['a']*u.m.to('AU')))
+
+plt.close(10)
+fig10 = plt.figure(num=10)
+plt.plot(alphasmax_mercury,V_magsMercury_Earth,color='gray',label='mercury')
+plt.plot(alphasmax_venus,V_magsVenus_Earth,color='yellow',label='venus')
+plt.plot(alphasmax_earth,V_magsEarth_Earth,color='blue',label='earth')
+plt.plot(alphasmax_mars,V_magsMars_Earth,color='red',label='mars')
+plt.plot(alphasmax_jupiter,V_magsJupiter_Earth,color='orange',label='jupiter')
+plt.plot(alphasmax_saturn,V_magsSaturn_Earth,color='gold',label='saturn')
+plt.plot(alphasmax_uranus,V_magsUranus_Earth,color='blue',label='uranus',linestyle='--')
+plt.plot(alphasmax_neptune,V_magsNeptune_Earth,color='cyan',label='neptune')
+plt.xlim([0.,90.])
+plt.ylim([-10.,10.])
+plt.ylabel('Visual Apparent Magnitude', weight='bold')
+plt.xlabel('Phase Angle in deg', weight='bold')
+plt.legend()
+plt.show(block=False)
 
 
 #### Full Range of Vmag equations in Mallama
