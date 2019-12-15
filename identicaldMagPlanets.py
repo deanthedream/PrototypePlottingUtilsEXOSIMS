@@ -619,6 +619,32 @@ plt.close('all')
 
 
 
+def calc_Vmag(solarFlux, bulk_albedo, r_sun_sc, nhat, A_aperture, r_gs_sc, vegaFlux):
+    """ The fully parameterized equation for visual magnitude
+    Args:
+        solarFlux (float) - solar flux in W/m^2
+        bulk_albedo (float) - Bulk Albedo of spacecraft surface
+        r_sun_sc (numpy array) - 3 component vector of sun from spacecraft
+        nhat (numpy array) - 3 component unit vector describing spacecraft surface normal
+        A_aperture (float) - Area of telescope aperture in m^2
+        r_gs_sc (numpy array) - 3 component vector of ground station w.r.t SC
+        vegaFlux (float) - Flux From Vega in W/m^2
+    """
+    numerator = solarFlux*(1.-bulk_albedo)*\
+        (no.dot(r_sun_sc,nhat)/np.linalg.norm(r_sun_sc))*\
+        (A_aperture/np.linalg.norm(r_gs_sc)**3.)*\
+        (np.dot(r_gs_sc,nhat))
+    denominator = 2.*np.pi*vegaFlux
+    Vmag = -2.5*np.log10(numerator/denominator)
+    return Vmag
+
+def calc_elongation_alpha_ap(alpha,a_p):
+    """ Calculates elongation given phase angle and planet semi-major axis
+    https://en.wikipedia.org/wiki/Elongation_(astronomy)
+    """
+    return elongation
+
+
 def d_planet_earth_D(D,a_p):
     """ Assuming circular orbits for the Earth and a general planet p, the earth-planet distances 
         is directly calculable from phase angle
@@ -642,10 +668,8 @@ def alpha_max_fromEarth(a_p):
     a_earth = 1. #in AU
     if a_p > a_earth:
         alpha_max = np.arcsin(a_earth/a_p)
-    elif a_p < a_earth:
-        alpha_max = np.arctan2(a_earth,a_p)
-    else:
-        print(error)
+    else: #if a_p < a_earth:
+        alpha_max = np.pi #DELETEnp.arctan2(a_earth,a_p)
     return alpha_max
 
 def d_planet_earth_alpha(alpha,a_p):
@@ -661,6 +685,14 @@ def d_planet_earth_alpha(alpha,a_p):
     #alpha_crit = np.arcsin(a_earth/a_p)
     #alpha_crit2 = np.arctan2(a_earth,a_p)
 
+    alpha_max = alpha_max_fromEarth(a_p)*np.pi/180. #in deg
+    assert np.all(alpha < alpha_max), "an alpha is above the maximum possible alpha"
+
+    if a_p > a_earth:
+        #There are two distances satisfying this solution
+    else:
+
+
     inds = np.arange(len(alpha))
     oneEightyInds = np.where(alpha == 180.)[0]
     zeroInds = np.where(alpha == 0.)[0]
@@ -673,6 +705,36 @@ def d_planet_earth_alpha(alpha,a_p):
     assert np.all(a_p*np.sin(alpha*np.pi/180.)/a_earth <= 1.), 'arcsin above range'
     d = np.sqrt(a_p**2. + a_earth**2. - 2.*a_p*a_earth*np.cos( 180.*np.pi/180. - alpha*np.pi/180. - np.arcsin(inner)))
     return d
+
+def elongation_max(a_p):
+    """
+    Return:
+        elongation (float) - maximum elongation in radians
+    """
+    a_earth = 1. #AU
+    if a_p > a_earth:
+        elongation = np.pi
+    else:
+        elongation = np.arctan2(a_p,a_earth)
+
+    return elongation
+
+def d_D_test():
+    return d
+
+def d_alpha_test(alpha,a_p):
+    a_earth = 1.
+    d = np.sqrt(a_p**2. + a_earth**2. + 2.*a_p*a_earth*(np.cos(alpha)*np.sqrt(1.-a_p**2./a_earth**2.*np.sin(alpha)**2.) - a_p/a_earth*np.sin(alpha)**2.))
+    return d
+
+alpha = np.linspace(start=0., stop=alpha_max_fromEarth(1.5),num=30)
+d = d_alpha_test(alpha,1.5)
+
+plt.close(999)
+plt.figure(num=999)
+plt.plot(1.+d*np.cos(alpha),d*np.sin(alpha))
+plt.show(block=False)
+
 
 def phi_lambert(alpha):
     """ Lambert phase function as presented in Garrett2016
