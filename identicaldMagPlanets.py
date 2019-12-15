@@ -617,6 +617,50 @@ plt.show(block=False)
 plt.close('all')
 
 
+def alpha_ap_D(D,a_p):
+    """ Given some Angle between r_earth/sun and r_planet/sun
+    Args:
+        D (float) - angle between r_earth/sun and r_planet/sun from 0 to 180 deg
+        a_p (float) - 
+    Return:
+    """
+    a_earth = 1. #AU
+    x_p = a_p*np.cos(D)
+    y_p = a_p*np.sin(D)
+    alpha = np.zeros(len(D))
+
+    #ang2 extends beyone a_earth
+    x_p_GT_a_earth_Inds = np.where(x_p > a_earth)[0]
+    #if x_p > a_earth:
+    ang1 = np.arctan2(x_p[x_p_GT_a_earth_Inds], y_p[x_p_GT_a_earth_Inds])
+    ang2 = np.arctan2(np.abs(x_p[x_p_GT_a_earth_Inds]-a_earth),y_p[x_p_GT_a_earth_Inds]) #from a_earth and a_p aligned up to p directly above.
+    alpha[x_p_GT_a_earth_Inds] = ang1 - ang2
+    #elif x_p < a_earth and x_p > 0.:
+    x_p_GTa_earth_GT0_Inds = np.where((x_p < a_earth)*(x_p > 0.))[0]
+    ang1 = np.arctan2(x_p[x_p_GTa_earth_GT0_Inds], y_p[x_p_GTa_earth_GT0_Inds])
+    ang2 = np.arctan2(a_earth - x_p[x_p_GTa_earth_GT0_Inds],y_p[x_p_GTa_earth_GT0_Inds])
+    alpha[x_p_GTa_earth_GT0_Inds] = ang1 + ang2
+    #else: #x_p < 0
+    x_p_LT0_Inds = np.where(x_p < 0.)[0]
+    ang1 = np.arctan2(np.abs(x_p[x_p_LT0_Inds]) + a_earth, y_p[x_p_LT0_Inds])
+    ang2 = np.arctan2(np.abs(x_p[x_p_LT0_Inds]), y_p[x_p_LT0_Inds])
+    alpha[x_p_LT0_Inds] = ang1 - ang2
+    return alpha
+
+Ds = np.linspace(start=0.,stop=np.pi,num=100)
+alphas1 = alpha_ap_D(Ds,0.7)
+alphas2 = alpha_ap_D(Ds,1.5)
+plt.close(99)
+plt.figure(num=99)
+plt.plot(1.5*np.cos(Ds),1.5*np.sin(Ds),color='blue')
+plt.show(block=False)
+plt.close(199)
+plt.figure(num=199)
+plt.plot(Ds,alphas1,color='red')
+plt.plot(Ds,alphas2,color='green')
+plt.xlabel('Ds',weight='bold')
+plt.ylabel('alphas',weight='bold')
+plt.show(block=False)
 
 
 def d_planet_earth_D(D,a_p):
