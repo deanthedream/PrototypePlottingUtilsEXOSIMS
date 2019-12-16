@@ -617,12 +617,13 @@ plt.show(block=False)
 plt.close('all')
 
 
-def alpha_ap_D(D,a_p):
+def alpha_ap_D(D,a_p): #OK
     """ Given some Angle between r_earth/sun and r_planet/sun
     Args:
         D (float) - angle between r_earth/sun and r_planet/sun from 0 to 180 deg
-        a_p (float) - 
+        a_p (float) - planet star semi-major axis
     Return:
+        alpha (float) - phase angle
     """
     a_earth = 1. #AU
     x_p = a_p*np.cos(D)
@@ -647,9 +648,49 @@ def alpha_ap_D(D,a_p):
     alpha[x_p_LT0_Inds] = ang1 - ang2
     return alpha
 
+def d_ap_D(D,a_p): #OK
+    """ Calculate planet-Earth distance d given D
+    D is the angle between r_k/star and r_earth/star
+    """
+    a_earth = 1. #AU
+    d = np.sqrt(a_p**2. + a_earth**2. - 2.*a_p*a_earth*np.cos(D))
+    return d
+
+def alpha_crit_fromEarth(a_p): #OK
+    """ Calculate the maximum phase angle for an object 
+    Args:
+        a_p (float) - planet semi-major axis in AU
+    Results:
+        alpha_max (float) - maximum alpha in radians
+    """
+    a_earth = 1. #in AU
+    if a_p > a_earth:
+        alpha_max = np.arcsin(a_earth/a_p) #occurs at quadrature
+    else: #if a_p < a_earth:
+        alpha_max = np.pi #DELETEnp.arctan2(a_earth,a_p)
+    return alpha_max
+
+def D_alphacrit(a_p): #OK
+    """ This assumes alpha_crit occurs when planet is at quadrature (same x location but different y)
+    Returns:
+        Dcrit (float) - the D angle where theta crit occurs in radians
+    """
+    Dcrit = np.pi - np.pi/2. - alpha_crit_fromEarth(a_p)
+    return Dcrit
+
+def d_crit_ap(a_p): #OK
+    """ We know this because at quadrature, alpha is at its maximum
+    Additionally, we assume this maximum occurs when the planets for a right triangle
+    """
+    a_earth = 1 #AU
+    dcrit = np.sqrt(a_p**2. - a_earth**2.)
+    return dcrit
+
 Ds = np.linspace(start=0.,stop=np.pi,num=100)
 alphas1 = alpha_ap_D(Ds,0.7)
 alphas2 = alpha_ap_D(Ds,1.5)
+ds1 = d_ap_D(Ds,0.7)
+ds2 = d_ap_D(Ds,1.5)
 plt.close(99)
 plt.figure(num=99)
 plt.plot(1.5*np.cos(Ds),1.5*np.sin(Ds),color='blue')
@@ -660,6 +701,13 @@ plt.plot(Ds,alphas1,color='red')
 plt.plot(Ds,alphas2,color='green')
 plt.xlabel('Ds',weight='bold')
 plt.ylabel('alphas',weight='bold')
+plt.show(block=False)
+plt.close(299)
+plt.figure(num=299)
+plt.plot(Ds,ds1,color='red')
+plt.plot(Ds,ds2,color='green')
+plt.xlabel('Ds',weight='bold')
+plt.ylabel('ds',weight='bold')
 plt.show(block=False)
 
 
@@ -682,11 +730,11 @@ def calc_Vmag(solarFlux, bulk_albedo, r_sun_sc, nhat, A_aperture, r_gs_sc, vegaF
     Vmag = -2.5*np.log10(numerator/denominator)
     return Vmag
 
-def calc_elongation_alpha_ap(alpha,a_p):
-    """ Calculates elongation given phase angle and planet semi-major axis
-    https://en.wikipedia.org/wiki/Elongation_(astronomy)
-    """
-    return elongation
+# def calc_elongation_alpha_ap(alpha,a_p):
+#     """ Calculates elongation given phase angle and planet semi-major axis
+#     https://en.wikipedia.org/wiki/Elongation_(astronomy)
+#     """
+#     return elongation
 
 
 def d_planet_earth_D(D,a_p):
@@ -702,53 +750,39 @@ def d_planet_earth_D(D,a_p):
     d = np.sqrt(a_p**2. + a_earth**2. - 2.*a_p*a_earth*np.cos(D))
     return d
 
-def alpha_max_fromEarth(a_p):
-    """ Calculate the maximum phase angle for an object 
-    Args:
-        a_p (float) - planet semi-major axis in AU
-    Results:
-        alpha_max (float) - maximum alpha in radians
-    """
-    a_earth = 1. #in AU
-    if a_p > a_earth:
-        alpha_max = np.arcsin(a_earth/a_p)
-    else: #if a_p < a_earth:
-        alpha_max = np.pi #DELETEnp.arctan2(a_earth,a_p)
-    return alpha_max
+# def d_planet_earth_alpha(alpha,a_p):
+#     """ Assuming circular orbits for the Earth and a general planet p, the earth-planet distances 
+#         is directly calculable from phase angle
+#     Args:
+#         alpha (float) - angle formed between sun-planet and planet-Earth vectors ranging from 0 to pi in deg
+#         a_p (float) - planet semi-major axis in AU
+#     Returns:
+#         d (float) - Earth to planet distance at given phase angle in AU
+#     """
+#     a_earth = 1. #in AU
+#     #alpha_crit = np.arcsin(a_earth/a_p)
+#     #alpha_crit2 = np.arctan2(a_earth,a_p)
 
-def d_planet_earth_alpha(alpha,a_p):
-    """ Assuming circular orbits for the Earth and a general planet p, the earth-planet distances 
-        is directly calculable from phase angle
-    Args:
-        alpha (float) - angle formed between sun-planet and planet-Earth vectors ranging from 0 to pi in deg
-        a_p (float) - planet semi-major axis in AU
-    Returns:
-        d (float) - Earth to planet distance at given phase angle in AU
-    """
-    a_earth = 1. #in AU
-    #alpha_crit = np.arcsin(a_earth/a_p)
-    #alpha_crit2 = np.arctan2(a_earth,a_p)
+#     alpha_max = alpha_crit_fromEarth(a_p)*np.pi/180. #in deg
+#     assert np.all(alpha < alpha_max), "an alpha is above the maximum possible alpha"
 
-    alpha_max = alpha_max_fromEarth(a_p)*np.pi/180. #in deg
-    assert np.all(alpha < alpha_max), "an alpha is above the maximum possible alpha"
-
-    if a_p > a_earth:
-        #There are two distances satisfying this solution
-    else:
+#     if a_p > a_earth:
+#         #There are two distances satisfying this solution
+#     else:
 
 
-    inds = np.arange(len(alpha))
-    oneEightyInds = np.where(alpha == 180.)[0]
-    zeroInds = np.where(alpha == 0.)[0]
-    inner = a_p*np.sin(alpha*np.pi/180.)/a_earth
-    inner[oneEightyInds] = 0.
-    inner[zeroInds] = 0.
-    # if inner > 1.: #Angle is actually complement
-    #     inner = a_p*np.sin(np.pi - alpha*np.pi/180.)/a_earth
-    assert np.all(a_p*np.sin(alpha*np.pi/180.)/a_earth >= -1.), 'arcsin below range'
-    assert np.all(a_p*np.sin(alpha*np.pi/180.)/a_earth <= 1.), 'arcsin above range'
-    d = np.sqrt(a_p**2. + a_earth**2. - 2.*a_p*a_earth*np.cos( 180.*np.pi/180. - alpha*np.pi/180. - np.arcsin(inner)))
-    return d
+#     inds = np.arange(len(alpha))
+#     oneEightyInds = np.where(alpha == 180.)[0]
+#     zeroInds = np.where(alpha == 0.)[0]
+#     inner = a_p*np.sin(alpha*np.pi/180.)/a_earth
+#     inner[oneEightyInds] = 0.
+#     inner[zeroInds] = 0.
+#     # if inner > 1.: #Angle is actually complement
+#     #     inner = a_p*np.sin(np.pi - alpha*np.pi/180.)/a_earth
+#     assert np.all(a_p*np.sin(alpha*np.pi/180.)/a_earth >= -1.), 'arcsin below range'
+#     assert np.all(a_p*np.sin(alpha*np.pi/180.)/a_earth <= 1.), 'arcsin above range'
+#     d = np.sqrt(a_p**2. + a_earth**2. - 2.*a_p*a_earth*np.cos( 180.*np.pi/180. - alpha*np.pi/180. - np.arcsin(inner)))
+#     return d
 
 def elongation_max(a_p):
     """
@@ -771,7 +805,7 @@ def d_alpha_test(alpha,a_p):
     d = np.sqrt(a_p**2. + a_earth**2. + 2.*a_p*a_earth*(np.cos(alpha)*np.sqrt(1.-a_p**2./a_earth**2.*np.sin(alpha)**2.) - a_p/a_earth*np.sin(alpha)**2.))
     return d
 
-alpha = np.linspace(start=0., stop=alpha_max_fromEarth(1.5),num=30)
+alpha = np.linspace(start=0., stop=alpha_crit_fromEarth(1.5),num=30)
 d = d_alpha_test(alpha,1.5)
 
 plt.close(999)
@@ -779,6 +813,7 @@ plt.figure(num=999)
 plt.plot(1.+d*np.cos(alpha),d*np.sin(alpha))
 plt.show(block=False)
 
+print(saltyburrito)
 
 def phi_lambert(alpha):
     """ Lambert phase function as presented in Garrett2016
@@ -943,21 +978,21 @@ def V_magNeptune(alpha,a_p,d):
     return V
 
 #### Possible From Earth Alphas Range
-alpha_max_mercury = alpha_max_fromEarth(planProp['mercury']['a']*u.m.to('AU'))
+alpha_max_mercury = alpha_crit_fromEarth(planProp['mercury']['a']*u.m.to('AU'))
 alphasmax_mercury = np.linspace(start=0.,stop=alpha_max_mercury*180./np.pi,num=100.,endpoint=True)
-alpha_max_venus = alpha_max_fromEarth(planProp['venus']['a']*u.m.to('AU'))
+alpha_max_venus = alpha_crit_fromEarth(planProp['venus']['a']*u.m.to('AU'))
 alphasmax_venus = np.linspace(start=0.,stop=alpha_max_venus*180./np.pi,num=100.,endpoint=True)
-alpha_max_earth = alpha_max_fromEarth(planProp['earth']['a']*u.m.to('AU'))
+alpha_max_earth = alpha_crit_fromEarth(planProp['earth']['a']*u.m.to('AU'))
 alphasmax_earth = np.linspace(start=0.,stop=alpha_max_earth*180./np.pi,num=100.,endpoint=True)
-alpha_max_mars = alpha_max_fromEarth(planProp['mars']['a']*u.m.to('AU'))
+alpha_max_mars = alpha_crit_fromEarth(planProp['mars']['a']*u.m.to('AU'))
 alphasmax_mars = np.linspace(start=0.,stop=alpha_max_mars*180./np.pi,num=100.,endpoint=True)
-alpha_max_jupiter = alpha_max_fromEarth(planProp['jupiter']['a']*u.m.to('AU'))
+alpha_max_jupiter = alpha_crit_fromEarth(planProp['jupiter']['a']*u.m.to('AU'))
 alphasmax_jupiter = np.linspace(start=0.,stop=alpha_max_jupiter*180./np.pi,num=100.,endpoint=True)
-alpha_max_saturn = alpha_max_fromEarth(planProp['saturn']['a']*u.m.to('AU'))
+alpha_max_saturn = alpha_crit_fromEarth(planProp['saturn']['a']*u.m.to('AU'))
 alphasmax_saturn = np.linspace(start=0.,stop=alpha_max_saturn*180./np.pi,num=100.,endpoint=True)
-alpha_max_uranus = alpha_max_fromEarth(planProp['uranus']['a']*u.m.to('AU'))
+alpha_max_uranus = alpha_crit_fromEarth(planProp['uranus']['a']*u.m.to('AU'))
 alphasmax_uranus = np.linspace(start=0.,stop=alpha_max_uranus*180./np.pi,num=100.,endpoint=True)
-alpha_max_neptune = alpha_max_fromEarth(planProp['neptune']['a']*u.m.to('AU'))
+alpha_max_neptune = alpha_crit_fromEarth(planProp['neptune']['a']*u.m.to('AU'))
 alphasmax_neptune = np.linspace(start=0.,stop=alpha_max_neptune*180./np.pi,num=100.,endpoint=True)
 V_magsMercury_Earth = V_magMercury(alphasmax_mercury,planProp['mercury']['a']*u.m.to('AU'),d_planet_earth_alpha(alphasmax_mercury,planProp['mercury']['a']*u.m.to('AU')))
 V_magsVenus_Earth = V_magVenus_1(alphasmax_venus,planProp['venus']['a']*u.m.to('AU'),d_planet_earth_alpha(alphasmax_venus,planProp['venus']['a']*u.m.to('AU')))
