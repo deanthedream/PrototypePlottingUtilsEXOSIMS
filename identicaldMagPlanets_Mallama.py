@@ -13,6 +13,16 @@ from scipy.optimize import minimize_scalar
 import astropy.units as u
 from scipy.interpolate import interp1d, PchipInterpolator
 
+#### Planet Properties #####################################
+planProp = dict() #all in units of meters
+planProp['mercury'] = {'R':2439.7*1000.,'a':57.91*10.**9.,'p':0.142}
+planProp['venus'] = {'R':6051.8*1000.,'a':108.21*10.**9.,'p':0.689}
+planProp['earth'] = {'R':6371.0*1000.,'a':149.60*10.**9.,'p':0.434}
+planProp['mars'] = {'R':3389.92*1000.,'a':227.92*10.**9.,'p':0.150}
+planProp['jupiter'] = {'R':69911.*1000.,'a':778.57*10.**9.,'p':0.538}
+planProp['saturn'] = {'R':58232.*1000.,'a':1433.53*10.**9.,'p':0.499}
+planProp['uranus'] = {'R':25362.*1000.,'a':2872.46*10.**9.,'p':0.488}
+planProp['neptune'] = {'R':24622.*1000.,'a':4495.*10.**9.,'p':0.442}
 
 def alpha_ap_D(D,a_p): #OK
     """ Given some Angle between r_earth/sun and r_planet/sun
@@ -64,7 +74,7 @@ def alpha_crit_fromEarth(a_p): #OK
     if a_p > a_earth:
         alpha_max = np.arcsin(a_earth/a_p) #occurs at quadrature
     else: #if a_p < a_earth:
-        alpha_max = np.arctan2(a_earth,a_p) #Correct. This value approaches 90 deg for smaller a_p
+        alpha_max = np.pi #0 deg when opposite side of sta180 deg on same side of star
     return alpha_max
 
 def D_alphacrit(a_p): #OK
@@ -90,6 +100,10 @@ ds1 = d_ap_D(Ds,0.7)
 ds2 = d_ap_D(Ds,1.5)
 plt.close(99)
 plt.figure(num=99)
+plt.rc('axes',linewidth=2)
+plt.rc('lines',linewidth=2)
+plt.rcParams['axes.linewidth']=2
+plt.rc('font',weight='bold')
 plt.plot(1.5*np.cos(Ds),1.5*np.sin(Ds),color='blue')
 plt.show(block=False)
 plt.close(199)
@@ -159,7 +173,7 @@ def d_planet_earth_alpha(alpha,a_p):
     a_earth = 1. #in AU
 
     #For the given a_p, check all alphas are possible (Not above alpha_crit)
-    alpha_crit = alpha_crit_fromEarth(a_p)*np.pi/180. #in deg
+    alpha_crit = alpha_crit_fromEarth(a_p)*180./np.pi #in deg
     assert np.all(alpha <= alpha_crit), "an alpha is above the maximum possible alpha"
 
     #Nominally a_p < a_earth
@@ -250,6 +264,8 @@ def V_magMercury(alpha,a_p,d):
 planProp['mercury']['num_Vmag_models'] = 1
 planProp['mercury']['earth_Vmag_model'] = 0
 planProp['mercury']['Vmag'] = [V_magMercury]
+planProp['mercury']['alphas_min'] = [0.]
+planProp['mercury']['alphas_max'] = [180.]
 
 #Venus
 #0<alpha<163.7
@@ -271,6 +287,8 @@ def V_magVenus_2(alpha, a_p, d):
 planProp['venus']['num_Vmag_models'] = 2
 planProp['venus']['earth_Vmag_model'] = 0
 planProp['venus']['Vmag'] = [V_magVenus_1,V_magVenus_2]
+planProp['venus']['alphas_min'] = [0.,163.7]
+planProp['venus']['alphas_max'] = [163.7,179.]
 
 #Earth
 #V = 5.*np.log10(r*d) - 3.99 - 1.060e-3*alpha + 2.054e-4*alpha**2.
@@ -283,6 +301,8 @@ def V_magEarth(alpha,a_p,d):
 planProp['earth']['num_Vmag_models'] = 1
 planProp['earth']['earth_Vmag_model'] = 0
 planProp['earth']['Vmag'] = [V_magEarth]
+planProp['earth']['alphas_min'] = [0.]
+planProp['earth']['alphas_max'] = [180.]
 
 #Mars
 #alpha<=50
@@ -305,6 +325,8 @@ def V_magMars_2(alpha,a_p,d):
 planProp['mars']['num_Vmag_models'] = 2
 planProp['mars']['earth_Vmag_model'] = 0
 planProp['mars']['Vmag'] = [V_magMars_1,V_magMars_2]
+planProp['mars']['alphas_min'] = [0.,50.]
+planProp['mars']['alphas_max'] = [50.,180.]
 
 #Jupiter
 #alpha<12
@@ -330,6 +352,8 @@ def V_magJupiter_2(alpha,a_p,d):
 planProp['jupiter']['num_Vmag_models'] = 2
 planProp['jupiter']['earth_Vmag_model'] = 0
 planProp['jupiter']['Vmag'] = [V_magJupiter_1,V_magJupiter_2]
+planProp['jupiter']['alphas_min'] = [0.,12.]
+planProp['jupiter']['alphas_max'] = [12.,130.]
 
 #Saturn
 #V = 5.*np.log10(r*d) - 8.914 - 1.825*np.sin(beta) + 0.026*alpha \
@@ -363,6 +387,8 @@ def V_magSaturn_3(alpha,a_p,d):
 planProp['saturn']['num_Vmag_models'] = 3
 planProp['saturn']['earth_Vmag_model'] = 1
 planProp['saturn']['Vmag'] = [V_magSaturn_1,V_magSaturn_2,V_magSaturn_3]
+planProp['saturn']['alphas_min'] = [0.,0.,6.5]
+planProp['saturn']['alphas_max'] = [6.5,6.5,150.]
 
 #Uranus
 #f = 0.0022927 #flattening of the planet
@@ -387,6 +413,9 @@ def V_magUranus(alpha,a_p,d,phi=-82.):
 planProp['uranus']['num_Vmag_models'] = 1
 planProp['uranus']['earth_Vmag_model'] = 0
 planProp['uranus']['Vmag'] = [V_magUranus]
+planProp['uranus']['alphas_min'] = [0.]
+planProp['uranus']['alphas_max'] = [154.]
+
 
 #Neptune
 def V_magNeptune(alpha,a_p,d):
@@ -397,6 +426,8 @@ def V_magNeptune(alpha,a_p,d):
 planProp['neptune']['num_Vmag_models'] = 1
 planProp['neptune']['earth_Vmag_model'] = 0
 planProp['neptune']['Vmag'] = [V_magNeptune]
+planProp['neptune']['alphas_min'] = [0.]
+planProp['neptune']['alphas_max'] = [133.14]
 
 planets=['mercury','venus','earth','mars','jupiter','saturn','uranus','saturn']
 pColors = ['grey','gold','blue','red','orange','goldrod','darkblue','turquoise']
@@ -406,7 +437,7 @@ for i in np.arange(len(planets)):
     planProp[planets[i]]['alphas_max_fromearth'] = np.linspace(start=0.,stop=planProp[planets[i]]['alpha_max_fromearth']*180./np.pi,num=100.,endpoint=True) #in deg
     d1, d2 = d_planet_earth_alpha(planProp[planets[i]]['alphas_max_fromearth'],planProp[planets[i]]['a']*u.m.to('AU'))
     planProp[planets[i]]['Vmags_fromearth'] = [planProp[planets[i]]['Vmag'][planProp[planets[i]]['earth_Vmag_model']](planProp[planets[i]]['alphas_max_fromearth'],planProp['mercury']['a']*u.m.to('AU'),d1),\
-                                                planProp[planets[i]]['Vmag'][planProp[planets[i]]['earth_Vmag_model']](planProp[planets[i]]['alphas_max_fromearth'],planProp['mercury']['a']*u.m.to('AU'),d1)]
+                                                planProp[planets[i]]['Vmag'][planProp[planets[i]]['earth_Vmag_model']](planProp[planets[i]]['alphas_max_fromearth'],planProp['mercury']['a']*u.m.to('AU'),d2)]
     planProp[planets[i]]['planet_name'] = planets[i]
     planProp[planets[i]]['planet_labelcolors'] = pColors[i]
 
@@ -438,9 +469,13 @@ for i in np.arange(len(planets)):
 
 plt.close(10)
 fig10 = plt.figure(num=10)
+plt.rc('axes',linewidth=2)
+plt.rc('lines',linewidth=2)
+plt.rcParams['axes.linewidth']=2
+plt.rc('font',weight='bold')
 for i in np.arange(len(planets)):
     plt.plot(planProp[planets[i]]['alphas_max_fromearth'],planProp[planets[i]]['Vmags_fromearth'][0],color=planProp[planets[i]]['planet_labelcolors'],label=planProp[planets[i]]['planet_name'])
-    plt.plot(planProp[planets[i]]['alphas_max_fromearth'],planProp[planets[i]]['Vmags_fromearth'][1],color=planProp[planets[i]]['planet_labelcolors'],label=planProp[planets[i]]['planet_name'])
+    plt.plot(planProp[planets[i]]['alphas_max_fromearth'],planProp[planets[i]]['Vmags_fromearth'][1],color=planProp[planets[i]]['planet_labelcolors'],label=planProp[planets[i]]['planet_name'],linestyle='--')
 #DELETE
 # plt.plot(alphasmax_mercury,V_magsMercury_Earth,color='gray',label='mercury')
 # plt.plot(alphasmax_venus,V_magsVenus_Earth,color='yellow',label='venus')
@@ -450,8 +485,8 @@ for i in np.arange(len(planets)):
 # plt.plot(alphasmax_saturn,V_magsSaturn_Earth,color='gold',label='saturn')
 # plt.plot(alphasmax_uranus,V_magsUranus_Earth,color='blue',label='uranus',linestyle='--')
 # plt.plot(alphasmax_neptune,V_magsNeptune_Earth,color='cyan',label='neptune')
-plt.xlim([0.,90.])
-plt.ylim([-10.,10.])
+plt.xlim([0.,180.])
+plt.ylim([-35.,10.])
 plt.ylabel('Visual Apparent Magnitude', weight='bold')
 plt.xlabel('Phase Angle in deg', weight='bold')
 plt.legend()
