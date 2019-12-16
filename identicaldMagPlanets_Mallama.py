@@ -1,3 +1,18 @@
+# Calculate Indentical dMag of planets
+
+import matplotlib.pyplot as plt
+import numpy as np
+#DELETE import matplotlib.dates as mdates
+import sys, os.path, EXOSIMS, EXOSIMS.MissionSim
+import numpy as np
+from EXOSIMS.util.deltaMag import *
+#DELETimport EXOSIMS.PlanetPhysicalModel as PPM#calc_Phi
+from scipy.optimize import fsolve
+from scipy.optimize import minimize
+from scipy.optimize import minimize_scalar
+import astropy.units as u
+from scipy.interpolate import interp1d, PchipInterpolator
+
 
 def alpha_ap_D(D,a_p): #OK
     """ Given some Angle between r_earth/sun and r_planet/sun
