@@ -761,30 +761,30 @@ def d_planet_earth_alpha(alpha,a_p):
     """
     a_earth = 1. #in AU
 
+    #For the given a_p, check all alphas are possible (Not above alpha_crit)
     alpha_crit = alpha_crit_fromEarth(a_p)*np.pi/180. #in deg
     assert np.all(alpha <= alpha_crit), "an alpha is above the maximum possible alpha"
 
+    #Nominally a_p < a_earth
+    elongation1 = np.arcsin(a_p*np.sin(alpha*np.pi/180.)/a_earth) #using law of sines
+    D1 = 180.*np.pi/180. - alpha*np.pi/180. - elongation1 #all sides add to 180 deg
+    d1 = np.sqrt(a_p**2. + a_earth**2. - 2.*a_p*a_earth*np.cos(D1))
+    d2 = None
     if a_p > a_earth:
-        #There are two distances satisfying this solution
-        critInds = np.where(alpha == alpha_crit)[0]
-        sin epsilon = a_p/a_earth*sin alpha 
-        D = np.pi - epsilon - alpha
-        #1 x_p > a_earth
-        #2 x_p > 0 and x_p < a_earth
-        #3 x_p < 0
-    else: #a_p < a_earth
+        #There will be two distances satisfying this solution
+        elongation2 = np.pi - np.arcsin(a_p*np.sin(alpha*np.pi/180.)/a_earth) #using law of sines
+        D2 = 180.*np.pi/180. - alpha*np.pi/180. - elongation2 #all sides add to 180 deg
+        d2 = np.sqrt(a_p**2. + a_earth**2. - 2.*a_p*a_earth*np.cos(D2))
 
-
-    inds = np.arange(len(alpha))
-    zeroInds = np.where(alpha == 0.)[0]
-    inner = a_p*np.sin(alpha*np.pi/180.)/a_earth
-    inner[zeroInds] = 0.
+    #inds = np.arange(len(alpha))
+    #zeroInds = np.where(alpha == 0.)[0]
+    #inner[zeroInds] = 0.
     # if inner > 1.: #Angle is actually complement
     #     inner = a_p*np.sin(np.pi - alpha*np.pi/180.)/a_earth
-    assert np.all(a_p*np.sin(alpha*np.pi/180.)/a_earth >= -1.), 'arcsin below range'
-    assert np.all(a_p*np.sin(alpha*np.pi/180.)/a_earth <= 1.), 'arcsin above range'
-    d = np.sqrt(a_p**2. + a_earth**2. - 2.*a_p*a_earth*np.cos( 180.*np.pi/180. - alpha*np.pi/180. - np.arcsin(inner)))
-    return d
+    #assert np.all(a_p*np.sin(alpha*np.pi/180.)/a_earth >= -1.), 'arcsin below range'
+    #assert np.all(a_p*np.sin(alpha*np.pi/180.)/a_earth <= 1.), 'arcsin above range'
+    #d = np.sqrt(a_p**2. + a_earth**2. - 2.*a_p*a_earth*np.cos( 180.*np.pi/180. - alpha*np.pi/180. - np.arcsin(inner)))
+    return d1, d2
 
 def elongation_max(a_p):
     """
