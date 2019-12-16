@@ -750,39 +750,41 @@ def d_planet_earth_D(D,a_p):
     d = np.sqrt(a_p**2. + a_earth**2. - 2.*a_p*a_earth*np.cos(D))
     return d
 
-# def d_planet_earth_alpha(alpha,a_p):
-#     """ Assuming circular orbits for the Earth and a general planet p, the earth-planet distances 
-#         is directly calculable from phase angle
-#     Args:
-#         alpha (float) - angle formed between sun-planet and planet-Earth vectors ranging from 0 to pi in deg
-#         a_p (float) - planet semi-major axis in AU
-#     Returns:
-#         d (float) - Earth to planet distance at given phase angle in AU
-#     """
-#     a_earth = 1. #in AU
-#     #alpha_crit = np.arcsin(a_earth/a_p)
-#     #alpha_crit2 = np.arctan2(a_earth,a_p)
+def d_planet_earth_alpha(alpha,a_p):
+    """ Assuming circular orbits for the Earth and a general planet p, the earth-planet distances 
+        is directly calculable from phase angle
+    Args:
+        alpha (float) - angle formed between sun-planet and planet-Earth vectors ranging from 0 to pi in deg
+        a_p (float) - planet semi-major axis in AU
+    Returns:
+        d (float) - Earth to planet distance at given phase angle in AU
+    """
+    a_earth = 1. #in AU
 
-#     alpha_max = alpha_crit_fromEarth(a_p)*np.pi/180. #in deg
-#     assert np.all(alpha < alpha_max), "an alpha is above the maximum possible alpha"
+    alpha_crit = alpha_crit_fromEarth(a_p)*np.pi/180. #in deg
+    assert np.all(alpha <= alpha_crit), "an alpha is above the maximum possible alpha"
 
-#     if a_p > a_earth:
-#         #There are two distances satisfying this solution
-#     else:
+    if a_p > a_earth:
+        #There are two distances satisfying this solution
+        critInds = np.where(alpha == alpha_crit)[0]
+        sin epsilon = a_p/a_earth*sin alpha 
+        D = np.pi - epsilon - alpha
+        #1 x_p > a_earth
+        #2 x_p > 0 and x_p < a_earth
+        #3 x_p < 0
+    else: #a_p < a_earth
 
 
-#     inds = np.arange(len(alpha))
-#     oneEightyInds = np.where(alpha == 180.)[0]
-#     zeroInds = np.where(alpha == 0.)[0]
-#     inner = a_p*np.sin(alpha*np.pi/180.)/a_earth
-#     inner[oneEightyInds] = 0.
-#     inner[zeroInds] = 0.
-#     # if inner > 1.: #Angle is actually complement
-#     #     inner = a_p*np.sin(np.pi - alpha*np.pi/180.)/a_earth
-#     assert np.all(a_p*np.sin(alpha*np.pi/180.)/a_earth >= -1.), 'arcsin below range'
-#     assert np.all(a_p*np.sin(alpha*np.pi/180.)/a_earth <= 1.), 'arcsin above range'
-#     d = np.sqrt(a_p**2. + a_earth**2. - 2.*a_p*a_earth*np.cos( 180.*np.pi/180. - alpha*np.pi/180. - np.arcsin(inner)))
-#     return d
+    inds = np.arange(len(alpha))
+    zeroInds = np.where(alpha == 0.)[0]
+    inner = a_p*np.sin(alpha*np.pi/180.)/a_earth
+    inner[zeroInds] = 0.
+    # if inner > 1.: #Angle is actually complement
+    #     inner = a_p*np.sin(np.pi - alpha*np.pi/180.)/a_earth
+    assert np.all(a_p*np.sin(alpha*np.pi/180.)/a_earth >= -1.), 'arcsin below range'
+    assert np.all(a_p*np.sin(alpha*np.pi/180.)/a_earth <= 1.), 'arcsin above range'
+    d = np.sqrt(a_p**2. + a_earth**2. - 2.*a_p*a_earth*np.cos( 180.*np.pi/180. - alpha*np.pi/180. - np.arcsin(inner)))
+    return d
 
 def elongation_max(a_p):
     """
