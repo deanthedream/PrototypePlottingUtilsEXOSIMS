@@ -165,7 +165,7 @@ def d_planet_earth_alpha(alpha,a_p):
     """ Assuming circular orbits for the Earth and a general planet p, the earth-planet distances 
         is directly calculable from phase angle
     Args:
-        alpha (float) - angle formed between sun-planet and planet-Earth vectors ranging from 0 to pi in deg
+        alpha (float) - angle formed between sun-planet and planet-Earth vectors ranging from 0 to 180 in deg
         a_p (float) - planet semi-major axis in AU
     Returns:
         d (float) - Earth to planet distance at given phase angle in AU
@@ -178,13 +178,13 @@ def d_planet_earth_alpha(alpha,a_p):
 
     #Nominally a_p < a_earth
     elongation1 = np.arcsin(a_p*np.sin(alpha*np.pi/180.)/a_earth) #using law of sines
-    D1 = 180.*np.pi/180. - alpha*np.pi/180. - elongation1 #all sides add to 180 deg
+    D1 = np.pi - alpha*np.pi/180. - elongation1 #all sides add to pi
     d1 = np.sqrt(a_p**2. + a_earth**2. - 2.*a_p*a_earth*np.cos(D1))
     d2 = d1
     if a_p > a_earth:
         #There will be two distances satisfying this solution
         elongation2 = np.pi - np.arcsin(a_p*np.sin(alpha*np.pi/180.)/a_earth) #using law of sines
-        D2 = 180.*np.pi/180. - alpha*np.pi/180. - elongation2 #all sides add to 180 deg
+        D2 = np.pi - alpha*np.pi/180. - elongation2 #all sides add to pi
         d2 = np.sqrt(a_p**2. + a_earth**2. - 2.*a_p*a_earth*np.cos(D2))
 
     #inds = np.arange(len(alpha))
@@ -226,6 +226,18 @@ plt.figure(num=999)
 plt.plot(1.+d*np.cos(alpha),d*np.sin(alpha))
 plt.show(block=False)
 
+
+def fluxRatio_fromVmag(Vmag):
+    """Calculates The Flux Ratio from a given Vmag
+    """
+    fluxRatio = 10.**(-0.4*Vmag)
+    return fluxRatio
+def planetFlux_fromFluxRatio(fluxRatio):
+    """ Calculated planet Flux from fluxRatio
+    """
+    vegaFlux = 6.958*10.**(-35.) # $W/m^2
+    pFlux = fluxRatio*vegaFlux
+    return pFlux
 
 def phi_lambert(alpha):
     """ Lambert phase function as presented in Garrett2016
@@ -429,44 +441,24 @@ planProp['neptune']['Vmag'] = [V_magNeptune]
 planProp['neptune']['alphas_min'] = [0.]
 planProp['neptune']['alphas_max'] = [133.14]
 
+
 planets=['mercury','venus','earth','mars','jupiter','saturn','uranus','saturn']
 pColors = ['grey','gold','blue','red','orange','goldrod','darkblue','turquoise']
 #### Possible From Earth Alphas Range
 for i in np.arange(len(planets)):
     planProp[planets[i]]['alpha_max_fromearth'] = alpha_crit_fromEarth(planProp[planets[i]]['a']*u.m.to('AU')) #in rad
-    planProp[planets[i]]['alphas_max_fromearth'] = np.linspace(start=0.,stop=planProp[planets[i]]['alpha_max_fromearth']*180./np.pi,num=100.,endpoint=True) #in deg
+    earthViewAlpha = np.min([planProp[planets[i]]['alphas_max'][planProp[planets[i]]['earth_Vmag_model']], planProp[planets[i]]['alpha_max_fromearth']*180./np.pi ])
+    print(earthViewAlpha)
+    planProp[planets[i]]['alphas_max_fromearth'] = np.linspace(start=0.,stop=earthViewAlpha,num=100.,endpoint=True) #in deg
     d1, d2 = d_planet_earth_alpha(planProp[planets[i]]['alphas_max_fromearth'],planProp[planets[i]]['a']*u.m.to('AU'))
     planProp[planets[i]]['Vmags_fromearth'] = [planProp[planets[i]]['Vmag'][planProp[planets[i]]['earth_Vmag_model']](planProp[planets[i]]['alphas_max_fromearth'],planProp['mercury']['a']*u.m.to('AU'),d1),\
                                                 planProp[planets[i]]['Vmag'][planProp[planets[i]]['earth_Vmag_model']](planProp[planets[i]]['alphas_max_fromearth'],planProp['mercury']['a']*u.m.to('AU'),d2)]
+    
     planProp[planets[i]]['planet_name'] = planets[i]
     planProp[planets[i]]['planet_labelcolors'] = pColors[i]
+    pFlux_FromEarth = planetFlux_fromFluxRatio(fluxRatio_fromVmag(planProp[planets[i]]['Vmags_fromearth']))
 
-#DELETE
-# alpha_max_mercury = alpha_crit_fromEarth(planProp['mercury']['a']*u.m.to('AU'))
-# alphasmax_mercury = np.linspace(start=0.,stop=alpha_max_mercury*180./np.pi,num=100.,endpoint=True)
-# alpha_max_venus = alpha_crit_fromEarth(planProp['venus']['a']*u.m.to('AU'))
-# alphasmax_venus = np.linspace(start=0.,stop=alpha_max_venus*180./np.pi,num=100.,endpoint=True)
-# alpha_max_earth = alpha_crit_fromEarth(planProp['earth']['a']*u.m.to('AU'))
-# alphasmax_earth = np.linspace(start=0.,stop=alpha_max_earth*180./np.pi,num=100.,endpoint=True)
-# alpha_max_mars = alpha_crit_fromEarth(planProp['mars']['a']*u.m.to('AU'))
-# alphasmax_mars = np.linspace(start=0.,stop=alpha_max_mars*180./np.pi,num=100.,endpoint=True)
-# alpha_max_jupiter = alpha_crit_fromEarth(planProp['jupiter']['a']*u.m.to('AU'))
-# alphasmax_jupiter = np.linspace(start=0.,stop=alpha_max_jupiter*180./np.pi,num=100.,endpoint=True)
-# alpha_max_saturn = alpha_crit_fromEarth(planProp['saturn']['a']*u.m.to('AU'))
-# alphasmax_saturn = np.linspace(start=0.,stop=alpha_max_saturn*180./np.pi,num=100.,endpoint=True)
-# alpha_max_uranus = alpha_crit_fromEarth(planProp['uranus']['a']*u.m.to('AU'))
-# alphasmax_uranus = np.linspace(start=0.,stop=alpha_max_uranus*180./np.pi,num=100.,endpoint=True)
-# alpha_max_neptune = alpha_crit_fromEarth(planProp['neptune']['a']*u.m.to('AU'))
-# alphasmax_neptune = np.linspace(start=0.,stop=alpha_max_neptune*180./np.pi,num=100.,endpoint=True)
-# V_magsMercury_Earth = V_magMercury(alphasmax_mercury,planProp['mercury']['a']*u.m.to('AU'),d_planet_earth_alpha(alphasmax_mercury,planProp['mercury']['a']*u.m.to('AU')))
-# V_magsVenus_Earth = V_magVenus_1(alphasmax_venus,planProp['venus']['a']*u.m.to('AU'),d_planet_earth_alpha(alphasmax_venus,planProp['venus']['a']*u.m.to('AU')))
-# V_magsEarth_Earth = V_magEarth(alphasmax_earth,planProp['earth']['a']*u.m.to('AU'),d_planet_earth_alpha(alphasmax_earth,planProp['earth']['a']*u.m.to('AU')))
-# V_magsMars_Earth = V_magMars_1(alphasmax_mars,planProp['mars']['a']*u.m.to('AU'),d_planet_earth_alpha(alphasmax_mars,planProp['mars']['a']*u.m.to('AU')))
-# V_magsJupiter_Earth = V_magJupiter_1(alphasmax_jupiter,planProp['jupiter']['a']*u.m.to('AU'),d_planet_earth_alpha(alphasmax_jupiter,planProp['jupiter']['a']*u.m.to('AU')))
-# V_magsSaturn_Earth = V_magSaturn_1(alphasmax_saturn,planProp['saturn']['a']*u.m.to('AU'),d_planet_earth_alpha(alphasmax_saturn,planProp['saturn']['a']*u.m.to('AU')),beta=0.)
-# V_magsUranus_Earth = V_magUranus(alphasmax_uranus,planProp['uranus']['a']*u.m.to('AU'),d_planet_earth_alpha(alphasmax_uranus,planProp['uranus']['a']*u.m.to('AU')),phi=-82.)
-# V_magsNeptune_Earth = V_magNeptune(alphasmax_neptune,planProp['neptune']['a']*u.m.to('AU'),d_planet_earth_alpha(alphasmax_neptune,planProp['neptune']['a']*u.m.to('AU')))
-
+#### A plot over the ranges a planet is visible from Earth
 plt.close(10)
 fig10 = plt.figure(num=10)
 plt.rc('axes',linewidth=2)
@@ -476,15 +468,6 @@ plt.rc('font',weight='bold')
 for i in np.arange(len(planets)):
     plt.plot(planProp[planets[i]]['alphas_max_fromearth'],planProp[planets[i]]['Vmags_fromearth'][0],color=planProp[planets[i]]['planet_labelcolors'],label=planProp[planets[i]]['planet_name'])
     plt.plot(planProp[planets[i]]['alphas_max_fromearth'],planProp[planets[i]]['Vmags_fromearth'][1],color=planProp[planets[i]]['planet_labelcolors'],label=planProp[planets[i]]['planet_name'],linestyle='--')
-#DELETE
-# plt.plot(alphasmax_mercury,V_magsMercury_Earth,color='gray',label='mercury')
-# plt.plot(alphasmax_venus,V_magsVenus_Earth,color='yellow',label='venus')
-# plt.plot(alphasmax_earth,V_magsEarth_Earth,color='blue',label='earth')
-# plt.plot(alphasmax_mars,V_magsMars_Earth,color='red',label='mars')
-# plt.plot(alphasmax_jupiter,V_magsJupiter_Earth,color='orange',label='jupiter')
-# plt.plot(alphasmax_saturn,V_magsSaturn_Earth,color='gold',label='saturn')
-# plt.plot(alphasmax_uranus,V_magsUranus_Earth,color='blue',label='uranus',linestyle='--')
-# plt.plot(alphasmax_neptune,V_magsNeptune_Earth,color='cyan',label='neptune')
 plt.xlim([0.,180.])
 plt.ylim([-35.,10.])
 plt.ylabel('Visual Apparent Magnitude', weight='bold')
