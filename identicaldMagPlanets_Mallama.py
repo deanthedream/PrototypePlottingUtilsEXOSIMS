@@ -13,6 +13,12 @@ from scipy.optimize import minimize_scalar
 import astropy.units as u
 from scipy.interpolate import interp1d, PchipInterpolator
 from matplotlib import colors
+import datetime
+import re
+
+folder = './'
+PPoutpath = './'
+
 
 #### Planet Properties #####################################
 planProp = dict() #all in units of meters
@@ -227,6 +233,9 @@ plt.figure(num=999)
 plt.plot(1.+d*np.cos(alpha),d*np.sin(alpha))
 plt.show(block=False)
 
+def separation_from_alpha_ap(alpha,a_p):
+    s = a_p*np.sin(alpha)
+    return s
 
 def fluxRatio_fromVmag(Vmag):
     """Calculates The Flux Ratio from a given Vmag
@@ -243,7 +252,7 @@ def planetFlux_fromFluxRatio(fluxRatio):
 def phi_lambert(alpha):
     """ Lambert phase function as presented in Garrett2016
     Args:
-        alpha (float) - phase angle
+        alpha (float) - phase angle in radians
     Returns:
         Phi (float) - phase function value between 0 and 1
     """
@@ -252,6 +261,9 @@ def phi_lambert(alpha):
 
 def transitionStart(x,a,b):
     """ Smoothly transition from one 0 to 1
+    Args:
+        x (float) - in deg input value in deg
+        a (float) - transition midpoint in deg
     """
     s = 0.5+0.5*np.tanh((x-a)/b)
     return s
@@ -259,6 +271,9 @@ def transitionEnd(x,a,b):
     """ Smoothly transition from one 1 to 0
     Smaller b is sharper step
     a is midpoint, s(a)=0.5
+    Args:
+        x (float) - in deg input value in deg
+        a (float) - transition midpoint in deg
     """
     s = 0.5-0.5*np.tanh((x-a)/b)
     return s
@@ -285,6 +300,7 @@ planProp['mercury']['Vmag'] = [V_magMercury]
 planProp['mercury']['phaseFunc'] = [phase_Mercury]
 planProp['mercury']['alphas_min'] = [0.]
 planProp['mercury']['alphas_max'] = [180.]
+planProp['mercury']['phaseFuncMelded'] = phase_Mercury
 
 #Venus
 #0<alpha<163.7
@@ -324,12 +340,18 @@ def phase_Venus_2(alpha):
     #-(- 2.81914e-00*163.7 + 8.39034e-03*163.7**2.)
     # - 1.
     return phase
+def phase_Venus_melded(alpha):
+    phase = transitionEnd(alpha,163.7,5.)*phase_Venus_1(alpha) + \
+        transitionStart(alpha,163.7,5.)*transitionEnd(alpha,179.,0.5)*phase_Mars_2(alpha) + \
+        transitionStart(alpha,179.,0.5)*phi_lambert(alpha*np.pi/180.)
+    return phase
 planProp['venus']['num_Vmag_models'] = 2
 planProp['venus']['earth_Vmag_model'] = 0
 planProp['venus']['Vmag'] = [V_magVenus_1,V_magVenus_2]
 planProp['venus']['phaseFunc'] = [phase_Venus_1,phase_Venus_2]
 planProp['venus']['alphas_min'] = [0.,163.7]
 planProp['venus']['alphas_max'] = [163.7,179.]
+planProp['venus']['phaseFuncMelded'] = phase_Venus_melded
 
 #Earth
 #V = 5.*np.log10(r*d) - 3.99 - 1.060e-3*alpha + 2.054e-4*alpha**2.
@@ -350,6 +372,7 @@ planProp['earth']['Vmag'] = [V_magEarth]
 planProp['earth']['phaseFunc'] = [phase_Earth]
 planProp['earth']['alphas_min'] = [0.]
 planProp['earth']['alphas_max'] = [180.]
+planProp['earth']['phaseFuncMelded'] = phase_Earth
 
 #Mars
 #alpha<=50
@@ -379,12 +402,17 @@ def phase_Mars_2(alpha):
     """
     phase = phase_Mars_1(50.)/10.**(-0.4*(- 0.02573*50. + 0.0003445*50.**2.)) * 10.**(-0.4*(- 0.02573*alpha + 0.0003445*alpha**2. + 0. + 0.)) #L(λe) + L(Ls)
     return phase
+def phase_Mars_melded(alpha):
+    phase = transitionEnd(alpha,50.,5.)*phase_Mars_1(alpha) + \
+        transitionStart(alpha,50.,5.)*phase_Mars_2(alpha)
+    return phase
 planProp['mars']['num_Vmag_models'] = 2
 planProp['mars']['earth_Vmag_model'] = 0
 planProp['mars']['Vmag'] = [V_magMars_1,V_magMars_2]
 planProp['mars']['phaseFunc'] = [phase_Mars_1,phase_Mars_2]
 planProp['mars']['alphas_min'] = [0.,50.]
 planProp['mars']['alphas_max'] = [50.,180.]
+planProp['mars']['phaseFuncMelded'] = phase_Mars_melded
 
 #Jupiter
 #alpha<12
@@ -418,12 +446,18 @@ def phase_Jupiter_2(alpha):
     difference = phase_Jupiter_1(12.) - 10.**(-0.4*(- 2.5*np.log10(1.0 - 1.507*(12./180.) - 0.363*(12./180.)**2. - 0.062*(12./180.)**3.+ 2.809*(12./180.)**4. - 1.876*(12./180.)**5.)))
     phase = difference + 10.**(-0.4*(- 2.5*np.log10(1.0 - 1.507*(alpha/180.) - 0.363*(alpha/180.)**2. - 0.062*(alpha/180.)**3.+ 2.809*(alpha/180.)**4. - 1.876*(alpha/180.)**5.)))
     return phase
+def phase_Jupiter_melded(alpha):
+    phase = transitionEnd(alpha,12.,5.)*phase_Jupiter_1(alpha) + \
+        transitionStart(alpha,12.,5.)*transitionEnd(alpha,130.,5.)*phase_Jupiter_2(alpha) + \
+        transitionStart(alpha,130.,5.)*phi_lambert(alpha*np.pi/180.)
+    return phase
 planProp['jupiter']['num_Vmag_models'] = 2
 planProp['jupiter']['earth_Vmag_model'] = 0
 planProp['jupiter']['Vmag'] = [V_magJupiter_1,V_magJupiter_2]
 planProp['jupiter']['phaseFunc'] = [phase_Jupiter_1,phase_Jupiter_2]
 planProp['jupiter']['alphas_min'] = [0.,12.]
 planProp['jupiter']['alphas_max'] = [12.,130.]
+planProp['jupiter']['phaseFuncMelded'] = phase_Jupiter_melded
 
 #Saturn
 #V = 5.*np.log10(r*d) - 8.914 - 1.825*np.sin(beta) + 0.026*alpha \
@@ -475,12 +509,18 @@ def phase_Saturn_3(alpha):
     difference = phase_Saturn_2(6.5) - 10.**(-0.4*(2.446e-4*6.5 + 2.672e-4*6.5**2. - 1.505e-6*6.5**3. + 4.767e-9*6.5**2.))
     phase = difference + 10.**(-0.4*(2.446e-4*alpha + 2.672e-4*alpha**2. - 1.505e-6*alpha**3. + 4.767e-9*alpha**2.))
     return phase
+def phase_Saturn_melded(alpha):
+    phase = transitionEnd(alpha,6.5,5.)*phase_Saturn_2(alpha) + \
+                transitionStart(alpha,6.5,5.)*transitionEnd(alpha,150.,5.)*phase_Saturn_3(alpha)  + \
+                transitionStart(alpha,150.,5.)*phi_lambert(alpha*np.pi/180.)
+    return phase
 planProp['saturn']['num_Vmag_models'] = 3
 planProp['saturn']['earth_Vmag_model'] = 1
 planProp['saturn']['Vmag'] = [V_magSaturn_1,V_magSaturn_2,V_magSaturn_3]
 planProp['saturn']['phaseFunc'] = [phase_Saturn_1,phase_Saturn_2,phase_Saturn_3]
 planProp['saturn']['alphas_min'] = [0.,0.,6.5]
 planProp['saturn']['alphas_max'] = [6.5,6.5,150.]
+planProp['saturn']['phaseFuncMelded'] = phase_Saturn_melded
 
 #Uranus
 #f = 0.0022927 #flattening of the planet
@@ -508,12 +548,17 @@ def phase_Uranus(alpha,phi=-82.):
     """
     phase = 10.**(-0.4*(- 8.4e-04*phiprime_phi(phi) + 6.587e-3*alpha + 1.045e-4*alpha**2.))
     return phase
+def phase_Uranus_melded(alpha):
+    phase = transitionEnd(alpha,154.,5.)*phase_Uranus(alpha) + \
+        transitionStart(alpha,154.,5.)*phi_lambert(alpha*np.pi/180.)
+    return phase
 planProp['uranus']['num_Vmag_models'] = 1
 planProp['uranus']['earth_Vmag_model'] = 0
 planProp['uranus']['Vmag'] = [V_magUranus]
 planProp['uranus']['phaseFunc'] = [phase_Uranus]
 planProp['uranus']['alphas_min'] = [0.]
 planProp['uranus']['alphas_max'] = [154.]
+planProp['uranus']['phaseFuncMelded'] = phase_Uranus_melded
 
 
 #Neptune
@@ -527,12 +572,17 @@ def phase_Neptune(alpha):
     """
     phase = 10.**(-0.4*(7.944e-3*alpha + 9.617e-5*alpha**2.))
     return phase
+def phase_Neptune_melded(alpha):
+    phase = transitionEnd(alpha,133.14,5.)*phase_Neptune(alpha) + \
+        transitionStart(alpha,133.14,5.)*phi_lambert(alpha*np.pi/180.)
+    return phase
 planProp['neptune']['num_Vmag_models'] = 1
 planProp['neptune']['earth_Vmag_model'] = 0
 planProp['neptune']['Vmag'] = [V_magNeptune]
 planProp['neptune']['phaseFunc'] = [phase_Neptune]
 planProp['neptune']['alphas_min'] = [0.]
 planProp['neptune']['alphas_max'] = [133.14]
+planProp['neptune']['phaseFuncMelded'] = phase_Neptune_melded
 
 
 planets=['mercury','venus','earth','mars','jupiter','saturn','uranus','neptune']
@@ -667,64 +717,32 @@ plt.show(block=False)
 
 
 
-
-
-#### Full Range of Vmag equations in Mallama
-# alphas_mercury = np.linspace(start=0.,stop=180.,num=np.ceil(180./3.),endpoint=True)
-# alphas_venus1 = np.linspace(start=0.,stop=163.7,num=np.ceil(163.7/3.),endpoint=True)
-# alphas_venus2 = np.linspace(start=163.7,stop=179.,num=np.ceil((179.-163.7)/3.),endpoint=True)
-# alphas_earth = np.linspace(start=0.,stop=180.,num=np.ceil(180./3.),endpoint=True)
-# alphas_mars1 = np.linspace(start=0.,stop=50.,num=np.ceil(50./3.),endpoint=True)
-# alphas_mars2 = np.linspace(start=50.,stop=180.,num=np.ceil((180.-50.)/3.),endpoint=True)
-# alphas_jupiter1 = np.linspace(start=0.,stop=12.,num=np.ceil(12./3.),endpoint=True)
-# alphas_jupiter2 = np.linspace(start=12.,stop=130.,num=np.ceil((130.-12.)/3.),endpoint=True)
-# alphas_saturn1 = np.linspace(start=0.,stop=6.5,num=np.ceil(6.5/3.),endpoint=True)
-# betas_saturn1 = np.linspace(start=0.,stop=27.,num=np.ceil(27./3.),endpoint=True)
-# alphas_saturn2 = np.linspace(start=0.,stop=6.5,num=np.ceil(6.5/3.),endpoint=True)
-# alphas_saturn3 = np.linspace(start=0.,stop=6.5,num=np.ceil(6.5/3.),endpoint=True)
-# alphas_saturn4 = np.linspace(start=6.,stop=150.,num=np.ceil((150.-6.5)/3.),endpoint=True)
-# alphas_uranus = np.linspace(start=0.,stop=154.,num=np.ceil(154./3.),endpoint=True)
-# phis_uranus = np.linspace(start=-82,stop=82.,num=np.ceil((82+82)/3.),endpoint=True)
-# alphas_neptune = np.linspace(start=0.,stop=133.14,num=np.ceil(133.14/3.),endpoint=True)
-# V_magsMercury = V_magMercury(alphas_mercury,planProp['mercury']['a']*u.m.to('AU'))
-# V_magsVenus_1 = V_magVenus_1(alphas_venus1,planProp['venus']['a']*u.m.to('AU'))
-# V_magsVenus_2 = V_magVenus_2(alphas_venus2,planProp['venus']['a']*u.m.to('AU'))
-# V_magsEarth = V_magEarth(alphas_earth,planProp['earth']['a']*u.m.to('AU'))
-# V_magsMars_1 = V_magMars_1(alphas_mars1,planProp['mars']['a']*u.m.to('AU'))
-# V_magsMars_2 = V_magMars_2(alphas_mars2,planProp['mars']['a']*u.m.to('AU'))
-# V_magsJupiter_1 = V_magJupiter_1(alphas_jupiter1,planProp['jupiter']['a']*u.m.to('AU'))
-# V_magsJupiter_2 = V_magJupiter_2(alphas_jupiter2,planProp['jupiter']['a']*u.m.to('AU'))
-# V_magsSaturn_1 = V_magSaturn_1(alphas_saturn1,planProp['saturn']['a']*u.m.to('AU'),beta=0.)
-# V_magsSaturn_2 = V_magSaturn_1(alphas_saturn2,planProp['saturn']['a']*u.m.to('AU'),beta=27.)
-# V_magsSaturn_3 = V_magSaturn_2(alphas_saturn3,planProp['saturn']['a']*u.m.to('AU'))
-# V_magsSaturn_4 = V_magSaturn_3(alphas_saturn4,planProp['saturn']['a']*u.m.to('AU'))
-# V_magsUranus_1 = V_magUranus(alphas_uranus,planProp['uranus']['a']*u.m.to('AU'),phi=-82.)
-# V_magsUranus_2 = V_magUranus(alphas_uranus,planProp['uranus']['a']*u.m.to('AU'),phi=0.)
-# V_magsUranus_3 = V_magUranus(alphas_uranus,planProp['uranus']['a']*u.m.to('AU'),phi=82.)
-# V_magsNeptune = V_magNeptune(alphas_neptune,planProp['neptune']['a']*u.m.to('AU'))
-
-# #### Plot Raw plane Visual Apparent Magnitudes ######################################################################
-# plt.close(1)
-# fig1 = plt.figure(num=1)
-# plt.plot(alphas_mercury,V_magsMercury,color='gray')
-# plt.plot(alphas_venus1,V_magsVenus_1,color='yellow', marker='x')
-# plt.plot(alphas_venus2,V_magsVenus_2,color='yellow',linestyle='--')
-# plt.plot(alphas_earth,V_magsEarth,color='blue')
-# plt.plot(alphas_mars1,V_magsMars_1,color='red', marker='x')
-# plt.plot(alphas_mars2,V_magsMars_2,color='red',linestyle='--')
-# plt.plot(alphas_jupiter1,V_magsJupiter_1,color='orange', marker='x')
-# plt.plot(alphas_jupiter2,V_magsJupiter_2,color='orange', linestyle='--')
-# plt.plot(alphas_saturn1,V_magsSaturn_1,color='gold', marker='x')
-# plt.plot(alphas_saturn2,V_magsSaturn_2,color='gold',linestyle='--')
-# plt.plot(alphas_saturn3,V_magsSaturn_3,color='gold',linestyle='.')
-# plt.plot(alphas_saturn4,V_magsSaturn_4,color='gold',linestyle='.-')
-# plt.plot(alphas_uranus,V_magsUranus_1,color='blue', marker='x')
-# plt.plot(alphas_uranus,V_magsUranus_2,color='blue', linestyle='--')
-# plt.plot(alphas_uranus,V_magsUranus_3,color='blue',linestyle='.')
-# plt.plot(alphas_neptune,V_magsNeptune,color='cyan')
+#### Calculate dMag vs s plots
+alphas = np.linspace(start=0.,stop=180.,num=360,endpoint=True)
+plt.close(66)
+fig66 = plt.figure(num=66)
+# plt.plot(alphas,phase_Saturn_melded(alphas))
 # plt.show(block=False)
-######################################################################################################################
-
+for i in np.arange(len(planets)):
+    planProp[planets[i]]['dmag'] = deltaMag(planProp[planets[i]]['p'], planProp[planets[i]]['R']*u.m, planProp[planets[i]]['a']*u.m,\
+            planProp[planets[i]]['phaseFuncMelded'](alphas))
+    planProp[planets[i]]['s'] = separation_from_alpha_ap(alphas*np.pi/180.,planProp[planets[i]]['a']*u.m).to('AU').value
+    plt.plot(planProp[planets[i]]['s'],planProp[planets[i]]['dmag'],color=planProp[planets[i]]['planet_labelcolors'],label=planProp[planets[i]]['planet_name'])
+plt.xlim([0.,32.])
+plt.ylim([19.,46.])
+plt.ylabel(r'$\Delta \mathrm{mag}$', weight='bold')
+plt.xlabel('Planet-Star Separation in AU', weight='bold')
+plt.legend()
+plt.show(block=False)
+#Save Plots
+# Save to a File
+date = str(datetime.datetime.now())
+date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+fname = 'dMagvsS_solarSystem' + folder.split('/')[-1] + '_' + date
+plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
+plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
+plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
+plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
 
 
 
