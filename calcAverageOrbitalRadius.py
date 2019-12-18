@@ -10,13 +10,13 @@ from matplotlib import cm
 import matplotlib.gridspec as gridspec
 
 def r_nuae(nu,a,e):
-    """
+    """ planet distance from central body as a function of true anomaly
     """
     r = a*(1.-e**2.)/(1.+e*np.cos(nu))
     return r
 
 def nu_Ee(E,e):
-    """
+    """ true anomaly as a function of Eccentric anomaly
     Args:
         E (float) - Eccentric anomaly
         e (float) - eccentricity
@@ -49,6 +49,18 @@ def E_nue(nu,e):
     E = out[0]
     return E
 
+#def ravg_analytical(e):
+
+nu = np.linspace(start=0.,stop=2.*np.pi,endpoint=True)
+plt.figure(1)
+plt.plot(nu,r_nuae(nu,1.,0.3))
+plt.show(block=False)
+
+#Test Integration
+out = quad(r_nuae,0.,2.*np.pi,args=(1.0,0.))
+r_avg = out[0]/(2.*np.pi)
+print(saltyburrito)
+
 #Test E_nue
 nu = np.pi/2.
 e = 0.3
@@ -61,7 +73,8 @@ e_s=np.linspace(start=0.,stop=1.,num=100)
 r_avg = np.zeros((len(a_s),len(e_s)))
 for ii,j in itertools.product(np.arange(len(a_s)),np.arange(len(e_s))):
     out = quad(r_nuae,0.,2.*np.pi,args=(a_s[ii],e_s[j]))
-    r_avg[ii,j] = out[0]
+    r_avg[ii,j] = out[0]/(2.*np.pi)
+    #1/(b-a)*int_a^b f(x)dx
 
 plt.close(1)
 fig = plt.figure(num=1)
@@ -75,8 +88,9 @@ ax0.set_xscale('symlog')
 cbar = fig.colorbar(cax, cax=ax1,orientation='vertical')
 cscaleMin = np.floor(np.nanmin(np.log10(r_avg))) # 10**min, min order of magnitude
 cscaleMax = np.ceil(np.nanmax(np.log10(r_avg))) # 10**max, max order of magnitude
-levels = 10.**np.arange(cscaleMin,cscaleMax+1)
-CS4 = ax1.contour(cax, colors=('k',), linewidths=(1,), origin='lower', levels=levels, norm=LogNorm())
+#levels = 10.**np.arange(cscaleMin,cscaleMax+1)
+levels = [5.,10.,20.,30.,40.,50.]
+CS4 = ax0.contour(cax, colors=('k',), linewidths=(1,), origin='lower', levels=levels, norm=LogNorm())
 ax1.set_ylabel('Average Orbital Radius',weight='bold')
 ax0.set_ylabel('Eccentricity', weight='bold')
 ax0.set_xlabel('Semi-major axis (unitless)',weight='bold')
