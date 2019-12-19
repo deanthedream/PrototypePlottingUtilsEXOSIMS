@@ -8,6 +8,8 @@ import matplotlib.pyplot as plt
 from matplotlib.colors import LogNorm
 from matplotlib import cm
 import matplotlib.gridspec as gridspec
+from EXOSIMS.util.eccanom import *
+from astropy import constants as const
 
 def r_nuae(nu,a,e):
     """ planet distance from central body as a function of true anomaly
@@ -26,30 +28,46 @@ def nu_Ee(E,e):
     nu = np.arccos((np.cos(E)-e)/(1.-e*np.cos(E)))
     return nu
 
-def nu_Ee_fsolve(E,nu,e):
-    """ A helper function for E_nue
-    Args:
-        E (float) - Eccentric Anomaly
-        nu (float) - ture anomaly
-        e (float) - eccentricity
-    Returns:
-        error (float) - 
-    """
-    return (np.cos(E)-e)/(1.-e*np.cos(E)) - np.cos(nu)
+#Next 2 functions are unnecessary???
+# def nu_Ee_fsolve(E,nu,e):
+#     """ A helper function for E_nue
+#     Args:
+#         E (float) - Eccentric Anomaly
+#         nu (float) - ture anomaly
+#         e (float) - eccentricity
+#     Returns:
+#         error (float) - 
+#     """
+#     return (np.cos(E)-e)/(1.-e*np.cos(E)) - np.cos(nu)
 
-def E_nue(nu,e):
-    """ Calculate Eccentric Anomaly Given true anomaly and eccentricity
+# def E_nue(nu,e):
+#     """ Calculate Eccentric Anomaly Given true anomaly and eccentricity
+#     Args:
+#         nu (float) - true anomaly
+#         e (float) - eccentricity
+#     Returns:
+#         E (float) - Eccentric Anomaly
+#     """
+#     out = fsolve(nu_Ee_fsolve,nu,args=(nu,e))
+#     E = out[0]
+#     return E
+
+def E_t(a,e,t):
+    """ Calculate Eccentric Anomaly From t
     Args:
-        nu (float) - true anomaly
+        a (float) - semi-major axis
         e (float) - eccentricity
+        t (float) - time
     Returns:
-        E (float) - Eccentric Anomaly
+        E (float) - eccentric anomaly
     """
-    out = fsolve(nu_Ee_fsolve,nu,args=(nu,e))
-    E = out[0]
+    #Assume 1 solar mass star
+    mu = const.G*const.M_sun
+    n = np.sqrt(mu/a**3.)
+    M = n*t
+    E = eccanom(M,e)
     return E
 
-#def ravg_analytical(e):
 
 nu = np.linspace(start=0.,stop=2.*np.pi,endpoint=True)
 plt.figure(1)
