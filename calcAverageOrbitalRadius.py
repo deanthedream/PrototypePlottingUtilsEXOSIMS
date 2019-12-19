@@ -10,6 +10,7 @@ from matplotlib import cm
 import matplotlib.gridspec as gridspec
 from EXOSIMS.util.eccanom import *
 from astropy import constants as const
+from matplotlib import ticker
 
 def r_nuae(nu,a,e):
     """ planet distance from central body as a function of true anomaly
@@ -52,6 +53,14 @@ def nu_Ee(E,e):
 #     E = out[0]
 #     return E
 
+def T_period(a,mu=const.G*const.M_sun):
+    """ Calculate orbital period in seconds??
+    Args:
+        a (float) - semi-major axis in units of AU
+    """
+    T = np.sqrt(mu.to('AU3/s2').value/a**3.)
+    return T
+
 def E_t(a,e,t):
     """ Calculate Eccentric Anomaly From t
     Args:
@@ -62,12 +71,65 @@ def E_t(a,e,t):
         E (float) - eccentric anomaly
     """
     #Assume 1 solar mass star
-    mu = const.G*const.M_sun
-    n = np.sqrt(mu/a**3.)
+    #mu = const.G*const.M_sun
+    n = 2.*np.pi/T_period(a) #in rad per second #np.sqrt(mu/a**3.)
     M = n*t
     E = eccanom(M,e)
     return E
 
+def r_avgt(a,e):
+    """Temporal average of planet-star distance
+    From Mendex et al. 2017 
+    """
+    r = a*(1+e**2./2.)
+    return r
+
+#Average Orbital Radius Test
+a = 1.
+e = 0.3
+T = T_period(a)
+ts = np.linspace(start=0.,stop=T,num=100.)
+Es = E_t(a,e,ts)
+nus = nu_Ee(Es,e)
+rs_1 = r_nuae(nus,a,e)
+r_avgt_1 = np.average(rs_1)
+r_avgt_2 = r_avgt(a,e)
+
+#### Example for A single a e combo
+# plt.close(1)
+# plt.plot([0.,2.*np.pi],[r_avgt_1,r_avgt_1],color='blue',label='numerical')
+# plt.plot([0.,2.*np.pi],[r_avgt_2,r_avgt_2],color='red',label='Mendez et al. 2017')
+# plt.plot(Es,rs_1,color='green',linestyle='--')
+# plt.show(block=False)
+
+####
+a_s=np.logspace(start=-2,stop=2,num=100)
+e_s=np.linspace(start=0.,stop=0.95,num=100)
+r_avgt_1 = np.zeros((len(a_s),len(e_s)))
+r_avgt_2 = np.zeros((len(a_s),len(e_s)))
+r_avgt_diff = np.zeros((len(a_s),len(e_s)))
+for ii,jj in itertools.product(np.arange(len(a_s)),np.arange(len(e_s))):
+    T = T_period(a_s[ii])
+    ts = np.linspace(start=0.,stop=T,num=100.)
+    Es = E_t(a_s[ii],e_s[jj],ts)
+    nus = nu_Ee(Es,e_s[jj])
+    rs_1 = r_nuae(nus,a_s[ii],e_s[jj])
+    r_avgt_1[ii,jj] = np.average(rs_1)
+    r_avgt_2[ii,jj] = r_avgt(a_s[ii],e_s[jj])
+    r_avgt_diff[ii,jj] = np.abs(r_avgt_1[ii,jj] - r_avgt_2[ii,jj])
+plt.close(2)
+levels=np.logspace(start=np.log(np.min(r_avgt_1)),stop=np.log(np.max(r_avgt_2)),num=300)
+fig2, (ax1,ax2,ax3) = plt.subplots(nrows=3, ncols=1, sharex=True, num=2)
+ax1.contourf(a_s,e_s,r_avgt_1,cmap='bwr',levels=levels, locator=ticker.LogLocator())
+ax2.contourf(a_s,e_s,r_avgt_2,cmap='bwr',levels=levels, locator=ticker.LogLocator())
+ax3.contourf(a_s,e_s,r_avgt_diff,cmap='bwr', locator=ticker.LogLocator())
+ax1.set_ylabel('eccentricity')
+ax2.set_ylabel('eccentricity')
+ax3.set_ylabel('eccentricity')
+ax3.set_xlabel('SMA')
+plt.show(block=False)
+
+print(saltyburrito)
 
 nu = np.linspace(start=0.,stop=2.*np.pi,endpoint=True)
 plt.figure(1)
