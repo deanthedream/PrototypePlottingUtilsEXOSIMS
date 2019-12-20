@@ -15,6 +15,7 @@ from scipy.interpolate import interp1d, PchipInterpolator
 from matplotlib import colors
 import datetime
 import re
+from scipy.misc import derivative
 
 folder = './'
 PPoutpath = './'
@@ -233,10 +234,66 @@ plt.figure(num=999)
 plt.plot(1.+d*np.cos(alpha),d*np.sin(alpha))
 plt.show(block=False)
 
+#### Functions for calculating dmag given s,ds,a_p,phaseFunc,dmagatsmax
 def separation_from_alpha_ap(alpha,a_p):
     s = a_p*np.sin(alpha)
     return s
 
+def ds_by_dalpha(alpha,a_p):
+    """calculates ds given alpha
+    Args:
+        alpha (float) - in radians
+        a_p (float) - in AU
+    """
+    ds_dalpha = a_p*np.cos(alpha)
+    return ds_dalpha
+
+def alpha_from_dmagapseparationdmagatsmax(sep,a_p,dmag,dmagatsmax):
+    """ Inverts separation_from_alpha_ap to calculate alpha from given observation
+    Args:
+        sep (float) - observed planet-star separation in AU
+        a_p (float) - planet-semi-major axis in AU
+        dmag (float) - observed dmag
+        dmagatsmax (float) - the dmag at smax
+    Returns:
+        alpha (float) - phase angle in radians
+    """
+    if np.all(dmag >= dmagatsmax): # on poor side of phase curve
+        #assert np.all(np.abs(sep/a_p) <= 1.), 'Invalid sep or a_p'
+        alpha = np.zeros(len(sep)) + np.pi/2.
+        inds = np.where(sep < a_p)[0]
+        alpha[inds] = np.pi - np.arcsin(sep[inds]/a_p)
+    else: #dmag < d,agatsmax
+        #assert np.all(np.abs(sep/a_p) <= 1.), 'Invalid sep or a_p'
+        alpha = np.zeros(len(sep)) + np.pi/2.
+        inds = np.where(sep < a_p)[0]
+        alpha[inds] = np.arcsin(sep[inds]/a_p)
+    return alpha
+
+def dalpha_given_ds_alpha(alpha,a_p,ds):
+    """ Calculates 
+    """
+    dalpha = ds/(a_p*np.cos(alpha))
+    return dalpha
+
+def calc_dPhi(phaseFunc,a_p,s,ds,dmag,dmagatsmax):
+    """ Calculated dPhi given an observation and phase function
+    """
+    alpha = alpha_from_dmagapseparationdmagatsmax(s,a_p,dmag,dmagatsmax)
+    dalpha = dalpha_given_ds_alpha(alpha,a_p,ds)
+    dPhi = derivative(phaseFunc,x0=alpha,dx=dalpha)
+    return dPhi
+
+def calc_ddmag(phaseFunc,a_p,separation,ds,dmag,dmagatsmax):
+    """ Calculates ddmag given the above parameters
+    """
+    alpha = alpha_from_dmagapseparationdmagatsmax(separation,a_p,dmag,dmagatsmax)
+    dPhi = calc_dPhi(phaseFunc,a_p,separation,ds,dmag,dmagatsmax)
+    ddmag = -2.5*dPhi/(phaseFunc(alpha)*np.log(10))
+    return ddmag
+
+
+#### Flux Radios
 def fluxRatio_fromVmag(Vmag):
     """Calculates The Flux Ratio from a given Vmag
     """
@@ -443,6 +500,9 @@ def phase_Jupiter_1(alpha):
 def phase_Jupiter_2(alpha):
     """ Valid from 12 to 130 deg
     """
+    inds = np.where(alpha > 180.)[0]
+    alpha[inds] = [180.]*len(inds)
+    assert np.all((1.0 - 1.507*(alpha/180.) - 0.363*(alpha/180.)**2. - 0.062*(alpha/180.)**3.+ 2.809*(alpha/180.)**4. - 1.876*(alpha/180.)**5.) >= 0.), "error in alpha input"
     difference = phase_Jupiter_1(12.) - 10.**(-0.4*(- 2.5*np.log10(1.0 - 1.507*(12./180.) - 0.363*(12./180.)**2. - 0.062*(12./180.)**3.+ 2.809*(12./180.)**4. - 1.876*(12./180.)**5.)))
     phase = difference + 10.**(-0.4*(- 2.5*np.log10(1.0 - 1.507*(alpha/180.) - 0.363*(alpha/180.)**2. - 0.062*(alpha/180.)**3.+ 2.809*(alpha/180.)**4. - 1.876*(alpha/180.)**5.)))
     return phase
@@ -718,31 +778,110 @@ plt.show(block=False)
 
 
 #### Calculate dMag vs s plots
-alphas = np.linspace(start=0.,stop=180.,num=360,endpoint=True)
+uncertainty_dmag = 0.01 #HabEx requirement is 1%
+uncertainty_s = 5.*u.mas.to('rad')*10.*u.pc.to('AU')
+alphas = np.linspace(start=0.,stop=180.,num=1200.,endpoint=True)
 plt.close(66)
 fig66 = plt.figure(num=66)
-# plt.plot(alphas,phase_Saturn_melded(alphas))
-# plt.show(block=False)
 for i in np.arange(len(planets)):
     planProp[planets[i]]['dmag'] = deltaMag(planProp[planets[i]]['p'], planProp[planets[i]]['R']*u.m, planProp[planets[i]]['a']*u.m,\
             planProp[planets[i]]['phaseFuncMelded'](alphas))
     planProp[planets[i]]['s'] = separation_from_alpha_ap(alphas*np.pi/180.,planProp[planets[i]]['a']*u.m).to('AU').value
-    plt.plot(planProp[planets[i]]['s'],planProp[planets[i]]['dmag'],color=planProp[planets[i]]['planet_labelcolors'],label=planProp[planets[i]]['planet_name'])
-plt.xlim([0.,32.])
+
+    tmpColor = list(planProp[planets[i]]['planet_labelcolors'])
+    tmpColor[3] = 0.3
+    tmpColor = tuple(tmpColor)
+    #Find Index where smax occurs
+    smaxInd = np.argmax(planProp[planets[i]]['s'])
+    dmag_at_smax = planProp[planets[i]]['dmag'][smaxInd] #dmag value at smax
+    indsLTdmag_at_smax = np.arange(smaxInd+1) #all inds where s is less than smax from 0 to dmag at smax
+    indsGTdmag_at_smax = np.arange(len(planProp[planets[i]]['s']) - (smaxInd+1)) + (len(planProp[planets[i]]['s']) - (smaxInd+1)) #all inds where s is less than smax from dmag at smax to the max dmag
+
+    #Below dmag at smax Lower
+    tmps1 = planProp[planets[i]]['s'][indsLTdmag_at_smax]+uncertainty_s
+    tmpdmag1 = deltaMag(planProp[planets[i]]['p'], planProp[planets[i]]['R']*u.m, planProp[planets[i]]['a']*u.m,\
+            planProp[planets[i]]['phaseFuncMelded'](180./np.pi*alpha_from_dmagapseparationdmagatsmax(tmps1,planProp[planets[i]]['a']*u.m.to('AU'),[0.9*dmag_at_smax]*len(tmps1),dmag_at_smax)))
+    dmagReplacementInds1 = np.where(tmps1>planProp[planets[i]]['s'][smaxInd])[0]
+    tmpdmag1[dmagReplacementInds1] = [dmag_at_smax]*len(dmagReplacementInds1)
+    plt.fill_between(planProp[planets[i]]['s'][indsLTdmag_at_smax]+uncertainty_s,(1.-uncertainty_dmag)*planProp[planets[i]]['dmag'][indsLTdmag_at_smax],tmpdmag1,color=tmpColor,edgecolor=tmpColor)#,alpha=0.3,linewidth=0.0)
+    
+    #Below dmag at smax Upper
+    #1. Calculate slope of line
+    indsLTdmag_at_smax2 = np.arange(smaxInd+1) #all inds where s is less than smax from 0 to dmag at smax
+    ddmag2 = calc_ddmag(planProp[planets[i]]['phaseFuncMelded'],planProp[planets[i]]['a']*u.m.to('AU'),planProp[planets[i]]['s'][indsLTdmag_at_smax2],uncertainty_s,planProp[planets[i]]['dmag'][indsLTdmag_at_smax2],dmag_at_smax)
+    tmpAlphas = alpha_from_dmagapseparationdmagatsmax(planProp[planets[i]]['s'][indsLTdmag_at_smax2],planProp[planets[i]]['a']*u.m.to('AU'),planProp[planets[i]]['dmag'][indsLTdmag_at_smax2],dmag_at_smax)
+    tmpds = ds_by_dalpha(tmpAlphas,planProp[planets[i]]['a']*u.m.to('AU'))
+    tmpThetas = np.arctan2(ddmag2,tmpds)
+    #2. find upper limit of the lower portion as x,y coordinates by
+    xs = planProp[planets[i]]['s'][indsLTdmag_at_smax2] - uncertainty_s*np.sin(tmpAlphas)
+    ys = planProp[planets[i]]['dmag'][indsLTdmag_at_smax2]*(1. + uncertainty_dmag*np.cos(tmpAlphas))
+    tmpdmag2 = deltaMag(planProp[planets[i]]['p'], planProp[planets[i]]['R']*u.m, planProp[planets[i]]['a']*u.m,\
+            planProp[planets[i]]['phaseFuncMelded'](180./np.pi*alpha_from_dmagapseparationdmagatsmax(xs,planProp[planets[i]]['a']*u.m.to('AU'),[0.9*dmag_at_smax]*len(tmps1),dmag_at_smax)))
+    plt.fill_between(xs,tmpdmag2,ys,color=tmpColor,edgecolor=tmpColor)#,alpha=0.3,linewidth=0.0)
+
+
+    #inside Phase Curve bounded by upper and lower
+    xs2 = np.linspace(start=np.max(planProp[planets[i]]['s'][indsLTdmag_at_smax2] - uncertainty_s*np.sin(tmpAlphas)), stop=np.max(planProp[planets[i]]['s'][indsLTdmag_at_smax2]))
+    ys2_lower = deltaMag(planProp[planets[i]]['p'], planProp[planets[i]]['R']*u.m, planProp[planets[i]]['a']*u.m,\
+            planProp[planets[i]]['phaseFuncMelded'](180./np.pi*alpha_from_dmagapseparationdmagatsmax(xs2,planProp[planets[i]]['a']*u.m.to('AU'),[0.9*dmag_at_smax]*len(tmps1),dmag_at_smax)))
+    ys2_upper = deltaMag(planProp[planets[i]]['p'], planProp[planets[i]]['R']*u.m, planProp[planets[i]]['a']*u.m,\
+            planProp[planets[i]]['phaseFuncMelded'](180./np.pi*alpha_from_dmagapseparationdmagatsmax(xs2,planProp[planets[i]]['a']*u.m.to('AU'),[1.1*dmag_at_smax]*len(tmps1),dmag_at_smax)))
+    plt.fill_between(xs2,ys2_lower,ys2_upper,color=tmpColor,edgecolor=tmpColor)#,alpha=0.3,)#linewidth=0.0)
+
+    #Above dmag at smax lower
+    #1. Calculate slope of line
+    indsLTdmag_at_smax2 = np.arange(smaxInd+1) #all inds where s is less than smax from 0 to dmag at smax
+    ddmag3 = calc_ddmag(planProp[planets[i]]['phaseFuncMelded'],planProp[planets[i]]['a']*u.m.to('AU'),planProp[planets[i]]['s'][indsGTdmag_at_smax],uncertainty_s,planProp[planets[i]]['dmag'][indsGTdmag_at_smax],dmag_at_smax)
+    tmpAlphas2 = alpha_from_dmagapseparationdmagatsmax(planProp[planets[i]]['s'][indsGTdmag_at_smax],planProp[planets[i]]['a']*u.m.to('AU'),planProp[planets[i]]['dmag'][indsGTdmag_at_smax],dmag_at_smax)
+    tmpds2 = ds_by_dalpha(tmpAlphas2,planProp[planets[i]]['a']*u.m.to('AU'))
+    tmpThetas2 = np.arctan2(ddmag3,tmpds2)
+    #2. find upper limit of the lower portion as x,y coordinates by
+    xs3 = planProp[planets[i]]['s'][indsGTdmag_at_smax] - uncertainty_s*np.sin(tmpAlphas2)
+    ys3 = planProp[planets[i]]['dmag'][indsGTdmag_at_smax]*(1. + uncertainty_dmag*np.cos(tmpAlphas2))
+    tmpdmag3 = deltaMag(planProp[planets[i]]['p'], planProp[planets[i]]['R']*u.m, planProp[planets[i]]['a']*u.m,\
+            planProp[planets[i]]['phaseFuncMelded'](180./np.pi*alpha_from_dmagapseparationdmagatsmax(xs3,planProp[planets[i]]['a']*u.m.to('AU'),[1.1*dmag_at_smax]*len(tmps1),dmag_at_smax)))
+    plt.fill_between(xs3,ys3,tmpdmag3,color=tmpColor,edgecolor=tmpColor)#,alpha=0.3,linewidth=0.0)
+
+    #Above dmag at smax upper
+    indsGTdmag_at_smax2 = np.arange(smaxInd+1) #all inds where s is less than smax from 0 to dmag at smax
+    ddmag4 = calc_ddmag(planProp[planets[i]]['phaseFuncMelded'],planProp[planets[i]]['a']*u.m.to('AU'),planProp[planets[i]]['s'][indsGTdmag_at_smax],uncertainty_s,planProp[planets[i]]['dmag'][indsGTdmag_at_smax],dmag_at_smax)
+    tmpAlphas4 = alpha_from_dmagapseparationdmagatsmax(planProp[planets[i]]['s'][indsGTdmag_at_smax],planProp[planets[i]]['a']*u.m.to('AU'),planProp[planets[i]]['dmag'][indsGTdmag_at_smax],dmag_at_smax)
+    tmpds4 = ds_by_dalpha(tmpAlphas4,planProp[planets[i]]['a']*u.m.to('AU'))
+    tmpThetas4 = np.arctan2(ddmag4,tmpds4)
+    #2. find upper limit of the lower portion as x,y coordinates by
+    xs4 = planProp[planets[i]]['s'][indsGTdmag_at_smax] + uncertainty_s*np.sin(tmpAlphas4)
+    ys4 = planProp[planets[i]]['dmag'][indsGTdmag_at_smax]*(1. - uncertainty_dmag*np.cos(tmpAlphas4))
+    tmpdmag4 = deltaMag(planProp[planets[i]]['p'], planProp[planets[i]]['R']*u.m, planProp[planets[i]]['a']*u.m,\
+            planProp[planets[i]]['phaseFuncMelded'](180./np.pi*alpha_from_dmagapseparationdmagatsmax(xs4,planProp[planets[i]]['a']*u.m.to('AU'),[1.1*dmag_at_smax]*len(tmps1),dmag_at_smax)))
+    plt.fill_between(xs4,tmpdmag4,ys4,color=tmpColor,edgecolor=tmpColor)#,alpha=0.3,linewidth=0.0)
+
+    #Plot Central Line
+    plt.plot(planProp[planets[i]]['s'],planProp[planets[i]]['dmag'],color=planProp[planets[i]]['planet_labelcolors'],label=planProp[planets[i]]['planet_name'].capitalize())
+
+
+#ADD SMIN FOR TELESCOPE
+IWA_HabEx = 0.045*u.arcsec #taken from a Habex Script in units of mas
+smin_telescope = IWA_HabEx.to('rad').value*10.*u.pc.to('AU') #IWA for HabEx 45 mas observing target at 10 pc
+plt.plot([smin_telescope,smin_telescope],[10.,70.],color='black',linestyle='-')
+
+plt.text(7,19.5,'Credit: Dean Keithly',fontsize='small',fontweight='normal')
+plt.text(1.05*smin_telescope,42,'IWA at\n10 pc',fontsize='medium',fontweight='bold',rotation=90)
+plt.xlim([1e-1,32.])
 plt.ylim([19.,46.])
-plt.ylabel(r'$\Delta \mathrm{mag}$', weight='bold')
-plt.xlabel('Planet-Star Separation in AU', weight='bold')
+plt.xscale('log')
+plt.ylabel('Planet-Star ' + r'$\Delta \mathrm{mag}$', weight='bold')
+plt.xlabel('Projected Planet-Star Separation, ' + r'$s$,' +' in AU', weight='bold')
 plt.legend()
 plt.show(block=False)
 #Save Plots
 # Save to a File
-date = str(datetime.datetime.now())
-date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
-fname = 'dMagvsS_solarSystem' + folder.split('/')[-1] + '_' + date
-plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
-plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
-plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
-plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
+# date = str(datetime.datetime.now())
+# date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+# fname = 'dMagvsS_solarSystem' + folder.split('/')[-1] + '_' + date
+# plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
+# plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
+# plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
+# plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
 
 
 
