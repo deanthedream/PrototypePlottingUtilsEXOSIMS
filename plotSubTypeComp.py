@@ -3,6 +3,7 @@
 import sys, os.path, EXOSIMS, EXOSIMS.MissionSim
 import datetime
 import re
+import astropy.units as u
 
 folder = os.path.normpath(os.path.expandvars('$HOME/Documents/exosims/Scripts/'))
 filename = 'compSubtype2.json'
@@ -38,22 +39,22 @@ plt.contourf(comp.xnew,comp.ynew,comp.Cpdf_earthLike,cmap='jet', locator=ticker.
 plt.show(block=False)
 
 
-#### Plot Sub-Type JPDF
-for ii,j in itertools.product(np.arange(len(comp.Rp_hi)),np.arange(len(comp.L_lo[:,0]))):
-    if np.max(comp.Cpdf_hs[ii,j]) == 0.:
-        print('Skipping: ' + str(ii) + ',' + str(j))
-        continue
-    plt.close(88853333333111+int(ii)*len(comp.Rp_hi)+int(j))
-    plt.figure(num=88853333333111+int(ii)*len(comp.Rp_hi)+int(j))
-    plt.title(str(ii) + ',' + str(j))
-    plt.contourf(comp.xnew,comp.ynew,comp.Cpdf_hs[ii,j],cmap='jet', locator=ticker.LogLocator())
-    plt.show(block=False)
-
-plt.close('all')
+#### Plot Sub-Type JPDF ##########################################################
+def plotIndividualSubTypeJPDFs(comp):
+    for ii,j in itertools.product(np.arange(len(comp.Rp_hi)),np.arange(len(comp.L_lo[:,0]))):
+        if np.max(comp.Cpdf_hs[ii,j]) == 0.:
+            print('Skipping: ' + str(ii) + ',' + str(j))
+            continue
+        plt.close(88853333333111+int(ii)*len(comp.Rp_hi)+int(j))
+        plt.figure(num=88853333333111+int(ii)*len(comp.Rp_hi)+int(j))
+        plt.title(str(ii) + ',' + str(j))
+        plt.contourf(comp.xnew,comp.ynew,comp.Cpdf_hs[ii,j],cmap='jet', locator=ticker.LogLocator())
+        plt.show(block=False)
+#plotIndividualSubTypeJPDFs(comp)
 ##################################################
 
 
-#### Plot Gridspec of Kopparapu Bins
+#### Plot Gridspec of Kopparapu Bins 1111111111111111111111111111111111111
 plt.close(1)
 fig = plt.figure(num=1, figsize=(len(comp.L_lo[0,:])*3,len(comp.Rp_bins)*3+0.75))
 numRows = len(comp.Rp_bins)-1+1 #Rp bins + 1 colorbar
@@ -109,6 +110,18 @@ for ii,j in itertools.product(np.arange(len(comp.Rp_hi)),np.arange(len(comp.L_lo
     axij[ii,j].text(0.5,45, comp.type_names[ii,j], weight='bold')
     #Add total Count per grid
     axij[ii,j].text(16,41, "{:.2e}".format(comp.count_hs[ii,j]),weight='bold')
+    #Add bounding edges
+    #sranges = list()
+    for k in np.arange(len(comp.jpdf_props['lower_limits'][ii,j])):
+        start = comp.jpdf_props['lower_limits'][ii,j][k]
+        stop = comp.jpdf_props['upper_limits'][ii,j][k]
+        sranges = np.linspace(start=start,stop=stop,num=100)
+        # if len(sranges[0]) == 5:
+        #     print(saltyburrito)
+
+        axij[ii,j].plot(sranges,comp.jpdf_props['limit_funcs'][ii,j][k](sranges),color='black')
+    #axij[ii,j].plot(sranges[1],comp.jpdf_props['limit_funcs'][ii,j][1](sranges[1]*u.AU),color='black')
+    #axij[ii,j].plot(sranges[2],comp.jpdf_props['limit_funcs'][ii,j][2](sranges[2]*u.AU),color='black')
 
 #Temporary For coloring purposes, pop hist
 plt.close(9000)
@@ -148,6 +161,8 @@ plt.xlabel('Planet-star Separation ' + r'$(s)$' + ' in AU', weight='bold')
 plt.ylabel('Planet-star Difference in Magnitude', weight='bold')
 
 plt.show(block=False)
+print(saltyburrito)
+
 
 plt.figure(fig.number)
 fname = 'JPDFsubtype_' + folder.split('/')[-1] + '_' + date
