@@ -100,7 +100,7 @@ ymax=50.
 # | gs[18] gs[19] gs[20] |
 # | gs[21] gs[22] gs[23] |
 ###---------------------------------------------------------
-axCBAR = plt.subplot(gs[0:2])
+axCBAR = plt.subplot(gs[0:3])
 axij = dict()
 for ii,j in itertools.product(np.arange(len(comp.Rp_hi)-1)+1,np.arange(len(comp.L_lo[0,:])-2)+1):
     #DELETE axij[ii,j] = plt.subplot(gs[5+j+ii*len(comp.L_lo[0,:])]) #old mapping
