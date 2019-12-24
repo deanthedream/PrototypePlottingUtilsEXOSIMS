@@ -4,6 +4,8 @@ import sys, os.path, EXOSIMS, EXOSIMS.MissionSim
 import datetime
 import re
 import astropy.units as u
+from scipy.stats import norm
+from scipy.integrate import nquad
 
 folder = os.path.normpath(os.path.expandvars('$HOME/Documents/exosims/Scripts/'))
 filename = 'compSubtype2.json'
@@ -59,10 +61,34 @@ def plotIndividualSubTypeJPDFs(comp):
 #plotIndividualSubTypeJPDFs(comp)
 ##################################################
 
+#Calculate Sub-type Probability 
+earth_separation = 0.7 #AU
+earth_dmag = 23. #planet-star difference in magnitude
+uncertainty_dmag = 0.01 #HabEx requirement is 1%
+uncertainty_s = 5.*u.mas.to('rad')*10.*u.pc.to('AU')
+f_sep = norm(earth_separation,uncertainty_s)
+f_dmag = norm(earth_dmag,uncertainty_dmag)
+prob1 = dict() #contians probabilities exoplanet is in this bin...
+normProb1 = dict()
+dmag_range = np.linspace(start=10.,stop=45.,num=500)
+s_range = np.linspace(start=0.,stop=20.,num=500)
+for ii,j in itertools.product(np.arange(len(comp.Rp_hi)),np.arange(len(comp.L_lo[0,:]))):
+    if comp.count_hs[ii,j] == 0.:
+        prob1[ii,j] = 0.
+        normProb1[ii,j] = 0.
+    else:
+        res = nquad(lambda si,dmagi:f_sep.cdf(si)*f_dmag.cdf(dmagi)*comp.EVPOCpdf_hs[ii,j].ev(si,dmagi),\
+                ranges=[(earth_separation-3.*uncertainty_s,earth_separation+3.*uncertainty_s),\
+                    (earth_dmag-3.*uncertainty_dmag*earth_dmag,earth_dmag+3.*uncertainty_dmag*earth_dmag)])
+            #comp.comp_calc2(s_min, s_max, dMag_min, dMag_max, subpop=-2)
+            #nquad(EVPOCpdf_pop.ev(si,smagi)
+        prob1[ii,j] = res[0]
+        normProb1[ii,j] = prob1[ii,j]/(comp.count_hs[ii,j]/comp.count_pop)
+print('Done Calculating Ingetrals')
 
 #### Plot Gridspec of Kopparapu Bins 1111111111111111111111111111111111111
 plt.close(9876)
-fig9876 = plt.figure(num=9876, figsize=(len(comp.L_lo[0,:]-2)*4,len(comp.Rp_bins-1)*4+0.75))
+fig9876 = plt.figure(num=9876, figsize=(len(comp.L_lo[0,:]-2)*3,len(comp.Rp_bins-1)*1.5+0.25))
 numRows = len(comp.Rp_bins)-1-1+1 #Rp bins + 1 colorbar
 numCols = len(comp.L_lo[0,:])-2 #Luminosity bins
 #height_ratios = ([0.75] + [3,0.5]*(len(comp.Rp_bins)-1))[:-1]
@@ -85,9 +111,13 @@ levels = 10.**np.arange(cscaleMin,cscaleMax+1)
 
 #Find xmin, xmax, ymin, ymax
 xmin=0.
+xmin2 = 1e-1
 xmax=25.
+xmax2=17.
 ymin=15.
 ymax=50.
+ymax2=40.
+xscale = 'linear'
 
 #What the plot layout looks like
 ###---------------------------------------------------------
@@ -106,22 +136,27 @@ for ii,j in itertools.product(np.arange(len(comp.Rp_hi)-1)+1,np.arange(len(comp.
     #DELETE axij[ii,j] = plt.subplot(gs[5+j+ii*len(comp.L_lo[0,:])]) #old mapping
     axij[ii,j] = plt.subplot(gs[2+j+(len(comp.Rp_hi)-1-ii)*(len(comp.L_lo[0,:])-2)])#3 from cbar, j iterates over row rest defines starting spot
     axij[ii,j].contourf(comp.xnew,comp.ynew,comp.Cpdf_hs[ii,j],cmap='jet', levels=levels, norm = LogNorm())
-    axij[ii,j].set_xlim([xmin,xmax])
-    axij[ii,j].set_ylim([ymin,ymax])
-    axij[ii,j].text(18.5,45,'(i:' + str(ii) + ',j:' + str(j) + ')', weight='bold')
+    axij[ii,j].set_xlim([xmin2,xmax2])
+    axij[ii,j].set_ylim([ymin,ymax2])
+    #KEEP FOR LATER axij[ii,j].text(10,35,'(i:' + str(ii) + ',j:' + str(j) + ')', weight='bold')
     if j != 1:
         axij[ii,j].get_yaxis().set_visible(False)
     if ii != 1:#len(comp.Rp_hi)-1:
         axij[ii,j].get_xaxis().set_visible(False)
-    axij[ii,j].text(0.5,45, comp.type_names[ii,j], weight='bold')
+    t = axij[ii,j].text(0.2,37.0, comp.type_names[ii,j], weight='bold')
+    t.set_bbox(dict(facecolor='white', alpha=0.7, edgecolor='black'))
     #Add total Count per grid
-    axij[ii,j].text(16,41, "{:.2e}".format(comp.count_hs[ii,j]),weight='bold')
+    #t = axij[ii,j].text(12,31,  comp.type_names[ii,j] + "\n" +  "{:.2e}".format(comp.count_hs[ii,j]),weight='bold')
+    t = axij[ii,j].text(8.05,31,  r"$Count=$" + "{:.2e}".format(comp.count_hs[ii,j]) + "\n" + \
+                r"$P(ij,s,\Delta mag)=$" + "{:.2e}".format(prob1[ii,j]) + "\n" + r"$P_{n}(ij,s,\Delta mag)=$" + "{:.2e}".format(normProb1[ii,j]), weight='bold')
+    t.set_bbox(dict(facecolor='white', alpha=0.7, edgecolor='black'))
     #Add bounding edges
     for k in np.arange(len(comp.jpdf_props['lower_limits'][ii,j])):
         start = comp.jpdf_props['lower_limits'][ii,j][k]
         stop = comp.jpdf_props['upper_limits'][ii,j][k]
         sranges = np.linspace(start=start,stop=stop,num=200)
         axij[ii,j].plot(sranges,comp.jpdf_props['limit_funcs'][ii,j][k](sranges),color='black')
+    axij[ii,j].plot([comp.jpdf_props['upper_limits'][ii,j][2].value,comp.jpdf_props['upper_limits'][ii,j][2].value], [comp.jpdf_props['limit_funcs'][ii,j][2](comp.jpdf_props['upper_limits'][ii,j][2]),comp.jpdf_props['limit_funcs'][ii,j][3](comp.jpdf_props['upper_limits'][ii,j][2])],color='black') #Add vertical black line
     #Add bounding edges For Other in Column
     for ii2 in (np.arange(len(comp.Rp_hi)-ii-1-1)+ii+1+1): #All plots above this one in the column
         for k in np.arange(len(comp.jpdf_props['lower_limits'][ii2,j])-1):
@@ -130,13 +165,10 @@ for ii,j in itertools.product(np.arange(len(comp.Rp_hi)-1)+1,np.arange(len(comp.
             sranges = np.linspace(start=start,stop=stop,num=200)
             axij[ii,j].plot(sranges,comp.jpdf_props['limit_funcs'][ii2,j][k](sranges),color='red',linewidth=1.0)
     #Add dmag and s, (dmag=23, s=0.7) - Earth from dmag vs s plot of solar system
-    earth_separation = 0.7 #AU
-    earth_dmag = 23. #planet-star difference in magnitude
-    axij[ii,j].scatter(earth_separation,earth_dmag,c='white',s=2,edgecolor='black',linewidth=0.5)
+    axij[ii,j].scatter(earth_separation,earth_dmag,c='white',s=3,edgecolor='red',linewidth=0.5)
     #Add ddmag and ds Error Bars
-    uncertainty_dmag = 0.01 #HabEx requirement is 1%
-    uncertainty_s = 5.*u.mas.to('rad')*10.*u.pc.to('AU')
-    axij[ii,j].errorbar(earth_separation, earth_dmag, yerr=[uncertainty_dmag*earth_dmag,], xerr=[uncertainty_s], fmt='--',color='black',linewidth=1)
+    axij[ii,j].errorbar(earth_separation, earth_dmag, yerr=[3.*uncertainty_dmag*earth_dmag,], xerr=[3.*uncertainty_s], fmt='--',color='red',linewidth=1)
+    axij[ii,j].set_xscale(xscale)
 fig9876.tight_layout(pad=0)
 
 #Temporary For coloring purposes, pop hist
@@ -150,14 +182,17 @@ for k in np.arange(len(comp.lower_limits)):
     stop = comp.upper_limits[k]
     sranges = np.linspace(start=start,stop=stop,num=200)
     ax1.plot(sranges, comp.dmag_limit_functions[k](sranges),color='black')
+ax1.plot([comp.upper_limits[2].value,comp.upper_limits[2].value], [comp.dmag_limit_functions[2](comp.upper_limits[2]),comp.dmag_limit_functions[3](comp.upper_limits[2])],color='black') #Add pop. vertical black line
 for ii,j in itertools.product(np.arange(len(comp.Rp_hi)-1)+1,np.arange(len(comp.L_lo[0,:])-2)+1):
     for k in np.arange(len(comp.jpdf_props['lower_limits'][ii,j])):
         start = comp.jpdf_props['lower_limits'][ii,j][k]
         stop = comp.jpdf_props['upper_limits'][ii,j][k]
         sranges = np.linspace(start=start,stop=stop,num=200)
         ax1.plot(sranges,comp.jpdf_props['limit_funcs'][ii,j][k](sranges),color='black', zorder=10)
+    ax1.plot([comp.jpdf_props['upper_limits'][ii,j][2].value,comp.jpdf_props['upper_limits'][ii,j][2].value], [comp.jpdf_props['limit_funcs'][ii,j][2](comp.jpdf_props['upper_limits'][ii,j][2]),comp.jpdf_props['limit_funcs'][ii,j][3](comp.jpdf_props['upper_limits'][ii,j][2])],color='black') #Add vertical black line
 ax1.set_ylim([ymin,ymax])
-ax1.set_xlim([xmin,xmax])
+ax1.set_xlim([xmin2,xmax2])
+ax1.set_xscale(xscale)
 
 #Add Colorbar, and pop dist
 cbar = fig9876.colorbar(cax, cax=axCBAR, orientation='horizontal')#pad=0.05,
@@ -168,10 +203,10 @@ cbar.add_lines(CS4)
 plt.title('SAG13 Population JPDF', weight='bold')
 plt.xlabel('Luminosity Scaled Planet-star Separation ' + r'$(s/\sqrt{L})$' + ' in AU', weight='bold')
 plt.ylabel('Planet-star Difference in Magnitude', weight='bold')
-plt.text(20,48,"{:.2e}".format(comp.count_pop),weight='bold')
+plt.text(15,30,"{:.2e}".format(comp.count_pop),weight='bold')
 
 #Add Labels
-fig9876.text(0.5, 0.075, 'Luminosity Scaled Planet-star Separation ' + r'$(s/\sqrt{L})$' + ' in AU', ha='center', weight='bold')
+fig9876.text(0.5, 0.055, 'Luminosity Scaled Planet-star Separation ' + r'$(s/\sqrt{L})$' + ' in AU', ha='center', weight='bold')
 fig9876.text(0.09, 0.5, 'Planet-star Difference in Magnitude', va='center', rotation='vertical', weight='bold')
 
 #### add Earth-Like dist
@@ -181,13 +216,33 @@ ax2= plt.gca()
 cax2 = ax2.contourf(comp.xnew, comp.ynew, comp.Cpdf_earthLike, extent=[xmin, xmax, ymin, ymax], cmap='jet', levels=levels, norm = LogNorm())
 CS42 = ax2.contour(cax2, colors=('k',), linewidths=(1,), origin='lower', levels=levels, norm = LogNorm())
 ax2.set_ylim([ymin,ymax])
-ax2.set_xlim([xmin,xmax])
+ax2.set_xlim([xmin2,xmax2])
+ax2.set_xscale(xscale)
 plt.text(20,48,"{:.2e}".format(comp.count_earthLike),weight='bold')
 plt.title('SAG13 Earth-Like Sub-Population JPDF', weight='bold')
 plt.xlabel('Luminosity Scaled Planet-star Separation ' + r'$(s/\sqrt{L})$' + ' in AU', weight='bold')
 plt.ylabel('Planet-star Difference in Magnitude', weight='bold')
 
 plt.show(block=False)
+plt.figure(fig9876.number)
+fname = 'JPDFsubtype_' + folder.split('/')[-1] + '_' + date
+plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=600)
+plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
+plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=600)
+plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=600)
+plt.figure(figpop.number)
+fname = 'JPDFpop_' + folder.split('/')[-1] + '_' + date
+plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=600)
+plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
+plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=600)
+plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=600)
+plt.figure(figearth.number)
+fname = 'JPDFearth_' + folder.split('/')[-1] + '_' + date
+plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=600)
+plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
+plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=600)
+plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=600)
+
 print(saltyburrito)
 ###########################################################################
 
