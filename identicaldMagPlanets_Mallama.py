@@ -875,13 +875,13 @@ plt.legend()
 plt.show(block=False)
 #Save Plots
 # Save to a File
-# date = str(datetime.datetime.now())
-# date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
-# fname = 'dMagvsS_solarSystem' + folder.split('/')[-1] + '_' + date
-# plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
-# plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
-# plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
-# plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
+date = str(datetime.datetime.now())
+date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+fname = 'dMagvsS_solarSystem' + folder.split('/')[-1] + '_' + date
+plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
+plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
+plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
+plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
 
 
 
