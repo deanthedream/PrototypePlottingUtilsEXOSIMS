@@ -528,3 +528,79 @@ plt.show(block=False)
 
 ###############################################################################
 
+
+#### Plot Kopparapu Grid###################################################
+import sys, os.path, EXOSIMS, EXOSIMS.MissionSim
+folder = os.path.normpath(os.path.expandvars('$HOME/Documents/exosims/Scripts/'))
+filename = 'compSubtype2.json'
+
+scriptfile = os.path.join(folder,filename)
+sim = EXOSIMS.MissionSim.MissionSim(scriptfile,nopar=True)
+comp = sim.Completeness
+plt.close(88888)
+figGrid = plt.figure(num=88888)
+
+#Plot Nodes
+for i in np.arange(len(comp.Rp_bins)-1):
+    plt.scatter(comp.L_bins[i],np.zeros(len(comp.L_bins[i]))+comp.Rp_bins[i],color='blue',alpha=0.5)
+#Plot Horizontal Lines
+for i in np.arange(len(comp.Rp_bins)):
+    for j in np.arange(len(comp.L_bins[i])-1):
+        plt.plot([comp.L_bins[i,j],comp.L_bins[i,j+1]],[comp.Rp_bins[i],comp.Rp_bins[i]],color='red')
+#Plot Vertical Lines
+for i in np.arange(len(comp.Rp_bins)-1):
+    for j in np.arange(len(comp.L_bins[i])):
+        plt.plot([comp.L_bins[i,j],comp.L_bins[i+1,j]],[comp.Rp_bins[i],comp.Rp_bins[i+1]],color='blue')
+
+ax = plt.gca()
+ax.set_ylim(0.4, 20.)
+#ax.set_xlim(500., 0.001)
+ax.set_xlim(0.001, 500.)
+ax.set_yscale('log')
+ax.set_xscale('log')
+ax.invert_xaxis()
+ax.set_ylabel('Planet Radius in ' + r'$R_{\oplus}$', weight='bold')
+ax.set_xlabel('Stellar Flux in Earth Units', weight='bold')
+plt.show(block=False)
+plt.figure(figGrid.number)
+fname = 'KopGrid_' + folder.split('/')[-1] + '_' + date
+plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=300)
+plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
+plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=300)
+#### Overlay 88888 on fig3
+#fig3
+#ax3
+
+L_star = 1.
+ej=0. #Dmitry says this is fine
+#Nominally
+#sma= np.sqrt(L_star/L_plan)/(1.+(ej**2.)/2.) 
+
+
+#Plot Nodes
+for i in np.arange(len(comp.Rp_bins)-1):
+    ax3.scatter(1./np.sqrt(comp.L_bins[i]),np.zeros(len(comp.L_bins[i]))+comp.Rp_bins[i],color='blue',alpha=0.5)
+#Plot Horizontal Lines
+for i in np.arange(len(comp.Rp_bins)):
+    for j in np.arange(len(comp.L_bins[i])-1):
+        ax3.plot([1./np.sqrt(comp.L_bins[i,j]),1./np.sqrt(comp.L_bins[i,j+1])],[comp.Rp_bins[i],comp.Rp_bins[i]],color='red')
+#Plot Vertical Lines
+for i in np.arange(len(comp.Rp_bins)-1):
+    for j in np.arange(len(comp.L_bins[i])):
+        ax3.plot([1./np.sqrt(comp.L_bins[i,j]),1./np.sqrt(comp.L_bins[i+1,j])],[comp.Rp_bins[i],comp.Rp_bins[i+1]],color='blue')
+
+ax3.set_xlabel('Luminosity Scaled Semi-major Axis in AU, ' + r'$a/\sqrt{L}$', weight='bold')
+ax3.set_xlim([0.1,30.])
+ax3.set_ylim([0.66666,17.])
+
+plt.show(block=False)
+plt.figure(fig3.number)
+fname = 'SAG13andKopGrid_' + folder.split('/')[-1] + '_' + date
+plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
+plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
+plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
+plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
+#############################################################################
+
+
+
