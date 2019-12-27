@@ -28,6 +28,41 @@ import matplotlib.gridspec as gridspec
 
 comp = sim.Completeness
 
+
+#### Plot Kopparapu Grid###################################################
+plt.close(88888)
+figGrid = plt.figure(num=88888)
+
+#Plot Nodes
+for i in np.arange(len(comp.Rp_bins)-1):
+    plt.scatter(comp.L_bins[i],np.zeros(len(comp.L_bins[i]))+comp.Rp_bins[i],color='blue',alpha=0.5)
+#Plot Horizontal Lines
+for i in np.arange(len(comp.Rp_bins)):
+    for j in np.arange(len(comp.L_bins[i])-1):
+        plt.plot([comp.L_bins[i,j],comp.L_bins[i,j+1]],[comp.Rp_bins[i],comp.Rp_bins[i]],color='red')
+#Plot Vertical Lines
+for i in np.arange(len(comp.Rp_bins)-1):
+    for j in np.arange(len(comp.L_bins[i])):
+        plt.plot([comp.L_bins[i,j],comp.L_bins[i+1,j]],[comp.Rp_bins[i],comp.Rp_bins[i+1]],color='blue')
+
+ax = plt.gca()
+ax.set_ylim(0.4, 20.)
+#ax.set_xlim(500., 0.001)
+ax.set_xlim(0.001, 500.)
+ax.set_yscale('log')
+ax.set_xscale('log')
+ax.invert_xaxis()
+ax.set_ylabel('Planet Radius in ' + r'$R_{\oplus}$', weight='bold')
+ax.set_xlabel('Stellar Flux in Earth Units', weight='bold')
+plt.show(block=False)
+plt.figure(figGrid.number)
+fname = 'KopGrid_' + folder.split('/')[-1] + '_' + date
+plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=300)
+plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
+plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=300)
+#############################################################################
+
+
 #### Plot Population JPDF
 plt.close(983098098203845)
 plt.figure(num=983098098203845)
@@ -63,7 +98,7 @@ def plotIndividualSubTypeJPDFs(comp):
 
 #Calculate Sub-type Probability 
 earth_separation = 0.7 #AU
-earth_dmag = 23. #planet-star difference in magnitude
+earth_dmag = 23. #Luminosity Scaled Planet-star Difference in Magnitude, ' + r'$\Delta\mathrm{mag}-2.5\log_{10}(L)$'
 uncertainty_dmag = 0.01 #HabEx requirement is 1%
 uncertainty_s = 5.*u.mas.to('rad')*10.*u.pc.to('AU')
 f_sep = norm(earth_separation,uncertainty_s)
@@ -143,11 +178,11 @@ for ii,j in itertools.product(np.arange(len(comp.Rp_hi)-1)+1,np.arange(len(comp.
         axij[ii,j].get_yaxis().set_visible(False)
     if ii != 1:#len(comp.Rp_hi)-1:
         axij[ii,j].get_xaxis().set_visible(False)
-    t = axij[ii,j].text(0.2,37.0, comp.type_names[ii,j], weight='bold')
+    t = axij[ii,j].text(0.4,37.0, comp.type_names[ii,j], weight='bold')
     t.set_bbox(dict(facecolor='white', alpha=0.7, edgecolor='black'))
     #Add total Count per grid
     #t = axij[ii,j].text(12,31,  comp.type_names[ii,j] + "\n" +  "{:.2e}".format(comp.count_hs[ii,j]),weight='bold')
-    t = axij[ii,j].text(8.05,31,  r"$Count=$" + "{:.2e}".format(comp.count_hs[ii,j]) + "\n" + \
+    t = axij[ii,j].text(8.05,31.35,  r"$Count=$" + "{:.2e}".format(comp.count_hs[ii,j]) + "\n" + \
                 r"$P(ij,s,\Delta mag)=$" + "{:.2e}".format(prob1[ii,j]) + "\n" + r"$P_{n}(ij,s,\Delta mag)=$" + "{:.2e}".format(normProb1[ii,j]), weight='bold')
     t.set_bbox(dict(facecolor='white', alpha=0.7, edgecolor='black'))
     #Add bounding edges
@@ -202,12 +237,12 @@ axCBAR.tick_params(axis='x',direction='in',labeltop=True,labelbottom=False)#'off
 cbar.add_lines(CS4)
 plt.title('SAG13 Population JPDF', weight='bold')
 plt.xlabel('Luminosity Scaled Planet-star Separation ' + r'$(s/\sqrt{L})$' + ' in AU', weight='bold')
-plt.ylabel('Planet-star Difference in Magnitude', weight='bold')
+plt.ylabel('Luminosity Scaled Luminosity Scaled Planet-star Difference in Magnitude, ' + r'$\Delta\mathrm{mag}-2.5\log_{10}(L)$', weight='bold')
 plt.text(15,30,"{:.2e}".format(comp.count_pop),weight='bold')
 
 #Add Labels
 fig9876.text(0.5, 0.055, 'Luminosity Scaled Planet-star Separation ' + r'$(s/\sqrt{L})$' + ' in AU', ha='center', weight='bold')
-fig9876.text(0.09, 0.5, 'Planet-star Difference in Magnitude', va='center', rotation='vertical', weight='bold')
+fig9876.text(0.09, 0.5, 'Luminosity Scaled Planet-star Difference in Magnitude, ' + r'$\Delta\mathrm{mag}-2.5\log_{10}(L)$', va='center', rotation='vertical', weight='bold')
 
 #### add Earth-Like dist
 plt.close(2)
@@ -221,7 +256,7 @@ ax2.set_xscale(xscale)
 plt.text(20,48,"{:.2e}".format(comp.count_earthLike),weight='bold')
 plt.title('SAG13 Earth-Like Sub-Population JPDF', weight='bold')
 plt.xlabel('Luminosity Scaled Planet-star Separation ' + r'$(s/\sqrt{L})$' + ' in AU', weight='bold')
-plt.ylabel('Planet-star Difference in Magnitude', weight='bold')
+plt.ylabel('Luminosity Scaled Planet-star Difference in Magnitude, ' + r'$\Delta\mathrm{mag}-2.5\log_{10}(L)$', weight='bold')
 
 plt.show(block=False)
 plt.figure(fig9876.number)
@@ -319,7 +354,7 @@ for ii,j in itertools.product(np.arange(len(comp.Rp_hi)),np.arange(len(comp.L_lo
             axij[ii,j].plot(sranges,comp.jpdf_props['limit_funcs'][ii2,j][k](sranges),color='red',linewidth=1.0)
     #Add dmag and s, (dmag=23, s=0.7) - Earth from dmag vs s plot of solar system
     earth_separation = 0.7 #AU
-    earth_dmag = 23. #planet-star difference in magnitude
+    earth_dmag = 23. #Luminosity Scaled Planet-star Difference in Magnitude, ' + r'$\Delta\mathrm{mag}-2.5\log_{10}(L)$'
     axij[ii,j].scatter(earth_separation,earth_dmag,c='white',s=2,edgecolor='black',linewidth=0.5)
     #Add ddmag and ds Error Bars
     uncertainty_dmag = 0.01 #HabEx requirement is 1%
@@ -355,12 +390,12 @@ axCBAR.tick_params(axis='x',direction='in',labeltop=True,labelbottom=False)#'off
 cbar.add_lines(CS4)
 plt.title('SAG13 Population JPDF', weight='bold')
 plt.xlabel('Luminosity Scaled Planet-star Separation ' + r'$(s/\sqrt{L})$' + ' in AU', weight='bold')
-plt.ylabel('Planet-star Difference in Magnitude', weight='bold')
+plt.ylabel('Luminosity Scaled Planet-star Difference in Magnitude, ' + r'$\Delta\mathrm{mag}-2.5\log_{10}(L)$', weight='bold')
 plt.text(20,48,"{:.2e}".format(comp.count_pop),weight='bold')
 
 #Add Labels
 fig.text(0.5, 0.075, 'Luminosity Scaled Planet-star Separation ' + r'$(s/\sqrt{L})$' + ' in AU', ha='center', weight='bold')
-fig.text(0.09, 0.5, 'Planet-star Difference in Magnitude', va='center', rotation='vertical', weight='bold')
+fig.text(0.09, 0.5, 'Luminosity Scaled Planet-star Difference in Magnitude, ' + r'$\Delta\mathrm{mag}-2.5\log_{10}(L)$', va='center', rotation='vertical', weight='bold')
 
 #### add Earth-Like dist
 plt.close(2)
@@ -373,7 +408,7 @@ ax2.set_xlim([xmin,xmax])
 plt.text(20,48,"{:.2e}".format(comp.count_earthLike),weight='bold')
 plt.title('SAG13 Earth-Like Sub-Population JPDF', weight='bold')
 plt.xlabel('Luminosity Scaled Planet-star Separation ' + r'$(s/\sqrt{L})$' + ' in AU', weight='bold')
-plt.ylabel('Planet-star Difference in Magnitude', weight='bold')
+plt.ylabel('Luminosity Scaled Planet-star Difference in Magnitude, ' + r'$\Delta\mathrm{mag}-2.5\log_{10}(L)$', weight='bold')
 
 plt.show(block=False)
 print(saltyburrito)
@@ -483,12 +518,12 @@ axCBAR.tick_params(axis='x',direction='in',labeltop=True,labelbottom=False)#'off
 cbar.add_lines(CS4)
 plt.title('SAG13 Population JPDF', weight='bold')
 plt.xlabel('Luminosity Scaled Planet-star Separation ' + r'$(s/\sqrt{L})$' + ' in AU', weight='bold')
-plt.ylabel('Planet-star Difference in Magnitude', weight='bold')
+plt.ylabel('Luminosity Scaled Planet-star Difference in Magnitude, ' + r'$\Delta\mathrm{mag}-2.5\log_{10}(L)$', weight='bold')
 plt.text(20,48,"{:.2e}".format(comp.count_pop),weight='bold')
 
 #Add Labels
 fig2.text(0.5, 0.075, 'Luminosity Scaled Planet-star Separation ' + r'$(s/\sqrt{L})$' + ' in AU', ha='center', weight='bold')
-fig2.text(0.09, 0.5, 'Planet-star Difference in Magnitude', va='center', rotation='vertical', weight='bold')
+fig2.text(0.09, 0.5, 'Luminosity Scaled Planet-star Difference in Magnitude, ' + r'$\Delta\mathrm{mag}-2.5\log_{10}(L)$', va='center', rotation='vertical', weight='bold')
 
 plt.show(block=False)
 
@@ -498,45 +533,6 @@ plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=300)
 plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
 plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=300)
 #########################################################################################
-
-
-
-
-
-
-#### Plot Kopparapu Grid###################################################
-plt.close(88888)
-figGrid = plt.figure(num=88888)
-
-#Plot Nodes
-for i in np.arange(len(comp.Rp_bins)-1):
-    plt.scatter(comp.L_bins[i],np.zeros(len(comp.L_bins[i]))+comp.Rp_bins[i],color='blue',alpha=0.5)
-#Plot Horizontal Lines
-for i in np.arange(len(comp.Rp_bins)):
-    for j in np.arange(len(comp.L_bins[i])-1):
-        plt.plot([comp.L_bins[i,j],comp.L_bins[i,j+1]],[comp.Rp_bins[i],comp.Rp_bins[i]],color='red')
-#Plot Vertical Lines
-for i in np.arange(len(comp.Rp_bins)-1):
-    for j in np.arange(len(comp.L_bins[i])):
-        plt.plot([comp.L_bins[i,j],comp.L_bins[i+1,j]],[comp.Rp_bins[i],comp.Rp_bins[i+1]],color='blue')
-
-ax = plt.gca()
-ax.set_ylim(0.4, 20.)
-#ax.set_xlim(500., 0.001)
-ax.set_xlim(0.001, 500.)
-ax.set_yscale('log')
-ax.set_xscale('log')
-ax.invert_xaxis()
-ax.set_ylabel('Planet Radius in ' + r'$R_{\oplus}$', weight='bold')
-ax.set_xlabel('Stellar Flux in Earth Units', weight='bold')
-plt.show(block=False)
-plt.figure(figGrid.number)
-fname = 'KopGrid_' + folder.split('/')[-1] + '_' + date
-plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=300)
-plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
-plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=300)
-#############################################################################
-
 
 #### Checking Classification Method
 import astropy.units as u
