@@ -41,7 +41,7 @@ from mpl_toolkits.mplot3d import Axes3D
 
 #folder = '/home/dean/Documents/SIOSlab/EXOSIMSres/HabExCompSpecPriors_HabEx_4m_TSDD_pop100DD_revisit_20180424/HabEx_CSAG13_PPSAG13'
 folder = '/home/dean/Documents/SIOSlab/EXOSIMSres/HabExCompSpecPriors_HabEx_4m_50119/HabEx_CKL2_PPKL2'#HABEX stuff
-folder = '/home/dean/Documents/SIOSlab/EXOSIMSres/WFIRSTCompSpecPriors_WFIRSTcycle6core_3mo_405_19/WFIRSTcycle6core_CSAG13_PPSAG13'#WFIRST stuff
+folder = '/home/dean/Documents/SIOSlab/EXOSIMSres/WFIRSTCompSpecPriors_WFIRSTcycle6core_3mo_40519/WFIRSTcycle6core_CSAG13_PPSAG13'#WFIRST stuff
 PPoutpath = './'
 
 if not os.path.exists(folder):#Folder must exist
@@ -202,8 +202,8 @@ for counter,f in enumerate(pklfiles[0:20]):
 
 #### Astrometric and Photometric Uncertainty Assumptions######
 U_dmag = 0.1 # pulled out of butt, 1/10 of order of magnitude
-U_az = 
-U_s = 
+#U_az = 
+#U_s = 
 ##############################################################
 
 
@@ -431,6 +431,25 @@ Mp
 
 
 #### Plot dMag vs s of Detected Exoplanets
+
+
+
+
+######################################################################
+#### Construct 4D probabilistic interpolant
+#DELETE t, dmag0, s0, dmag1, s1, dTheta
+#t, dmag0, s0, ddmag, ds, dTheta
+from scipy.interpolate import Rbf as Rbf
+#Rbf = Radial Basis Function
+#Rbf(x,y,z,d)
+Rbfout = Rbf(t,dmag0,s0,ddmag,ds,dThetam,h_secondVisit,function='multiquadric',mode='5-D',smooth='1')#,epsilon='',norm='')
+#https://docs.scipy.org/doc/scipy/reference/generated/scipy.interpolate.Rbf.html#scipy.interpolate.Rbf
+
+
+
+
+
+
 
 
 
