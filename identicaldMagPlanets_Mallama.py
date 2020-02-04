@@ -1030,8 +1030,43 @@ alpha_larger = sp.Symbol('alpha_larger', real=True, positive=True)
 fluxRatioPLANET = eqnDmagInside.subs(R,planProp[planets[ind_smaller]]['R']*u.m.to('earthRad')).subs(p,planProp[planets[ind_smaller]]['p']).subs(a,planProp[planets[ind_smaller]]['a']*u.m.to('AU')).subs(Phi,1.) / \
                 eqnDmagInside.subs(R,planProp[planets[ind_larger]]['R']*u.m.to('earthRad')).subs(p,planProp[planets[ind_larger]]['p']).subs(a,planProp[planets[ind_larger]]['a']*u.m.to('AU')).subs(Phi,1.)
 fluxRatioPHASE = symbolicPhases[ind_larger].subs(alpha,alpha_larger)/symbolicPhases[ind_smaller].subs(alpha,alpha_smaller)
+from scipy.optimize import fsolve
+from matplotlib import ticker
+def errorFluxRatio(x):
+    a_s = x[0]
+    a_l = x[1]
+    error = fluxRatioPLANET - fluxRatioPHASE.subs(alpha_smaller,a_s).subs(alpha_larger,a_l)
+    return [error,error]
+def errorFluxRatio2(x):
+    a_s = x[0]
+    a_l = x[1]
+    error = np.abs(fluxRatioPLANET.evalf() - fluxRatioPHASE.subs(alpha_smaller,a_s).subs(alpha_larger,a_l).evalf())
+    return error
+x0 = np.asarray([45.,134.])
+out = fsolve(func=errorFluxRatio,x0=x0)
+out2 = minimize(fun=errorFluxRatio2,x0=x0,bounds=[(alpha_min_smaller,alpha_max_smaller),(dmag_min_crescent_larger,dmag_max_crescent_larger)])
+##############
 
-out = sp.solvers.solve(fluxRatioPLANET - fluxRatioPHASE, alpha_smaller)
+####
+alpha1_range = np.linspace(start=0.,stop=180.,num=1800)
+alpha2_range = np.linspace(start=alpha_min_fullphase_larger,stop=alpha_max_fullphase_larger,num=90)
+alpha3_range = np.linspace(start=alpha_min_crescent_larger,stop=alpha_max_crescent_larger,num=30)
+FRgrid = np.zeros((len(alpha1_range),len(alpha2_range)+len(alpha3_range)))
+for i in np.arange(len(alpha1_range)):
+    for j in np.arange(len(alpha2_range)):
+        FRgrid[i,j] = fluxRatioPHASE.subs(alpha_smaller,alpha1_range[i]).subs(alpha_larger,alpha2_range[j])
+    for j in np.arange(len(alpha3_range)):
+        FRgrid[i,j+len(alpha2_range)-1] = fluxRatioPHASE.subs(alpha_smaller,alpha1_range[i]).subs(alpha_larger,alpha3_range[j])
+plt.figure(num=97987987)
+#plt.contourf(alpha1_range,list(alpha2_range)+list(alpha3_range),FRgrid.T)#, locator=ticker.LogLocator())
+tmp = FRgrid
+tmp[tmp > 1.] = 10.
+plt.contourf(alpha1_range,list(alpha2_range)+list(alpha3_range),tmp.T)#, locator=ticker.LogLocator())
+cbar3 = plt.colorbar()
+plt.show(block=False)
+
+#out = sp.solvers.solve(fluxRatioPLANET - fluxRatioPHASE, alpha_smaller)
+print(saltyburrtito)
 
 #### Inclination min
 #Find the bounding inclinations which cause intersection
