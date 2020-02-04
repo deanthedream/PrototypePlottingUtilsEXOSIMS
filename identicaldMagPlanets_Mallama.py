@@ -1052,11 +1052,13 @@ alpha1_range = np.linspace(start=0.,stop=180.,num=1800)
 alpha2_range = np.linspace(start=alpha_min_fullphase_larger,stop=alpha_max_fullphase_larger,num=90)
 alpha3_range = np.linspace(start=alpha_min_crescent_larger,stop=alpha_max_crescent_larger,num=30)
 FRgrid = np.zeros((len(alpha1_range),len(alpha2_range)+len(alpha3_range)))
+tic = time.time()
 for i in np.arange(len(alpha1_range)):
     for j in np.arange(len(alpha2_range)):
         FRgrid[i,j] = fluxRatioPHASE.subs(alpha_smaller,alpha1_range[i]).subs(alpha_larger,alpha2_range[j])
     for j in np.arange(len(alpha3_range)):
         FRgrid[i,j+len(alpha2_range)-1] = fluxRatioPHASE.subs(alpha_smaller,alpha1_range[i]).subs(alpha_larger,alpha3_range[j])
+print(time.time()-tic)
 plt.figure(num=97987987)
 #plt.contourf(alpha1_range,list(alpha2_range)+list(alpha3_range),FRgrid.T)#, locator=ticker.LogLocator())
 tmp = FRgrid
