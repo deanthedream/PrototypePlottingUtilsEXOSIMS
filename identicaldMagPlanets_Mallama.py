@@ -984,16 +984,16 @@ plt.show(block=False)
 i=0
 j=1
 #### a_max
-a_min = planProp[planets[i]]['a']*u.m.to('AU')
-if a_min < planProp[planets[j]]['a']*u.m.to('AU'):
-    a_max = planProp[planets[j]]['a']*u.m.to('AU')
-    ind_min = i #The naturally smaller brightness planet
-    ind_max = j #The naturally larger brightness planet
+a_smaller = planProp[planets[i]]['a']*u.m.to('AU')
+if a_smaller < planProp[planets[j]]['a']*u.m.to('AU'):
+    a_larger = planProp[planets[j]]['a']*u.m.to('AU')
+    ind_smaller = i #The naturally smaller brightness planet
+    ind_larger = j #The naturally larger brightness planet
 else:
-    a_max = a_min
-    a_min = planProp[planets[j]]['a']*u.m.to('AU')
-    ind_min = j
-    ind_max = i
+    a_larger = a_smaller
+    a_smaller = planProp[planets[j]]['a']*u.m.to('AU')
+    ind_smaller = j
+    ind_larger = i
 #### Smax
 #Find out which SMA is smaller and pick that as smax
 s_smaller = planProp[planets[i]]['a']*u.m.to('AU')
@@ -1011,23 +1011,32 @@ alpha_max_fullphase_larger = np.arcsin(s_max/a_larger)*180./np.pi
 alpha_min_crescent_larger = np.arcsin(s_max/a_larger)*180./np.pi+90.
 alpha_max_crescent_larger = 180.
 #### dmag range fullphase/crescant phase
-dmag_min_fullphase_smaller = eqnDmag.subs(R,planProp[planets[ind_min]]['R']*u.m.to('earthRad')).subs(p,planProp[planets[ind_min]]['p']).subs(a,planProp[planets[ind_min]]['a']*u.m.to('AU')).subs(Phi,symbolicPhases[ind_min]).subs(alpha,alpha_min_fullphase_smaller)
-dmag_max_fullphase_smaller = eqnDmag.subs(R,planProp[planets[ind_min]]['R']*u.m.to('earthRad')).subs(p,planProp[planets[ind_min]]['p']).subs(a,planProp[planets[ind_min]]['a']*u.m.to('AU')).subs(Phi,symbolicPhases[ind_min]).subs(alpha,alpha_max_fullphase_smaller)
-dmag_min_fullphase_larger = eqnDmag.subs(R,planProp[planets[ind_max]]['R']*u.m.to('earthRad')).subs(p,planProp[planets[ind_max]]['p']).subs(a,planProp[planets[ind_max]]['a']*u.m.to('AU')).subs(Phi,symbolicPhases[ind_max]).subs(alpha,alpha_min_fullphase_larger)
-dmag_max_fullphase_larger = eqnDmag.subs(R,planProp[planets[ind_max]]['R']*u.m.to('earthRad')).subs(p,planProp[planets[ind_max]]['p']).subs(a,planProp[planets[ind_max]]['a']*u.m.to('AU')).subs(Phi,symbolicPhases[ind_max]).subs(alpha,alpha_max_fullphase_larger)
-dmag_min_crescent_larger = eqnDmag.subs(R,planProp[planets[ind_max]]['R']*u.m.to('earthRad')).subs(p,planProp[planets[ind_max]]['p']).subs(a,planProp[planets[ind_max]]['a']*u.m.to('AU')).subs(Phi,symbolicPhases[ind_max]).subs(alpha,alpha_min_crescent_larger)
-dmag_max_crescent_larger = eqnDmag.subs(R,planProp[planets[ind_max]]['R']*u.m.to('earthRad')).subs(p,planProp[planets[ind_max]]['p']).subs(a,planProp[planets[ind_max]]['a']*u.m.to('AU')).subs(Phi,symbolicPhases[ind_max]).subs(alpha,alpha_max_crescent_larger)
-if dmag_max_fullphase_larger < dmag_min_fullphase_smaller:
+dmag_min_smaller = eqnDmag.subs(R,planProp[planets[ind_smaller]]['R']*u.m.to('earthRad')).subs(p,planProp[planets[ind_smaller]]['p']).subs(a,planProp[planets[ind_smaller]]['a']*u.m.to('AU')).subs(Phi,symbolicPhases[ind_smaller]).subs(alpha,alpha_min_smaller)
+dmag_max_smaller = eqnDmag.subs(R,planProp[planets[ind_smaller]]['R']*u.m.to('earthRad')).subs(p,planProp[planets[ind_smaller]]['p']).subs(a,planProp[planets[ind_smaller]]['a']*u.m.to('AU')).subs(Phi,symbolicPhases[ind_smaller]).subs(alpha,alpha_max_smaller)
+dmag_min_fullphase_larger = eqnDmag.subs(R,planProp[planets[ind_larger]]['R']*u.m.to('earthRad')).subs(p,planProp[planets[ind_larger]]['p']).subs(a,planProp[planets[ind_larger]]['a']*u.m.to('AU')).subs(Phi,symbolicPhases[ind_larger]).subs(alpha,alpha_min_fullphase_larger)
+dmag_max_fullphase_larger = eqnDmag.subs(R,planProp[planets[ind_larger]]['R']*u.m.to('earthRad')).subs(p,planProp[planets[ind_larger]]['p']).subs(a,planProp[planets[ind_larger]]['a']*u.m.to('AU')).subs(Phi,symbolicPhases[ind_larger]).subs(alpha,alpha_max_fullphase_larger)
+dmag_min_crescent_larger = eqnDmag.subs(R,planProp[planets[ind_larger]]['R']*u.m.to('earthRad')).subs(p,planProp[planets[ind_larger]]['p']).subs(a,planProp[planets[ind_larger]]['a']*u.m.to('AU')).subs(Phi,symbolicPhases[ind_larger]).subs(alpha,alpha_min_crescent_larger)
+dmag_max_crescent_larger = eqnDmag.subs(R,planProp[planets[ind_larger]]['R']*u.m.to('earthRad')).subs(p,planProp[planets[ind_larger]]['p']).subs(a,planProp[planets[ind_larger]]['a']*u.m.to('AU')).subs(Phi,symbolicPhases[ind_larger]).subs(alpha,alpha_max_crescent_larger)
+#if dmag_max_fullphase_larger < dmag_min_fullphase_smaller:
     #If the larger planet at it's dimmest in the full phase portion is brighter than the maximum brightness of the smaller planet
     #then no intersection could occur on the maximum phase side
-else:
+#else:
     # check flux ratio between planets in this region of common separations
 
+#### Calculate Nominal Flux Ratios 
+#[ps(Rs/as)^2]/[pL(RL/aL)^2]
+alpha_smaller = sp.Symbol('alpha_smaller', real=True, positive=True)
+alpha_larger = sp.Symbol('alpha_larger', real=True, positive=True)
+fluxRatioPLANET = eqnDmagInside.subs(R,planProp[planets[ind_smaller]]['R']*u.m.to('earthRad')).subs(p,planProp[planets[ind_smaller]]['p']).subs(a,planProp[planets[ind_smaller]]['a']*u.m.to('AU')).subs(Phi,1.) / \
+                eqnDmagInside.subs(R,planProp[planets[ind_larger]]['R']*u.m.to('earthRad')).subs(p,planProp[planets[ind_larger]]['p']).subs(a,planProp[planets[ind_larger]]['a']*u.m.to('AU')).subs(Phi,1.)
+fluxRatioPHASE = symbolicPhases[ind_larger].subs(alpha,alpha_larger)/symbolicPhases[ind_smaller].subs(alpha,alpha_smaller)
+
+out = sp.solvers.solve(fluxRatioPLANET - fluxRatioPHASE, alpha_smaller)
 
 #### Inclination min
 #Find the bounding inclinations which cause intersection
 i_max = 90.
-i_min = 
+#i_min = 
 
 
 #out = sp.solvers.solve((eqnDmag1RHS-eqnDmag1LHS,eqnS1RHS-eqnS1LHS),[v1,v2,inc], force=True, manual=True, set=True)

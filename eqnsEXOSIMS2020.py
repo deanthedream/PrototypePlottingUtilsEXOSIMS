@@ -42,7 +42,8 @@ print(eqnAlpha)
 eqnS = sp.sqrt(eqnX**2.+eqnY**2.)
 
 #dmag
-eqnDmag = -2.5*sp.log(p*(R/a)**2.*Phi,10)
+eqnDmagInside = p*(R/a)**2.*Phi
+eqnDmag = -2.5*sp.log(eqnDmagInside,10)
 
 #### PHASE FUNCTIONS ##############
 #LAMBERT
