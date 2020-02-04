@@ -654,7 +654,7 @@ for i in np.arange(len(planets)):
     planProp[planets[i]]['alpha_max_fromearth'] = alpha_crit_fromEarth(planProp[planets[i]]['a']*u.m.to('AU')) #in rad
     earthViewAlpha = np.min([planProp[planets[i]]['alphas_max'][planProp[planets[i]]['earth_Vmag_model']], planProp[planets[i]]['alpha_max_fromearth']*180./np.pi ])
     #print(earthViewAlpha)
-    planProp[planets[i]]['alphas_max_fromearth'] = np.linspace(start=0.,stop=earthViewAlpha,num=100.,endpoint=True) #in deg
+    planProp[planets[i]]['alphas_max_fromearth'] = np.linspace(start=0.,stop=earthViewAlpha,num=100,endpoint=True) #in deg
     d1, d2 = d_planet_earth_alpha(planProp[planets[i]]['alphas_max_fromearth'],planProp[planets[i]]['a']*u.m.to('AU'))
     planProp[planets[i]]['distances_fromearth'] = [d1,d2]
     planProp[planets[i]]['Vmags_fromearth'] = [planProp[planets[i]]['Vmag'][planProp[planets[i]]['earth_Vmag_model']](planProp[planets[i]]['alphas_max_fromearth'],planProp[planets[i]]['a']*u.m.to('AU'),d1),\
@@ -775,12 +775,28 @@ plt.xlabel('Phase Angle in deg', weight='bold')
 plt.legend()
 plt.show(block=False)
 
+#### All Phase Functions MELDED
+plt.close(17)
+fig17 = plt.figure(num=17)
+plt.rc('axes',linewidth=2)
+plt.rc('lines',linewidth=2)
+plt.rcParams['axes.linewidth']=2
+plt.rc('font',weight='bold')
+for i in np.arange(len(planets)):
+    plt.plot(np.linspace(start=0.,stop=180.,num=180),planProp[planets[i]]['phaseFuncMelded'](np.linspace(start=0.,stop=180.,num=180)),color=planProp[planets[i]]['planet_labelcolors'],label=planProp[planets[i]]['planet_name'])
+plt.xlim([0.,180.])
+plt.ylim([0.,1.0])
+plt.ylabel('Phase Function Mallama alphas Melded', weight='bold')
+plt.xlabel('Phase Angle in deg', weight='bold')
+plt.legend()
+plt.show(block=False)
+
 
 
 #### Calculate dMag vs s plots
 uncertainty_dmag = 0.01 #HabEx requirement is 1%
 uncertainty_s = 5.*u.mas.to('rad')*10.*u.pc.to('AU')
-alphas = np.linspace(start=0.,stop=180.,num=1200.,endpoint=True)
+alphas = np.linspace(start=0.,stop=180.,num=1200,endpoint=True)
 plt.close(66)
 fig66 = plt.figure(num=66)
 for i in np.arange(len(planets)):
@@ -905,4 +921,238 @@ The rings are effectively a flat disk with, under some viewing angles, some port
 
 
 
+
+##########################################################################
+from eqnsEXOSIMS2020 import *
+import sympy as sp
+from time import time
+v1 = sp.Symbol('v1', real=True, positive=True)
+v2 = sp.Symbol('v2', real=True, positive=True)
+i=0
+j=1
+eqnDmag1LHS = eqnDmag.subs(Phi,symbolicPhases[i]).subs(a,planProp[planets[i]]['a']*u.m.to('AU')).subs(R,planProp[planets[i]]['R']*u.m.to('earthRad')).subs(p,planProp[planets[i]]['p'])#.subs(w,90.).subs(W,0).subs(e,0)
+eqnDmag1LHS = sp.simplify(eqnDmag1LHS)
+eqnDmag1RHS = eqnDmag.subs(Phi,symbolicPhases[j]).subs(a,planProp[planets[j]]['a']*u.m.to('AU')).subs(R,planProp[planets[j]]['R']*u.m.to('earthRad')).subs(p,planProp[planets[j]]['p'])#.subs(w,90.).subs(W,0).subs(e,0)
+eqnDmag1RHS = sp.simplify(eqnDmag1RHS)
+eqnS1LHS = eqnS.subs(a,planProp[planets[i]]['a']*u.m.to('AU')).subs(w,90.).subs(W,0).subs(e,0).subs(v,v1)
+eqnS1RHS = eqnS.subs(a,planProp[planets[j]]['a']*u.m.to('AU')).subs(w,90.).subs(W,0).subs(e,0).subs(v,v2)
+
+
+#### Separation vs a,v,inc
+s_anuinc = sp.simplify(eqnS.subs(W,0).subs(w,90.).subs(e,0))
+#### Plot s vs nu, inc
+nu_range  = np.linspace(start=0.,stop=360.,num=360)
+inc_range = np.linspace(start=0.,stop=90.,num=90)
+s_anuincVals = np.zeros((len(nu_range),len(inc_range)))
+for i in np.arange(len(nu_range)):
+    for j in np.arange(len(inc_range)):
+        s_anuincVals[i,j] = s_anuinc.subs(a,1.).subs(v,nu_range[i]).subs(inc,inc_range[j])
+plt.figure(num=888777666)
+plt.contourf(nu_range,inc_range,s_anuincVals.T,cmap='bwr',levels=100)
+cbar = plt.colorbar()
+cbar.set_label('Planet-Star Separation')
+plt.xlabel('nu')
+plt.ylabel('inc')
+plt.show(block=False)
+##########################
+
+#### Phase Angle vs nu, inc
+alpha_nuinc = sp.simplify(eqnAlpha.subs(W,0).subs(w,90.).subs(e,0))
+#DELETEalpha_nuinc2 = sp.simplify(eqnAlpha.subs(W,0).subs(w,90.).subs(e,0))#180.-
+#### Plot s vs nu, inc
+nu_range  = np.linspace(start=0.,stop=360.,num=360)
+inc_range = np.linspace(start=0.,stop=90.,num=90)
+alpha_nuincVals = np.zeros((len(nu_range),len(inc_range)))
+for i in np.arange(len(nu_range)):
+    for j in np.arange(len(inc_range)):
+        #DELETEif nu_range[i] <= 90.:
+        alpha_nuincVals[i,j] = alpha_nuinc.subs(v,nu_range[i]).subs(inc,inc_range[j]).evalf()
+        #DELETE else:
+        #     alpha_nuincVals[i,j] = alpha_nuinc2.subs(v,nu_range[i]).subs(inc,inc_range[j]).evalf()
+plt.figure(num=888777666555)
+plt.contourf(nu_range,inc_range,alpha_nuincVals.T,cmap='bwr',levels=100)
+cbar2 = plt.colorbar()
+cbar2.set_label('Planet Phase Angle')
+plt.xlabel('nu')
+plt.ylabel('inc')
+plt.show(block=False)
+###########################
+
+
+
+#### Calculate max of parameters both planets could share (s,dmag coincidence) ###################################
+i=0
+j=1
+#### a_max
+a_min = planProp[planets[i]]['a']*u.m.to('AU')
+if a_min < planProp[planets[j]]['a']*u.m.to('AU'):
+    a_max = planProp[planets[j]]['a']*u.m.to('AU')
+    ind_min = i #The naturally smaller brightness planet
+    ind_max = j #The naturally larger brightness planet
+else:
+    a_max = a_min
+    a_min = planProp[planets[j]]['a']*u.m.to('AU')
+    ind_min = j
+    ind_max = i
+#### Smax
+#Find out which SMA is smaller and pick that as smax
+s_smaller = planProp[planets[i]]['a']*u.m.to('AU')
+if s_smaller < planProp[planets[j]]['a']*u.m.to('AU'):
+    s_larger = planProp[planets[j]]['a']*u.m.to('AU')
+else:
+    s_larger = s_smaller
+    s_smaller = planProp[planets[j]]['a']*u.m.to('AU')
+s_max = s_smaller
+#### Maximum alpha ranges for smax (based on smax)
+alpha_min_smaller = 0.
+alpha_max_smaller = 180.
+alpha_min_fullphase_larger = 0.
+alpha_max_fullphase_larger = np.arcsin(s_max/a_larger)*180./np.pi
+alpha_min_crescent_larger = np.arcsin(s_max/a_larger)*180./np.pi+90.
+alpha_max_crescent_larger = 180.
+#### dmag range fullphase/crescant phase
+dmag_min_fullphase_smaller = eqnDmag.subs(R,planProp[planets[ind_min]]['R']*u.m.to('earthRad')).subs(p,planProp[planets[ind_min]]['p']).subs(a,planProp[planets[ind_min]]['a']*u.m.to('AU')).subs(Phi,symbolicPhases[ind_min]).subs(alpha,alpha_min_fullphase_smaller)
+dmag_max_fullphase_smaller = eqnDmag.subs(R,planProp[planets[ind_min]]['R']*u.m.to('earthRad')).subs(p,planProp[planets[ind_min]]['p']).subs(a,planProp[planets[ind_min]]['a']*u.m.to('AU')).subs(Phi,symbolicPhases[ind_min]).subs(alpha,alpha_max_fullphase_smaller)
+dmag_min_fullphase_larger = eqnDmag.subs(R,planProp[planets[ind_max]]['R']*u.m.to('earthRad')).subs(p,planProp[planets[ind_max]]['p']).subs(a,planProp[planets[ind_max]]['a']*u.m.to('AU')).subs(Phi,symbolicPhases[ind_max]).subs(alpha,alpha_min_fullphase_larger)
+dmag_max_fullphase_larger = eqnDmag.subs(R,planProp[planets[ind_max]]['R']*u.m.to('earthRad')).subs(p,planProp[planets[ind_max]]['p']).subs(a,planProp[planets[ind_max]]['a']*u.m.to('AU')).subs(Phi,symbolicPhases[ind_max]).subs(alpha,alpha_max_fullphase_larger)
+dmag_min_crescent_larger = eqnDmag.subs(R,planProp[planets[ind_max]]['R']*u.m.to('earthRad')).subs(p,planProp[planets[ind_max]]['p']).subs(a,planProp[planets[ind_max]]['a']*u.m.to('AU')).subs(Phi,symbolicPhases[ind_max]).subs(alpha,alpha_min_crescent_larger)
+dmag_max_crescent_larger = eqnDmag.subs(R,planProp[planets[ind_max]]['R']*u.m.to('earthRad')).subs(p,planProp[planets[ind_max]]['p']).subs(a,planProp[planets[ind_max]]['a']*u.m.to('AU')).subs(Phi,symbolicPhases[ind_max]).subs(alpha,alpha_max_crescent_larger)
+if dmag_max_fullphase_larger < dmag_min_fullphase_smaller:
+    #If the larger planet at it's dimmest in the full phase portion is brighter than the maximum brightness of the smaller planet
+    #then no intersection could occur on the maximum phase side
+else:
+    # check flux ratio between planets in this region of common separations
+
+
+#### Inclination min
+#Find the bounding inclinations which cause intersection
+i_max = 90.
+i_min = 
+
+
+#out = sp.solvers.solve((eqnDmag1RHS-eqnDmag1LHS,eqnS1RHS-eqnS1LHS),[v1,v2,inc], force=True, manual=True, set=True)
+#out = sp.solvers.solve((eqnDmag1RHS-eqnDmag1LHS,eqnS1RHS-eqnS1LHS),[v1,v2,inc], force=True, manual=True, set=True)
+
+
+#### Plotting dmag vs S to see if it looks right
+vvv = np.linspace(start=0.,stop=180.,num=181)
+# sss = [eqnS1LHS.subs(inc,90.).subs(alpha,vvv[ind]).evalf() for ind in np.arange(len(vvv))] 
+# mmm = [eqnDmag1LHS.subs(inc,90.).subs(v1,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
+# sss1 = [eqnS1LHS.subs(inc,45.).subs(v1,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
+# mmm1 = [eqnDmag1LHS.subs(inc,45.).subs(v1,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
+# sss2 = [eqnS1LHS.subs(inc,20.).subs(v1,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
+# mmm2 = [eqnDmag1LHS.subs(inc,20.).subs(v1,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
+# sss3 = [eqnS1LHS.subs(inc,0.).subs(v1,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
+# mmm3 = [eqnDmag1LHS.subs(inc,0.).subs(v1,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
+# Rsss = [eqnS1RHS.subs(inc,90.).subs(v2,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
+# Rmmm = [eqnDmag1RHS.subs(inc,90.).subs(v2,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
+# Rsss1 = [eqnS1RHS.subs(inc,45.).subs(v2,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
+# Rmmm1 = [eqnDmag1RHS.subs(inc,45.).subs(v2,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
+# Rsss2 = [eqnS1RHS.subs(inc,20.).subs(v2,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
+# Rmmm2 = [eqnDmag1RHS.subs(inc,20.).subs(v2,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
+# Rsss3 = [eqnS1RHS.subs(inc,0.).subs(v2,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
+# Rmmm3 = [eqnDmag1RHS.subs(inc,0.).subs(v2,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
+sss = [eqnS1LHS.subs(alpha,vvv[ind]).evalf() for ind in np.arange(len(vvv))] 
+mmm = [eqnDmag1LHS.subs(alpha,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
+sss1 = [eqnS1LHS.subs(alpha,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
+mmm1 = [eqnDmag1LHS.subs(alpha,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
+sss2 = [eqnS1LHS.subs(alpha,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
+mmm2 = [eqnDmag1LHS.subs(alpha,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
+sss3 = [eqnS1LHS.subs(alpha,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
+mmm3 = [eqnDmag1LHS.subs(alpha,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
+Rsss = [eqnS1RHS.subs(alpha,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
+Rmmm = [eqnDmag1RHS.subs(alpha,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
+Rsss1 = [eqnS1RHS.subs(alpha,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
+Rmmm1 = [eqnDmag1RHS.subs(alpha,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
+Rsss2 = [eqnS1RHS.subs(alpha,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
+Rmmm2 = [eqnDmag1RHS.subs(alpha,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
+Rsss3 = [eqnS1RHS.subs(alpha,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
+Rmmm3 = [eqnDmag1RHS.subs(alpha,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
+plt.close(10920198230)
+plt.figure(num=10920198230)
+plt.plot(sss,mmm,color=(1.,0.,1.-1.))
+plt.plot(sss1,mmm1,color=(0.5,0.,1.-0.5))
+plt.plot(sss2,mmm2,color=(0.2,0.,1.-0.2))
+plt.plot(sss3,mmm3,color=(0.,0.,1.-0.))
+plt.plot(Rsss,Rmmm,color=(1.,0.5,1.-1.),linestyle='--')
+plt.plot(Rsss1,Rmmm1,color=(0.5,0.5,1.-0.5),linestyle='--')
+plt.plot(Rsss2,Rmmm2,color=(0.2,0.5,1.-0.2),linestyle='--')
+plt.plot(Rsss3,Rmmm3,color=(0.,0.5,1.-0.),linestyle='--')
+plt.show(block=False)
+####
+
+#v1 and v2 as functions of inclination FROM SEPARATION
+incFunc_s = sp.solvers.solve(eqnS1LHS-eqnS1RHS,inc)
+
+#v1 vs v2 function
+# tic = time()
+# tmp = sp.simplify(eqnDmag1RHS - eqnDmag1LHS)
+# toc = time()
+# print('simplify time: ' + str(toc-tic))
+#dmagEquiv = [tmp.subs(inc,incFunc_s[i]) for i in np.arange(len(incFunc_s))]
+#TAKESTOOLONGdmagEquiv = [sp.simplify(dmagEquiv[i]) for i in np.arange(len(incFunc_s))]
+#out = sp.solvers.solve(dmagEquiv[0],v1)
+
+#v1 and v2 as functions of inclination from dmag
+#incFunc_dmag = sp.solvers.solve(1.-eqnDmag1RHS/eqnDmag1LHS,inc)
+
+
+print('Minimizing')
+from scipy.optimize import minimize
+from scipy.optimize import LinearConstraint
+from scipy.optimize import NonlinearConstraint
+def func(x,inc_val):
+    tv1 = x[0]
+    tv2 = x[1]
+    equivalency = eqnDmag1RHS.subs(inc,inc_val).subs(v1,tv1).subs(v2,tv2) - eqnDmag1LHS.subs(inc,inc_val).subs(v1,tv1).subs(v2,tv2)
+    out = equivalency.evalf(10)
+    print("out: " + str(np.abs(out)) + "  tv1: " + str(tv1) + "  tv2: " + str(tv2))
+    if not out.is_real:#out == complex:
+        return 100
+    else:
+        return np.abs(out)
+
+print(func([45.,55.],90.))
+
+#### Equivalent Separation Constraint##################################################################################
+def sepCon(x,inc_val):
+    tv1 = x[0]
+    tv2 = x[1]
+    #error = incFunc_s.subs(v1,tv1).subs(v2,tv2) - inc_val
+    error = eqnS1RHS.subs(v1,tv1).subs(v2,tv2).subs(inc,inc_val) - eqnS1LHS.subs(v1,tv1).subs(v2,tv2).subs(inc,inc_val)
+    return error.evalf()
+#######################################################################################################################
+
+inc_val = 90.
+#### Setup Jacobians#######################################################
+#objective function jacobian
+funcJac = [sp.diff(eqnDmag1RHS-eqnDmag1LHS,v1),sp.diff(eqnDmag1RHS-eqnDmag1LHS,v2)]
+#separation constraint jacobian
+sepConJac = [sp.diff(eqnS1RHS-eqnS1LHS,v1).subs(inc,inc_val), sp.diff(eqnS1RHS-eqnS1LHS,v2).subs(inc,inc_val)]
+###########################################################################
+con2 = NonlinearConstraint(lambda y: sepCon(y,inc_val),lb=0.,ub=0., jac=lambda x: sepConJac[0].subs(v1,x))
+con1 = LinearConstraint(np.asarray([[1.,0.],[0.,1.]]),np.asarray([0.,0.]),np.asarray([180.,180.]))
+x0 = np.asarray([45.,55.])
+out = minimize(func, x0, args=(inc_val,), method='SLSQP', bounds=[(0.,180.),(0.,180.)], constraints=[{'type':'eq','fun':sepCon, 'args':(inc_val,)}], options={'disp':True,})#'eps':1.})#constraints=[con1])
+
+print(eqnDmag1RHS.subs(inc,inc_val).subs(v1,out.x[0]).subs(v2,out.x[1]).evalf())
+print(eqnDmag1LHS.subs(inc,inc_val).subs(v1,out.x[0]).subs(v2,out.x[1]).evalf())
+print(eqnS1RHS.subs(v1,out.x[0]).subs(v2,out.x[1]).subs(inc,inc_val))
+print(eqnS1RHS.subs(v1,out.x[0]).subs(v2,out.x[1]).subs(inc,inc_val))
+
+
+plt.close(299)
+plt.close(199)
+plt.close(11)
+plt.close(12)
+plt.close(99)
+plt.close(999)
+
+
+#### Testing eqnLAMBERT
+vvv = np.linspace(start=1.,stop=359.,num=180)
+out = [eqnLAMBERT.subs(alpha,vvv[i]) for i in np.arange(len(vvv))]
+plt.figure(num=9878907896)
+plt.plot(vvv,out)
+plt.show(block=False)
 
