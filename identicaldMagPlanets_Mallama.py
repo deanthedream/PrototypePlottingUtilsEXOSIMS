@@ -16,6 +16,7 @@ from matplotlib import colors
 import datetime
 import re
 from scipy.misc import derivative
+from time import time
 
 folder = './'
 PPoutpath = './'
@@ -925,7 +926,6 @@ The rings are effectively a flat disk with, under some viewing angles, some port
 ##########################################################################
 from eqnsEXOSIMS2020 import *
 import sympy as sp
-from time import time
 v1 = sp.Symbol('v1', real=True, positive=True)
 v2 = sp.Symbol('v2', real=True, positive=True)
 i=0
@@ -1027,8 +1027,8 @@ dmag_max_crescent_larger = eqnDmag.subs(R,planProp[planets[ind_larger]]['R']*u.m
 #[ps(Rs/as)^2]/[pL(RL/aL)^2]
 alpha_smaller = sp.Symbol('alpha_smaller', real=True, positive=True)
 alpha_larger = sp.Symbol('alpha_larger', real=True, positive=True)
-fluxRatioPLANET = eqnDmagInside.subs(R,planProp[planets[ind_smaller]]['R']*u.m.to('earthRad')).subs(p,planProp[planets[ind_smaller]]['p']).subs(a,planProp[planets[ind_smaller]]['a']*u.m.to('AU')).subs(Phi,1.) / \
-                eqnDmagInside.subs(R,planProp[planets[ind_larger]]['R']*u.m.to('earthRad')).subs(p,planProp[planets[ind_larger]]['p']).subs(a,planProp[planets[ind_larger]]['a']*u.m.to('AU')).subs(Phi,1.)
+fluxRatioPLANET = eqnDmagInside.subs(R,planProp[planets[ind_smaller]]['R']*u.m.to('m')).subs(p,planProp[planets[ind_smaller]]['p']).subs(a,planProp[planets[ind_smaller]]['a']*u.m.to('m')).subs(Phi,1.) / \
+                eqnDmagInside.subs(R,planProp[planets[ind_larger]]['R']*u.m.to('m')).subs(p,planProp[planets[ind_larger]]['p']).subs(a,planProp[planets[ind_larger]]['a']*u.m.to('m')).subs(Phi,1.)
 fluxRatioPHASE = symbolicPhases[ind_larger].subs(alpha,alpha_larger)/symbolicPhases[ind_smaller].subs(alpha,alpha_smaller)
 from scipy.optimize import fsolve
 from matplotlib import ticker
@@ -1042,30 +1042,52 @@ def errorFluxRatio2(x):
     a_l = x[1]
     error = np.abs(fluxRatioPLANET.evalf() - fluxRatioPHASE.subs(alpha_smaller,a_s).subs(alpha_larger,a_l).evalf())
     return error
-x0 = np.asarray([45.,134.])
+x0 = np.asarray([45.,135.])
 out = fsolve(func=errorFluxRatio,x0=x0)
-out2 = minimize(fun=errorFluxRatio2,x0=x0,bounds=[(alpha_min_smaller,alpha_max_smaller),(dmag_min_crescent_larger,dmag_max_crescent_larger)])
+out2 = minimize(fun=errorFluxRatio2,x0=x0,bounds=[(alpha_min_smaller,alpha_max_smaller),(alpha_min_crescent_larger,alpha_max_crescent_larger)])
 ##############
 
-####
+#### Verifying symbolic phase functions
+alpha_range = np.linspace(start=0.,stop=180.,num=180)
+PHPHvals = list()
+for i in np.arange(len(symbolicPhases)):
+    tmp = list()
+    for j in np.arange(len(alpha_range)):
+        tmp.append(symbolicPhases[i].subs(alpha,alpha_range[j]))
+    PHPHvals.append(tmp)
+plt.figure(num=10000123123)
+for i in np.arange(len(symbolicPhases)):
+    plt.plot(alpha_range,PHPHvals[i],label=str(i))
+plt.xlabel('alpha')
+plt.legend()
+plt.show(block=False)
+##############################
+
+#### verifying the a solution exists somewhere in the entire alpha range
 alpha1_range = np.linspace(start=0.,stop=180.,num=1800)
 alpha2_range = np.linspace(start=alpha_min_fullphase_larger,stop=alpha_max_fullphase_larger,num=90)
 alpha3_range = np.linspace(start=alpha_min_crescent_larger,stop=alpha_max_crescent_larger,num=30)
 FRgrid = np.zeros((len(alpha1_range),len(alpha2_range)+len(alpha3_range)))
-tic = time.time()
+tic = time()
 for i in np.arange(len(alpha1_range)):
     for j in np.arange(len(alpha2_range)):
         FRgrid[i,j] = fluxRatioPHASE.subs(alpha_smaller,alpha1_range[i]).subs(alpha_larger,alpha2_range[j])
     for j in np.arange(len(alpha3_range)):
         FRgrid[i,j+len(alpha2_range)-1] = fluxRatioPHASE.subs(alpha_smaller,alpha1_range[i]).subs(alpha_larger,alpha3_range[j])
-print(time.time()-tic)
+print(time()-tic)
 plt.figure(num=97987987)
 #plt.contourf(alpha1_range,list(alpha2_range)+list(alpha3_range),FRgrid.T)#, locator=ticker.LogLocator())
-tmp = FRgrid
-tmp[tmp > 1.] = 10.
-plt.contourf(alpha1_range,list(alpha2_range)+list(alpha3_range),tmp.T)#, locator=ticker.LogLocator())
+tmp = FRgrid.copy()
+tmp[tmp > 1.] = np.nan
+plt.contourf(alpha1_range,list(alpha2_range)+list(alpha3_range),tmp.T,levels=100)#, locator=ticker.LogLocator())
+plt.plot([0.,180.],[alpha_max_fullphase_larger,alpha_max_fullphase_larger],color='black')
+plt.plot([0.,180.],[alpha_min_crescent_larger,alpha_min_crescent_larger],color='black')
 cbar3 = plt.colorbar()
+plt.xlabel('alpha1')
+plt.ylabel('alpha2,3')
 plt.show(block=False)
+unique = []
+trash = [unique.append(i) for i in FRgrid.flatten() if not i in unique]
 
 #out = sp.solvers.solve(fluxRatioPLANET - fluxRatioPHASE, alpha_smaller)
 print(saltyburrtito)
