@@ -59,12 +59,12 @@ print('phaseMERCURY')
 print(phaseMERCURY)
 
 #VENUS
-eqnPhase1Venus = 10.**(-0.4*(- 1.044e-03*alpha + 3.687e-04*alpha**2. - 2.814e-06*alpha**3. + 8.938e-09*alpha**4.))
+eqnPhase1Venus = 10.**(-0.4*(- 1.044e-03*alpha + 3.687e-04*alpha**2. - 2.814e-06*alpha**3. + 8.938e-09*alpha**4.)) #OK alpha in deg
 tmpPhase = 10.**(-0.4*( - 2.81914e-00*alpha + 8.39034e-03*alpha**2.))
-h1 = eqnPhase1Venus.subs(alpha,163.7)
-h2 = 10.**(-0.4*( - 2.81914e-00*163.7 + 8.39034e-03*163.7**2.)) - 10.**(-0.4*( - 2.81914e-00*179. + 8.39034e-03*179.**2.))
-tmpDifference = eqnPhase1Venus.subs(alpha, 163.7) - h1/h2*(10.**(-0.4*( - 2.81914e-00*163.7 + 8.39034e-03*163.7**2.)))
-eqnPhase2Venus = tmpPhase + tmpDifference
+h1 = eqnPhase1Venus.subs(alpha,163.7).evalf() #OK
+h2 = 10.**(-0.4*( - 2.81914e-00*163.7 + 8.39034e-03*163.7**2.)) - 10.**(-0.4*( - 2.81914e-00*179. + 8.39034e-03*179.**2.)) #OK
+tmpDifference = eqnPhase1Venus.subs(alpha, 163.7).evalf() - h1/h2*(10.**(-0.4*( - 2.81914e-00*163.7 + 8.39034e-03*163.7**2.)))
+eqnPhase2Venus = tmpPhase*h1/h2 + tmpDifference
 phaseVENUS = eqnEND.subs(A,163.7).subs(B,5.)*eqnPhase1Venus + \
         eqnSTART.subs(A,163.7).subs(B,5.)*eqnEND.subs(A,179.).subs(B,0.5)*eqnPhase2Venus + \
         eqnSTART.subs(A,179.).subs(B,0.5)*eqnLAMBERT
