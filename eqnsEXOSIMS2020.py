@@ -125,8 +125,8 @@ print(phaseNEPTUNE)
 
 
 #### List of Planet Phase Functions
-symbolicPhases = [phaseMERCURY, phaseVENUS, phaseEARTH, phaseMARS, phaseJUPITER,\
-	phaseSATURN, phaseURANUS, phaseNEPTUNE]
+symbolicPhases = [sp.Abs(phaseMERCURY), sp.Abs(phaseVENUS), sp.Abs(phaseEARTH), sp.Abs(phaseMARS), sp.Abs(phaseJUPITER),\
+    sp.Abs(phaseSATURN), sp.Abs(phaseURANUS), sp.Abs(phaseNEPTUNE)]
 
 
 

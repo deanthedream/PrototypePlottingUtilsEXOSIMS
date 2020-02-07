@@ -1011,12 +1011,12 @@ alpha_max_fullphase_larger = np.arcsin(s_max/a_larger)*180./np.pi
 alpha_min_crescent_larger = np.arcsin(s_max/a_larger)*180./np.pi+90.
 alpha_max_crescent_larger = 180.
 #### dmag range fullphase/crescant phase
-dmag_min_smaller = eqnDmag.subs(R,planProp[planets[ind_smaller]]['R']*u.m.to('earthRad')).subs(p,planProp[planets[ind_smaller]]['p']).subs(a,planProp[planets[ind_smaller]]['a']*u.m.to('AU')).subs(Phi,symbolicPhases[ind_smaller]).subs(alpha,alpha_min_smaller)
-dmag_max_smaller = eqnDmag.subs(R,planProp[planets[ind_smaller]]['R']*u.m.to('earthRad')).subs(p,planProp[planets[ind_smaller]]['p']).subs(a,planProp[planets[ind_smaller]]['a']*u.m.to('AU')).subs(Phi,symbolicPhases[ind_smaller]).subs(alpha,alpha_max_smaller)
-dmag_min_fullphase_larger = eqnDmag.subs(R,planProp[planets[ind_larger]]['R']*u.m.to('earthRad')).subs(p,planProp[planets[ind_larger]]['p']).subs(a,planProp[planets[ind_larger]]['a']*u.m.to('AU')).subs(Phi,symbolicPhases[ind_larger]).subs(alpha,alpha_min_fullphase_larger)
-dmag_max_fullphase_larger = eqnDmag.subs(R,planProp[planets[ind_larger]]['R']*u.m.to('earthRad')).subs(p,planProp[planets[ind_larger]]['p']).subs(a,planProp[planets[ind_larger]]['a']*u.m.to('AU')).subs(Phi,symbolicPhases[ind_larger]).subs(alpha,alpha_max_fullphase_larger)
-dmag_min_crescent_larger = eqnDmag.subs(R,planProp[planets[ind_larger]]['R']*u.m.to('earthRad')).subs(p,planProp[planets[ind_larger]]['p']).subs(a,planProp[planets[ind_larger]]['a']*u.m.to('AU')).subs(Phi,symbolicPhases[ind_larger]).subs(alpha,alpha_min_crescent_larger)
-dmag_max_crescent_larger = eqnDmag.subs(R,planProp[planets[ind_larger]]['R']*u.m.to('earthRad')).subs(p,planProp[planets[ind_larger]]['p']).subs(a,planProp[planets[ind_larger]]['a']*u.m.to('AU')).subs(Phi,symbolicPhases[ind_larger]).subs(alpha,alpha_max_crescent_larger)
+dmag_min_smaller = eqnDmag.subs(R,planProp[planets[ind_smaller]]['R']*u.m.to('m')).subs(p,planProp[planets[ind_smaller]]['p']).subs(a,planProp[planets[ind_smaller]]['a']*u.m.to('m')).subs(Phi,symbolicPhases[ind_smaller]).subs(alpha,alpha_min_smaller)
+dmag_max_smaller = eqnDmag.subs(R,planProp[planets[ind_smaller]]['R']*u.m.to('m')).subs(p,planProp[planets[ind_smaller]]['p']).subs(a,planProp[planets[ind_smaller]]['a']*u.m.to('m')).subs(Phi,symbolicPhases[ind_smaller]).subs(alpha,alpha_max_smaller)
+dmag_min_fullphase_larger = eqnDmag.subs(R,planProp[planets[ind_larger]]['R']*u.m.to('m')).subs(p,planProp[planets[ind_larger]]['p']).subs(a,planProp[planets[ind_larger]]['a']*u.m.to('m')).subs(Phi,symbolicPhases[ind_larger]).subs(alpha,alpha_min_fullphase_larger)
+dmag_max_fullphase_larger = eqnDmag.subs(R,planProp[planets[ind_larger]]['R']*u.m.to('m')).subs(p,planProp[planets[ind_larger]]['p']).subs(a,planProp[planets[ind_larger]]['a']*u.m.to('m')).subs(Phi,symbolicPhases[ind_larger]).subs(alpha,alpha_max_fullphase_larger)
+dmag_min_crescent_larger = eqnDmag.subs(R,planProp[planets[ind_larger]]['R']*u.m.to('m')).subs(p,planProp[planets[ind_larger]]['p']).subs(a,planProp[planets[ind_larger]]['a']*u.m.to('m')).subs(Phi,symbolicPhases[ind_larger]).subs(alpha,alpha_min_crescent_larger)
+dmag_max_crescent_larger = eqnDmag.subs(R,planProp[planets[ind_larger]]['R']*u.m.to('m')).subs(p,planProp[planets[ind_larger]]['p']).subs(a,planProp[planets[ind_larger]]['a']*u.m.to('m')).subs(Phi,symbolicPhases[ind_larger]).subs(alpha,alpha_max_crescent_larger)
 #if dmag_max_fullphase_larger < dmag_min_fullphase_smaller:
     #If the larger planet at it's dimmest in the full phase portion is brighter than the maximum brightness of the smaller planet
     #then no intersection could occur on the maximum phase side
@@ -1076,18 +1076,29 @@ for i in np.arange(len(alpha1_range)):
         FRgrid[i,j+len(alpha2_range)-1] = fluxRatioPHASE.subs(alpha_smaller,alpha1_range[i]).subs(alpha_larger,alpha3_range[j])
 print(time()-tic)
 plt.figure(num=97987987)
-#plt.contourf(alpha1_range,list(alpha2_range)+list(alpha3_range),FRgrid.T)#, locator=ticker.LogLocator())
+#DELETEplt.contourf(alpha1_range,list(alpha2_range)+list(alpha3_range),FRgrid.T)#, locator=ticker.LogLocator())
 tmp = FRgrid.copy()
-tmp[tmp > 1.] = np.nan
-plt.contourf(alpha1_range,list(alpha2_range)+list(alpha3_range),tmp.T,levels=100)#, locator=ticker.LogLocator())
+#tmp[tmp > 20.] = np.nan
+plt.contourf(alpha1_range,list(alpha2_range)+list(alpha3_range),tmp.T, locator=ticker.LogLocator(), levels=[10**i for i in np.linspace(-5,5,num=11)])
 plt.plot([0.,180.],[alpha_max_fullphase_larger,alpha_max_fullphase_larger],color='black')
 plt.plot([0.,180.],[alpha_min_crescent_larger,alpha_min_crescent_larger],color='black')
 cbar3 = plt.colorbar()
 plt.xlabel('alpha1')
 plt.ylabel('alpha2,3')
 plt.show(block=False)
-unique = []
-trash = [unique.append(i) for i in FRgrid.flatten() if not i in unique]
+plt.figure(num=979879872)
+#DELETEplt.contourf(alpha1_range,list(alpha2_range)+list(alpha3_range),FRgrid.T)#, locator=ticker.LogLocator())
+tmp = FRgrid.copy()
+tmp[tmp > 1.] = np.nan
+plt.contourf(alpha1_range,list(alpha2_range)+list(alpha3_range),tmp.T, levels=100)# locator=ticker.LogLocator(), levels=[10**i for i in np.linspace(-5,5,num=11)])
+plt.plot([0.,180.],[alpha_max_fullphase_larger,alpha_max_fullphase_larger],color='black')
+plt.plot([0.,180.],[alpha_min_crescent_larger,alpha_min_crescent_larger],color='black')
+cbar3 = plt.colorbar()
+plt.xlabel('alpha1')
+plt.ylabel('alpha2,3')
+plt.show(block=False)
+#DELETEunique = []
+#DELETEtrash = [unique.append(i) for i in FRgrid.flatten() if not i in unique]
 
 #out = sp.solvers.solve(fluxRatioPLANET - fluxRatioPHASE, alpha_smaller)
 print(saltyburrtito)
