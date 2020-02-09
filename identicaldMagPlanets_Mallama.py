@@ -930,53 +930,76 @@ v1 = sp.Symbol('v1', real=True, positive=True)
 v2 = sp.Symbol('v2', real=True, positive=True)
 i=0
 j=1
+print('Simplify')
 eqnDmag1LHS = eqnDmag.subs(Phi,symbolicPhases[i]).subs(a,planProp[planets[i]]['a']*u.m.to('AU')).subs(R,planProp[planets[i]]['R']*u.m.to('earthRad')).subs(p,planProp[planets[i]]['p'])#.subs(w,90.).subs(W,0).subs(e,0)
-eqnDmag1LHS = sp.simplify(eqnDmag1LHS)
+tic = time()
+eqnDmag1LHS = sp.simplify(eqnDmag1LHS) 
+print(time()-tic)
 eqnDmag1RHS = eqnDmag.subs(Phi,symbolicPhases[j]).subs(a,planProp[planets[j]]['a']*u.m.to('AU')).subs(R,planProp[planets[j]]['R']*u.m.to('earthRad')).subs(p,planProp[planets[j]]['p'])#.subs(w,90.).subs(W,0).subs(e,0)
+tic = time()
 eqnDmag1RHS = sp.simplify(eqnDmag1RHS)
+print(time()-tic)
 eqnS1LHS = eqnS.subs(a,planProp[planets[i]]['a']*u.m.to('AU')).subs(w,90.).subs(W,0).subs(e,0).subs(v,v1)
 eqnS1RHS = eqnS.subs(a,planProp[planets[j]]['a']*u.m.to('AU')).subs(w,90.).subs(W,0).subs(e,0).subs(v,v2)
 
+eqnAlpha1LHS = eqnAlpha1.subs(a,planProp[planets[i]]['a']*u.m.to('AU')).subs(w,90.).subs(W,0).subs(e,0).subs(v,v1)
+eqnAlpha1RHS = eqnAlpha1.subs(a,planProp[planets[j]]['a']*u.m.to('AU')).subs(w,90.).subs(W,0).subs(e,0).subs(v,v2)
+eqnAlpha2LHS = eqnAlpha2.subs(a,planProp[planets[i]]['a']*u.m.to('AU')).subs(w,90.).subs(W,0).subs(e,0).subs(v,v1)
+eqnAlpha2RHS = eqnAlpha2.subs(a,planProp[planets[j]]['a']*u.m.to('AU')).subs(w,90.).subs(W,0).subs(e,0).subs(v,v2)
+
 
 #### Separation vs a,v,inc
+print('separation vs a,v,inc')
 s_anuinc = sp.simplify(eqnS.subs(W,0).subs(w,90.).subs(e,0))
-#### Plot s vs nu, inc
-nu_range  = np.linspace(start=0.,stop=360.,num=360)
-inc_range = np.linspace(start=0.,stop=90.,num=90)
-s_anuincVals = np.zeros((len(nu_range),len(inc_range)))
-for i in np.arange(len(nu_range)):
-    for j in np.arange(len(inc_range)):
-        s_anuincVals[i,j] = s_anuinc.subs(a,1.).subs(v,nu_range[i]).subs(inc,inc_range[j])
-plt.figure(num=888777666)
-plt.contourf(nu_range,inc_range,s_anuincVals.T,cmap='bwr',levels=100)
-cbar = plt.colorbar()
-cbar.set_label('Planet-Star Separation')
-plt.xlabel('nu')
-plt.ylabel('inc')
-plt.show(block=False)
-##########################
+# #### Plot s vs nu, inc
+# nu_range  = np.linspace(start=0.,stop=360.,num=180)
+# inc_range = np.linspace(start=0.,stop=90.,num=90)
+# s_anuincVals = np.zeros((len(nu_range),len(inc_range)))
+# for i in np.arange(len(nu_range)):
+#     for j in np.arange(len(inc_range)):
+#         s_anuincVals[i,j] = s_anuinc.subs(a,1.).subs(v,nu_range[i]).subs(inc,inc_range[j])
+# plt.figure(num=888777666)
+# plt.contourf(nu_range,inc_range,s_anuincVals.T,cmap='bwr',levels=100)
+# cbar = plt.colorbar()
+# cbar.set_label('Planet-Star Separation')
+# plt.xlabel('nu')
+# plt.ylabel('inc')
+# plt.show(block=False)
+# ##########################
+
+#### Minimum Possible Separation of 2 planets
+#Minimum and Maximum $s$ of Coincidence
+def rangeSep_2planets(a_s,a_l,inc):
+    """ Finds the minimum and maximum planet-star separation achievable by both planets
+    Args:
+        inc (float) - inclination in degrees
+    """
+    s_min = a_l*np.cos(inc*np.pi/180.) #smallest planet-star separation of the a_larger planet
+    s_max = a_s #largest planet-star separation of the a_smaller planet
+    return s_min, s_max
+############################
 
 #### Phase Angle vs nu, inc
-alpha_nuinc = sp.simplify(eqnAlpha.subs(W,0).subs(w,90.).subs(e,0))
-#DELETEalpha_nuinc2 = sp.simplify(eqnAlpha.subs(W,0).subs(w,90.).subs(e,0))#180.-
-#### Plot s vs nu, inc
-nu_range  = np.linspace(start=0.,stop=360.,num=360)
-inc_range = np.linspace(start=0.,stop=90.,num=90)
-alpha_nuincVals = np.zeros((len(nu_range),len(inc_range)))
-for i in np.arange(len(nu_range)):
-    for j in np.arange(len(inc_range)):
-        #DELETEif nu_range[i] <= 90.:
-        alpha_nuincVals[i,j] = alpha_nuinc.subs(v,nu_range[i]).subs(inc,inc_range[j]).evalf()
-        #DELETE else:
-        #     alpha_nuincVals[i,j] = alpha_nuinc2.subs(v,nu_range[i]).subs(inc,inc_range[j]).evalf()
-plt.figure(num=888777666555)
-plt.contourf(nu_range,inc_range,alpha_nuincVals.T,cmap='bwr',levels=100)
-cbar2 = plt.colorbar()
-cbar2.set_label('Planet Phase Angle')
-plt.xlabel('nu')
-plt.ylabel('inc')
-plt.show(block=False)
-###########################
+print('Phase Angle vs nu, inc')
+alpha_nuinc = sp.simplify(eqnAlpha1.subs(W,0).subs(w,90.).subs(e,0))
+# #### Plot s vs nu, inc
+# nu_range  = np.linspace(start=0.,stop=360.,num=180)
+# inc_range = np.linspace(start=0.,stop=90.,num=90)
+# alpha_nuincVals = np.zeros((len(nu_range),len(inc_range)))
+# for i in np.arange(len(nu_range)):
+#     for j in np.arange(len(inc_range)):
+#         #DELETEif nu_range[i] <= 90.:
+#         alpha_nuincVals[i,j] = alpha_nuinc.subs(v,nu_range[i]).subs(inc,inc_range[j]).evalf()
+#         #DELETE else:
+#         #     alpha_nuincVals[i,j] = alpha_nuinc2.subs(v,nu_range[i]).subs(inc,inc_range[j]).evalf()
+# plt.figure(num=888777666555)
+# plt.contourf(nu_range,inc_range,alpha_nuincVals.T,cmap='bwr',levels=100)
+# cbar2 = plt.colorbar()
+# cbar2.set_label('Planet Phase Angle')
+# plt.xlabel('nu')
+# plt.ylabel('inc')
+# plt.show(block=False)
+# ###########################
 
 
 
@@ -984,32 +1007,41 @@ plt.show(block=False)
 i=0
 j=1
 #### a_max
-a_smaller = planProp[planets[i]]['a']*u.m.to('AU')
-if a_smaller < planProp[planets[j]]['a']*u.m.to('AU'):
-    a_larger = planProp[planets[j]]['a']*u.m.to('AU')
-    ind_smaller = i #The naturally smaller brightness planet
-    ind_larger = j #The naturally larger brightness planet
-else:
-    a_larger = a_smaller
-    a_smaller = planProp[planets[j]]['a']*u.m.to('AU')
-    ind_smaller = j
-    ind_larger = i
+def a_Lmaller_Larger(planProp,i,j):
+    a_smaller = planProp[planets[i]]['a']*u.m.to('AU')
+    if a_smaller < planProp[planets[j]]['a']*u.m.to('AU'):
+        a_larger = planProp[planets[j]]['a']*u.m.to('AU')
+        ind_smaller = i #The naturally smaller brightness planet
+        ind_larger = j #The naturally larger brightness planet
+    else:
+        a_larger = a_smaller
+        a_smaller = planProp[planets[j]]['a']*u.m.to('AU')
+        ind_smaller = j
+        ind_larger = i
+    return a_smaller, a_larger, ind_smaller, ind_larger
+a_smaller, a_larger, ind_smaller, ind_larger = a_Lmaller_Larger(planProp,i,j)
 #### Smax
 #Find out which SMA is smaller and pick that as smax
-s_smaller = planProp[planets[i]]['a']*u.m.to('AU')
-if s_smaller < planProp[planets[j]]['a']*u.m.to('AU'):
-    s_larger = planProp[planets[j]]['a']*u.m.to('AU')
-else:
-    s_larger = s_smaller
-    s_smaller = planProp[planets[j]]['a']*u.m.to('AU')
-s_max = s_smaller
+def s_smaller_larger_max(planProp,i,j):
+    s_smaller = planProp[planets[i]]['a']*u.m.to('AU')
+    if s_smaller < planProp[planets[j]]['a']*u.m.to('AU'):
+        s_larger = planProp[planets[j]]['a']*u.m.to('AU')
+    else:
+        s_larger = s_smaller
+        s_smaller = planProp[planets[j]]['a']*u.m.to('AU')
+    s_max = s_smaller
+    return s_smaller, s_larger, s_max
+s_smaller, s_larger, s_max = s_smaller_larger_max(planProp,i,j)
 #### Maximum alpha ranges for smax (based on smax)
-alpha_min_smaller = 0.
-alpha_max_smaller = 180.
-alpha_min_fullphase_larger = 0.
-alpha_max_fullphase_larger = np.arcsin(s_max/a_larger)*180./np.pi
-alpha_min_crescent_larger = np.arcsin(s_max/a_larger)*180./np.pi+90.
-alpha_max_crescent_larger = 180.
+def alpha_MinMaxranges(s_max,a_larger):
+    alpha_min_smaller = 0.
+    alpha_max_smaller = 180.
+    alpha_min_fullphase_larger = 0.
+    alpha_max_fullphase_larger = np.arcsin(s_max/a_larger)*180./np.pi
+    alpha_min_crescent_larger = np.arcsin(s_max/a_larger)*180./np.pi+90.
+    alpha_max_crescent_larger = 180.
+    return alpha_min_smaller, alpha_max_smaller, alpha_min_fullphase_larger, alpha_max_fullphase_larger, alpha_min_crescent_larger, alpha_max_crescent_larger
+alpha_min_smaller, alpha_max_smaller, alpha_min_fullphase_larger, alpha_max_fullphase_larger, alpha_min_crescent_larger, alpha_max_crescent_larger = alpha_MinMaxranges(s_max,a_larger)
 #### dmag range fullphase/crescant phase
 dmag_min_smaller = eqnDmag.subs(R,planProp[planets[ind_smaller]]['R']*u.m.to('m')).subs(p,planProp[planets[ind_smaller]]['p']).subs(a,planProp[planets[ind_smaller]]['a']*u.m.to('m')).subs(Phi,symbolicPhases[ind_smaller]).subs(alpha,alpha_min_smaller)
 dmag_max_smaller = eqnDmag.subs(R,planProp[planets[ind_smaller]]['R']*u.m.to('m')).subs(p,planProp[planets[ind_smaller]]['p']).subs(a,planProp[planets[ind_smaller]]['a']*u.m.to('m')).subs(Phi,symbolicPhases[ind_smaller]).subs(alpha,alpha_max_smaller)
@@ -1025,6 +1057,7 @@ dmag_max_crescent_larger = eqnDmag.subs(R,planProp[planets[ind_larger]]['R']*u.m
 
 #### Calculate Nominal Flux Ratios 
 #[ps(Rs/as)^2]/[pL(RL/aL)^2]
+print('Calculating Nominal Flux Ratios')
 alpha_smaller = sp.Symbol('alpha_smaller', real=True, positive=True)
 alpha_larger = sp.Symbol('alpha_larger', real=True, positive=True)
 fluxRatioPLANET = eqnDmagInside.subs(R,planProp[planets[ind_smaller]]['R']*u.m.to('m')).subs(p,planProp[planets[ind_smaller]]['p']).subs(a,planProp[planets[ind_smaller]]['a']*u.m.to('m')).subs(Phi,1.) / \
@@ -1044,27 +1077,31 @@ def errorFluxRatio2(x):
     return error
 x0 = np.asarray([45.,135.])
 out = fsolve(func=errorFluxRatio,x0=x0)
-out2 = minimize(fun=errorFluxRatio2,x0=x0,bounds=[(alpha_min_smaller,alpha_max_smaller),(alpha_min_crescent_larger,alpha_max_crescent_larger)])
+out2 = minimize(fun=errorFluxRatio2,x0=x0,bounds=[(alpha_min_smaller,alpha_max_smaller),(alpha_min_crescent_larger,alpha_max_crescent_larger)], \
+                )
 ##############
 
 #### Verifying symbolic phase functions
-alpha_range = np.linspace(start=0.,stop=180.,num=180)
-PHPHvals = list()
-for i in np.arange(len(symbolicPhases)):
-    tmp = list()
-    for j in np.arange(len(alpha_range)):
-        tmp.append(symbolicPhases[i].subs(alpha,alpha_range[j]))
-    PHPHvals.append(tmp)
-plt.figure(num=10000123123)
-for i in np.arange(len(symbolicPhases)):
-    plt.plot(alpha_range,PHPHvals[i],label=str(i))
-plt.xlabel('alpha')
-plt.legend()
-plt.show(block=False)
+#some functions don't have 0 at 180 deg phase
+# print('Verifying Symbolic Phase Functions')
+# alpha_range = np.linspace(start=0.,stop=180.,num=180)
+# PHPHvals = list()
+# for i in np.arange(len(symbolicPhases)):
+#     tmp = list()
+#     for j in np.arange(len(alpha_range)):
+#         tmp.append(symbolicPhases[i].subs(alpha,alpha_range[j]))
+#     PHPHvals.append(tmp)
+# plt.figure(num=10000123123)
+# for i in np.arange(len(symbolicPhases)):
+#     plt.plot(alpha_range,PHPHvals[i],label=str(i))
+# plt.xlabel('alpha')
+# plt.legend()
+# plt.show(block=False)
 ##############################
 
 #### verifying the a solution exists somewhere in the entire alpha range
-alpha1_range = np.linspace(start=0.,stop=180.,num=1800)
+print('Verifying a Solution exists somewhere in the entire alpha range')
+alpha1_range = np.linspace(start=0.,stop=180.,num=180)
 alpha2_range = np.linspace(start=alpha_min_fullphase_larger,stop=alpha_max_fullphase_larger,num=90)
 alpha3_range = np.linspace(start=alpha_min_crescent_larger,stop=alpha_max_crescent_larger,num=30)
 FRgrid = np.zeros((len(alpha1_range),len(alpha2_range)+len(alpha3_range)))
@@ -1074,9 +1111,10 @@ for i in np.arange(len(alpha1_range)):
         FRgrid[i,j] = fluxRatioPHASE.subs(alpha_smaller,alpha1_range[i]).subs(alpha_larger,alpha2_range[j])
     for j in np.arange(len(alpha3_range)):
         FRgrid[i,j+len(alpha2_range)-1] = fluxRatioPHASE.subs(alpha_smaller,alpha1_range[i]).subs(alpha_larger,alpha3_range[j])
+    print('Verify Soln: ' + str(i))
 print(time()-tic)
+
 plt.figure(num=97987987)
-#DELETEplt.contourf(alpha1_range,list(alpha2_range)+list(alpha3_range),FRgrid.T)#, locator=ticker.LogLocator())
 tmp = FRgrid.copy()
 #tmp[tmp > 20.] = np.nan
 plt.contourf(alpha1_range,list(alpha2_range)+list(alpha3_range),tmp.T, locator=ticker.LogLocator(), levels=[10**i for i in np.linspace(-5,5,num=11)])
@@ -1087,7 +1125,6 @@ plt.xlabel('alpha1')
 plt.ylabel('alpha2,3')
 plt.show(block=False)
 plt.figure(num=979879872)
-#DELETEplt.contourf(alpha1_range,list(alpha2_range)+list(alpha3_range),FRgrid.T)#, locator=ticker.LogLocator())
 tmp = FRgrid.copy()
 tmp[tmp > 1.] = np.nan
 plt.contourf(alpha1_range,list(alpha2_range)+list(alpha3_range),tmp.T, levels=100)# locator=ticker.LogLocator(), levels=[10**i for i in np.linspace(-5,5,num=11)])
@@ -1096,12 +1133,213 @@ plt.plot([0.,180.],[alpha_min_crescent_larger,alpha_min_crescent_larger],color='
 cbar3 = plt.colorbar()
 plt.xlabel('alpha1')
 plt.ylabel('alpha2,3')
+
+plt.scatter(out2.x[0],out2.x[1],marker='x', color='k')
+
+
 plt.show(block=False)
-#DELETEunique = []
-#DELETEtrash = [unique.append(i) for i in FRgrid.flatten() if not i in unique]
 
 #out = sp.solvers.solve(fluxRatioPLANET - fluxRatioPHASE, alpha_smaller)
-print(saltyburrtito)
+####
+#### Minimization for alpha1, alpha2, inc
+print('Minimizing1')
+i_crit = np.arccos(a_smaller/a_larger)*180./np.pi
+def funcMaxInc(x):
+    tv1 = x[0]
+    tv2 = x[1]
+    tinc = x[2]
+    return -tinc
+def con_sep(x):
+    tv1 = x[0]
+    tv2 = x[1]
+    tinc = x[2]
+    error = eqnS1LHS.subs(v1,tv1).subs(inc,tinc).evalf() - eqnS1RHS.subs(v2,tv2).subs(inc,tinc).evalf()
+    return error
+def con_dmag(x):
+    tv1 = x[0]
+    tv2 = x[1]
+    tinc = x[2]
+    error = eqnDmag1LHS.subs(alpha,eqnAlpha2LHS).subs(v1,tv1).subs(inc,tinc).evalf() - eqnDmag1RHS.subs(alpha,eqnAlpha2RHS).subs(v2,tv2).subs(inc,tinc).evalf()
+    return error
+x0 = np.asarray([1.,1.,0.])
+out = minimize(funcMaxInc, x0, method='SLSQP', bounds=[(0.,180.),(0.,180.),(0.,i_crit)], constraints=[{'type':'eq','fun':con_sep},{'type':'eq','fun':con_dmag}], options={'disp':True,})#'eps':1.})#constraints=[con1])
+####
+print('Minimizing2')
+i_crit = np.arccos(a_smaller/a_larger)*180./np.pi
+def funcMaxInc(x):
+    tv1 = x[0]
+    tv2 = x[1]
+    tinc = x[2]
+    return -tinc
+def con_sep1(x,sep):
+    tv1 = x[0]
+    tv2 = x[1]
+    tinc = x[2]
+    error = eqnS1LHS.subs(v1,tv1).subs(inc,tinc).evalf() - sep#eqnS1RHS.subs(v2,tv2).subs(inc,tinc).evalf()
+    return error
+def con_sep2(x,sep):
+    tv1 = x[0]
+    tv2 = x[1]
+    tinc = x[2]
+    error = sep - eqnS1RHS.subs(v2,tv2).subs(inc,tinc).evalf()
+    return error
+def con_dmag(x):
+    tv1 = x[0]
+    tv2 = x[1]
+    tinc = x[2]
+    error = eqnDmag1LHS.subs(alpha,eqnAlpha2LHS).subs(v1,tv1).subs(inc,tinc).evalf() - eqnDmag1RHS.subs(alpha,eqnAlpha2RHS).subs(v2,tv2).subs(inc,tinc).evalf()
+    return error
+s_range = np.linspace(start=0.,stop=a_smaller,num=int(np.ceil((a_smaller-0.)/0.1)))#int(np.ceil((a_smaller-0.)*5./180.)))
+outList = list()
+for i in np.arange(len(s_range)):
+    s_i = s_range[i]
+    x0 = np.asarray([1.,1.,0.])
+    out = minimize(funcMaxInc, x0, method='SLSQP', bounds=[(0.,180.),(0.,180.),(0.,i_crit)], constraints=[{'type':'eq','fun':con_sep1,'args':(s_i,)},{'type':'eq','fun':con_sep2,'args':(s_i,)},{'type':'eq','fun':con_dmag}], options={'disp':True,})#'eps':1.})#constraints=[con1])
+    outList.append(out)
+####
+print('Minimizing3')
+i_crit = np.arccos(a_smaller/a_larger)*180./np.pi
+def funcMaxInc(x):
+    tv1 = x[0]
+    tv2 = x[1]
+    tinc = x[2]
+    return np.abs(eqnDmag1LHS.subs(alpha,eqnAlpha2LHS).subs(v1,tv1).subs(inc,tinc).evalf() - eqnDmag1RHS.subs(alpha,eqnAlpha2RHS).subs(v2,tv2).subs(inc,tinc).evalf())
+# s_range = np.linspace(start=0.,stop=a_smaller,num=int(np.ceil((a_smaller-0.)/0.1)))#int(np.ceil((a_smaller-0.)*5./180.)))
+# outList = list()
+# for i in np.arange(len(s_range)):
+#     s_i = s_range[i]
+x0 = np.asarray([1.,1.,0.])
+out = minimize(funcMaxInc, x0, method='SLSQP', bounds=[(0.,180.),(0.,180.),(0.,i_crit)], constraints=[{'type':'eq','fun':con_sep}], options={'disp':True,})#'eps':1.})#constraints=[con1])
+#outList.append(out)
+#### SUCCESS
+print('Minimizing4')
+i_crit = np.arccos(a_smaller/a_larger)*180./np.pi
+def funcMaxInc(x):
+    talpha1 = x[0]
+    talpha2 = x[1]
+    return np.abs(eqnDmag1LHS.subs(alpha,talpha1).evalf() - eqnDmag1RHS.subs(alpha,talpha2).evalf())
+def con_sepAlpha(x):
+    talpha1 = x[0]
+    talpha2 = x[1]
+    error = eqnSAlpha.subs(a,planProp[planets[ind_smaller]]['a']*u.m.to('AU')).subs(alpha,talpha1).evalf() - eqnSAlpha.subs(a,planProp[planets[ind_larger]]['a']*u.m.to('AU')).subs(alpha,talpha2).evalf()
+    return error
+# s_range = np.linspace(start=0.,stop=a_smaller,num=int(np.ceil((a_smaller-0.)/0.1)))#int(np.ceil((a_smaller-0.)*5./180.)))
+# outList = list()
+# for i in np.arange(len(s_range)):
+#     s_i = s_range[i]
+x0 = np.asarray([1.,1.])
+out = minimize(funcMaxInc, x0, method='SLSQP', bounds=[(0.,180.),(alpha_min_crescent_larger,180.)], constraints=[{'type':'eq','fun':con_sepAlpha}], options={'disp':True,})#'eps':1.})#constraints=[con1])
+#outList.append(out)
+print(eqnSAlpha.subs(a,planProp[planets[ind_smaller]]['a']*u.m.to('AU')).subs(alpha,out.x[0]))
+print(eqnSAlpha.subs(a,planProp[planets[ind_larger]]['a']*u.m.to('AU')).subs(alpha,out.x[1]).evalf())
+print(eqnDmag1LHS.subs(alpha,out.x[0]).evalf())
+print(eqnDmag1RHS.subs(alpha,out.x[1]).evalf())
+
+####SUCCESS!!! We get inclinations of the solved system by imposing them as constraints
+print('Minimizing5')
+i_crit = np.arccos(a_smaller/a_larger)*180./np.pi
+def funcMaxInc(x):
+    talpha1 = x[0]
+    talpha2 = x[1]
+    return np.abs(eqnDmag1LHS.subs(alpha,talpha1).evalf() - eqnDmag1RHS.subs(alpha,talpha2).evalf())
+def con_sepAlpha(x):
+    talpha1 = x[0]
+    talpha2 = x[1]
+    error = eqnSAlpha.subs(a,planProp[planets[ind_smaller]]['a']*u.m.to('AU')).subs(alpha,talpha1).evalf() - eqnSAlpha.subs(a,planProp[planets[ind_larger]]['a']*u.m.to('AU')).subs(alpha,talpha2).evalf()
+    return error
+#CREATE BOUNDS AND USE THOSE BOUNDS TO DEFINE THE RANGE FOR ALPHA1 AND ALPHA2
+inc_range = np.linspace(start=0.,stop=90.,num=45)
+outList = list()
+dmagErrorList = list()
+for i in np.arange(len(inc_range)):
+    min_alpha = inc_range[i]
+    x0 = np.asarray([1.,1.])
+    if alpha_min_crescent_larger > 180.-min_alpha:
+        continue
+    out = minimize(funcMaxInc, x0, method='SLSQP', bounds=[(0.+min_alpha,180.-min_alpha),(alpha_min_crescent_larger,180.-min_alpha)], constraints=[{'type':'eq','fun':con_sepAlpha}], options={'disp':True,})#'eps':1.})#constraints=[con1])
+    outList.append(out)
+    dmagErrorList.append(np.abs(eqnDmag1RHS.subs(alpha,out.x[1]).evalf() - eqnDmag1LHS.subs(alpha,out.x[0]).evalf()))
+successList = [outList[i].success for i in np.arange(len(outList))]
+# print(eqnSAlpha.subs(a,planProp[planets[ind_smaller]]['a']*u.m.to('AU')).subs(alpha,out.x[0]))
+# print(eqnSAlpha.subs(a,planProp[planets[ind_larger]]['a']*u.m.to('AU')).subs(alpha,out.x[1]).evalf())
+# print(eqnDmag1LHS.subs(alpha,out.x[0]).evalf())
+# print(eqnDmag1RHS.subs(alpha,out.x[1]).evalf())
+
+#### Finding Minimum Inclination For Overlaps
+print('Max Inclination Ranges')
+#Creates List of all planet-planet comparisons to do
+planInds = np.arange(8)
+planIndPairs = list()
+tmp = [[planIndPairs.append([i,j]) for j in np.arange(7+1) if not i == j and j > i] for i in planInds]
+#Find all inc. alpha1, alpha2 intersections
+incDict = {}
+for pair_k in np.arange(len(planIndPairs)):
+    i = planIndPairs[pair_k][0]
+    j = planIndPairs[pair_k][1]
+    print("i: " + str(i) + " j: " + str(j))
+    a_smaller, a_larger, ind_smaller, ind_larger  = a_Lmaller_Larger(planProp,i,j)
+    s_smaller, s_larger, s_max = s_smaller_larger_max(planProp,i,j)
+    alpha_min_smaller, alpha_max_smaller, alpha_min_fullphase_larger, alpha_max_fullphase_larger, alpha_min_crescent_larger, alpha_max_crescent_larger = alpha_MinMaxranges(s_max,a_larger)
+    i_crit = np.arccos(a_smaller/a_larger)*180./np.pi
+    incDict[ind_smaller,ind_larger] = {}
+    incDict[ind_smaller,ind_larger]['opt1'] = {}
+    incDict[ind_smaller,ind_larger]['opt2'] = {}
+    eqnDmagLHS = eqnDmag.subs(Phi,symbolicPhases[ind_smaller]).subs(a,planProp[planets[ind_smaller]]['a']*u.m.to('AU')).subs(R,planProp[planets[ind_smaller]]['R']*u.m.to('earthRad')).subs(p,planProp[planets[ind_smaller]]['p'])
+    eqnDmagRHS = eqnDmag.subs(Phi,symbolicPhases[ind_larger]).subs(a,planProp[planets[ind_larger]]['a']*u.m.to('AU')).subs(R,planProp[planets[ind_larger]]['R']*u.m.to('earthRad')).subs(p,planProp[planets[ind_larger]]['p'])
+    def funcMaxInc(x):
+        talpha1 = x[0]
+        talpha2 = x[1]
+        return np.abs(eqnDmagLHS.subs(alpha,talpha1).evalf() - eqnDmagRHS.subs(alpha,talpha2).evalf())
+    def con_sepAlpha(x):
+        talpha1 = x[0]
+        talpha2 = x[1]
+        error = eqnSAlpha.subs(a,planProp[planets[ind_smaller]]['a']*u.m.to('AU')).subs(alpha,talpha1).evalf() - eqnSAlpha.subs(a,planProp[planets[ind_larger]]['a']*u.m.to('AU')).subs(alpha,talpha2).evalf()
+        return error
+    #CREATE BOUNDS AND USE THOSE BOUNDS TO DEFINE THE RANGE FOR ALPHA1 AND ALPHA2
+    inc_range = np.linspace(start=0.,stop=90.,num=45)
+    outList1 = list()
+    outList2 = list()
+    dmagErrorList = list()
+    continueOpt1 = True #Boolean indicating if last opt failed
+    continueOpt2 = True #Boolean indicating if last opt failed
+    opt1Incs = list()
+    opt2Incs = list()
+    for i in np.arange(len(inc_range)):
+        min_alpha = inc_range[i]
+        if alpha_min_crescent_larger > 180.-min_alpha:
+            continue
+        else:
+            if not continueOpt1:
+                continue
+            #Find Intersection (brighter of smaller, dimmer of larger)
+            x0 = np.asarray([(90.+min_alpha)/2.,(alpha_min_crescent_larger+180.-min_alpha)/2.])
+            out = minimize(funcMaxInc, x0, method='SLSQP', bounds=[(0.+min_alpha,180.-min_alpha),(alpha_min_crescent_larger,180.-min_alpha)], constraints=[{'type':'eq','fun':con_sepAlpha}], options={'disp':True,})
+            outList1.append(out)
+            dmagErrorList.append(np.abs(eqnDmag1RHS.subs(alpha,out.x[1]).evalf() - eqnDmag1LHS.subs(alpha,out.x[0]).evalf()))
+            if out.success == False:#If we did not successfully converge, do not run this opt again
+                continueOpt1 = False
+        if alpha_max_fullphase_larger < min_alpha:
+            continue
+        else:
+            if not continueOpt2:
+                continue
+            #Find Intersection (brighter of smaller, brighter of larger)
+            x0 = np.asarray([(90.+min_alpha)/2.,(min_alpha+alpha_max_fullphase_larger)/2.])
+            out = minimize(funcMaxInc, x0, method='SLSQP', bounds=[(0.+min_alpha,180.-min_alpha),(0.+min_alpha,alpha_max_fullphase_larger)], constraints=[{'type':'eq','fun':con_sepAlpha}], options={'disp':True,})
+            outList2.append(out)
+            dmagErrorList.append(np.abs(eqnDmag1RHS.subs(alpha,out.x[1]).evalf() - eqnDmag1LHS.subs(alpha,out.x[0]).evalf()))
+            if out.success == False: #If we did not successfully converge, do not run this opt again
+                continueOpt1 = False
+    incDict[ind_smaller,ind_larger]['opt1']['incs'] = opt1Incs
+    incDict[ind_smaller,ind_larger]['opt2']['incs'] = opt2Incs
+    incDict[ind_smaller,ind_larger]['opt1']['outList'] = outList1
+    incDict[ind_smaller,ind_larger]['opt2']['outList'] = outList2
+    successList = [outList[i].success for i in np.arange(len(outList))]
+######################################################################
+
+
+
+
 
 #### Inclination min
 #Find the bounding inclinations which cause intersection
@@ -1131,21 +1369,21 @@ vvv = np.linspace(start=0.,stop=180.,num=181)
 # Rmmm2 = [eqnDmag1RHS.subs(inc,20.).subs(v2,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
 # Rsss3 = [eqnS1RHS.subs(inc,0.).subs(v2,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
 # Rmmm3 = [eqnDmag1RHS.subs(inc,0.).subs(v2,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
-sss = [eqnS1LHS.subs(alpha,vvv[ind]).evalf() for ind in np.arange(len(vvv))] 
+sss = [eqnS1LHS.subs(v1,vvv[ind]).subs(inc,90.).evalf() for ind in np.arange(len(vvv))] 
 mmm = [eqnDmag1LHS.subs(alpha,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
-sss1 = [eqnS1LHS.subs(alpha,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
+sss1 = [eqnS1LHS.subs(v1,vvv[ind]).subs(inc,90.).evalf() for ind in np.arange(len(vvv))]
 mmm1 = [eqnDmag1LHS.subs(alpha,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
-sss2 = [eqnS1LHS.subs(alpha,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
+sss2 = [eqnS1LHS.subs(v1,vvv[ind]).subs(inc,90.).evalf() for ind in np.arange(len(vvv))]
 mmm2 = [eqnDmag1LHS.subs(alpha,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
-sss3 = [eqnS1LHS.subs(alpha,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
+sss3 = [eqnS1LHS.subs(v1,vvv[ind]).subs(inc,90.).evalf() for ind in np.arange(len(vvv))]
 mmm3 = [eqnDmag1LHS.subs(alpha,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
-Rsss = [eqnS1RHS.subs(alpha,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
+Rsss = [eqnS1RHS.subs(v2,vvv[ind]).subs(inc,90.).evalf() for ind in np.arange(len(vvv))]
 Rmmm = [eqnDmag1RHS.subs(alpha,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
-Rsss1 = [eqnS1RHS.subs(alpha,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
+Rsss1 = [eqnS1RHS.subs(v2,vvv[ind]).subs(inc,90.).evalf() for ind in np.arange(len(vvv))]
 Rmmm1 = [eqnDmag1RHS.subs(alpha,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
-Rsss2 = [eqnS1RHS.subs(alpha,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
+Rsss2 = [eqnS1RHS.subs(v2,vvv[ind]).subs(inc,90.).evalf() for ind in np.arange(len(vvv))]
 Rmmm2 = [eqnDmag1RHS.subs(alpha,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
-Rsss3 = [eqnS1RHS.subs(alpha,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
+Rsss3 = [eqnS1RHS.subs(v2,vvv[ind]).subs(inc,90.).evalf() for ind in np.arange(len(vvv))]
 Rmmm3 = [eqnDmag1RHS.subs(alpha,vvv[ind]).evalf() for ind in np.arange(len(vvv))]
 plt.close(10920198230)
 plt.figure(num=10920198230)
@@ -1176,10 +1414,7 @@ incFunc_s = sp.solvers.solve(eqnS1LHS-eqnS1RHS,inc)
 #incFunc_dmag = sp.solvers.solve(1.-eqnDmag1RHS/eqnDmag1LHS,inc)
 
 
-print('Minimizing')
-from scipy.optimize import minimize
-from scipy.optimize import LinearConstraint
-from scipy.optimize import NonlinearConstraint
+print('Minimizing2')
 def func(x,inc_val):
     tv1 = x[0]
     tv2 = x[1]

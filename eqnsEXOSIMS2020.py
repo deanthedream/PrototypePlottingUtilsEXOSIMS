@@ -33,13 +33,15 @@ print(eqnY)
 print('Z')
 print(eqnZ)
 
-#alpha in deg
-eqnAlpha = sp.acos(eqnZ/sp.sqrt(eqnX**2.+eqnY**2.+eqnZ**2.))*180./np.pi
-print('Alpha')
-print(eqnAlpha)
-
 #s
 eqnS = sp.sqrt(eqnX**2.+eqnY**2.)
+eqnSAlpha = a*sp.sin(alpha*np.pi/180.)
+
+#alpha in deg
+eqnAlpha1 = sp.acos(eqnZ/sp.sqrt(eqnX**2.+eqnY**2.+eqnZ**2.))*180./np.pi
+eqnAlpha2 = sp.asin(eqnS/sp.sqrt(eqnX**2.+eqnY**2.+eqnZ**2.))*180./np.pi
+print('Alpha')
+print(eqnAlpha1)
 
 #dmag
 eqnDmagInside = p*(R/a)**2.*Phi
@@ -66,8 +68,8 @@ h2 = 10.**(-0.4*( - 2.81914e-00*163.7 + 8.39034e-03*163.7**2.)) - 10.**(-0.4*( -
 tmpDifference = eqnPhase1Venus.subs(alpha, 163.7).evalf() - h1/h2*(10.**(-0.4*( - 2.81914e-00*163.7 + 8.39034e-03*163.7**2.)))
 eqnPhase2Venus = tmpPhase*h1/h2 + tmpDifference
 phaseVENUS = eqnEND.subs(A,163.7).subs(B,5.)*eqnPhase1Venus + \
-        eqnSTART.subs(A,163.7).subs(B,5.)*eqnEND.subs(A,179.).subs(B,0.5)*eqnPhase2Venus + \
-        eqnSTART.subs(A,179.).subs(B,0.5)*eqnLAMBERT
+        eqnSTART.subs(A,163.7).subs(B,5.)*eqnEND.subs(A,179.).subs(B,0.3)*eqnPhase2Venus + \
+        eqnSTART.subs(A,179.).subs(B,0.3)*eqnLAMBERT
 print('phaseVENUS')
 print(phaseVENUS)
 
