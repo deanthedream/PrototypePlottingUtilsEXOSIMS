@@ -540,6 +540,10 @@ successList = [outList[i].success for i in np.arange(len(outList))]
 # print(eqnDmag1LHS.subs(alpha,out.x[0]).evalf())
 # print(eqnDmag1RHS.subs(alpha,out.x[1]).evalf())
 
+
+
+
+
 #### Finding Minimum Inclination For Overlaps
 print('Max Inclination Ranges')
 #Creates List of all planet-planet comparisons to do
@@ -559,6 +563,8 @@ for pair_k in np.arange(len(planIndPairs)):
     incDict[ind_smaller,ind_larger] = {}
     incDict[ind_smaller,ind_larger]['opt1'] = {}
     incDict[ind_smaller,ind_larger]['opt2'] = {}
+    incDict[ind_smaller,ind_larger]['opt3'] = {}
+    incDict[ind_smaller,ind_larger]['opt4'] = {}
     eqnDmagLHS = eqnDmag.subs(Phi,symbolicPhases[ind_smaller]).subs(a,planProp[planets[ind_smaller]]['a']*u.m.to('AU')).subs(R,planProp[planets[ind_smaller]]['R']*u.m.to('earthRad')).subs(p,planProp[planets[ind_smaller]]['p'])
     eqnDmagRHS = eqnDmag.subs(Phi,symbolicPhases[ind_larger]).subs(a,planProp[planets[ind_larger]]['a']*u.m.to('AU')).subs(R,planProp[planets[ind_larger]]['R']*u.m.to('earthRad')).subs(p,planProp[planets[ind_larger]]['p'])
     def funcMaxInc(x):
@@ -574,22 +580,39 @@ for pair_k in np.arange(len(planIndPairs)):
     inc_range = np.linspace(start=0.,stop=90.,num=45)
     outList1 = list()
     outList2 = list()
+    outList3 = list()
+    outList4 = list()
     dmagErrorList = list()
     continueOpt1 = True #Boolean indicating if last opt failed
     continueOpt2 = True #Boolean indicating if last opt failed
+    continueOpt3 = True #Boolean indicating if last opt failed
+    continueOpt4 = True #Boolean indicating if last opt failed
     opt1Incs = list()
     opt2Incs = list()
+    opt3Incs = list()
+    opt4Incs = list()
     incDict[ind_smaller,ind_larger]['opt1']['success'] = list()
     incDict[ind_smaller,ind_larger]['opt2']['success'] = list()
+    incDict[ind_smaller,ind_larger]['opt3']['success'] = list()
+    incDict[ind_smaller,ind_larger]['opt4']['success'] = list()
     incDict[ind_smaller,ind_larger]['opt1']['v1'] = list()
     incDict[ind_smaller,ind_larger]['opt1']['v2'] = list()
     incDict[ind_smaller,ind_larger]['opt2']['v1'] = list()
     incDict[ind_smaller,ind_larger]['opt2']['v2'] = list()
+    incDict[ind_smaller,ind_larger]['opt3']['v1'] = list()
+    incDict[ind_smaller,ind_larger]['opt3']['v2'] = list()
+    incDict[ind_smaller,ind_larger]['opt4']['v1'] = list()
+    incDict[ind_smaller,ind_larger]['opt4']['v2'] = list()
     incDict[ind_smaller,ind_larger]['opt1']['fun'] = list()
     incDict[ind_smaller,ind_larger]['opt2']['fun'] = list()
+    incDict[ind_smaller,ind_larger]['opt3']['fun'] = list()
+    incDict[ind_smaller,ind_larger]['opt4']['fun'] = list()
     incDict[ind_smaller,ind_larger]['opt1']['funZERO'] = list()
     incDict[ind_smaller,ind_larger]['opt2']['funZERO'] = list()
+    incDict[ind_smaller,ind_larger]['opt3']['funZERO'] = list()
+    incDict[ind_smaller,ind_larger]['opt4']['funZERO'] = list()
     for i in np.arange(len(inc_range)):
+        #Opt1 Start Small: Full Phase Side, Large: Dim Side
         min_alpha = inc_range[i]
         if alpha_min_crescent_larger > 180.-min_alpha:
             continue
@@ -610,6 +633,7 @@ for pair_k in np.arange(len(planIndPairs)):
             incDict[ind_smaller,ind_larger]['opt1']['fun'].append(out.fun)
             incDict[ind_smaller,ind_larger]['opt1']['funZERO'].append(out.fun < 0.1)
             incDict[ind_smaller,ind_larger]['opt1']['inc_range'] = opt1Incs
+        #Opt2 Start Small: Full Phase Side, Large: Full Phase Side
         if alpha_max_fullphase_larger < min_alpha:
             continue
         else:
@@ -629,27 +653,79 @@ for pair_k in np.arange(len(planIndPairs)):
             incDict[ind_smaller,ind_larger]['opt2']['fun'].append(out.fun)
             incDict[ind_smaller,ind_larger]['opt2']['funZERO'].append(out.fun < 1e-5) #The solution is optimal
             incDict[ind_smaller,ind_larger]['opt2']['inc_range'] = opt2Incs
+        #Opt3 Start Small: Dim Side, Large: Dim Side
+        min_alpha = inc_range[i]
+        if alpha_min_crescent_larger > 180.-min_alpha:
+            continue
+        else:
+            if not continueOpt3:
+                continue
+            #Find Intersection (brighter of smaller, dimmer of larger)
+            x0 = np.asarray([(90.+180.-min_alpha)/2.,(alpha_min_crescent_larger+180.-min_alpha)/2.])
+            out = minimize(funcMaxInc, x0, method='SLSQP', bounds=[(0.+min_alpha,180.-min_alpha),(alpha_min_crescent_larger,180.-min_alpha)], constraints=[{'type':'eq','fun':con_sepAlpha}], options={'disp':True,})
+            outList3.append(out)
+            opt3Incs.append(inc_range[i])
+            dmagErrorList.append(np.abs(eqnDmag1RHS.subs(alpha,out.x[1]).evalf() - eqnDmag1LHS.subs(alpha,out.x[0]).evalf()))
+            if out.success == False:# or out.fun > 0.1:#If we did not successfully converge, do not run this opt again
+                continueOpt3 = False
+            incDict[ind_smaller,ind_larger]['opt3']['success'].append(out.success)
+            incDict[ind_smaller,ind_larger]['opt3']['v1'].append(out.x[0])
+            incDict[ind_smaller,ind_larger]['opt3']['v2'].append(out.x[1])
+            incDict[ind_smaller,ind_larger]['opt3']['fun'].append(out.fun)
+            incDict[ind_smaller,ind_larger]['opt3']['funZERO'].append(out.fun < 0.1)
+            incDict[ind_smaller,ind_larger]['opt3']['inc_range'] = opt3Incs
+        #Opt4 Start Small: Dim Side, Large: Full Phase Side
+        if alpha_max_fullphase_larger < min_alpha:
+            continue
+        else:
+            if not continueOpt4:
+                continue
+            #Find Intersection (brighter of smaller, brighter of larger)
+            x0 = np.asarray([(90.+180.-min_alpha)/2.,(min_alpha+alpha_max_fullphase_larger)/2.])
+            out = minimize(funcMaxInc, x0, method='SLSQP', bounds=[(0.+min_alpha,180.-min_alpha),(0.+min_alpha,alpha_max_fullphase_larger)], constraints=[{'type':'eq','fun':con_sepAlpha}], options={'disp':True,})
+            outList4.append(out)
+            opt4Incs.append(inc_range[i])
+            dmagErrorList.append(np.abs(eqnDmag1RHS.subs(alpha,out.x[1]).evalf() - eqnDmag1LHS.subs(alpha,out.x[0]).evalf()))
+            if out.success == False:# or out.fun > 0.1: #If we did not successfully converge, do not run this opt again
+                continueOpt4 = False
+            incDict[ind_smaller,ind_larger]['opt4']['success'].append(out.success)
+            incDict[ind_smaller,ind_larger]['opt4']['v1'].append(out.x[0])
+            incDict[ind_smaller,ind_larger]['opt4']['v2'].append(out.x[1])
+            incDict[ind_smaller,ind_larger]['opt4']['fun'].append(out.fun)
+            incDict[ind_smaller,ind_larger]['opt4']['funZERO'].append(out.fun < 1e-5) #The solution is optimal
+            incDict[ind_smaller,ind_larger]['opt4']['inc_range'] = opt4Incs
 
     incDict[ind_smaller,ind_larger]['opt1']['incs'] = opt1Incs
     incDict[ind_smaller,ind_larger]['opt2']['incs'] = opt2Incs
+    incDict[ind_smaller,ind_larger]['opt3']['incs'] = opt3Incs
+    incDict[ind_smaller,ind_larger]['opt4']['incs'] = opt4Incs
     incDict[ind_smaller,ind_larger]['opt1']['outList'] = outList1
     incDict[ind_smaller,ind_larger]['opt2']['outList'] = outList2
+    incDict[ind_smaller,ind_larger]['opt3']['outList'] = outList3
+    incDict[ind_smaller,ind_larger]['opt4']['outList'] = outList4
 
     #Pick which side was smaller, Opt1 or Opt2
     minOpt1 = np.min(incDict[ind_smaller,ind_larger]['opt1']['fun'])
     minOpt2 = np.min(incDict[ind_smaller,ind_larger]['opt2']['fun'])
-    ind_minSide = np.argmin([minOpt1, minOpt2])
-    if ind_minSide == 0:
-        optNum = 'opt1'
-        nonOptNum = 'opt2'
-    elif ind_minSide == 1:
-        optNum = 'opt2'
-        nonOptNum = 'opt1'
+    minOpt3 = np.min(incDict[ind_smaller,ind_larger]['opt3']['fun'])
+    minOpt4 = np.min(incDict[ind_smaller,ind_larger]['opt4']['fun'])
+    tmp = [minOpt1, minOpt2, minOpt3, minOpt4]
+    ind_minSide = np.argmin(tmp)
+    optNum = 'opt' + str(ind_minSide+1)
+    tmp.pop(ind_minSide)
+    ind_minSide2 = np.argmin(tmp)
+    nonOptNum = 'opt' + str(ind_minSide2+1)
+    # if ind_minSide == 0:
+    #     optNum = 'opt1'
+    #     nonOptNum = 'opt2'
+    # elif ind_minSide == 1:
+    #     optNum = 'opt2'
+    #     nonOptNum = 'opt1'
     incDict[ind_smaller,ind_larger]['optNum'] = optNum #which side has fun closest to 0
-    incDict[ind_smaller,ind_larger]['optNum_isOpt'] = np.asarray(incDict[ind_smaller,ind_larger][incDict[ind_smaller,ind_larger]['optNum']]['fun']) < 1e-5 #true if close to optimal
+    incDict[ind_smaller,ind_larger]['optNum_isOpt'] = np.asarray(incDict[ind_smaller,ind_larger][incDict[ind_smaller,ind_larger]['optNum']]['fun']) < 0.1#1e-5 #true if close to optimal
     # Does the other side have dmag-s coincidence?
     incDict[ind_smaller,ind_larger]['nonOptNum'] = nonOptNum #the keyName of the nonOptNum side 
-    incDict[ind_smaller,ind_larger]['nonOptNum_isOpt'] = np.asarray(incDict[ind_smaller,ind_larger][incDict[ind_smaller,ind_larger]['nonOptNum']]['fun']) < 1e-5 #checks to see if a solution is second intersection (mars-jupiter)
+    incDict[ind_smaller,ind_larger]['nonOptNum_isOpt'] = np.asarray(incDict[ind_smaller,ind_larger][incDict[ind_smaller,ind_larger]['nonOptNum']]['fun']) < 0.1#1e-1 #checks to see if a solution is second intersection (mars-jupiter)
     incDict[ind_smaller,ind_larger]['isNonOptNum_Opt'] = np.any(incDict[ind_smaller,ind_larger]['nonOptNum_isOpt']) #checks to see if a second intersection occurs (mars-jupiter)
     #What is the maximum inclination where a solution still occurs
     tmp = [i for i, val in enumerate(incDict[ind_smaller,ind_larger]['optNum_isOpt']) if val]
@@ -746,6 +822,11 @@ print(line6)
 print(line7)
 print(line8)
 print(line9)
+
+
+
+
+
 
 
 
