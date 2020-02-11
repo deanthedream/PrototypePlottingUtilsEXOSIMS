@@ -376,45 +376,43 @@ out2 = minimize(fun=errorFluxRatio2,x0=x0,bounds=[(alpha_min_smaller,alpha_max_s
 # plt.show(block=False)
 ##############################
 
-#### verifying the a solution exists somewhere in the entire alpha range
-print('Verifying a Solution exists somewhere in the entire alpha range')
-alpha1_range = np.linspace(start=0.,stop=180.,num=180)
-alpha2_range = np.linspace(start=alpha_min_fullphase_larger,stop=alpha_max_fullphase_larger,num=90)
-alpha3_range = np.linspace(start=alpha_min_crescent_larger,stop=alpha_max_crescent_larger,num=30)
-FRgrid = np.zeros((len(alpha1_range),len(alpha2_range)+len(alpha3_range)))
-tic = time()
-for i in np.arange(len(alpha1_range)):
-    for j in np.arange(len(alpha2_range)):
-        FRgrid[i,j] = fluxRatioPHASE.subs(alpha_smaller,alpha1_range[i]).subs(alpha_larger,alpha2_range[j])
-    for j in np.arange(len(alpha3_range)):
-        FRgrid[i,j+len(alpha2_range)-1] = fluxRatioPHASE.subs(alpha_smaller,alpha1_range[i]).subs(alpha_larger,alpha3_range[j])
-    print('Verify Soln: ' + str(i))
-print(time()-tic)
+# #KEEP#### verifying the a solution exists somewhere in the entire alpha range
+# print('Verifying a Solution exists somewhere in the entire alpha range')
+# alpha1_range = np.linspace(start=0.,stop=180.,num=180)
+# alpha2_range = np.linspace(start=alpha_min_fullphase_larger,stop=alpha_max_fullphase_larger,num=90)
+# alpha3_range = np.linspace(start=alpha_min_crescent_larger,stop=alpha_max_crescent_larger,num=30)
+# FRgrid = np.zeros((len(alpha1_range),len(alpha2_range)+len(alpha3_range)))
+# tic = time()
+# for i in np.arange(len(alpha1_range)):
+#     for j in np.arange(len(alpha2_range)):
+#         FRgrid[i,j] = fluxRatioPHASE.subs(alpha_smaller,alpha1_range[i]).subs(alpha_larger,alpha2_range[j])
+#     for j in np.arange(len(alpha3_range)):
+#         FRgrid[i,j+len(alpha2_range)-1] = fluxRatioPHASE.subs(alpha_smaller,alpha1_range[i]).subs(alpha_larger,alpha3_range[j])
+#     print('Verify Soln: ' + str(i))
+# print(time()-tic)
 
-plt.figure(num=97987987)
-tmp = FRgrid.copy()
-#tmp[tmp > 20.] = np.nan
-plt.contourf(alpha1_range,list(alpha2_range)+list(alpha3_range),tmp.T, locator=ticker.LogLocator(), levels=[10**i for i in np.linspace(-5,5,num=11)])
-plt.plot([0.,180.],[alpha_max_fullphase_larger,alpha_max_fullphase_larger],color='black')
-plt.plot([0.,180.],[alpha_min_crescent_larger,alpha_min_crescent_larger],color='black')
-cbar3 = plt.colorbar()
-plt.xlabel('alpha1')
-plt.ylabel('alpha2,3')
-plt.show(block=False)
-plt.figure(num=979879872)
-tmp = FRgrid.copy()
-tmp[tmp > 1.] = np.nan
-plt.contourf(alpha1_range,list(alpha2_range)+list(alpha3_range),tmp.T, levels=100)# locator=ticker.LogLocator(), levels=[10**i for i in np.linspace(-5,5,num=11)])
-plt.plot([0.,180.],[alpha_max_fullphase_larger,alpha_max_fullphase_larger],color='black')
-plt.plot([0.,180.],[alpha_min_crescent_larger,alpha_min_crescent_larger],color='black')
-cbar3 = plt.colorbar()
-plt.xlabel('alpha1')
-plt.ylabel('alpha2,3')
+# plt.figure(num=97987987)
+# tmp = FRgrid.copy()
+# #tmp[tmp > 20.] = np.nan
+# plt.contourf(alpha1_range,list(alpha2_range)+list(alpha3_range),tmp.T, locator=ticker.LogLocator(), levels=[10**i for i in np.linspace(-5,5,num=11)])
+# plt.plot([0.,180.],[alpha_max_fullphase_larger,alpha_max_fullphase_larger],color='black')
+# plt.plot([0.,180.],[alpha_min_crescent_larger,alpha_min_crescent_larger],color='black')
+# cbar3 = plt.colorbar()
+# plt.xlabel('alpha1')
+# plt.ylabel('alpha2,3')
+# plt.show(block=False)
+# plt.figure(num=979879872)
+# tmp = FRgrid.copy()
+# tmp[tmp > 1.] = np.nan
+# plt.contourf(alpha1_range,list(alpha2_range)+list(alpha3_range),tmp.T, levels=100)# locator=ticker.LogLocator(), levels=[10**i for i in np.linspace(-5,5,num=11)])
+# plt.plot([0.,180.],[alpha_max_fullphase_larger,alpha_max_fullphase_larger],color='black')
+# plt.plot([0.,180.],[alpha_min_crescent_larger,alpha_min_crescent_larger],color='black')
+# cbar3 = plt.colorbar()
+# plt.xlabel('alpha1')
+# plt.ylabel('alpha2,3')
 
-plt.scatter(out2.x[0],out2.x[1],marker='x', color='k')
-
-
-plt.show(block=False)
+# plt.scatter(out2.x[0],out2.x[1],marker='x', color='k')
+# plt.show(block=False)
 
 #out = sp.solvers.solve(fluxRatioPLANET - fluxRatioPHASE, alpha_smaller)
 ####
@@ -611,6 +609,7 @@ for pair_k in np.arange(len(planIndPairs)):
             incDict[ind_smaller,ind_larger]['opt1']['v2'].append(out.x[1])
             incDict[ind_smaller,ind_larger]['opt1']['fun'].append(out.fun)
             incDict[ind_smaller,ind_larger]['opt1']['funZERO'].append(out.fun < 0.1)
+            incDict[ind_smaller,ind_larger]['opt1']['inc_range'] = opt1Incs
         if alpha_max_fullphase_larger < min_alpha:
             continue
         else:
@@ -629,6 +628,7 @@ for pair_k in np.arange(len(planIndPairs)):
             incDict[ind_smaller,ind_larger]['opt2']['v2'].append(out.x[1])
             incDict[ind_smaller,ind_larger]['opt2']['fun'].append(out.fun)
             incDict[ind_smaller,ind_larger]['opt2']['funZERO'].append(out.fun < 1e-5) #The solution is optimal
+            incDict[ind_smaller,ind_larger]['opt2']['inc_range'] = opt2Incs
 
     incDict[ind_smaller,ind_larger]['opt1']['incs'] = opt1Incs
     incDict[ind_smaller,ind_larger]['opt2']['incs'] = opt2Incs
@@ -641,10 +641,22 @@ for pair_k in np.arange(len(planIndPairs)):
     ind_minSide = np.argmin([minOpt1, minOpt2])
     if ind_minSide == 0:
         optNum = 'opt1'
+        nonOptNum = 'opt2'
     elif ind_minSide == 1:
         optNum = 'opt2'
+        nonOptNum = 'opt1'
     incDict[ind_smaller,ind_larger]['optNum'] = optNum #which side has fun closest to 0
-    incDict[ind_smaller,ind_larger]['optNum_isOpt'] = incDict[ind_smaller,ind_larger][incDict[ind_smaller,ind_larger]['optNum']]['fun'] < 1e-5 #true if close to optimal
+    incDict[ind_smaller,ind_larger]['optNum_isOpt'] = np.asarray(incDict[ind_smaller,ind_larger][incDict[ind_smaller,ind_larger]['optNum']]['fun']) < 1e-5 #true if close to optimal
+    # Does the other side have dmag-s coincidence?
+    incDict[ind_smaller,ind_larger]['nonOptNum'] = nonOptNum #the keyName of the nonOptNum side 
+    incDict[ind_smaller,ind_larger]['nonOptNum_isOpt'] = np.asarray(incDict[ind_smaller,ind_larger][incDict[ind_smaller,ind_larger]['nonOptNum']]['fun']) < 1e-5 #checks to see if a solution is second intersection (mars-jupiter)
+    incDict[ind_smaller,ind_larger]['isNonOptNum_Opt'] = np.any(incDict[ind_smaller,ind_larger]['nonOptNum_isOpt']) #checks to see if a second intersection occurs (mars-jupiter)
+    #What is the maximum inclination where a solution still occurs
+    tmp = [i for i, val in enumerate(incDict[ind_smaller,ind_larger]['optNum_isOpt']) if val]
+    if not tmp == []:
+        incDict[ind_smaller,ind_larger]['maxIncInd_Opt'] = int(np.max(tmp))
+    if incDict[ind_smaller,ind_larger]['isNonOptNum_Opt']:
+        incDict[ind_smaller,ind_larger]['maxIncInd_NonOpt'] = int(np.max([i for i, val in enumerate(incDict[ind_smaller,ind_larger]['nonOptNum_isOpt']) if val])) #finds index of second solution point
 ######################################################################
 
 #Analysis of Optimization Runs
@@ -655,9 +667,85 @@ for pair_k in np.arange(len(planIndPairs)):
 # successfulInc = incDict[0,1]['opt1']['incs'][-2]
 
 #### Craft Intersection Table
-#1 
-
-
+line1 = r"(Y,$i$,$\alpha_{smaller}$,$\alpha_{larger}$) & $\mercury$ & $\venus$ & $\earth$ & $\mars$ & $\jupiter$ & $\saturn$ & $\uranus$ & $\neptune$"
+i01 =  incDict[0,1][incDict[0,1]['optNum']]['inc_range'][incDict[0,1]['maxIncInd_Opt']]
+as01 = incDict[0,1][incDict[0,1]['optNum']]['v1'][incDict[0,1]['maxIncInd_Opt']]
+al01 = incDict[0,1][incDict[0,1]['optNum']]['v2'][incDict[0,1]['maxIncInd_Opt']]
+i02 =  incDict[0,2][incDict[0,2]['optNum']]['inc_range'][incDict[0,2]['maxIncInd_Opt']]
+as02 = incDict[0,2][incDict[0,2]['optNum']]['v1'][incDict[0,2]['maxIncInd_Opt']]
+al02 = incDict[0,2][incDict[0,2]['optNum']]['v2'][incDict[0,2]['maxIncInd_Opt']]
+i03 =  incDict[0,3][incDict[0,3]['optNum']]['inc_range'][incDict[0,3]['maxIncInd_Opt']]
+as03 = incDict[0,3][incDict[0,3]['optNum']]['v1'][incDict[0,3]['maxIncInd_Opt']]
+al03 = incDict[0,3][incDict[0,3]['optNum']]['v2'][incDict[0,3]['maxIncInd_Opt']]
+i06 =  incDict[0,6][incDict[0,6]['optNum']]['inc_range'][incDict[0,6]['maxIncInd_Opt']]
+as06 = incDict[0,6][incDict[0,6]['optNum']]['v1'][incDict[0,6]['maxIncInd_Opt']]
+al06 = incDict[0,6][incDict[0,6]['optNum']]['v2'][incDict[0,6]['maxIncInd_Opt']]
+i07 =  incDict[0,7][incDict[0,7]['optNum']]['inc_range'][incDict[0,7]['maxIncInd_Opt']]
+as07 = incDict[0,7][incDict[0,7]['optNum']]['v1'][incDict[0,7]['maxIncInd_Opt']]
+al07 = incDict[0,7][incDict[0,7]['optNum']]['v2'][incDict[0,7]['maxIncInd_Opt']]
+line2 = r"$\mercury$    & \cellcolor{black} & (Y,"+str(i01)+","+str(as01)+","+str(al01)+")  & (Y,"+str(i02)+","+str(as02)+","+str(al02)+")  & (Y,"+str(i03)+","+str(as03)+","+str(al03)+")  & (N,)                                          & (N,)                                          & (Y,"+str(i06)+","+str(as06)+","+str(al06)+")  & (Y,"+str(i07)+","+str(as07)+","+str(al07)+")\\"
+i12 =  incDict[1,2][incDict[1,2]['optNum']]['inc_range'][incDict[1,2]['maxIncInd_Opt']]
+as12 = incDict[1,2][incDict[1,2]['optNum']]['v1'][incDict[1,2]['maxIncInd_Opt']]
+al12 = incDict[1,2][incDict[1,2]['optNum']]['v2'][incDict[1,2]['maxIncInd_Opt']]
+i15 =  incDict[1,5][incDict[1,5]['optNum']]['inc_range'][incDict[1,5]['maxIncInd_Opt']]
+as15 = incDict[1,5][incDict[1,5]['optNum']]['v1'][incDict[1,5]['maxIncInd_Opt']]
+al15 = incDict[1,5][incDict[1,5]['optNum']]['v2'][incDict[1,5]['maxIncInd_Opt']]
+line3 = r"$\venus$      &                   & \cellcolor{black}                             & (Y,"+str(i12)+","+str(as12)+","+str(al12)+")  & (N,)                                          & (N,)                                          & (Y,"+str(i15)+","+str(as15)+","+str(al15)+")  & (N,)                                          & (N,)\\"
+i23 =  incDict[2,3][incDict[2,3]['optNum']]['inc_range'][incDict[2,3]['maxIncInd_Opt']]
+as23 = incDict[2,3][incDict[2,3]['optNum']]['v1'][incDict[2,3]['maxIncInd_Opt']]
+al23 = incDict[2,3][incDict[2,3]['optNum']]['v2'][incDict[2,3]['maxIncInd_Opt']]
+i25 =  incDict[2,5][incDict[2,5]['optNum']]['inc_range'][incDict[2,5]['maxIncInd_Opt']]
+as25 = incDict[2,5][incDict[2,5]['optNum']]['v1'][incDict[2,5]['maxIncInd_Opt']]
+al25 = incDict[2,5][incDict[2,5]['optNum']]['v2'][incDict[2,5]['maxIncInd_Opt']]
+i26 =  incDict[2,6][incDict[2,6]['optNum']]['inc_range'][incDict[2,6]['maxIncInd_Opt']]
+as26 = incDict[2,6][incDict[2,6]['optNum']]['v1'][incDict[2,6]['maxIncInd_Opt']]
+al26 = incDict[2,6][incDict[2,6]['optNum']]['v2'][incDict[2,6]['maxIncInd_Opt']]
+i27 =  incDict[2,7][incDict[2,7]['optNum']]['inc_range'][incDict[2,7]['maxIncInd_Opt']]
+as27 = incDict[2,7][incDict[2,7]['optNum']]['v1'][incDict[2,7]['maxIncInd_Opt']]
+al27 = incDict[2,7][incDict[2,7]['optNum']]['v2'][incDict[2,7]['maxIncInd_Opt']]
+line4 = r"$\earth$      &                   &                                               & \cellcolor{black}                             & (Y,"+str(i23)+","+str(as23)+","+str(al23)+")  & (N,)                                          & (Y,"+str(i25)+","+str(as25)+","+str(al25)+")  & (Y,"+str(i26)+","+str(as26)+","+str(al26)+")  & (Y,"+str(i27)+","+str(as27)+","+str(al27)+")\\"
+i34 =  incDict[3,4][incDict[3,4]['optNum']]['inc_range'][incDict[3,4]['maxIncInd_Opt']]
+as34 = incDict[3,4][incDict[3,4]['optNum']]['v1'][incDict[3,4]['maxIncInd_Opt']]
+al34 = incDict[3,4][incDict[3,4]['optNum']]['v2'][incDict[3,4]['maxIncInd_Opt']]
+i36 =  incDict[3,6][incDict[3,6]['optNum']]['inc_range'][incDict[3,6]['maxIncInd_Opt']]
+as36 = incDict[3,6][incDict[3,6]['optNum']]['v1'][incDict[3,6]['maxIncInd_Opt']]
+al36 = incDict[3,6][incDict[3,6]['optNum']]['v2'][incDict[3,6]['maxIncInd_Opt']]
+line5 = r"$\mars$       &                   &                                               &                                               & \cellcolor{black}                             & (Y,"+str(i34)+","+str(as34)+","+str(al34)+")  & (N,)                                          & (Y,"+str(i36)+","+str(as36)+","+str(al36)+")  & (N,)\\"
+#FIX Should be other solution
+i34 =  incDict[3,4][incDict[3,4]['optNum']]['inc_range'][incDict[3,4]['maxIncInd_Opt']]
+as34 = incDict[3,4][incDict[3,4]['optNum']]['v1'][incDict[3,4]['maxIncInd_Opt']]
+al34 = incDict[3,4][incDict[3,4]['optNum']]['v2'][incDict[3,4]['maxIncInd_Opt']]
+i45 =  incDict[4,5][incDict[4,5]['optNum']]['inc_range'][incDict[4,5]['maxIncInd_Opt']]
+as45 = incDict[4,5][incDict[4,5]['optNum']]['v1'][incDict[4,5]['maxIncInd_Opt']]
+al45 = incDict[4,5][incDict[4,5]['optNum']]['v2'][incDict[4,5]['maxIncInd_Opt']]
+i46 =  incDict[4,6][incDict[4,6]['optNum']]['inc_range'][incDict[4,6]['maxIncInd_Opt']]
+as46 = incDict[4,6][incDict[4,6]['optNum']]['v1'][incDict[4,6]['maxIncInd_Opt']]
+al46 = incDict[4,6][incDict[4,6]['optNum']]['v2'][incDict[4,6]['maxIncInd_Opt']]
+i47 =  incDict[4,7][incDict[4,7]['optNum']]['inc_range'][incDict[4,7]['maxIncInd_Opt']]
+as47 = incDict[4,7][incDict[4,7]['optNum']]['v1'][incDict[4,7]['maxIncInd_Opt']]
+al47 = incDict[4,7][incDict[4,7]['optNum']]['v2'][incDict[4,7]['maxIncInd_Opt']]
+line6 = r"$\jupiter$    &                   &                                               &                                               & (Y,"+str(i34)+","+str(as34)+","+str(al34)+r") & \cellcolor{black}                             & (Y,"+str(i45)+","+str(as45)+","+str(al45)+")  & (Y,"+str(i46)+","+str(as46)+","+str(al46)+")  & (Y,"+str(i47)+","+str(as47)+","+str(al47)+")\\"
+i56 =  incDict[5,6][incDict[5,6]['optNum']]['inc_range'][incDict[5,6]['maxIncInd_Opt']]
+as56 = incDict[5,6][incDict[5,6]['optNum']]['v1'][incDict[5,6]['maxIncInd_Opt']]
+al56 = incDict[5,6][incDict[5,6]['optNum']]['v2'][incDict[5,6]['maxIncInd_Opt']]
+i57 =  incDict[5,7][incDict[5,7]['optNum']]['inc_range'][incDict[5,7]['maxIncInd_Opt']]
+as57 = incDict[5,7][incDict[5,7]['optNum']]['v1'][incDict[5,7]['maxIncInd_Opt']]
+al57 = incDict[5,7][incDict[5,7]['optNum']]['v2'][incDict[5,7]['maxIncInd_Opt']]
+line7 = r"$\saturn$     &                   &                                               &                                               &                                               &                                               & \cellcolor{black}                             & (Y,"+str(i56)+","+str(as56)+","+str(al56)+")  & (Y,"+str(i57)+","+str(as57)+","+str(al57)+")\\"
+i67 =  incDict[6,7][incDict[6,7]['optNum']]['inc_range'][incDict[6,7]['maxIncInd_Opt']]
+as67 = incDict[6,7][incDict[6,7]['optNum']]['v1'][incDict[6,7]['maxIncInd_Opt']]
+al67 = incDict[6,7][incDict[6,7]['optNum']]['v2'][incDict[6,7]['maxIncInd_Opt']]
+line8 = r"$\uranus$     &                   &                                               &                                               &                                               &                                               &                                               & \cellcolor{black}                             & (Y,"+str(i67)+","+str(as67)+","+str(al67)+")\\"
+line9 = r"$\neptune$    &                   &                                               &                                               &                                               &                                               &                                               &                                               & \cellcolor{black}\\"
+print(line1)
+print(line2)
+print(line3)
+print(line4)
+print(line5)
+print(line6)
+print(line7)
+print(line8)
+print(line9)
 
 
 
