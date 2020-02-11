@@ -11,10 +11,9 @@ from scipy.optimize import minimize
 from scipy.optimize import minimize_scalar
 import astropy.units as u
 from scipy.interpolate import interp1d, PchipInterpolator
-from matplotlib import colors
+#DELETEfrom matplotlib import colors
 import datetime
 import re
-from scipy.misc import derivative
 from time import time
 from mallama2018PlanetProperties import *
 
@@ -177,41 +176,7 @@ plt.figure(num=999)
 plt.plot(1.+d*np.cos(alpha),d*np.sin(alpha))
 plt.show(block=False)
 
-#### Functions for calculating dmag given s,ds,a_p,phaseFunc,dmagatsmax
-def separation_from_alpha_ap(alpha,a_p):
-    s = a_p*np.sin(alpha)
-    return s
 
-def ds_by_dalpha(alpha,a_p):
-    """calculates ds given alpha
-    Args:
-        alpha (float) - in radians
-        a_p (float) - in AU
-    """
-    ds_dalpha = a_p*np.cos(alpha)
-    return ds_dalpha
-
-def dalpha_given_ds_alpha(alpha,a_p,ds):
-    """ Calculates 
-    """
-    dalpha = ds/(a_p*np.cos(alpha))
-    return dalpha
-
-def calc_dPhi(phaseFunc,a_p,s,ds,dmag,dmagatsmax):
-    """ Calculated dPhi given an observation and phase function
-    """
-    alpha = alpha_from_dmagapseparationdmagatsmax(s,a_p,dmag,dmagatsmax)
-    dalpha = dalpha_given_ds_alpha(alpha,a_p,ds)
-    dPhi = derivative(phaseFunc,x0=alpha,dx=dalpha)
-    return dPhi
-
-def calc_ddmag(phaseFunc,a_p,separation,ds,dmag,dmagatsmax):
-    """ Calculates ddmag given the above parameters
-    """
-    alpha = alpha_from_dmagapseparationdmagatsmax(separation,a_p,dmag,dmagatsmax)
-    dPhi = calc_dPhi(phaseFunc,a_p,separation,ds,dmag,dmagatsmax)
-    ddmag = -2.5*dPhi/(phaseFunc(alpha)*np.log(10))
-    return ddmag
 
 
 
@@ -616,6 +581,16 @@ for pair_k in np.arange(len(planIndPairs)):
     continueOpt2 = True #Boolean indicating if last opt failed
     opt1Incs = list()
     opt2Incs = list()
+    incDict[ind_smaller,ind_larger]['opt1']['success'] = list()
+    incDict[ind_smaller,ind_larger]['opt2']['success'] = list()
+    incDict[ind_smaller,ind_larger]['opt1']['v1'] = list()
+    incDict[ind_smaller,ind_larger]['opt1']['v2'] = list()
+    incDict[ind_smaller,ind_larger]['opt2']['v1'] = list()
+    incDict[ind_smaller,ind_larger]['opt2']['v2'] = list()
+    incDict[ind_smaller,ind_larger]['opt1']['fun'] = list()
+    incDict[ind_smaller,ind_larger]['opt2']['fun'] = list()
+    incDict[ind_smaller,ind_larger]['opt1']['funZERO'] = list()
+    incDict[ind_smaller,ind_larger]['opt2']['funZERO'] = list()
     for i in np.arange(len(inc_range)):
         min_alpha = inc_range[i]
         if alpha_min_crescent_larger > 180.-min_alpha:
@@ -627,9 +602,15 @@ for pair_k in np.arange(len(planIndPairs)):
             x0 = np.asarray([(90.+min_alpha)/2.,(alpha_min_crescent_larger+180.-min_alpha)/2.])
             out = minimize(funcMaxInc, x0, method='SLSQP', bounds=[(0.+min_alpha,180.-min_alpha),(alpha_min_crescent_larger,180.-min_alpha)], constraints=[{'type':'eq','fun':con_sepAlpha}], options={'disp':True,})
             outList1.append(out)
+            opt1Incs.append(inc_range[i])
             dmagErrorList.append(np.abs(eqnDmag1RHS.subs(alpha,out.x[1]).evalf() - eqnDmag1LHS.subs(alpha,out.x[0]).evalf()))
-            if out.success == False:#If we did not successfully converge, do not run this opt again
+            if out.success == False:# or out.fun > 0.1:#If we did not successfully converge, do not run this opt again
                 continueOpt1 = False
+            incDict[ind_smaller,ind_larger]['opt1']['success'].append(out.success)
+            incDict[ind_smaller,ind_larger]['opt1']['v1'].append(out.x[0])
+            incDict[ind_smaller,ind_larger]['opt1']['v2'].append(out.x[1])
+            incDict[ind_smaller,ind_larger]['opt1']['fun'].append(out.fun)
+            incDict[ind_smaller,ind_larger]['opt1']['funZERO'].append(out.fun < 0.1)
         if alpha_max_fullphase_larger < min_alpha:
             continue
         else:
@@ -639,15 +620,43 @@ for pair_k in np.arange(len(planIndPairs)):
             x0 = np.asarray([(90.+min_alpha)/2.,(min_alpha+alpha_max_fullphase_larger)/2.])
             out = minimize(funcMaxInc, x0, method='SLSQP', bounds=[(0.+min_alpha,180.-min_alpha),(0.+min_alpha,alpha_max_fullphase_larger)], constraints=[{'type':'eq','fun':con_sepAlpha}], options={'disp':True,})
             outList2.append(out)
+            opt2Incs.append(inc_range[i])
             dmagErrorList.append(np.abs(eqnDmag1RHS.subs(alpha,out.x[1]).evalf() - eqnDmag1LHS.subs(alpha,out.x[0]).evalf()))
-            if out.success == False: #If we did not successfully converge, do not run this opt again
-                continueOpt1 = False
+            if out.success == False:# or out.fun > 0.1: #If we did not successfully converge, do not run this opt again
+                continueOpt2 = False
+            incDict[ind_smaller,ind_larger]['opt2']['success'].append(out.success)
+            incDict[ind_smaller,ind_larger]['opt2']['v1'].append(out.x[0])
+            incDict[ind_smaller,ind_larger]['opt2']['v2'].append(out.x[1])
+            incDict[ind_smaller,ind_larger]['opt2']['fun'].append(out.fun)
+            incDict[ind_smaller,ind_larger]['opt2']['funZERO'].append(out.fun < 1e-5) #The solution is optimal
+
     incDict[ind_smaller,ind_larger]['opt1']['incs'] = opt1Incs
     incDict[ind_smaller,ind_larger]['opt2']['incs'] = opt2Incs
     incDict[ind_smaller,ind_larger]['opt1']['outList'] = outList1
     incDict[ind_smaller,ind_larger]['opt2']['outList'] = outList2
-    successList = [outList[i].success for i in np.arange(len(outList))]
+
+    #Pick which side was smaller, Opt1 or Opt2
+    minOpt1 = np.min(incDict[ind_smaller,ind_larger]['opt1']['fun'])
+    minOpt2 = np.min(incDict[ind_smaller,ind_larger]['opt2']['fun'])
+    ind_minSide = np.argmin([minOpt1, minOpt2])
+    if ind_minSide == 0:
+        optNum = 'opt1'
+    elif ind_minSide == 1:
+        optNum = 'opt2'
+    incDict[ind_smaller,ind_larger]['optNum'] = optNum #which side has fun closest to 0
+    incDict[ind_smaller,ind_larger]['optNum_isOpt'] = incDict[ind_smaller,ind_larger][incDict[ind_smaller,ind_larger]['optNum']]['fun'] < 1e-5 #true if close to optimal
 ######################################################################
+
+#Analysis of Optimization Runs
+# assert len(incDict[0,1]['opt1']['outList']) > 1, "there was no success" #There must be at least 1 unsuccessful optimization attempt
+# successfulOut = incDict[0,1]['opt1']['outList'][-2] #second from last is the successful one closest to limit
+# successfulv1 = successfulOut.x[0]
+# successfulv2 = successfulOut.x[1]
+# successfulInc = incDict[0,1]['opt1']['incs'][-2]
+
+#### Craft Intersection Table
+#1 
+
 
 
 

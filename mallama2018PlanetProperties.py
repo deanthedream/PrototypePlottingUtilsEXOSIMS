@@ -4,9 +4,12 @@ Written By: Dean Keithly
 import numpy as np
 from EXOSIMS.util.deltaMag import *
 import matplotlib.pyplot as plt
+from matplotlib import colors
 import astropy.units as u
 import datetime
 import re
+from scipy.misc import derivative
+import sys, os.path
 
 #### Planet Properties #####################################
 planProp = dict() #all in units of meters
@@ -440,6 +443,40 @@ def alpha_from_dmagapseparationdmagatsmax(sep,a_p,dmag,dmagatsmax):
         alpha[inds] = np.arcsin(sep[inds]/a_p)
     return alpha
 
+#### Functions for calculating dmag given s,ds,a_p,phaseFunc,dmagatsmax
+def ds_by_dalpha(alpha,a_p):
+    """calculates ds given alpha
+    Args:
+        alpha (float) - in radians
+        a_p (float) - in AU
+    """
+    ds_dalpha = a_p*np.cos(alpha)
+    return ds_dalpha
+
+def dalpha_given_ds_alpha(alpha,a_p,ds):
+    """ Calculates 
+    """
+    dalpha = ds/(a_p*np.cos(alpha))
+    return dalpha
+def separation_from_alpha_ap(alpha,a_p):
+    s = a_p*np.sin(alpha)
+    return s
+def calc_dPhi(phaseFunc,a_p,s,ds,dmag,dmagatsmax):
+    """ Calculated dPhi given an observation and phase function
+    """
+    alpha = alpha_from_dmagapseparationdmagatsmax(s,a_p,dmag,dmagatsmax)
+    dalpha = dalpha_given_ds_alpha(alpha,a_p,ds)
+    dPhi = derivative(phaseFunc,x0=alpha,dx=dalpha)
+    return dPhi
+
+def calc_ddmag(phaseFunc,a_p,separation,ds,dmag,dmagatsmax):
+    """ Calculates ddmag given the above parameters
+    """
+    alpha = alpha_from_dmagapseparationdmagatsmax(separation,a_p,dmag,dmagatsmax)
+    dPhi = calc_dPhi(phaseFunc,a_p,separation,ds,dmag,dmagatsmax)
+    ddmag = -2.5*dPhi/(phaseFunc(alpha)*np.log(10))
+    return ddmag
+
 #### Verifying Planet Planet Properties ##############################################
 planets=['mercury','venus','earth','mars','jupiter','saturn','uranus','neptune']
 pColors = [colors.to_rgba('grey'),colors.to_rgba('gold'),colors.to_rgba('blue'),colors.to_rgba('red'),\
@@ -570,7 +607,11 @@ plt.show(block=False)
 uncertainty_dmag = 0.01 #HabEx requirement is 1%
 uncertainty_s = 5.*u.mas.to('rad')*10.*u.pc.to('AU')
 def plotDmagvss(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx,inclination, folder, PPoutpath):
-    alphas = np.linspace(start=0.,stop=180.,num=1200,endpoint=True)
+    """
+    Args:
+        inclination (float) - inclination in degrees
+    """
+    alphas = np.linspace(start=0.+inclination,stop=180.-inclination,num=1200,endpoint=True)
     plt.close(66)
     fig66 = plt.figure(num=66)
     for i in np.arange(len(planets)):
@@ -666,7 +707,7 @@ def plotDmagvss(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx,inclin
     # Save to a File
     date = str(datetime.datetime.now())
     date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
-    fname = 'dMagvsS_solarSystem' + folder.split('/')[-1] + '_' + date
+    fname = 'dMagvsS_solarSystem_inc' + str(inclination) + folder.split('/')[-1] + '_' + date
     plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
     plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
     plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
