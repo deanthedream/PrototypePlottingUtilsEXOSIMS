@@ -556,6 +556,7 @@ for pair_k in np.arange(len(planIndPairs)):
     i = planIndPairs[pair_k][0]
     j = planIndPairs[pair_k][1]
     print("i: " + str(i) + " j: " + str(j))
+    #LARGER REFERS TO LARGER SMA
     a_smaller, a_larger, ind_smaller, ind_larger  = a_Lmaller_Larger(planProp,i,j)
     s_smaller, s_larger, s_max = s_smaller_larger_max(planProp,i,j)
     alpha_min_smaller, alpha_max_smaller, alpha_min_fullphase_larger, alpha_max_fullphase_larger, alpha_min_crescent_larger, alpha_max_crescent_larger = alpha_MinMaxranges(s_max,a_larger)
@@ -661,7 +662,7 @@ for pair_k in np.arange(len(planIndPairs)):
             if not continueOpt3:
                 continue
             #Find Intersection (brighter of smaller, dimmer of larger)
-            x0 = np.asarray([(90.+180.-min_alpha)/2.,alpha_min_crescent_larger*0.3+(180.-min_alpha)*0.7])
+            x0 = np.asarray([90.*0.3+(180.-min_alpha)*0.7,alpha_min_crescent_larger*0.3+(180.-min_alpha)*0.7])
             out = minimize(funcMaxInc, x0, method='SLSQP', bounds=[(0.+min_alpha,180.-min_alpha),(alpha_min_crescent_larger,180.-min_alpha)], constraints=[{'type':'eq','fun':con_sepAlpha}], options={'disp':True,})
             outList3.append(out)
             opt3Incs.append(inc_range[i])
@@ -681,7 +682,7 @@ for pair_k in np.arange(len(planIndPairs)):
             if not continueOpt4:
                 continue
             #Find Intersection (brighter of smaller, brighter of larger)
-            x0 = np.asarray([(90.+180.-min_alpha)/2.,(min_alpha+alpha_max_fullphase_larger)/2.])
+            x0 = np.asarray([90.*0.3+(180.-min_alpha)*0.7,(min_alpha+alpha_max_fullphase_larger)/2.])
             out = minimize(funcMaxInc, x0, method='SLSQP', bounds=[(0.+min_alpha,180.-min_alpha),(0.+min_alpha,alpha_max_fullphase_larger)], constraints=[{'type':'eq','fun':con_sepAlpha}], options={'disp':True,})
             outList4.append(out)
             opt4Incs.append(inc_range[i])
@@ -743,6 +744,7 @@ for pair_k in np.arange(len(planIndPairs)):
 # successfulInc = incDict[0,1]['opt1']['incs'][-2]
 
 #### Craft Intersection Table
+#ADD DMAG AND S
 line1 = r"(Y,$i$,$\alpha_{smaller}$,$\alpha_{larger}$) & $\mercury$ & $\venus$ & $\earth$ & $\mars$ & $\jupiter$ & $\saturn$ & $\uranus$ & $\neptune$"
 i01 =  incDict[0,1][incDict[0,1]['optNum']]['inc_range'][incDict[0,1]['maxIncInd_Opt']]
 as01 = incDict[0,1][incDict[0,1]['optNum']]['v1'][incDict[0,1]['maxIncInd_Opt']]
@@ -759,14 +761,16 @@ al06 = incDict[0,6][incDict[0,6]['optNum']]['v2'][incDict[0,6]['maxIncInd_Opt']]
 i07 =  incDict[0,7][incDict[0,7]['optNum']]['inc_range'][incDict[0,7]['maxIncInd_Opt']]
 as07 = incDict[0,7][incDict[0,7]['optNum']]['v1'][incDict[0,7]['maxIncInd_Opt']]
 al07 = incDict[0,7][incDict[0,7]['optNum']]['v2'][incDict[0,7]['maxIncInd_Opt']]
-line2 = r"$\mercury$    & \cellcolor{black} & (Y,"+str(i01)+","+str(as01)+","+str(al01)+")  & (Y,"+str(i02)+","+str(as02)+","+str(al02)+")  & (Y,"+str(i03)+","+str(as03)+","+str(al03)+")  & (N,)                                          & (N,)                                          & (Y,"+str(i06)+","+str(as06)+","+str(al06)+")  & (Y,"+str(i07)+","+str(as07)+","+str(al07)+")\\"
+line2 = r"$\mercury$    & \cellcolor{black} & (Y,"+str(np.round(i01,2))+","+str(np.round(as01,2))+","+str(np.round(al01,2))+")  & (Y,"+str(np.round(i02,2))+","+str(np.round(as02,2))+","+str(np.round(al02,2))+\
+        ")  & (Y,"+str(np.round(i03,2))+","+str(np.round(as03,2))+","+str(np.round(al03,2))+")  & (N,) & (N,) & (Y,"+str(np.round(i06,2))+","+str(np.round(as06,2))+","+str(np.round(al06,2))+\
+        ")  & (Y,"+str(np.round(i07,2))+","+str(np.round(as07,2))+","+str(np.round(al07,2))+")\\"
 i12 =  incDict[1,2][incDict[1,2]['optNum']]['inc_range'][incDict[1,2]['maxIncInd_Opt']]
 as12 = incDict[1,2][incDict[1,2]['optNum']]['v1'][incDict[1,2]['maxIncInd_Opt']]
 al12 = incDict[1,2][incDict[1,2]['optNum']]['v2'][incDict[1,2]['maxIncInd_Opt']]
 i15 =  incDict[1,5][incDict[1,5]['optNum']]['inc_range'][incDict[1,5]['maxIncInd_Opt']]
 as15 = incDict[1,5][incDict[1,5]['optNum']]['v1'][incDict[1,5]['maxIncInd_Opt']]
 al15 = incDict[1,5][incDict[1,5]['optNum']]['v2'][incDict[1,5]['maxIncInd_Opt']]
-line3 = r"$\venus$      &                   & \cellcolor{black}                             & (Y,"+str(i12)+","+str(as12)+","+str(al12)+")  & (N,)                                          & (N,)                                          & (Y,"+str(i15)+","+str(as15)+","+str(al15)+")  & (N,)                                          & (N,)\\"
+line3 = r"$\venus$      & & \cellcolor{black} & (Y,"+str(np.round(i12,2))+","+str(np.round(as12,2))+","+str(np.round(al12,2))+")  & (N,) & (N,)  & (Y,"+str(np.round(i15,2))+","+str(np.round(as15,2))+","+str(np.round(al15,2))+") & (N,) & (N,)\\"
 i23 =  incDict[2,3][incDict[2,3]['optNum']]['inc_range'][incDict[2,3]['maxIncInd_Opt']]
 as23 = incDict[2,3][incDict[2,3]['optNum']]['v1'][incDict[2,3]['maxIncInd_Opt']]
 al23 = incDict[2,3][incDict[2,3]['optNum']]['v2'][incDict[2,3]['maxIncInd_Opt']]
@@ -779,14 +783,17 @@ al26 = incDict[2,6][incDict[2,6]['optNum']]['v2'][incDict[2,6]['maxIncInd_Opt']]
 i27 =  incDict[2,7][incDict[2,7]['optNum']]['inc_range'][incDict[2,7]['maxIncInd_Opt']]
 as27 = incDict[2,7][incDict[2,7]['optNum']]['v1'][incDict[2,7]['maxIncInd_Opt']]
 al27 = incDict[2,7][incDict[2,7]['optNum']]['v2'][incDict[2,7]['maxIncInd_Opt']]
-line4 = r"$\earth$      &                   &                                               & \cellcolor{black}                             & (Y,"+str(i23)+","+str(as23)+","+str(al23)+")  & (N,)                                          & (Y,"+str(i25)+","+str(as25)+","+str(al25)+")  & (Y,"+str(i26)+","+str(as26)+","+str(al26)+")  & (Y,"+str(i27)+","+str(as27)+","+str(al27)+")\\"
+line4 = r"$\earth$      & &  & \cellcolor{black} & (Y,"+str(np.round(i23,2))+","+str(np.round(as23,2))+","+str(np.round(al23,2))+\
+        ")  & (N,) & (Y,"+str(np.round(i25,2))+","+str(np.round(as25,2))+","+str(np.round(al25,2))+")  & (Y,"+str(np.round(i26,2))+","+str(np.round(as26,2))+\
+        ","+str(np.round(al26,2))+")  & (Y,"+str(np.round(i27,2))+","+str(np.round(as27,2))+","+str(np.round(al27,2))+")\\"
 i34 =  incDict[3,4][incDict[3,4]['optNum']]['inc_range'][incDict[3,4]['maxIncInd_Opt']]
 as34 = incDict[3,4][incDict[3,4]['optNum']]['v1'][incDict[3,4]['maxIncInd_Opt']]
 al34 = incDict[3,4][incDict[3,4]['optNum']]['v2'][incDict[3,4]['maxIncInd_Opt']]
 i36 =  incDict[3,6][incDict[3,6]['optNum']]['inc_range'][incDict[3,6]['maxIncInd_Opt']]
 as36 = incDict[3,6][incDict[3,6]['optNum']]['v1'][incDict[3,6]['maxIncInd_Opt']]
 al36 = incDict[3,6][incDict[3,6]['optNum']]['v2'][incDict[3,6]['maxIncInd_Opt']]
-line5 = r"$\mars$       &                   &                                               &                                               & \cellcolor{black}                             & (Y,"+str(i34)+","+str(as34)+","+str(al34)+")  & (N,)                                          & (Y,"+str(i36)+","+str(as36)+","+str(al36)+")  & (N,)\\"
+line5 = r"$\mars$       & & & & \cellcolor{black} & (Y,"+str(np.round(i34,2))+","+str(np.round(as34,2))+","+str(np.round(al34,2))+\
+            ")  & (N,) & (Y,"+str(np.round(i36,2))+","+str(np.round(as36,2))+","+str(np.round(al36,2))+")  & (N,)\\"
 #FIX Should be other solution
 i34 =  incDict[3,4][incDict[3,4]['optNum']]['inc_range'][incDict[3,4]['maxIncInd_Opt']]
 as34 = incDict[3,4][incDict[3,4]['optNum']]['v1'][incDict[3,4]['maxIncInd_Opt']]
@@ -800,19 +807,21 @@ al46 = incDict[4,6][incDict[4,6]['optNum']]['v2'][incDict[4,6]['maxIncInd_Opt']]
 i47 =  incDict[4,7][incDict[4,7]['optNum']]['inc_range'][incDict[4,7]['maxIncInd_Opt']]
 as47 = incDict[4,7][incDict[4,7]['optNum']]['v1'][incDict[4,7]['maxIncInd_Opt']]
 al47 = incDict[4,7][incDict[4,7]['optNum']]['v2'][incDict[4,7]['maxIncInd_Opt']]
-line6 = r"$\jupiter$    &                   &                                               &                                               & (Y,"+str(i34)+","+str(as34)+","+str(al34)+r") & \cellcolor{black}                             & (Y,"+str(i45)+","+str(as45)+","+str(al45)+")  & (Y,"+str(i46)+","+str(as46)+","+str(al46)+")  & (Y,"+str(i47)+","+str(as47)+","+str(al47)+")\\"
+line6 = r"$\jupiter$    & & & & (Y,"+str(np.round(i34,2))+","+str(np.round(as34,2))+","+str(np.round(al34,2))+r") & \cellcolor{black} & (Y,"+str(np.round(i45,2))+","+str(np.round(as45,2))+","+str(np.round(al45,2))+\
+            ")  & (Y,"+str(np.round(i46,2))+","+str(np.round(as46,2))+","+str(np.round(al46,2))+")  & (Y,"+str(np.round(i47,2))+","+str(np.round(as47,2))+","+str(np.round(al47,2))+")\\"
 i56 =  incDict[5,6][incDict[5,6]['optNum']]['inc_range'][incDict[5,6]['maxIncInd_Opt']]
 as56 = incDict[5,6][incDict[5,6]['optNum']]['v1'][incDict[5,6]['maxIncInd_Opt']]
 al56 = incDict[5,6][incDict[5,6]['optNum']]['v2'][incDict[5,6]['maxIncInd_Opt']]
 i57 =  incDict[5,7][incDict[5,7]['optNum']]['inc_range'][incDict[5,7]['maxIncInd_Opt']]
 as57 = incDict[5,7][incDict[5,7]['optNum']]['v1'][incDict[5,7]['maxIncInd_Opt']]
 al57 = incDict[5,7][incDict[5,7]['optNum']]['v2'][incDict[5,7]['maxIncInd_Opt']]
-line7 = r"$\saturn$     &                   &                                               &                                               &                                               &                                               & \cellcolor{black}                             & (Y,"+str(i56)+","+str(as56)+","+str(al56)+")  & (Y,"+str(i57)+","+str(as57)+","+str(al57)+")\\"
+line7 = r"$\saturn$     & & & & & & \cellcolor{black} & (Y,"+str(np.round(i56,2))+","+str(np.round(as56,2))+","+str(np.round(al56,2))+\
+            ")  & (Y,"+str(np.round(i57,2))+","+str(np.round(as57,2))+","+str(np.round(al57,2))+")\\"
 i67 =  incDict[6,7][incDict[6,7]['optNum']]['inc_range'][incDict[6,7]['maxIncInd_Opt']]
 as67 = incDict[6,7][incDict[6,7]['optNum']]['v1'][incDict[6,7]['maxIncInd_Opt']]
 al67 = incDict[6,7][incDict[6,7]['optNum']]['v2'][incDict[6,7]['maxIncInd_Opt']]
-line8 = r"$\uranus$     &                   &                                               &                                               &                                               &                                               &                                               & \cellcolor{black}                             & (Y,"+str(i67)+","+str(as67)+","+str(al67)+")\\"
-line9 = r"$\neptune$    &                   &                                               &                                               &                                               &                                               &                                               &                                               & \cellcolor{black}\\"
+line8 = r"$\uranus$     & & & & & & & \cellcolor{black} & (Y,"+str(np.round(i67,2))+","+str(np.round(as67,2))+","+str(np.round(al67,2))+")\\"
+line9 = r"$\neptune$    & & & & & & & & \cellcolor{black}\\"
 print(line1)
 print(line2)
 print(line3)
