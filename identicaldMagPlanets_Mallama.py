@@ -566,8 +566,8 @@ for pair_k in np.arange(len(planIndPairs)):
     incDict[ind_smaller,ind_larger]['opt2'] = {}
     incDict[ind_smaller,ind_larger]['opt3'] = {}
     incDict[ind_smaller,ind_larger]['opt4'] = {}
-    eqnDmagLHS = eqnDmag.subs(Phi,symbolicPhases[ind_smaller]).subs(a,planProp[planets[ind_smaller]]['a']*u.m.to('AU')).subs(R,planProp[planets[ind_smaller]]['R']*u.m.to('earthRad')).subs(p,planProp[planets[ind_smaller]]['p'])
-    eqnDmagRHS = eqnDmag.subs(Phi,symbolicPhases[ind_larger]).subs(a,planProp[planets[ind_larger]]['a']*u.m.to('AU')).subs(R,planProp[planets[ind_larger]]['R']*u.m.to('earthRad')).subs(p,planProp[planets[ind_larger]]['p'])
+    eqnDmagLHS = eqnDmag.subs(Phi,symbolicPhases[ind_smaller]).subs(a,planProp[planets[ind_smaller]]['a']).subs(R,planProp[planets[ind_smaller]]['R']).subs(p,planProp[planets[ind_smaller]]['p'])
+    eqnDmagRHS = eqnDmag.subs(Phi,symbolicPhases[ind_larger]).subs(a,planProp[planets[ind_larger]]['a']).subs(R,planProp[planets[ind_larger]]['R']).subs(p,planProp[planets[ind_larger]]['p'])
     def funcMaxInc(x):
         talpha1 = x[0]
         talpha2 = x[1]
@@ -746,81 +746,133 @@ for pair_k in np.arange(len(planIndPairs)):
 #### Craft Intersection Table
 #ADD DMAG AND S
 line1 = r"(Y,$i$,$\alpha_{smaller}$,$\alpha_{larger}$) & $\mercury$ & $\venus$ & $\earth$ & $\mars$ & $\jupiter$ & $\saturn$ & $\uranus$ & $\neptune$"
+ind_smaller = 0
+eqnDmagLHS = eqnDmag.subs(Phi,symbolicPhases[ind_smaller]).subs(a,planProp[planets[ind_smaller]]['a']).subs(R,planProp[planets[ind_smaller]]['R']).subs(p,planProp[planets[ind_smaller]]['p'])
 i01 =  incDict[0,1][incDict[0,1]['optNum']]['inc_range'][incDict[0,1]['maxIncInd_Opt']]
 as01 = incDict[0,1][incDict[0,1]['optNum']]['v1'][incDict[0,1]['maxIncInd_Opt']]
 al01 = incDict[0,1][incDict[0,1]['optNum']]['v2'][incDict[0,1]['maxIncInd_Opt']]
+dmag01 = float(eqnDmagLHS.subs(alpha,as01).evalf())
+s01 = float(eqnSAlpha.subs(a,planProp[planets[0]]['a']*u.m.to('AU')).subs(alpha,as01).evalf())
 i02 =  incDict[0,2][incDict[0,2]['optNum']]['inc_range'][incDict[0,2]['maxIncInd_Opt']]
 as02 = incDict[0,2][incDict[0,2]['optNum']]['v1'][incDict[0,2]['maxIncInd_Opt']]
 al02 = incDict[0,2][incDict[0,2]['optNum']]['v2'][incDict[0,2]['maxIncInd_Opt']]
+dmag02 = float(eqnDmagLHS.subs(alpha,as02).evalf())
+s02 = float(eqnSAlpha.subs(a,planProp[planets[0]]['a']*u.m.to('AU')).subs(alpha,as02).evalf())
 i03 =  incDict[0,3][incDict[0,3]['optNum']]['inc_range'][incDict[0,3]['maxIncInd_Opt']]
 as03 = incDict[0,3][incDict[0,3]['optNum']]['v1'][incDict[0,3]['maxIncInd_Opt']]
 al03 = incDict[0,3][incDict[0,3]['optNum']]['v2'][incDict[0,3]['maxIncInd_Opt']]
+dmag03 = float(eqnDmagLHS.subs(alpha,as03).evalf())
+s03 = float(eqnSAlpha.subs(a,planProp[planets[0]]['a']*u.m.to('AU')).subs(alpha,as03).evalf())
 i06 =  incDict[0,6][incDict[0,6]['optNum']]['inc_range'][incDict[0,6]['maxIncInd_Opt']]
 as06 = incDict[0,6][incDict[0,6]['optNum']]['v1'][incDict[0,6]['maxIncInd_Opt']]
 al06 = incDict[0,6][incDict[0,6]['optNum']]['v2'][incDict[0,6]['maxIncInd_Opt']]
+dmag06 = float(eqnDmagLHS.subs(alpha,as06).evalf())
+s06 = float(eqnSAlpha.subs(a,planProp[planets[0]]['a']*u.m.to('AU')).subs(alpha,as06).evalf())
 i07 =  incDict[0,7][incDict[0,7]['optNum']]['inc_range'][incDict[0,7]['maxIncInd_Opt']]
 as07 = incDict[0,7][incDict[0,7]['optNum']]['v1'][incDict[0,7]['maxIncInd_Opt']]
 al07 = incDict[0,7][incDict[0,7]['optNum']]['v2'][incDict[0,7]['maxIncInd_Opt']]
-line2 = r"$\mercury$    & \cellcolor{black} & (Y,"+str(np.round(i01,2))+","+str(np.round(as01,2))+","+str(np.round(al01,2))+")  & (Y,"+str(np.round(i02,2))+","+str(np.round(as02,2))+","+str(np.round(al02,2))+\
-        ")  & (Y,"+str(np.round(i03,2))+","+str(np.round(as03,2))+","+str(np.round(al03,2))+")  & (N,) & (N,) & (Y,"+str(np.round(i06,2))+","+str(np.round(as06,2))+","+str(np.round(al06,2))+\
-        ")  & (Y,"+str(np.round(i07,2))+","+str(np.round(as07,2))+","+str(np.round(al07,2))+")\\"
+dmag07 = float(eqnDmagLHS.subs(alpha,as07).evalf())
+s07 = float(eqnSAlpha.subs(a,planProp[planets[0]]['a']*u.m.to('AU')).subs(alpha,as07).evalf())
+line2 = r"$\mercury$    & \cellcolor{black} & (Y,"+str(np.round(i01,2))+","+str(np.round(as01,2))+","+str(np.round(al01,2))+","+str(np.round(dmag01,2))+","+str(np.round(s01,2))+")  & (Y,"+str(np.round(i02,2))+","+str(np.round(as02,2))+","+str(np.round(al02,2))+","+str(np.round(dmag02,2))+","+str(np.round(s02,2))+")"\
+        +"  & (Y,"+str(np.round(i03,2))+","+str(np.round(as03,2))+","+str(np.round(al03,2))+","+str(np.round(dmag03,2))+","+str(np.round(s03,2))+")  & (N,) & (N,) & (Y,"+str(np.round(i06,2))+","+str(np.round(as06,2))+","+str(np.round(al06,2))+","+str(np.round(dmag06,2))+","+str(np.round(s06,2))+")"\
+        +"  & (Y,"+str(np.round(i07,2))+","+str(np.round(as07,2))+","+str(np.round(al07,2))+","+str(np.round(dmag07,2))+","+str(np.round(s07,2))+")\\"
+ind_smaller = 1
+eqnDmagLHS = eqnDmag.subs(Phi,symbolicPhases[ind_smaller]).subs(a,planProp[planets[ind_smaller]]['a']).subs(R,planProp[planets[ind_smaller]]['R']).subs(p,planProp[planets[ind_smaller]]['p'])
 i12 =  incDict[1,2][incDict[1,2]['optNum']]['inc_range'][incDict[1,2]['maxIncInd_Opt']]
 as12 = incDict[1,2][incDict[1,2]['optNum']]['v1'][incDict[1,2]['maxIncInd_Opt']]
 al12 = incDict[1,2][incDict[1,2]['optNum']]['v2'][incDict[1,2]['maxIncInd_Opt']]
+dmag12 = float(eqnDmagLHS.subs(alpha,as12).evalf())
+s12 = float(eqnSAlpha.subs(a,planProp[planets[1]]['a']*u.m.to('AU')).subs(alpha,as12).evalf())
 i15 =  incDict[1,5][incDict[1,5]['optNum']]['inc_range'][incDict[1,5]['maxIncInd_Opt']]
 as15 = incDict[1,5][incDict[1,5]['optNum']]['v1'][incDict[1,5]['maxIncInd_Opt']]
 al15 = incDict[1,5][incDict[1,5]['optNum']]['v2'][incDict[1,5]['maxIncInd_Opt']]
-line3 = r"$\venus$      & & \cellcolor{black} & (Y,"+str(np.round(i12,2))+","+str(np.round(as12,2))+","+str(np.round(al12,2))+")  & (N,) & (N,)  & (Y,"+str(np.round(i15,2))+","+str(np.round(as15,2))+","+str(np.round(al15,2))+") & (N,) & (N,)\\"
+dmag15 = float(eqnDmagLHS.subs(alpha,as15).evalf())
+s15 = float(eqnSAlpha.subs(a,planProp[planets[1]]['a']*u.m.to('AU')).subs(alpha,as15).evalf())
+line3 = r"$\venus$      & & \cellcolor{black} & (Y,"+str(np.round(i12,2))+","+str(np.round(as12,2))+","+str(np.round(al12,2))+","+str(np.round(dmag12,2))+","+str(np.round(s12,2))+")  & (N,) & (N,)  & (Y,"+str(np.round(i15,2))+","+str(np.round(as15,2))+","+str(np.round(al15,2))+","+str(np.round(dmag15,2))+","+str(np.round(s15,2))+") & (N,) & (N,)\\"
 i23 =  incDict[2,3][incDict[2,3]['optNum']]['inc_range'][incDict[2,3]['maxIncInd_Opt']]
 as23 = incDict[2,3][incDict[2,3]['optNum']]['v1'][incDict[2,3]['maxIncInd_Opt']]
 al23 = incDict[2,3][incDict[2,3]['optNum']]['v2'][incDict[2,3]['maxIncInd_Opt']]
+dmag23 = float(eqnDmagLHS.subs(alpha,as23).evalf())
+s23 = float(eqnSAlpha.subs(a,planProp[planets[2]]['a']*u.m.to('AU')).subs(alpha,as23).evalf())
 i25 =  incDict[2,5][incDict[2,5]['optNum']]['inc_range'][incDict[2,5]['maxIncInd_Opt']]
 as25 = incDict[2,5][incDict[2,5]['optNum']]['v1'][incDict[2,5]['maxIncInd_Opt']]
 al25 = incDict[2,5][incDict[2,5]['optNum']]['v2'][incDict[2,5]['maxIncInd_Opt']]
+dmag25 = float(eqnDmagLHS.subs(alpha,as25).evalf())
+s25 = float(eqnSAlpha.subs(a,planProp[planets[2]]['a']*u.m.to('AU')).subs(alpha,as25).evalf())
 i26 =  incDict[2,6][incDict[2,6]['optNum']]['inc_range'][incDict[2,6]['maxIncInd_Opt']]
 as26 = incDict[2,6][incDict[2,6]['optNum']]['v1'][incDict[2,6]['maxIncInd_Opt']]
 al26 = incDict[2,6][incDict[2,6]['optNum']]['v2'][incDict[2,6]['maxIncInd_Opt']]
+dmag26 = float(eqnDmagLHS.subs(alpha,as26).evalf())
+s26 = float(eqnSAlpha.subs(a,planProp[planets[2]]['a']*u.m.to('AU')).subs(alpha,as26).evalf())
 i27 =  incDict[2,7][incDict[2,7]['optNum']]['inc_range'][incDict[2,7]['maxIncInd_Opt']]
 as27 = incDict[2,7][incDict[2,7]['optNum']]['v1'][incDict[2,7]['maxIncInd_Opt']]
 al27 = incDict[2,7][incDict[2,7]['optNum']]['v2'][incDict[2,7]['maxIncInd_Opt']]
-line4 = r"$\earth$      & &  & \cellcolor{black} & (Y,"+str(np.round(i23,2))+","+str(np.round(as23,2))+","+str(np.round(al23,2))+\
-        ")  & (N,) & (Y,"+str(np.round(i25,2))+","+str(np.round(as25,2))+","+str(np.round(al25,2))+")  & (Y,"+str(np.round(i26,2))+","+str(np.round(as26,2))+\
-        ","+str(np.round(al26,2))+")  & (Y,"+str(np.round(i27,2))+","+str(np.round(as27,2))+","+str(np.round(al27,2))+")\\"
+dmag27 = float(eqnDmagLHS.subs(alpha,as27).evalf())
+s27 = float(eqnSAlpha.subs(a,planProp[planets[2]]['a']*u.m.to('AU')).subs(alpha,as27).evalf())
+line4 = r"$\earth$      & &  & \cellcolor{black} & (Y,"+str(np.round(i23,2))+","+str(np.round(as23,2))+","+str(np.round(al23,2))+","+str(np.round(dmag23,2))+","+str(np.round(s23,2))+")"\
+        +"  & (N,) & (Y,"+str(np.round(i25,2))+","+str(np.round(as25,2))+","+str(np.round(al25,2))+","+str(np.round(dmag25,2))+","+str(np.round(s25,2))+")  & (Y,"+str(np.round(i26,2))+","+str(np.round(as26,2))+\
+        ","+str(np.round(al26,2))+","+str(np.round(dmag26,2))+","+str(np.round(s26,2))+")  & (Y,"+str(np.round(i27,2))+","+str(np.round(as27,2))+","+str(np.round(al27,2))+","+str(np.round(dmag27,2))+","+str(np.round(s27,2))+")\\"
+ind_smaller = 3
+eqnDmagLHS = eqnDmag.subs(Phi,symbolicPhases[ind_smaller]).subs(a,planProp[planets[ind_smaller]]['a']).subs(R,planProp[planets[ind_smaller]]['R']).subs(p,planProp[planets[ind_smaller]]['p'])
 i34 =  incDict[3,4][incDict[3,4]['optNum']]['inc_range'][incDict[3,4]['maxIncInd_Opt']]
 as34 = incDict[3,4][incDict[3,4]['optNum']]['v1'][incDict[3,4]['maxIncInd_Opt']]
 al34 = incDict[3,4][incDict[3,4]['optNum']]['v2'][incDict[3,4]['maxIncInd_Opt']]
+dmag34 = float(eqnDmagLHS.subs(alpha,as34).evalf())
+s34 = float(eqnSAlpha.subs(a,planProp[planets[3]]['a']*u.m.to('AU')).subs(alpha,as34).evalf())
 i36 =  incDict[3,6][incDict[3,6]['optNum']]['inc_range'][incDict[3,6]['maxIncInd_Opt']]
 as36 = incDict[3,6][incDict[3,6]['optNum']]['v1'][incDict[3,6]['maxIncInd_Opt']]
 al36 = incDict[3,6][incDict[3,6]['optNum']]['v2'][incDict[3,6]['maxIncInd_Opt']]
-line5 = r"$\mars$       & & & & \cellcolor{black} & (Y,"+str(np.round(i34,2))+","+str(np.round(as34,2))+","+str(np.round(al34,2))+\
-            ")  & (N,) & (Y,"+str(np.round(i36,2))+","+str(np.round(as36,2))+","+str(np.round(al36,2))+")  & (N,)\\"
+dmag36 = float(eqnDmagLHS.subs(alpha,as36).evalf())
+s36 = float(eqnSAlpha.subs(a,planProp[planets[3]]['a']*u.m.to('AU')).subs(alpha,as36).evalf())
+line5 = r"$\mars$       & & & & \cellcolor{black} & (Y,"+str(np.round(i34,2))+","+str(np.round(as34,2))+","+str(np.round(al34,2))+","+str(np.round(dmag34,2))+","+str(np.round(s34,2))+")"\
+        +"  & (N,) & (Y,"+str(np.round(i36,2))+","+str(np.round(as36,2))+","+str(np.round(al36,2))+","+str(np.round(dmag36,2))+","+str(np.round(s36,2))+")  & (N,)\\"
 #FIX Should be other solution
 i34 =  incDict[3,4][incDict[3,4]['optNum']]['inc_range'][incDict[3,4]['maxIncInd_Opt']]
 as34 = incDict[3,4][incDict[3,4]['optNum']]['v1'][incDict[3,4]['maxIncInd_Opt']]
 al34 = incDict[3,4][incDict[3,4]['optNum']]['v2'][incDict[3,4]['maxIncInd_Opt']]
+dmag34 = float(eqnDmagLHS.subs(alpha,al34).evalf())
+s34 = float(eqnSAlpha.subs(a,planProp[planets[3]]['a']*u.m.to('AU')).subs(alpha,as34).evalf())
+ind_smaller = 4
+eqnDmagLHS = eqnDmag.subs(Phi,symbolicPhases[ind_smaller]).subs(a,planProp[planets[ind_smaller]]['a']).subs(R,planProp[planets[ind_smaller]]['R']).subs(p,planProp[planets[ind_smaller]]['p'])
 i45 =  incDict[4,5][incDict[4,5]['optNum']]['inc_range'][incDict[4,5]['maxIncInd_Opt']]
 as45 = incDict[4,5][incDict[4,5]['optNum']]['v1'][incDict[4,5]['maxIncInd_Opt']]
 al45 = incDict[4,5][incDict[4,5]['optNum']]['v2'][incDict[4,5]['maxIncInd_Opt']]
+dmag45 = float(eqnDmagLHS.subs(alpha,as45).evalf())
+s45 = float(eqnSAlpha.subs(a,planProp[planets[4]]['a']*u.m.to('AU')).subs(alpha,as45).evalf())
 i46 =  incDict[4,6][incDict[4,6]['optNum']]['inc_range'][incDict[4,6]['maxIncInd_Opt']]
 as46 = incDict[4,6][incDict[4,6]['optNum']]['v1'][incDict[4,6]['maxIncInd_Opt']]
 al46 = incDict[4,6][incDict[4,6]['optNum']]['v2'][incDict[4,6]['maxIncInd_Opt']]
+dmag46 = float(eqnDmagLHS.subs(alpha,as46).evalf())
+s46 = float(eqnSAlpha.subs(a,planProp[planets[4]]['a']*u.m.to('AU')).subs(alpha,as46).evalf())
 i47 =  incDict[4,7][incDict[4,7]['optNum']]['inc_range'][incDict[4,7]['maxIncInd_Opt']]
 as47 = incDict[4,7][incDict[4,7]['optNum']]['v1'][incDict[4,7]['maxIncInd_Opt']]
 al47 = incDict[4,7][incDict[4,7]['optNum']]['v2'][incDict[4,7]['maxIncInd_Opt']]
-line6 = r"$\jupiter$    & & & & (Y,"+str(np.round(i34,2))+","+str(np.round(as34,2))+","+str(np.round(al34,2))+r") & \cellcolor{black} & (Y,"+str(np.round(i45,2))+","+str(np.round(as45,2))+","+str(np.round(al45,2))+\
-            ")  & (Y,"+str(np.round(i46,2))+","+str(np.round(as46,2))+","+str(np.round(al46,2))+")  & (Y,"+str(np.round(i47,2))+","+str(np.round(as47,2))+","+str(np.round(al47,2))+")\\"
+dmag47 = float(eqnDmagLHS.subs(alpha,as47).evalf())
+s47 = float(eqnSAlpha.subs(a,planProp[planets[4]]['a']*u.m.to('AU')).subs(alpha,as47).evalf())
+line6 = r"$\jupiter$    & & & & (Y,"+str(np.round(i34,2))+","+str(np.round(as34,2))+","+str(np.round(al34,2))+","+str(np.round(dmag34,2))+","+str(np.round(s34,2))+r") & \cellcolor{black} & (Y,"+str(np.round(i45,2))+","+str(np.round(as45,2))+","+str(np.round(al45,2))+","+str(np.round(dmag45,2))+","+str(np.round(s45,2))+")"\
+        +"  & (Y,"+str(np.round(i46,2))+","+str(np.round(as46,2))+","+str(np.round(al46,2))+","+str(np.round(dmag46,2))+","+str(np.round(s46,2))+")  & (Y,"+str(np.round(i47,2))+","+str(np.round(as47,2))+","+str(np.round(al47,2))+","+str(np.round(dmag47,2))+","+str(np.round(s47,2))+")\\"
+ind_smaller = 5
+eqnDmagLHS = eqnDmag.subs(Phi,symbolicPhases[ind_smaller]).subs(a,planProp[planets[ind_smaller]]['a']).subs(R,planProp[planets[ind_smaller]]['R']).subs(p,planProp[planets[ind_smaller]]['p'])
 i56 =  incDict[5,6][incDict[5,6]['optNum']]['inc_range'][incDict[5,6]['maxIncInd_Opt']]
 as56 = incDict[5,6][incDict[5,6]['optNum']]['v1'][incDict[5,6]['maxIncInd_Opt']]
 al56 = incDict[5,6][incDict[5,6]['optNum']]['v2'][incDict[5,6]['maxIncInd_Opt']]
+dmag56 = float(eqnDmagLHS.subs(alpha,as56).evalf())
+s56 = float(eqnSAlpha.subs(a,planProp[planets[5]]['a']*u.m.to('AU')).subs(alpha,as56).evalf())
 i57 =  incDict[5,7][incDict[5,7]['optNum']]['inc_range'][incDict[5,7]['maxIncInd_Opt']]
 as57 = incDict[5,7][incDict[5,7]['optNum']]['v1'][incDict[5,7]['maxIncInd_Opt']]
 al57 = incDict[5,7][incDict[5,7]['optNum']]['v2'][incDict[5,7]['maxIncInd_Opt']]
-line7 = r"$\saturn$     & & & & & & \cellcolor{black} & (Y,"+str(np.round(i56,2))+","+str(np.round(as56,2))+","+str(np.round(al56,2))+\
-            ")  & (Y,"+str(np.round(i57,2))+","+str(np.round(as57,2))+","+str(np.round(al57,2))+")\\"
+dmag57 = float(eqnDmagLHS.subs(alpha,as57).evalf())
+s57 = float(eqnSAlpha.subs(a,planProp[planets[5]]['a']*u.m.to('AU')).subs(alpha,as57).evalf())
+line7 = r"$\saturn$     & & & & & & \cellcolor{black} & (Y,"+str(np.round(i56,2))+","+str(np.round(as56,2))+","+str(np.round(al56,2))+","+str(np.round(dmag56,2))+","+str(np.round(s56,2))+")"\
+        +"  & (Y,"+str(np.round(i57,2))+","+str(np.round(as57,2))+","+str(np.round(al57,2))+","+str(np.round(dmag57,2))+","+str(np.round(s57,2))+")\\"
+ind_smaller = 6
+eqnDmagLHS = eqnDmag.subs(Phi,symbolicPhases[ind_smaller]).subs(a,planProp[planets[ind_smaller]]['a']).subs(R,planProp[planets[ind_smaller]]['R']).subs(p,planProp[planets[ind_smaller]]['p'])
 i67 =  incDict[6,7][incDict[6,7]['optNum']]['inc_range'][incDict[6,7]['maxIncInd_Opt']]
 as67 = incDict[6,7][incDict[6,7]['optNum']]['v1'][incDict[6,7]['maxIncInd_Opt']]
 al67 = incDict[6,7][incDict[6,7]['optNum']]['v2'][incDict[6,7]['maxIncInd_Opt']]
-line8 = r"$\uranus$     & & & & & & & \cellcolor{black} & (Y,"+str(np.round(i67,2))+","+str(np.round(as67,2))+","+str(np.round(al67,2))+")\\"
+dmag67 = float(eqnDmagLHS.subs(alpha,as67).evalf())
+s67 = float(eqnSAlpha.subs(a,planProp[planets[6]]['a']*u.m.to('AU')).subs(alpha,as67).evalf())
+line8 = r"$\uranus$     & & & & & & & \cellcolor{black} & (Y,"+str(np.round(i67,2))+","+str(np.round(as67,2))+","+str(np.round(al67,2))+","+str(np.round(dmag67,2))+","+str(np.round(s67,2))+")\\"
 line9 = r"$\neptune$    & & & & & & & & \cellcolor{black}\\"
 print(line1)
 print(line2)
