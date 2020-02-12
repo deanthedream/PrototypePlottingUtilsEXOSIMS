@@ -578,7 +578,7 @@ for pair_k in np.arange(len(planIndPairs)):
         error = eqnSAlpha.subs(a,planProp[planets[ind_smaller]]['a']*u.m.to('AU')).subs(alpha,talpha1).evalf() - eqnSAlpha.subs(a,planProp[planets[ind_larger]]['a']*u.m.to('AU')).subs(alpha,talpha2).evalf()
         return error
     #CREATE BOUNDS AND USE THOSE BOUNDS TO DEFINE THE RANGE FOR ALPHA1 AND ALPHA2
-    inc_range = np.linspace(start=0.,stop=90.,num=45)
+    inc_range = np.linspace(start=0.,stop=90.,num=360)#Was 45
     outList1 = list()
     outList2 = list()
     outList3 = list()
