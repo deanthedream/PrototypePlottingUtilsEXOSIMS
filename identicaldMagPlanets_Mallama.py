@@ -620,7 +620,7 @@ for pair_k in np.arange(len(planIndPairs)):
             if not continueOpt1:
                 continue
             #Find Intersection (brighter of smaller, dimmer of larger)
-            x0 = np.asarray([(90.+min_alpha)/2.,(alpha_min_crescent_larger+180.-min_alpha)/2.])
+            x0 = np.asarray([(90.+min_alpha)/2.,alpha_min_crescent_larger*0.3+(180.-min_alpha)*0.7])
             out = minimize(funcMaxInc, x0, method='SLSQP', bounds=[(0.+min_alpha,180.-min_alpha),(alpha_min_crescent_larger,180.-min_alpha)], constraints=[{'type':'eq','fun':con_sepAlpha}], options={'disp':True,})
             outList1.append(out)
             opt1Incs.append(inc_range[i])
@@ -661,7 +661,7 @@ for pair_k in np.arange(len(planIndPairs)):
             if not continueOpt3:
                 continue
             #Find Intersection (brighter of smaller, dimmer of larger)
-            x0 = np.asarray([(90.+180.-min_alpha)/2.,(alpha_min_crescent_larger+180.-min_alpha)/2.])
+            x0 = np.asarray([(90.+180.-min_alpha)/2.,alpha_min_crescent_larger*0.3+(180.-min_alpha)*0.7])
             out = minimize(funcMaxInc, x0, method='SLSQP', bounds=[(0.+min_alpha,180.-min_alpha),(alpha_min_crescent_larger,180.-min_alpha)], constraints=[{'type':'eq','fun':con_sepAlpha}], options={'disp':True,})
             outList3.append(out)
             opt3Incs.append(inc_range[i])
