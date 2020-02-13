@@ -702,6 +702,7 @@ def plotDmagvss(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx,inclin
     plt.ylabel('Planet-Star ' + r'$\Delta \mathrm{mag}$', weight='bold')
     plt.xlabel('Projected Planet-Star Separation, ' + r'$s$,' +' in AU', weight='bold')
     plt.legend()
+    plt.title('Inclination: ' + str(inclination) + r'$^\circ$' ,weight='bold')
     plt.show(block=False)
     #Save Plots
     # Save to a File

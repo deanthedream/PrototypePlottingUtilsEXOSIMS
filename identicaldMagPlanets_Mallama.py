@@ -1024,3 +1024,5 @@ plt.figure(num=9878907896)
 plt.plot(vvv,out)
 plt.show(block=False)
 
+
+plotDmagvss(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,inclination=25.3, folder='./', PPoutpath='./')
