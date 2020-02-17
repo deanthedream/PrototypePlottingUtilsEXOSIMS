@@ -854,6 +854,13 @@ dmag47 = float(eqnDmagLHS.subs(alpha,as47).evalf())
 s47 = float(eqnSAlpha.subs(a,planProp[planets[4]]['a']*u.m.to('AU')).subs(alpha,as47).evalf())
 line6 = r"$\jupiter$    & & & & (Y,"+str(np.round(i43,2))+","+str(np.round(as43,2))+","+str(np.round(al43,2))+","+str(np.round(dmag43,2))+","+str(np.round(s43,2))+r") & \cellcolor{black} & (Y,"+str(np.round(i45,2))+","+str(np.round(as45,2))+","+str(np.round(al45,2))+","+str(np.round(dmag45,2))+","+str(np.round(s45,2))+")"\
         +"  & (Y,"+str(np.round(i46,2))+","+str(np.round(as46,2))+","+str(np.round(al46,2))+","+str(np.round(dmag46,2))+","+str(np.round(s46,2))+")  & (Y,"+str(np.round(i47,2))+","+str(np.round(as47,2))+","+str(np.round(al47,2))+","+str(np.round(dmag47,2))+","+str(np.round(s47,2))+")\\"
+i54 = 0.75#incDict[4,5]['opt3']['inc_range'][12]
+as54 = 178.55#incDict[4,5]['opt3']['v1'][12]
+al54 = 179.20#incDict[4,5]['opt3']['v2'][12]
+eqnDmagLHSs = eqnDmag.subs(Phi,symbolicPhases[4]).subs(a,planProp[planets[4]]['a']).subs(R,planProp[planets[4]]['R']).subs(p,planProp[planets[4]]['p'])  
+eqnDmagLHSl = eqnDmag.subs(Phi,symbolicPhases[5]).subs(a,planProp[planets[5]]['a']).subs(R,planProp[planets[5]]['R']).subs(p,planProp[planets[5]]['p'])
+dmag54 = float(eqnDmagLHSs.subs(alpha,as54).evalf())
+s54 = float(eqnSAlpha.subs(a,planProp[planets[4]]['a']*u.m.to('AU')).subs(alpha,as54).evalf())
 ind_smaller = 5
 eqnDmagLHS = eqnDmag.subs(Phi,symbolicPhases[ind_smaller]).subs(a,planProp[planets[ind_smaller]]['a']).subs(R,planProp[planets[ind_smaller]]['R']).subs(p,planProp[planets[ind_smaller]]['p'])
 i56 =  incDict[5,6][incDict[5,6]['optNum']]['inc_range'][incDict[5,6]['maxIncInd_Opt']]
@@ -1025,4 +1032,9 @@ plt.plot(vvv,out)
 plt.show(block=False)
 
 
+plotDmagvss(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,inclination=0., folder='./', PPoutpath='./')
+plotDmagvss(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,inclination=0.5, folder='./', PPoutpath='./')
+plotDmagvss(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,inclination=0.85, folder='./', PPoutpath='./')
 plotDmagvss(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,inclination=25.3, folder='./', PPoutpath='./')
+
+

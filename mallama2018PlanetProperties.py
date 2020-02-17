@@ -594,12 +594,22 @@ plt.rcParams['axes.linewidth']=2
 plt.rc('font',weight='bold')
 for i in np.arange(len(planets)):
     plt.plot(np.linspace(start=0.,stop=180.,num=180),planProp[planets[i]]['phaseFuncMelded'](np.linspace(start=0.,stop=180.,num=180)),color=planProp[planets[i]]['planet_labelcolors'],label=planProp[planets[i]]['planet_name'])
+plt.plot(np.linspace(start=0.,stop=180.,num=180),phi_lambert(np.linspace(start=0.,stop=180.,num=180)*np.pi/180.),color='black',label='Lambert',linestyle='--')
 plt.xlim([0.,180.])
 plt.ylim([0.,1.0])
-plt.ylabel('Phase Function Mallama alphas Melded', weight='bold')
-plt.xlabel('Phase Angle in deg', weight='bold')
+plt.ylabel(r'Melded Solar System Phase Function, $\Phi$', weight='bold')
+plt.xlabel(r'Phase Angle, $\alpha$, in ($^\circ$)', weight='bold')
 plt.legend()
 plt.show(block=False)
+#Save Plots
+# Save to a File
+date = str(datetime.datetime.now())
+date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+fname = 'MeldedSolarSystemPhaseFunctions' + folder.split('/')[-1] + '_' + date
+plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
+plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
+plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
+plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
 ############################################################################
 
 
