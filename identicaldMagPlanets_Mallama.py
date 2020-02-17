@@ -860,6 +860,7 @@ al54 = 179.20#incDict[4,5]['opt3']['v2'][12]
 eqnDmagLHSs = eqnDmag.subs(Phi,symbolicPhases[4]).subs(a,planProp[planets[4]]['a']).subs(R,planProp[planets[4]]['R']).subs(p,planProp[planets[4]]['p'])  
 eqnDmagLHSl = eqnDmag.subs(Phi,symbolicPhases[5]).subs(a,planProp[planets[5]]['a']).subs(R,planProp[planets[5]]['R']).subs(p,planProp[planets[5]]['p'])
 dmag54 = float(eqnDmagLHSs.subs(alpha,as54).evalf())
+dmag54_2 = float(eqnDmagLHSl.subs(alpha,al54).evalf())
 s54 = float(eqnSAlpha.subs(a,planProp[planets[4]]['a']*u.m.to('AU')).subs(alpha,as54).evalf())
 ind_smaller = 5
 eqnDmagLHS = eqnDmag.subs(Phi,symbolicPhases[ind_smaller]).subs(a,planProp[planets[ind_smaller]]['a']).subs(R,planProp[planets[ind_smaller]]['R']).subs(p,planProp[planets[ind_smaller]]['p'])
