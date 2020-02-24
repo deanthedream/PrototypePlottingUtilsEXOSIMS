@@ -24,7 +24,7 @@ print(eqnr)
 
 #XYZ
 eqnX = eqnr*(sp.cos(W*np.pi/180)*sp.cos((w+v)*np.pi/180) - sp.sin(W*np.pi/180)*sp.sin((w+v)*np.pi/180)*sp.cos(inc*np.pi/180.))
-eqnY = eqnr*(sp.sin(W*np.pi/180)*sp.cos((w+v)*np.pi/180) - sp.cos(W*np.pi/180)*sp.sin((w+v)*np.pi/180)*sp.cos(inc*np.pi/180.))
+eqnY = eqnr*(sp.sin(W*np.pi/180)*sp.cos((w+v)*np.pi/180) + sp.cos(W*np.pi/180)*sp.sin((w+v)*np.pi/180)*sp.cos(inc*np.pi/180.))
 eqnZ = eqnr*(sp.sin(inc*np.pi/180.)*sp.sin((w+v)*np.pi/180.))
 print('X')
 print(eqnX)
