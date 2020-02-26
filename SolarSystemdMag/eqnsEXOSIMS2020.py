@@ -33,6 +33,10 @@ print(eqnY)
 print('Z')
 print(eqnZ)
 
+#For Paper
+thisIsOne = sp.simplify(((eqnX/eqnr)**2+(eqnY/eqnr)**2+(eqnZ/eqnr)**2))
+thetaEquation = sp.simplify(eqnY/eqnX)
+
 #s
 eqnS = sp.sqrt(eqnX**2.+eqnY**2.)
 eqnSAlpha = a*sp.sin(alpha*np.pi/180.)
