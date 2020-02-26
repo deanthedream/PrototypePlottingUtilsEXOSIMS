@@ -33,7 +33,9 @@ print(eqnY)
 print('Z')
 print(eqnZ)
 
-#tmp
+#For Paper
+thisIsOne = sp.simplify(((eqnX/eqnr)**2+(eqnY/eqnr)**2+(eqnZ/eqnr)**2))
+thetaEquation = sp.simplify(eqnY/eqnX)
 FORPAPER_eqnS_eqnr = sp.simplify(sp.sqrt((eqnX/eqnr)**2.+(eqnY/eqnr)**2.))
 
 #s
