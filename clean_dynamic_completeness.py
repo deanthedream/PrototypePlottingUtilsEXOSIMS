@@ -128,7 +128,7 @@ def cij(a, e, M0, I, w, O, Rp, p, t, mu, potential_planets, d, IWA, OWA, dMag0):
     theta = nu + w_p.value
     r = a_p*(1.-e_p**2.)/(1.+e_p*np.cos(nu))
     s = (r.value/4.)*np.sqrt(4.*np.cos(2.*I_p.value) + 4.*np.cos(2.*theta)-2.*np.cos(2.*I_p.value-2.*theta) \
-         - 2.*np.cos(2.*I_p.value+2.*theta) + 12.)
+         - 2.*np.cos(2.*I_p.value+2.*theta) + 12.) #From 
     beta = np.arccos(-np.sin(I_p)*np.sin(theta))
     phi = (np.sin(beta.value) + (np.pi - beta.value)*np.cos(beta.value))/np.pi
     dMag = deltaMag(p_p, Rp_p.to(u.km), r.to(u.AU), phi)
