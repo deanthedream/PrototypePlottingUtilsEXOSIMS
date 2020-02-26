@@ -10,6 +10,10 @@ import datetime
 import re
 from scipy.misc import derivative
 import sys, os.path
+from matplotlib import cm
+
+folder = './'
+PPoutpath = './'
 
 #### Planet Properties #####################################
 planProp = dict() #all in units of meters
@@ -216,9 +220,9 @@ def phase_Jupiter_1(alpha):
 def phase_Jupiter_2(alpha):
     """ Valid from 12 to 130 deg
     """
-    inds = np.where(alpha > 180.)[0]
-    alpha[inds] = [180.]*len(inds)
-    assert np.all((1.0 - 1.507*(alpha/180.) - 0.363*(alpha/180.)**2. - 0.062*(alpha/180.)**3.+ 2.809*(alpha/180.)**4. - 1.876*(alpha/180.)**5.) >= 0.), "error in alpha input"
+    # inds = np.where(alpha > 180.)[0]
+    # alpha[inds] = [180.]*len(inds)
+    # assert np.all((1.0 - 1.507*(alpha/180.) - 0.363*(alpha/180.)**2. - 0.062*(alpha/180.)**3.+ 2.809*(alpha/180.)**4. - 1.876*(alpha/180.)**5.) >= 0.), "error in alpha input"
     difference = phase_Jupiter_1(12.) - 10.**(-0.4*(- 2.5*np.log10(1.0 - 1.507*(12./180.) - 0.363*(12./180.)**2. - 0.062*(12./180.)**3.+ 2.809*(12./180.)**4. - 1.876*(12./180.)**5.)))
     phase = difference + 10.**(-0.4*(- 2.5*np.log10(1.0 - 1.507*(alpha/180.) - 0.363*(alpha/180.)**2. - 0.062*(alpha/180.)**3.+ 2.809*(alpha/180.)**4. - 1.876*(alpha/180.)**5.)))
     return phase
@@ -644,7 +648,7 @@ def plotDmagvss(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx,inclin
                 planProp[planets[i]]['phaseFuncMelded'](180./np.pi*alpha_from_dmagapseparationdmagatsmax(tmps1,planProp[planets[i]]['a']*u.m.to('AU'),[0.9*dmag_at_smax]*len(tmps1),dmag_at_smax)))
         dmagReplacementInds1 = np.where(tmps1>planProp[planets[i]]['s'][smaxInd])[0]
         tmpdmag1[dmagReplacementInds1] = [dmag_at_smax]*len(dmagReplacementInds1)
-        plt.fill_between(planProp[planets[i]]['s'][indsLTdmag_at_smax]+uncertainty_s,(1.-uncertainty_dmag)*planProp[planets[i]]['dmag'][indsLTdmag_at_smax],tmpdmag1,color=tmpColor,edgecolor=tmpColor)#,alpha=0.3,linewidth=0.0)
+        plt.fill_between(planProp[planets[i]]['s'][indsLTdmag_at_smax]+uncertainty_s,(1.-uncertainty_dmag)*planProp[planets[i]]['dmag'][indsLTdmag_at_smax],tmpdmag1,color=tmpColor,edgecolor=(0.,0.,0.,0.),linestyle='None',lw=0.)#tmpColor)#,alpha=0.3,linewidth=0.0)
         
         #Below dmag at smax Upper
         #1. Calculate slope of line
@@ -658,30 +662,35 @@ def plotDmagvss(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx,inclin
         ys = planProp[planets[i]]['dmag'][indsLTdmag_at_smax2]*(1. + uncertainty_dmag*np.cos(tmpAlphas))
         tmpdmag2 = deltaMag(planProp[planets[i]]['p'], planProp[planets[i]]['R']*u.m, planProp[planets[i]]['a']*u.m,\
                 planProp[planets[i]]['phaseFuncMelded'](180./np.pi*alpha_from_dmagapseparationdmagatsmax(xs,planProp[planets[i]]['a']*u.m.to('AU'),[0.9*dmag_at_smax]*len(tmps1),dmag_at_smax)))
-        plt.fill_between(xs,tmpdmag2,ys,color=tmpColor,edgecolor=tmpColor)#,alpha=0.3,linewidth=0.0)
+        plt.fill_between(xs,tmpdmag2,ys,color=tmpColor,edgecolor=(0.,0.,0.,0.),linestyle='None',lw=0.)#,alpha=0.3,linewidth=0.0)
 
 
         #inside Phase Curve bounded by upper and lower
-        xs2 = np.linspace(start=np.max(planProp[planets[i]]['s'][indsLTdmag_at_smax2] - uncertainty_s*np.sin(tmpAlphas)), stop=np.max(planProp[planets[i]]['s'][indsLTdmag_at_smax2]))
+        xs2 = np.linspace(start=np.max(planProp[planets[i]]['s'][indsLTdmag_at_smax2]*0.998 - uncertainty_s*np.sin(tmpAlphas)), stop=np.max(planProp[planets[i]]['s'][indsLTdmag_at_smax2]))
         ys2_lower = deltaMag(planProp[planets[i]]['p'], planProp[planets[i]]['R']*u.m, planProp[planets[i]]['a']*u.m,\
                 planProp[planets[i]]['phaseFuncMelded'](180./np.pi*alpha_from_dmagapseparationdmagatsmax(xs2,planProp[planets[i]]['a']*u.m.to('AU'),[0.9*dmag_at_smax]*len(tmps1),dmag_at_smax)))
         ys2_upper = deltaMag(planProp[planets[i]]['p'], planProp[planets[i]]['R']*u.m, planProp[planets[i]]['a']*u.m,\
                 planProp[planets[i]]['phaseFuncMelded'](180./np.pi*alpha_from_dmagapseparationdmagatsmax(xs2,planProp[planets[i]]['a']*u.m.to('AU'),[1.1*dmag_at_smax]*len(tmps1),dmag_at_smax)))
-        plt.fill_between(xs2,ys2_lower,ys2_upper,color=tmpColor,edgecolor=tmpColor)#,alpha=0.3,)#linewidth=0.0)
+        plt.fill_between(xs2,ys2_lower,ys2_upper,color=tmpColor,edgecolor=(0.,0.,0.,0.),linestyle='None',lw=0.)#,alpha=0.3,)#linewidth=0.0)
 
         #Above dmag at smax lower
-        #1. Calculate slope of line
+        #1. Calculate slope of line. 
         indsLTdmag_at_smax2 = np.arange(smaxInd+1) #all inds where s is less than smax from 0 to dmag at smax
         ddmag3 = calc_ddmag(planProp[planets[i]]['phaseFuncMelded'],planProp[planets[i]]['a']*u.m.to('AU'),planProp[planets[i]]['s'][indsGTdmag_at_smax],uncertainty_s,planProp[planets[i]]['dmag'][indsGTdmag_at_smax],dmag_at_smax)
+        #above always negative
         tmpAlphas2 = alpha_from_dmagapseparationdmagatsmax(planProp[planets[i]]['s'][indsGTdmag_at_smax],planProp[planets[i]]['a']*u.m.to('AU'),planProp[planets[i]]['dmag'][indsGTdmag_at_smax],dmag_at_smax)
         tmpds2 = ds_by_dalpha(tmpAlphas2,planProp[planets[i]]['a']*u.m.to('AU'))
         tmpThetas2 = np.arctan2(ddmag3,tmpds2)
         #2. find upper limit of the lower portion as x,y coordinates by
         xs3 = planProp[planets[i]]['s'][indsGTdmag_at_smax] - uncertainty_s*np.sin(tmpAlphas2)
+        #DELETExs3 = planProp[planets[i]]['s'][indsGTdmag_at_smax] - uncertainty_s*np.sin(tmpAlphas2)
         ys3 = planProp[planets[i]]['dmag'][indsGTdmag_at_smax]*(1. + uncertainty_dmag*np.cos(tmpAlphas2))
         tmpdmag3 = deltaMag(planProp[planets[i]]['p'], planProp[planets[i]]['R']*u.m, planProp[planets[i]]['a']*u.m,\
                 planProp[planets[i]]['phaseFuncMelded'](180./np.pi*alpha_from_dmagapseparationdmagatsmax(xs3,planProp[planets[i]]['a']*u.m.to('AU'),[1.1*dmag_at_smax]*len(tmps1),dmag_at_smax)))
-        plt.fill_between(xs3,ys3,tmpdmag3,color=tmpColor,edgecolor=tmpColor)#,alpha=0.3,linewidth=0.0)
+        plt.fill_between(xs3,ys3,tmpdmag3,color=tmpColor,edgecolor=(0.,0.,0.,0.),linestyle='None',lw=0.)#,alpha=0.3,linewidth=0.0)
+
+        if planets[i] == 'venus':
+            print(saltyburrito)
 
         #Above dmag at smax upper
         indsGTdmag_at_smax2 = np.arange(smaxInd+1) #all inds where s is less than smax from 0 to dmag at smax
@@ -694,7 +703,7 @@ def plotDmagvss(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx,inclin
         ys4 = planProp[planets[i]]['dmag'][indsGTdmag_at_smax]*(1. - uncertainty_dmag*np.cos(tmpAlphas4))
         tmpdmag4 = deltaMag(planProp[planets[i]]['p'], planProp[planets[i]]['R']*u.m, planProp[planets[i]]['a']*u.m,\
                 planProp[planets[i]]['phaseFuncMelded'](180./np.pi*alpha_from_dmagapseparationdmagatsmax(xs4,planProp[planets[i]]['a']*u.m.to('AU'),[1.1*dmag_at_smax]*len(tmps1),dmag_at_smax)))
-        plt.fill_between(xs4,tmpdmag4,ys4,color=tmpColor,edgecolor=tmpColor)#,alpha=0.3,linewidth=0.0)
+        plt.fill_between(xs4,tmpdmag4,ys4,color=tmpColor,edgecolor=(0.,0.,0.,0.),linestyle='None',lw=0.)#,alpha=0.3,linewidth=0.0)
 
         #Plot Central Line
         plt.plot(planProp[planets[i]]['s'],planProp[planets[i]]['dmag'],color=planProp[planets[i]]['planet_labelcolors'],label=planProp[planets[i]]['planet_name'].capitalize())
@@ -723,6 +732,252 @@ def plotDmagvss(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx,inclin
     plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
     plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
     plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
+
+
+#### Calculate dMag vs s plots
+uncertainty_dmag = 0.01 #HabEx requirement is 1%
+uncertainty_s = 5.*u.mas.to('rad')*10.*u.pc.to('AU')
+def plotDmagvssLineIncs(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx,inclinations, folder, PPoutpath):
+    """
+    Args:
+        inclination (float) - inclination in degrees
+    """
+    alphas = np.linspace(start=0.,stop=180.,num=1200,endpoint=True)
+    plt.close(66)
+    fig66 = plt.figure(num=66)
+    for i in np.arange(len(planets)):
+        planProp[planets[i]]['dmag'] = deltaMag(planProp[planets[i]]['p'], planProp[planets[i]]['R']*u.m, planProp[planets[i]]['a']*u.m,\
+                planProp[planets[i]]['phaseFuncMelded'](alphas))
+        planProp[planets[i]]['s'] = separation_from_alpha_ap(alphas*np.pi/180.,planProp[planets[i]]['a']*u.m).to('AU').value
+
+        tmpColor = list(planProp[planets[i]]['planet_labelcolors'])
+        tmpColor[3] = 0.3
+        tmpColor = tuple(tmpColor)
+        #Find Index where smax occurs
+        smaxInd = np.argmax(planProp[planets[i]]['s'])
+        dmag_at_smax = planProp[planets[i]]['dmag'][smaxInd] #dmag value at smax
+        indsLTdmag_at_smax = np.arange(smaxInd+1) #all inds where s is less than smax from 0 to dmag at smax
+        indsGTdmag_at_smax = np.arange(len(planProp[planets[i]]['s']) - (smaxInd+1)) + (len(planProp[planets[i]]['s']) - (smaxInd+1)) #all inds where s is less than smax from dmag at smax to the max dmag
+
+        #Below dmag at smax Lower
+        tmps1 = planProp[planets[i]]['s'][indsLTdmag_at_smax]+uncertainty_s
+        tmpdmag1 = deltaMag(planProp[planets[i]]['p'], planProp[planets[i]]['R']*u.m, planProp[planets[i]]['a']*u.m,\
+                planProp[planets[i]]['phaseFuncMelded'](180./np.pi*alpha_from_dmagapseparationdmagatsmax(tmps1,planProp[planets[i]]['a']*u.m.to('AU'),[0.9*dmag_at_smax]*len(tmps1),dmag_at_smax)))
+        dmagReplacementInds1 = np.where(tmps1>planProp[planets[i]]['s'][smaxInd])[0]
+        tmpdmag1[dmagReplacementInds1] = [dmag_at_smax]*len(dmagReplacementInds1)
+        plt.fill_between(planProp[planets[i]]['s'][indsLTdmag_at_smax]+uncertainty_s,(1.-uncertainty_dmag)*planProp[planets[i]]['dmag'][indsLTdmag_at_smax],tmpdmag1,color=tmpColor,edgecolor=(0.,0.,0.,0.),linestyle='None',lw=0.)#tmpColor)#,alpha=0.3,linewidth=0.0)
+        
+        #Below dmag at smax Upper
+        #1. Calculate slope of line
+        indsLTdmag_at_smax2 = np.arange(smaxInd+1) #all inds where s is less than smax from 0 to dmag at smax
+        ddmag2 = calc_ddmag(planProp[planets[i]]['phaseFuncMelded'],planProp[planets[i]]['a']*u.m.to('AU'),planProp[planets[i]]['s'][indsLTdmag_at_smax2],uncertainty_s,planProp[planets[i]]['dmag'][indsLTdmag_at_smax2],dmag_at_smax)
+        tmpAlphas = alpha_from_dmagapseparationdmagatsmax(planProp[planets[i]]['s'][indsLTdmag_at_smax2],planProp[planets[i]]['a']*u.m.to('AU'),planProp[planets[i]]['dmag'][indsLTdmag_at_smax2],dmag_at_smax)
+        tmpds = ds_by_dalpha(tmpAlphas,planProp[planets[i]]['a']*u.m.to('AU'))
+        tmpThetas = np.arctan2(ddmag2,tmpds)
+        #2. find upper limit of the lower portion as x,y coordinates by
+        xs = planProp[planets[i]]['s'][indsLTdmag_at_smax2] - uncertainty_s*np.sin(tmpAlphas)
+        ys = planProp[planets[i]]['dmag'][indsLTdmag_at_smax2]*(1. + uncertainty_dmag*np.cos(tmpAlphas))
+        tmpdmag2 = deltaMag(planProp[planets[i]]['p'], planProp[planets[i]]['R']*u.m, planProp[planets[i]]['a']*u.m,\
+                planProp[planets[i]]['phaseFuncMelded'](180./np.pi*alpha_from_dmagapseparationdmagatsmax(xs,planProp[planets[i]]['a']*u.m.to('AU'),[0.9*dmag_at_smax]*len(tmps1),dmag_at_smax)))
+        plt.fill_between(xs,tmpdmag2,ys,color=tmpColor,edgecolor=(0.,0.,0.,0.),linestyle='None',lw=0.)#,alpha=0.3,linewidth=0.0)
+
+
+        #inside Phase Curve bounded by upper and lower
+        xs2 = np.linspace(start=np.max(planProp[planets[i]]['s'][indsLTdmag_at_smax2]*0.998 - uncertainty_s*np.sin(tmpAlphas)), stop=np.max(planProp[planets[i]]['s'][indsLTdmag_at_smax2]))
+        ys2_lower = deltaMag(planProp[planets[i]]['p'], planProp[planets[i]]['R']*u.m, planProp[planets[i]]['a']*u.m,\
+                planProp[planets[i]]['phaseFuncMelded'](180./np.pi*alpha_from_dmagapseparationdmagatsmax(xs2,planProp[planets[i]]['a']*u.m.to('AU'),[0.9*dmag_at_smax]*len(tmps1),dmag_at_smax)))
+        ys2_upper = deltaMag(planProp[planets[i]]['p'], planProp[planets[i]]['R']*u.m, planProp[planets[i]]['a']*u.m,\
+                planProp[planets[i]]['phaseFuncMelded'](180./np.pi*alpha_from_dmagapseparationdmagatsmax(xs2,planProp[planets[i]]['a']*u.m.to('AU'),[1.1*dmag_at_smax]*len(tmps1),dmag_at_smax)))
+        plt.fill_between(xs2,ys2_lower,ys2_upper,color=tmpColor,edgecolor=(0.,0.,0.,0.),linestyle='None',lw=0.)#,alpha=0.3,)#linewidth=0.0)
+
+        #Above dmag at smax lower
+        #1. Calculate slope of line. 
+        indsLTdmag_at_smax2 = np.arange(smaxInd+1) #all inds where s is less than smax from 0 to dmag at smax
+        ddmag3 = calc_ddmag(planProp[planets[i]]['phaseFuncMelded'],planProp[planets[i]]['a']*u.m.to('AU'),planProp[planets[i]]['s'][indsGTdmag_at_smax],uncertainty_s,planProp[planets[i]]['dmag'][indsGTdmag_at_smax],dmag_at_smax)
+        #above always negative
+        tmpAlphas2 = alpha_from_dmagapseparationdmagatsmax(planProp[planets[i]]['s'][indsGTdmag_at_smax],planProp[planets[i]]['a']*u.m.to('AU'),planProp[planets[i]]['dmag'][indsGTdmag_at_smax],dmag_at_smax)
+        tmpds2 = ds_by_dalpha(tmpAlphas2,planProp[planets[i]]['a']*u.m.to('AU'))
+        tmpThetas2 = np.arctan2(ddmag3,tmpds2)
+        #2. find upper limit of the lower portion as x,y coordinates by
+        xs3 = planProp[planets[i]]['s'][indsGTdmag_at_smax] - uncertainty_s*np.sin(tmpAlphas2)
+        #DELETExs3 = planProp[planets[i]]['s'][indsGTdmag_at_smax] - uncertainty_s*np.sin(tmpAlphas2)
+        ys3 = planProp[planets[i]]['dmag'][indsGTdmag_at_smax]*(1. + uncertainty_dmag*np.cos(tmpAlphas2))
+        tmpdmag3 = deltaMag(planProp[planets[i]]['p'], planProp[planets[i]]['R']*u.m, planProp[planets[i]]['a']*u.m,\
+                planProp[planets[i]]['phaseFuncMelded'](180./np.pi*alpha_from_dmagapseparationdmagatsmax(xs3,planProp[planets[i]]['a']*u.m.to('AU'),[1.1*dmag_at_smax]*len(tmps1),dmag_at_smax)))
+        plt.fill_between(xs3,ys3,tmpdmag3,color=tmpColor,edgecolor=(0.,0.,0.,0.),linestyle='None',lw=0.)#,alpha=0.3,linewidth=0.0)
+
+        #Above dmag at smax upper
+        indsGTdmag_at_smax2 = np.arange(smaxInd+1) #all inds where s is less than smax from 0 to dmag at smax
+        ddmag4 = calc_ddmag(planProp[planets[i]]['phaseFuncMelded'],planProp[planets[i]]['a']*u.m.to('AU'),planProp[planets[i]]['s'][indsGTdmag_at_smax],uncertainty_s,planProp[planets[i]]['dmag'][indsGTdmag_at_smax],dmag_at_smax)
+        tmpAlphas4 = alpha_from_dmagapseparationdmagatsmax(planProp[planets[i]]['s'][indsGTdmag_at_smax],planProp[planets[i]]['a']*u.m.to('AU'),planProp[planets[i]]['dmag'][indsGTdmag_at_smax],dmag_at_smax)
+        tmpds4 = ds_by_dalpha(tmpAlphas4,planProp[planets[i]]['a']*u.m.to('AU'))
+        tmpThetas4 = np.arctan2(ddmag4,tmpds4)
+        #2. find upper limit of the lower portion as x,y coordinates by
+        xs4 = planProp[planets[i]]['s'][indsGTdmag_at_smax] + uncertainty_s*np.sin(tmpAlphas4)
+        ys4 = planProp[planets[i]]['dmag'][indsGTdmag_at_smax]*(1. - uncertainty_dmag*np.cos(tmpAlphas4))
+        tmpdmag4 = deltaMag(planProp[planets[i]]['p'], planProp[planets[i]]['R']*u.m, planProp[planets[i]]['a']*u.m,\
+                planProp[planets[i]]['phaseFuncMelded'](180./np.pi*alpha_from_dmagapseparationdmagatsmax(xs4,planProp[planets[i]]['a']*u.m.to('AU'),[1.1*dmag_at_smax]*len(tmps1),dmag_at_smax)))
+        plt.fill_between(xs4,tmpdmag4,ys4,color=tmpColor,edgecolor=(0.,0.,0.,0.),linestyle='None',lw=0.)#,alpha=0.3,linewidth=0.0)
+
+        #Plot Central Line
+        plt.plot(planProp[planets[i]]['s'],planProp[planets[i]]['dmag'],color=planProp[planets[i]]['planet_labelcolors'],label=planProp[planets[i]]['planet_name'].capitalize())
+
+        #Plot Inclinations dmag and s
+        colorSmaller = list()
+        sSmaller = list()
+        dmagSmaller = list()
+        colorLarger = list()
+        sLarger = list()
+        dmagLarger = list()
+        for j in np.arange(len(inclinations)):
+            alphaSmaller = 0.+inclinations[j]
+            alphaLarger = 180.-inclinations[j]
+            dmagSmaller.append(deltaMag(planProp[planets[i]]['p'], planProp[planets[i]]['R']*u.m, planProp[planets[i]]['a']*u.m,\
+                planProp[planets[i]]['phaseFuncMelded'](alphaSmaller)))
+            sSmaller.append(separation_from_alpha_ap(alphaSmaller*np.pi/180.,planProp[planets[i]]['a']*u.m).to('AU').value)
+            dmagLarger.append(deltaMag(planProp[planets[i]]['p'], planProp[planets[i]]['R']*u.m, planProp[planets[i]]['a']*u.m,\
+                planProp[planets[i]]['phaseFuncMelded'](alphaLarger)))
+            sLarger.append(separation_from_alpha_ap(alphaLarger*np.pi/180.,planProp[planets[i]]['a']*u.m).to('AU').value)
+            #DELETEcm.plasma(inclinations[j]/(np.max(inclinations)-np.min(inclinations))*255.)
+            colorSmaller.append(inclinations[j]/(np.max(inclinations)-np.min(inclinations))*255.)
+            colorLarger.append(inclinations[j]/(np.max(inclinations)-np.min(inclinations))*255.)
+            #print(colorSmaller)
+            #print(colorLarger)
+
+        plt.scatter(sSmaller,dmagSmaller,marker="$[$",s=60,zorder=10,c=colorSmaller, cmap='plasma')
+        plt.scatter(sLarger,dmagLarger,marker="$[$",s=60,zorder=10,c=colorLarger, cmap='plasma') #[ looks better than <
+
+    #ADD SMIN FOR TELESCOPE
+    smin_telescope = IWA_HabEx.to('rad').value*10.*u.pc.to('AU') #IWA for HabEx 45 mas observing target at 10 pc
+    plt.plot([smin_telescope,smin_telescope],[10.,70.],color='black',linestyle='-')
+
+    plt.text(7,19.5,'Credit: Dean Keithly',fontsize='small',fontweight='normal')
+    plt.text(1.05*smin_telescope,42,'IWA at\n10 pc',fontsize='medium',fontweight='bold',rotation=90)
+    plt.xlim([1e-1,32.])
+    plt.ylim([19.,46.])
+    plt.xscale('log')
+    plt.ylabel('Planet-Star ' + r'$\Delta \mathrm{mag}$', weight='bold')
+    plt.xlabel('Projected Planet-Star Separation, ' + r'$s$,' +' in AU', weight='bold')
+    plt.legend()
+    incStringList = [str(incNum) for incNum in inclinations]
+    plt.title('Inclination: ' + r'$^\circ$ '.join(incStringList) + r'$^\circ$' ,weight='bold')
+    plt.show(block=False)
+    #Save Plots
+    # Save to a File
+    date = str(datetime.datetime.now())
+    date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+    fname = 'dMagvsS_solarSystem_Multincs' + '_'.join(incStringList) + folder.split('/')[-1] + '_' + date
+    plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
+    plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
+    plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
+    plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
+
+inclinations = np.asarray([2.,5.,10.,25.])
+IWA_HabEx = 0.045*u.arcsec #taken from a Habex Script in units of mas
+plotDmagvssLineIncs(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx,inclinations, folder, PPoutpath)
+print(saltyburrito)
+
+
+
+#Optimal Spacing Algorithm
+inclination = 0
+alphas = np.linspace(start=0.+inclination,stop=180.-inclination,num=120,endpoint=True)
+i = 0
+planProp[planets[i]]['dmag'] = deltaMag(planProp[planets[i]]['p'], planProp[planets[i]]['R']*u.m, planProp[planets[i]]['a']*u.m,\
+                planProp[planets[i]]['phaseFuncMelded'](alphas))
+planProp[planets[i]]['s'] = separation_from_alpha_ap(alphas*np.pi/180.,planProp[planets[i]]['a']*u.m).to('AU').value
+
+
+def plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx,inclination, folder, PPoutpath):
+    """
+    Args:
+        planProp (dict)
+        planets (list)
+        uncertainty_dmag (float)
+        uncertainty_s (float)
+        IWA_HabEx (float)
+        inclination (float) - inclination in degrees
+        folder (string)
+        PPoutpath (string) 
+
+    """
+    alphas = np.linspace(start=0.+inclination,stop=180.-inclination,num=120,endpoint=True)
+    #Must Dsitribute alpha such that np.sqrt(ddmag^2+ds^2) = constant
+    #need to solve optimal alpha spacing for each planet with optimization algorithm
+    #alphas = np.linspace(start=0.+inclination,stop=)
+    plt.close(67)
+    fig67 = plt.figure(num=67)
+    for i in np.arange(len(planets)):
+        planProp[planets[i]]['dmag'] = deltaMag(planProp[planets[i]]['p'], planProp[planets[i]]['R']*u.m, planProp[planets[i]]['a']*u.m,\
+                planProp[planets[i]]['phaseFuncMelded'](alphas))
+        planProp[planets[i]]['s'] = separation_from_alpha_ap(alphas*np.pi/180.,planProp[planets[i]]['a']*u.m).to('AU').value
+
+        tmpColor = list(planProp[planets[i]]['planet_labelcolors'])
+        tmpColor[3] = 0.3
+        tmpColor = tuple(tmpColor)
+
+        #Generate a Monte Carlo of detected planets with the initial uncertainties
+        dsTemplate = np.random.normal(loc=0.0, scale=uncertainty_s, size=10**4)
+        ddmagTemplate = np.random.normal(loc=0.0, scale=uncertainty_dmag, size=10**4)
+        planArray_s = np.asarray([])
+        planArray_dmag = np.asarray([])
+        for j in np.arange(len(alphas)):#For each alpha, we can generate a set of dmag and s uncertaintie
+            plan_s = planProp[planets[i]]['s'][j] + dsTemplate
+            planArray_s = np.concatenate((planArray_s,plan_s),axis=0)
+            plan_dmag = planProp[planets[i]]['dmag'][j] + ddmagTemplate*planProp[planets[i]]['dmag'][j]
+            planArray_dmag = np.concatenate((planArray_dmag,plan_dmag),axis=0) #These are the percentage uncertainties
+        planProp[planets[i]]['dmagSPointsPlanUncertainty'] = np.asarray([planArray_s,planArray_dmag])
+
+        maxs = np.max(planProp[planets[i]]['dmagSPointsPlanUncertainty'][:,0])
+        mindmag = np.min(planProp[planets[i]]['dmagSPointsPlanUncertainty'][:,1])
+        maxdmag = np.max(planProp[planets[i]]['dmagSPointsPlanUncertainty'][:,1])
+
+        #DELETExs = np.linspace(start=0.,stop=maxs,num=1000)
+        #DELETEydmag = np.linspace(start=mindmag,stop=maxdmag,num=1000)
+
+        H, xedges, yedges = np.histogram2d(planProp[planets[i]]['dmagSPointsPlanUncertainty'][0,:],planProp[planets[i]]['dmagSPointsPlanUncertainty'][1,:],bins=(1000,1000))
+        #DELETExx, yy = np.meshgrid(xs,ydmag)
+        planProp[planets[i]]['2dHist'] = {"h":H,"xedges":xedges,"yedges":yedges}
+
+        #custom color scale for each planet
+        sumTotal = np.sum(H)
+        plt.contourf(xedges[:-1],yedges[:-1],H.T/sumTotal)#,color=tmpColor)
+        plt.contour(xedges[:-1],yedges[:-1],H.T/sumTotal)#, levels=)#,color=tmpColor)
+
+        #Plot Central Line
+        plt.plot(planProp[planets[i]]['s'],planProp[planets[i]]['dmag'],color=planProp[planets[i]]['planet_labelcolors'],label=planProp[planets[i]]['planet_name'].capitalize())
+        plt.show(block=False)
+        print(saltyburrito)
+
+    #ADD SMIN FOR TELESCOPE
+    smin_telescope = IWA_HabEx.to('rad').value*10.*u.pc.to('AU') #IWA for HabEx 45 mas observing target at 10 pc
+    plt.plot([smin_telescope,smin_telescope],[10.,70.],color='black',linestyle='-')
+
+    plt.text(7,19.5,'Credit: Dean Keithly',fontsize='small',fontweight='normal')
+    plt.text(1.05*smin_telescope,42,'IWA at\n10 pc',fontsize='medium',fontweight='bold',rotation=90)
+    plt.xlim([1e-1,32.])
+    plt.ylim([19.,46.])
+    plt.xscale('log')
+    plt.ylabel('Planet-Star ' + r'$\Delta \mathrm{mag}$', weight='bold')
+    plt.xlabel('Projected Planet-Star Separation, ' + r'$s$,' +' in AU', weight='bold')
+    plt.legend()
+    plt.title('Inclination: ' + str(inclination) + r'$^\circ$' ,weight='bold')
+    plt.show(block=False)
+    #Save Plots
+    # Save to a File
+    # date = str(datetime.datetime.now())
+    # date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+    # fname = 'dMagvsSMonteCarlo_solarSystem_inc' + str(inclination) + folder.split('/')[-1] + '_' + date
+    # plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
+    # plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
+    # plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
+    # plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
+
+
+plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,inclination=0., folder='./', PPoutpath='./')
+
+
+
 
 IWA_HabEx = 0.045*u.arcsec #taken from a Habex Script in units of mas
 plotDmagvss(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,inclination=0., folder='./', PPoutpath='./')
