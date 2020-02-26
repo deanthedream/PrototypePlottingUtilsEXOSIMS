@@ -33,6 +33,9 @@ print(eqnY)
 print('Z')
 print(eqnZ)
 
+#tmp
+FORPAPER_eqnS_eqnr = sp.simplify(sp.sqrt((eqnX/eqnr)**2.+(eqnY/eqnr)**2.))
+
 #s
 eqnS = sp.sqrt(eqnX**2.+eqnY**2.)
 eqnSAlpha = a*sp.sin(alpha*np.pi/180.)

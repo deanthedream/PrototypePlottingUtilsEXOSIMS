@@ -55,7 +55,7 @@ def meananom(mu, a, t, M0=0, to=0):
     mu = mu.to(u.m**3/(u.s**2))
     
     # Calculate mean anomaly
-#    M = np.add(np.sqrt(mu/a**3)*(t-to),Mo)
+    #    M = np.add(np.sqrt(mu/a**3)*(t-to),Mo)
     M1= np.sqrt(mu/a**3)*(t-to)*u.rad
     M2= M0
     M = (M1+M2)%(2*np.pi*u.rad)
@@ -103,10 +103,10 @@ def cij(a, e, M0, I, w, O, Rp, p, t, mu, potential_planets, d, IWA, OWA, dMag0):
         c2j (ndarray):
             Dynamic completeness value
     '''
-    total_planets = len(a)
+    total_planets = len(a) #total number of planets
     
     # Get indices for which planets are to be propagated
-    planet_indices = np.linspace(0, total_planets-1, total_planets).astype(int)
+    planet_indices = np.arange(total_planets) #np.linspace(0, total_planets-1, total_planets).astype(int)
     potential_planet_indices = planet_indices[potential_planets]
     
     # Get the values for the propagated planets
@@ -126,9 +126,9 @@ def cij(a, e, M0, I, w, O, Rp, p, t, mu, potential_planets, d, IWA, OWA, dMag0):
     nu = fun.trueanom(E, e_p)
     
     theta = nu + w_p.value
-    r = a_p*(1-e_p**2)/(1+e_p*np.cos(nu))
-    s = (r.value/4)*np.sqrt(4*np.cos(2*I_p.value) + 4*np.cos(2*theta)-2*np.cos(2*I_p.value-2*theta) \
-         - 2*np.cos(2*I_p.value+2*theta) + 12)
+    r = a_p*(1.-e_p**2.)/(1.+e_p*np.cos(nu))
+    s = (r.value/4.)*np.sqrt(4.*np.cos(2.*I_p.value) + 4.*np.cos(2.*theta)-2.*np.cos(2.*I_p.value-2.*theta) \
+         - 2.*np.cos(2.*I_p.value+2.*theta) + 12.)
     beta = np.arccos(-np.sin(I_p)*np.sin(theta))
     phi = (np.sin(beta.value) + (np.pi - beta.value)*np.cos(beta.value))/np.pi
     dMag = deltaMag(p_p, Rp_p.to(u.km), r.to(u.AU), phi)
