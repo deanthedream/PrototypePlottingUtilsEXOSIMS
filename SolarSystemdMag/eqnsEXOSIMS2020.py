@@ -137,3 +137,14 @@ symbolicPhases = [sp.Abs(phaseMERCURY), sp.Abs(phaseVENUS), sp.Abs(phaseEARTH), 
 
 
 
+#### Solving s eqn
+#Solves in Wolfram alpha but not Here
+# a, b, c, d, f, xxx = sp.symbols('a b c d f xxx', real=True, positive=True)
+# eqnSLimit = a+b*xxx+c*xxx**2.+d*xxx*sp.sqrt(1.-xxx**2.)
+# out = sp.solve(eqnSLimit,xxx)
+
+# print('Solving for v')
+# print(0.45-eqnS.subs(W,0.).subs(a,1).subs(e,0.1).subs(w,0.2).subs(inc,0.3))
+# out = sp.solve(0.45-eqnS.subs(W,0.).subs(a,1).subs(e,0.1).subs(w,0.2).subs(inc,0.3),v) #Uses all the ram :(
+
+ 
