@@ -73,7 +73,7 @@ def s_koe(a,e,nu,inc,omega):
     s = r_koe(a,e,nu)*np.sqrt(np.cos(omega+nu)**2. + np.sin(omega+nu)**2.*np.cos(inc)**2.)
     return s
 
-def plotdmagvss(sma,eccen,inc,omega,Omega):
+def plotdmagvss(sma,eccen,inc,omega,Omega,ax=None,num=None):
     #need a mechanism for calculating evenly spaced distribution of nu
     circ = circ_from_E(sma,eccen)
     b = np.sqrt(sma**2.*(1.-eccen**2.)) #semi-minor axis
@@ -96,12 +96,19 @@ def plotdmagvss(sma,eccen,inc,omega,Omega):
     betas = np.arcsin(ss/rs) #From my paper
     Phis = phiLambert(betas)
     dmags = deltaMag(p=1.,Rp=1.*u.earthRad,d=rs*u.AU,Phi=Phis)
-    plt.figure()
-    plt.plot(ss,dmags)
-    #plt.scatter(ss,dmags)
-    plt.xlabel('s')
-    plt.ylabel('dmag')
-    plt.show(block=False)
+    if ax == None:
+        plt.figure()
+        plt.plot(ss,dmags)
+        plt.xlabel('s')
+        plt.ylabel('dmag')
+        return None
+    else:
+        #ax.plot(ss,dmags)
+        ax.scatter(ss,dmags)
+        ra = sma*(1.+eccen)
+        ax.set_xlim([0.,ra])
+        plt.show(block=False)
+        return ax
 
 def x_koe(r,inc,omega,Omega,nu):
     return r*(np.cos(Omega)*np.cos(omega+nu)-np.sin(Omega)*np.sin(omega+nu)*np.cos(inc))
@@ -112,7 +119,7 @@ def y_koe(r,inc,omega,Omega,nu):
 def z_koe(r,inc,omega,Omega,nu):
     return r*np.sin(inc)*np.sin(omega+nu)
 
-def plotxyvskoe(sma,eccen,inc,omega,Omega):
+def plotxyvskoe(sma,eccen,inc,omega,Omega,ax=None,num=None):
     #need a mechanism for calculating evenly spaced distribution of nu
     circ = circ_from_E(sma,eccen)
     b = np.sqrt(sma**2.*(1.-eccen**2.)) #semi-minor axis
@@ -141,44 +148,79 @@ def plotxyvskoe(sma,eccen,inc,omega,Omega):
     betas = np.arcsin(ss/rs) #From my paper
     Phis = phiLambert(betas)
     dmags = deltaMag(p=1.,Rp=1.*u.earthRad,d=rs*u.AU,Phi=Phis)
-    plt.figure()
-    #plt.plot(ss,dmags)
-    #plt.scatter(ss,dmags)
-    plt.plot(xs,ys)
-    ra = sma*(1.+eccen)
-    plt.ylim([-ra,ra])
-    plt.xlim([-ra,ra])
-    plt.xlabel('x')
-    plt.ylabel('y')
-    plt.show(block=False)
-
+    if ax == None:
+        plt.figure()
+        plt.plot(xs,ys)
+        ra = sma*(1.+eccen)
+        plt.ylim([-ra,ra])
+        plt.xlim([-ra,ra])
+        plt.xlabel('x')
+        plt.ylabel('y')
+        plt.show(block=False)
+        return None
+    else:
+        ax.plot(xs,ys)
+        ra = sma*(1.+eccen)
+        ax.set_ylim([-ra,ra])
+        ax.set_xlim([-ra,ra])
+        return ax
 
 #DELETE E = elliptic_integral_of_second_kind_power_series(e)
 
 #### Good dMag vs s Plots for several orbits
-plotdmagvss(sma=1.,eccen=0.2,inc=0.,       omega=0.,Omega=0.)
-plotdmagvss(sma=1.,eccen=0.2,inc=np.pi/10.,omega=0.,Omega=0.)
-plotdmagvss(sma=1.,eccen=0.2,inc=np.pi/2., omega=0.,Omega=0.)
-plotdmagvss(sma=1.,eccen=0.2,inc=0.,       omega=np.pi/10.,Omega=0.)
-plotdmagvss(sma=1.,eccen=0.2,inc=np.pi/10.,omega=np.pi/10.,Omega=0.)
-plotdmagvss(sma=1.,eccen=0.2,inc=np.pi/2., omega=np.pi/10.,Omega=0.)
-plt.close('all')
+fig0, ax0 = plt.subplots(nrows=2,ncols=3,num=500)
+ax0[0,0] = plotdmagvss(sma=1.,eccen=0.2,inc=0.,       omega=0.,Omega=0.,ax=ax0[0,0])
+ax0[0,1] = plotdmagvss(sma=1.,eccen=0.2,inc=np.pi/10.,omega=0.,Omega=0.,ax=ax0[0,1])
+ax0[0,2] = plotdmagvss(sma=1.,eccen=0.2,inc=np.pi/2., omega=0.,Omega=0.,ax=ax0[0,2])
+ax0[1,0] = plotdmagvss(sma=1.,eccen=0.2,inc=0.,       omega=np.pi/10.,Omega=0.,ax=ax0[1,0])
+ax0[1,1] = plotdmagvss(sma=1.,eccen=0.2,inc=np.pi/10.,omega=np.pi/10.,Omega=0.,ax=ax0[1,1])
+ax0[1,2] = plotdmagvss(sma=1.,eccen=0.2,inc=np.pi/2., omega=np.pi/10.,Omega=0.,ax=ax0[1,2])
+fig0.subplots_adjust(hspace=0.,wspace=0.)
+#plt.close('all')
 
 #### Associated x,y plots for these orbits
-plotxyvskoe(sma=1.,eccen=0.6,inc=0.,       omega=0.,Omega=0.)
-plotxyvskoe(sma=1.,eccen=0.6,inc=np.pi/6.,omega=0.,Omega=0.)
-plotxyvskoe(sma=1.,eccen=0.6,inc=np.pi/3.,omega=0.,Omega=0.)
-plotxyvskoe(sma=1.,eccen=0.6,inc=np.pi/2., omega=0.,Omega=0.) #edge on
-plotxyvskoe(sma=1.,eccen=0.6,inc=0.,       omega=np.pi/6.,Omega=0.)
-plotxyvskoe(sma=1.,eccen=0.6,inc=np.pi/6.,omega=np.pi/6.,Omega=0.)
-plotxyvskoe(sma=1.,eccen=0.6,inc=np.pi/3.,omega=np.pi/6.,Omega=0.)
-plotxyvskoe(sma=1.,eccen=0.6,inc=np.pi/2., omega=np.pi/6.,Omega=0.) #edge on
-plotxyvskoe(sma=1.,eccen=0.6,inc=0.,       omega=np.pi/3.,Omega=0.)
-plotxyvskoe(sma=1.,eccen=0.6,inc=np.pi/6.,omega=np.pi/3.,Omega=0.)
-plotxyvskoe(sma=1.,eccen=0.6,inc=np.pi/3.,omega=np.pi/3.,Omega=0.)
-plotxyvskoe(sma=1.,eccen=0.6,inc=np.pi/2., omega=np.pi/3.,Omega=0.) #edge on
-plt.close('all')
-#hmmmm... it doesn't look like changing inclination has any effect here and everything is baked in
+fig00, ax00 = plt.subplots(nrows=4,ncols=4,num=5000)
+ax00[0,0] = plotdmagvss(sma=1.,eccen=0.6,inc=0.,       omega=0.,Omega=0.,ax=ax00[0,0])
+ax00[0,1] = plotdmagvss(sma=1.,eccen=0.6,inc=np.pi/6.,omega=0.,Omega=0.,ax=ax00[0,1])
+ax00[0,2] = plotdmagvss(sma=1.,eccen=0.6,inc=np.pi/3.,omega=0.,Omega=0.,ax=ax00[0,2])
+ax00[0,3] = plotdmagvss(sma=1.,eccen=0.6,inc=np.pi/2., omega=0.,Omega=0.,ax=ax00[0,3]) #edge on
+ax00[1,0] = plotdmagvss(sma=1.,eccen=0.6,inc=0.,       omega=np.pi/6.,Omega=0.,ax=ax00[1,0])
+ax00[1,1] = plotdmagvss(sma=1.,eccen=0.6,inc=np.pi/6.,omega=np.pi/6.,Omega=0.,ax=ax00[1,1])
+ax00[1,2] = plotdmagvss(sma=1.,eccen=0.6,inc=np.pi/3.,omega=np.pi/6.,Omega=0.,ax=ax00[1,2])
+ax00[1,3] = plotdmagvss(sma=1.,eccen=0.6,inc=np.pi/2., omega=np.pi/6.,Omega=0.,ax=ax00[1,3]) #edge on
+ax00[2,0] = plotdmagvss(sma=1.,eccen=0.6,inc=0.,       omega=np.pi/3.,Omega=0.,ax=ax00[2,0])
+ax00[2,1] = plotdmagvss(sma=1.,eccen=0.6,inc=np.pi/6.,omega=np.pi/3.,Omega=0.,ax=ax00[2,1])
+ax00[2,2] = plotdmagvss(sma=1.,eccen=0.6,inc=np.pi/3.,omega=np.pi/3.,Omega=0.,ax=ax00[2,2])
+ax00[2,3] = plotdmagvss(sma=1.,eccen=0.6,inc=np.pi/2., omega=np.pi,Omega=0.,ax=ax00[2,3]) #edge on
+ax00[3,0] = plotdmagvss(sma=1.,eccen=0.6,inc=0.,       omega=75./180.*np.pi,Omega=0.,ax=ax00[3,0])
+ax00[3,1] = plotdmagvss(sma=1.,eccen=0.6,inc=np.pi/6.,omega=75./180.*np.pi,Omega=0.,ax=ax00[3,1])
+ax00[3,2] = plotdmagvss(sma=1.,eccen=0.6,inc=np.pi/3.,omega=75./180.*np.pi,Omega=0.,ax=ax00[3,2])
+ax00[3,3] = plotdmagvss(sma=1.,eccen=0.6,inc=np.pi/2., omega=75./180.*np.pi,Omega=0.,ax=ax00[3,3]) #edge on
+fig00.subplots_adjust(hspace=0.,wspace=0.)
+#plt.close('all')
+
+#### Associated x,y plots for these orbits
+fig1, ax = plt.subplots(nrows=4,ncols=4,num=501)
+ax[0,0] = plotxyvskoe(sma=1.,eccen=0.6,inc=0.,       omega=0.,Omega=0.,ax=ax[0,0])
+ax[0,1] = plotxyvskoe(sma=1.,eccen=0.6,inc=np.pi/6.,omega=0.,Omega=0.,ax=ax[0,1])
+ax[0,2] = plotxyvskoe(sma=1.,eccen=0.6,inc=np.pi/3.,omega=0.,Omega=0.,ax=ax[0,2])
+ax[0,3] = plotxyvskoe(sma=1.,eccen=0.6,inc=np.pi/2., omega=0.,Omega=0.,ax=ax[0,3]) #edge on
+ax[1,0] = plotxyvskoe(sma=1.,eccen=0.6,inc=0.,       omega=np.pi/6.,Omega=0.,ax=ax[1,0])
+ax[1,1] = plotxyvskoe(sma=1.,eccen=0.6,inc=np.pi/6.,omega=np.pi/6.,Omega=0.,ax=ax[1,1])
+ax[1,2] = plotxyvskoe(sma=1.,eccen=0.6,inc=np.pi/3.,omega=np.pi/6.,Omega=0.,ax=ax[1,2])
+ax[1,3] = plotxyvskoe(sma=1.,eccen=0.6,inc=np.pi/2., omega=np.pi/6.,Omega=0.,ax=ax[1,3]) #edge on
+ax[2,0] = plotxyvskoe(sma=1.,eccen=0.6,inc=0.,       omega=np.pi/3.,Omega=0.,ax=ax[2,0])
+ax[2,1] = plotxyvskoe(sma=1.,eccen=0.6,inc=np.pi/6.,omega=np.pi/3.,Omega=0.,ax=ax[2,1])
+ax[2,2] = plotxyvskoe(sma=1.,eccen=0.6,inc=np.pi/3.,omega=np.pi/3.,Omega=0.,ax=ax[2,2])
+ax[2,3] = plotxyvskoe(sma=1.,eccen=0.6,inc=np.pi/2., omega=np.pi,Omega=0.,ax=ax[2,3]) #edge on
+ax[3,0] = plotxyvskoe(sma=1.,eccen=0.6,inc=0.,       omega=75./180.*np.pi,Omega=0.,ax=ax[3,0])
+ax[3,1] = plotxyvskoe(sma=1.,eccen=0.6,inc=np.pi/6.,omega=75./180.*np.pi,Omega=0.,ax=ax[3,1])
+ax[3,2] = plotxyvskoe(sma=1.,eccen=0.6,inc=np.pi/3.,omega=75./180.*np.pi,Omega=0.,ax=ax[3,2])
+ax[3,3] = plotxyvskoe(sma=1.,eccen=0.6,inc=np.pi/2., omega=75./180.*np.pi,Omega=0.,ax=ax[3,3]) #edge on
+fig1.subplots_adjust(hspace=0.,wspace=0.)
+#plt.close('all')
+
+
 
 
 #### Test Omega 
