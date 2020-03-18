@@ -12,6 +12,12 @@ Phi = sp.Symbol('Phi',real=True,positive=True)
 alpha = sp.Symbol('alpha', real=True, positive=True)
 
 #### The common point between two ellipses is the orbiting Foci
+#In the projected ellipse, the Foci may not be the orbiting Foci
+
+#r
+eqnr = a*(1.-e**2.)/(1.+e*sp.cos(v*np.pi/180))
+print('r')
+print(eqnr)
 
 #### XYZ of 3D ellipse
 eqnX = eqnr*(sp.cos(W)*sp.cos((w+v)) - sp.sin(W)*sp.sin((w+v))*sp.cos(inc.))
@@ -29,13 +35,46 @@ print(eqnZ)
 #### The 3D vector along the semi-MAJOR axis in the direction of perigee is when nu=0
 X_perigee_vect_3D_orbit = eqnX.subs(nu,0.)
 Y_perigee_vect_3D_orbit = eqnY.subs(nu,0.)
+Z_perigee_vect_3D_orbit = eqnZ.subs(nu,0.)
+majorAxisVect_3D_ellipse = [X_perigee_vect_3D_orbit,Y_perigee_vect_3D_orbit,Z_perigee_vect_3D_orbit]
 
-#### The 3D vector along the semi-MINOR axis in the direction of perigee+pi/2 is when nu=pi/2.
-X_perigee_vect_3D_orbit = eqnX.subs(nu.np.pi/2.)
-Y_perigee_vect_3D_orbit = eqnY.subs(nu,np.pi/2.)
+#### The 3D vector along the semi-MAJOR axis in the direction of apogee is when nu=np.pi
+#UNNECESSARY SINCE WE HAVE SMA and ECCEN
+X_apogee_vect_3D_orbit = eqnX.subs(nu,np.pi)
+Y_apogee_vect_3D_orbit = eqnY.subs(nu,np.pi)
+
+#Unit vector from 3D Ellipse Foci to 3D Ellipse Origin
+U_3DFoci_to_origin = -(X_perigee_vect_3D_orbit,Y_perigee_vect_3D_orbit)/sp.sqrt(X_perigee_vect_3D_orbit**2+Y_perigee_vect_3D_orbit**2)
+#Distance from 3D Ellipse Foci to 3D Ellipse Origin: c**2 = a**2-b**2
+B_3D = sma*np.sqrt(1.-eccen**2.)
+C_3DFoci_to_origin = sp.sqrt(sma**2.-B_3D**2.)
+
+#### The 3D unit vector describing orbital plane
+#NEED TO FIGURE OUT HOW TO DO SYMPY CROSS PRODUCT BS OR JUST USE NUMPY??
+normalVect_3D_ellipse = sp.cross([X_perigee_vect_3D_orbit,Y_perigee_vect_3D_orbit,Z_perigee_vect_3D_orbit],\
+            [eqnX.subs(nu,np.pi/2.),eqnY.subs(nu,np.pi/2.),eqnZ.subs(nu,np.pi/2.)]) #np.pi/2. was used, but any value of nu is acceptable
+normalVect_3D_ellipse = normalVect_3D_ellipse/sp.norm(normalVect_3D_ellipse)
+
+#### The 3D unit vector along the semi-MINOR axis is given by
+minorAxisUnitVect_3D_ellipse = np.cross(majorAxisVect_3D_ellipse, normalVect_3D_ellipse)
+
+#### The 3D vector along the semi-MINOR axis is therefore
+minorAxisVect_3D_ellipse = B_3D*minorAxisUnitVect_3D_ellipse
+
+#DELETEAssumption the center of a 3D ellipse is the same as the center of it's projection
+#Assume a 3D Ellipse center projected onto a 2D plane has the same center as the projected ellipse
+#### From 2D Projected Ellipse Center to Projected 3D Ellipse Foci
+#A (major or minor) axis must lie along the Ellipse center-foci line
+C_2DFoci_to_origin = np.sqrt(U_3DFoci_to_origin[0]**2.+U_3DFoci_to_origin[0]**2.)
+projected_perigee_distance = np.sqrt(majorAxisVect_3D_ellipse[0]**2.+majorAxisVect_3D_ellipse[1]**2.)
+axis1_projected = C_2DFoci_to_origin+projected_perigee_distance #this is either the semi-major axis or semi-minor axis
+
+
+LEAVING OFF HERE! NEED TO FIND OUT HOW TO CALCULATE THE SEMI-MINOR AXIS LENGTH
+
+#Distance from orbit Foci to perigee sqrt(xp**2.+yp**2.) 
 
 #### Projected Semi-major axis
-sma_proj = 
 
 #### Projected Semi-minor axis
 
