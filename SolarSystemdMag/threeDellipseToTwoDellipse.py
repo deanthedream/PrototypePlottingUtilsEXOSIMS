@@ -68,6 +68,18 @@ minorAxisVect_3D_ellipse = B_3D*minorAxisUnitVect_3D_ellipse
 C_2DFoci_to_origin = np.sqrt(U_3DFoci_to_origin[0]**2.+U_3DFoci_to_origin[0]**2.)
 projected_perigee_distance = np.sqrt(majorAxisVect_3D_ellipse[0]**2.+majorAxisVect_3D_ellipse[1]**2.)
 axis1_projected = C_2DFoci_to_origin+projected_perigee_distance #this is either the semi-major axis or semi-minor axis
+axis1Unit_projected = [X_perigee_vect_3D_orbit, Y_perigee_vect_3D_orbit, 0]/np.linalg.norm([X_perigee_vect_3D_orbit, Y_perigee_vect_3D_orbit, 0])
+
+#Axis 2 unit vector
+axis2Unit_projected = np.cross(axis1Unit_projected,[0,0,1])
+
+#Ellipse origin location
+projectedEllipseCenter = -axis1Unit_projected*C_2DFoci_to_origin
+
+#Axis 2 length
+[eqnX,eqnY,0] == projectedEllipseCenter + t*axis2Unit_projected
+
+solve for length of axis 2 by 
 
 
 LEAVING OFF HERE! NEED TO FIND OUT HOW TO CALCULATE THE SEMI-MINOR AXIS LENGTH
