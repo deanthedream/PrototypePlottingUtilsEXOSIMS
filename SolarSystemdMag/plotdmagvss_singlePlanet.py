@@ -81,31 +81,43 @@ def plotdmagvss(sma,eccen,inc,omega,Omega,ax=None,num=None):
 
     #Note: We only need to evenly distribute over area bc equal area
     #in equal time is one of Kepler's laws
-    numPts=100 #number of points to get
+    numPts=200 #number of points to get
     dA = area/numPts #each dA aiming to achieve
     rs = np.zeros(numPts)#All the r to use
     nus = np.zeros(numPts)#All the nu to use
+    xs = np.zeros(numPts)
+    ys = np.zeros(numPts)
+    zs = np.zeros(numPts)
     rs[0] = r_koe(sma,eccen,0.) #Set initial r
     nus[0] = 0.
+    #EXAMPLE nus[1] = nus[0] + 2.*dA/(rs[0]*(rs[0]-dr_koe(a,e,nus[0])))
+    xs[0] = x_koe(rs[0],inc,omega,Omega,nus[0])
+    ys[0] = y_koe(rs[0],inc,omega,Omega,nus[0])
+    zs[0] = z_koe(rs[0],inc,omega,Omega,nus[0])
     #EXAMPLE nus[1] = nus[0] + 2.*dA/(rs[0]*(rs[0]-dr_koe(a,e,nus[0])))
     for i in np.arange(numPts-1)+1:
         nus[i] = nus[i-1] + 2.*dA/(rs[i-1]*(rs[i-1]-dr_koe(sma,eccen,nus[i-1])))
         rs[i] = r_koe(sma,eccen,nus[i])
+        xs[i] = x_koe(rs[i],inc,omega,Omega,nus[i])
+        ys[i] = y_koe(rs[i],inc,omega,Omega,nus[i])
+        zs[i] = z_koe(rs[i],inc,omega,Omega,nus[i])
 
     ss = s_koe(sma,eccen,nus,inc,omega)
-    betas = np.arcsin(ss/rs) #From my paper
-    Phis = phiLambert(betas)
+    betas = np.arcsin(zs/rs) #From my paper
+    Phis = phiLambert(betas*u.rad)
     dmags = deltaMag(p=1.,Rp=1.*u.earthRad,d=rs*u.AU,Phi=Phis)
     if ax == None:
         plt.figure()
         plt.plot(ss,dmags)
         plt.xlabel('s')
         plt.ylabel('dmag')
+        plt.show(block=False)
         return None
     else:
-        #ax.plot(ss,dmags)
-        ax.scatter(ss,dmags)
+        ax.plot(ss,dmags)
+        #ax.scatter(ss,dmags,s=4)
         ra = sma*(1.+eccen)
+        #DELETEax.plot([ra*np.sin(inc),ra*np.sin(inc)],[20.,23])
         ax.set_xlim([0.,ra])
         plt.show(block=False)
         return ax
@@ -127,26 +139,29 @@ def plotxyvskoe(sma,eccen,inc,omega,Omega,ax=None,num=None):
 
     #Note: We only need to evenly distribute over area bc equal area
     #in equal time is one of Kepler's laws
-    numPts=100 #number of points to get
+    numPts=200 #number of points to get
     dA = area/numPts #each dA aiming to achieve
     rs = np.zeros(numPts)#All the r to use
     nus = np.zeros(numPts)#All the nu to use
     xs = np.zeros(numPts)
     ys = np.zeros(numPts)
+    zs = np.zeros(numPts)
     rs[0] = r_koe(sma,eccen,0.) #Set initial r
     nus[0] = 0.
     xs[0] = x_koe(rs[0],inc,omega,Omega,nus[0])
     ys[0] = y_koe(rs[0],inc,omega,Omega,nus[0])
+    zs[0] = z_koe(rs[0],inc,omega,Omega,nus[0])
     #EXAMPLE nus[1] = nus[0] + 2.*dA/(rs[0]*(rs[0]-dr_koe(a,e,nus[0])))
     for i in np.arange(numPts-1)+1:
         nus[i] = nus[i-1] + 2.*dA/(rs[i-1]*(rs[i-1]-dr_koe(sma,eccen,nus[i-1])))
         rs[i] = r_koe(sma,eccen,nus[i])
         xs[i] = x_koe(rs[i],inc,omega,Omega,nus[i])
         ys[i] = y_koe(rs[i],inc,omega,Omega,nus[i])
+        zs[i] = z_koe(rs[i],inc,omega,Omega,nus[i])
 
     ss = s_koe(sma,eccen,nus,inc,omega)
     betas = np.arcsin(ss/rs) #From my paper
-    Phis = phiLambert(betas)
+    Phis = phiLambert(betas*u.rad)
     dmags = deltaMag(p=1.,Rp=1.*u.earthRad,d=rs*u.AU,Phi=Phis)
     if ax == None:
         plt.figure()
@@ -163,6 +178,7 @@ def plotxyvskoe(sma,eccen,inc,omega,Omega,ax=None,num=None):
         ra = sma*(1.+eccen)
         ax.set_ylim([-ra,ra])
         ax.set_xlim([-ra,ra])
+        plt.show(block=False)
         return ax
 
 #DELETE E = elliptic_integral_of_second_kind_power_series(e)
@@ -178,7 +194,7 @@ ax0[1,2] = plotdmagvss(sma=1.,eccen=0.2,inc=np.pi/2., omega=np.pi/10.,Omega=0.,a
 fig0.subplots_adjust(hspace=0.,wspace=0.)
 #plt.close('all')
 
-#### Associated x,y plots for these orbits
+#### Associated s,dmag plots for these orbits
 fig00, ax00 = plt.subplots(nrows=4,ncols=4,num=5000)
 ax00[0,0] = plotdmagvss(sma=1.,eccen=0.6,inc=0.,       omega=0.,Omega=0.,ax=ax00[0,0])
 ax00[0,1] = plotdmagvss(sma=1.,eccen=0.6,inc=np.pi/6.,omega=0.,Omega=0.,ax=ax00[0,1])
@@ -191,7 +207,7 @@ ax00[1,3] = plotdmagvss(sma=1.,eccen=0.6,inc=np.pi/2., omega=np.pi/6.,Omega=0.,a
 ax00[2,0] = plotdmagvss(sma=1.,eccen=0.6,inc=0.,       omega=np.pi/3.,Omega=0.,ax=ax00[2,0])
 ax00[2,1] = plotdmagvss(sma=1.,eccen=0.6,inc=np.pi/6.,omega=np.pi/3.,Omega=0.,ax=ax00[2,1])
 ax00[2,2] = plotdmagvss(sma=1.,eccen=0.6,inc=np.pi/3.,omega=np.pi/3.,Omega=0.,ax=ax00[2,2])
-ax00[2,3] = plotdmagvss(sma=1.,eccen=0.6,inc=np.pi/2., omega=np.pi,Omega=0.,ax=ax00[2,3]) #edge on
+ax00[2,3] = plotdmagvss(sma=1.,eccen=0.6,inc=np.pi/2., omega=np.pi/3,Omega=0.,ax=ax00[2,3]) #edge on
 ax00[3,0] = plotdmagvss(sma=1.,eccen=0.6,inc=0.,       omega=75./180.*np.pi,Omega=0.,ax=ax00[3,0])
 ax00[3,1] = plotdmagvss(sma=1.,eccen=0.6,inc=np.pi/6.,omega=75./180.*np.pi,Omega=0.,ax=ax00[3,1])
 ax00[3,2] = plotdmagvss(sma=1.,eccen=0.6,inc=np.pi/3.,omega=75./180.*np.pi,Omega=0.,ax=ax00[3,2])
@@ -212,7 +228,7 @@ ax[1,3] = plotxyvskoe(sma=1.,eccen=0.6,inc=np.pi/2., omega=np.pi/6.,Omega=0.,ax=
 ax[2,0] = plotxyvskoe(sma=1.,eccen=0.6,inc=0.,       omega=np.pi/3.,Omega=0.,ax=ax[2,0])
 ax[2,1] = plotxyvskoe(sma=1.,eccen=0.6,inc=np.pi/6.,omega=np.pi/3.,Omega=0.,ax=ax[2,1])
 ax[2,2] = plotxyvskoe(sma=1.,eccen=0.6,inc=np.pi/3.,omega=np.pi/3.,Omega=0.,ax=ax[2,2])
-ax[2,3] = plotxyvskoe(sma=1.,eccen=0.6,inc=np.pi/2., omega=np.pi,Omega=0.,ax=ax[2,3]) #edge on
+ax[2,3] = plotxyvskoe(sma=1.,eccen=0.6,inc=np.pi/2., omega=np.pi/3.,Omega=0.,ax=ax[2,3]) #edge on
 ax[3,0] = plotxyvskoe(sma=1.,eccen=0.6,inc=0.,       omega=75./180.*np.pi,Omega=0.,ax=ax[3,0])
 ax[3,1] = plotxyvskoe(sma=1.,eccen=0.6,inc=np.pi/6.,omega=75./180.*np.pi,Omega=0.,ax=ax[3,1])
 ax[3,2] = plotxyvskoe(sma=1.,eccen=0.6,inc=np.pi/3.,omega=75./180.*np.pi,Omega=0.,ax=ax[3,2])
@@ -220,8 +236,77 @@ ax[3,3] = plotxyvskoe(sma=1.,eccen=0.6,inc=np.pi/2., omega=75./180.*np.pi,Omega=
 fig1.subplots_adjust(hspace=0.,wspace=0.)
 #plt.close('all')
 
+#### Plot s vs nu
+def plotsvskoe(sma,eccen,inc,omega,Omega,ax=None,num=None):
+    #need a mechanism for calculating evenly spaced distribution of nu
+    circ = circ_from_E(sma,eccen)
+    b = np.sqrt(sma**2.*(1.-eccen**2.)) #semi-minor axis
+    area = np.pi*sma*b #area inside the ellipse
 
+    #Note: We only need to evenly distribute over area bc equal area
+    #in equal time is one of Kepler's laws
+    numPts=200 #number of points to get
+    dA = area/numPts #each dA aiming to achieve
+    rs = np.zeros(numPts)#All the r to use
+    nus = np.zeros(numPts)#All the nu to use
+    #xs = np.zeros(numPts)
+    #ys = np.zeros(numPts)
+    #zs = np.zeros(numPts)
+    rs[0] = r_koe(sma,eccen,0.) #Set initial r
+    nus[0] = 0.
+    #xs[0] = x_koe(rs[0],inc,omega,Omega,nus[0])
+    #ys[0] = y_koe(rs[0],inc,omega,Omega,nus[0])
+    #zs[0] = z_koe(rs[0],inc,omega,Omega,nus[0])
+    #EXAMPLE nus[1] = nus[0] + 2.*dA/(rs[0]*(rs[0]-dr_koe(a,e,nus[0])))
+    for i in np.arange(numPts-1)+1:
+        nus[i] = nus[i-1] + 2.*dA/(rs[i-1]*(rs[i-1]-dr_koe(sma,eccen,nus[i-1])))
+        rs[i] = r_koe(sma,eccen,nus[i])
+        #xs[i] = x_koe(rs[i],inc,omega,Omega,nus[i])
+        #ys[i] = y_koe(rs[i],inc,omega,Omega,nus[i])
+        #zs[i] = z_koe(rs[i],inc,omega,Omega,nus[i])
 
+    ss = s_koe(sma,eccen,nus,inc,omega)
+    #betas = np.arcsin(ss/rs) #From my paper
+    #Phis = phiLambert(betas*u.rad)
+    #dmags = deltaMag(p=1.,Rp=1.*u.earthRad,d=rs*u.AU,Phi=Phis)
+    if ax == None:
+        plt.figure()
+        plt.plot(nus,ss)
+        ra = sma*(1.+eccen)
+        plt.ylim([0.,ra])
+        plt.xlim([0.,2.*np.pi])
+        plt.xlabel('x')
+        plt.ylabel('y')
+        plt.show(block=False)
+        return None
+    else:
+        ax.plot(nus,ss)
+        ra = sma*(1.+eccen)
+        ax.set_ylim([0.,ra])
+        ax.set_xlim([0.,2.*np.pi])
+        plt.show(block=False)
+        return ax
+
+#### Associated x,y plots for these orbits
+fig3, ax3 = plt.subplots(nrows=4,ncols=4,num=503)
+ax3[0,0] = plotsvskoe(sma=1.,eccen=0.6,inc=0.,       omega=0.,Omega=0.,ax=ax3[0,0])
+ax3[0,1] = plotsvskoe(sma=1.,eccen=0.6,inc=np.pi/6.,omega=0.,Omega=0.,ax=ax3[0,1])
+ax3[0,2] = plotsvskoe(sma=1.,eccen=0.6,inc=np.pi/3.,omega=0.,Omega=0.,ax=ax3[0,2])
+ax3[0,3] = plotsvskoe(sma=1.,eccen=0.6,inc=np.pi/2., omega=0.,Omega=0.,ax=ax3[0,3]) #edge on
+ax3[1,0] = plotsvskoe(sma=1.,eccen=0.6,inc=0.,       omega=np.pi/6.,Omega=0.,ax=ax3[1,0])
+ax3[1,1] = plotsvskoe(sma=1.,eccen=0.6,inc=np.pi/6.,omega=np.pi/6.,Omega=0.,ax=ax3[1,1])
+ax3[1,2] = plotsvskoe(sma=1.,eccen=0.6,inc=np.pi/3.,omega=np.pi/6.,Omega=0.,ax=ax3[1,2])
+ax3[1,3] = plotsvskoe(sma=1.,eccen=0.6,inc=np.pi/2., omega=np.pi/6.,Omega=0.,ax=ax3[1,3]) #edge on
+ax3[2,0] = plotsvskoe(sma=1.,eccen=0.6,inc=0.,       omega=np.pi/3.,Omega=0.,ax=ax3[2,0])
+ax3[2,1] = plotsvskoe(sma=1.,eccen=0.6,inc=np.pi/6.,omega=np.pi/3.,Omega=0.,ax=ax3[2,1])
+ax3[2,2] = plotsvskoe(sma=1.,eccen=0.6,inc=np.pi/3.,omega=np.pi/3.,Omega=0.,ax=ax3[2,2])
+ax3[2,3] = plotsvskoe(sma=1.,eccen=0.6,inc=np.pi/2., omega=np.pi/3.,Omega=0.,ax=ax3[2,3]) #edge on
+ax3[3,0] = plotsvskoe(sma=1.,eccen=0.6,inc=0.,       omega=75./180.*np.pi,Omega=0.,ax=ax3[3,0])
+ax3[3,1] = plotsvskoe(sma=1.,eccen=0.6,inc=np.pi/6.,omega=75./180.*np.pi,Omega=0.,ax=ax3[3,1])
+ax3[3,2] = plotsvskoe(sma=1.,eccen=0.6,inc=np.pi/3.,omega=75./180.*np.pi,Omega=0.,ax=ax3[3,2])
+ax3[3,3] = plotsvskoe(sma=1.,eccen=0.6,inc=np.pi/2., omega=75./180.*np.pi,Omega=0.,ax=ax3[3,3]) #edge on
+fig3.subplots_adjust(hspace=0.,wspace=0.)
+#plt.close('all')
 
 #### Test Omega 
 # plotxyvskoe(sma=1.,eccen=0.6,inc=np.pi/10.,omega=0.,Omega=0.)

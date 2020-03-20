@@ -73,6 +73,7 @@ for i in np.arange(len(x0s)):
     outs.append(out5['x'])
 stop=time.time()
 print(stop-start)
+print(str((stop-start)))
 print('total time (hrs): ' + str((stop-start)*10**8./60/60.))
 print('Done out5')
 
@@ -110,7 +111,10 @@ plt.show(block=False)
 plt.close(33)
 plt.figure(num=33)
 fig, ax = plt.subplots(nrows=4, num=33, sharex=True)
+e = 0.3
+i_crit = np.arccos(((1.-e**2.)**0.5/(1.+e)))
 incs = np.linspace(start=0.,stop=0.9*np.pi/2.,num=10)
+incs = np.append(incs,[i_crit])
 for j in np.arange(len(incs)):
     R = incs[j]/np.max(incs)
     G = 0.
@@ -124,7 +128,7 @@ plt.show(block=False)
 
 plt.close(4)
 plt.figure(num=4)
-incs = np.linspace(start=0.,stop=0.9*np.pi/2.,num=10)
+#incs = np.linspace(start=0.,stop=0.9*np.pi/2.,num=10)
 for j in np.arange(len(incs)):
     R = incs[j]/np.max(incs)
     G = 0.
@@ -137,7 +141,7 @@ plt.show(block=False)
 
 #plt.close(44)
 #plt.figure(num=44)
-incs = np.linspace(start=0.,stop=0.9*np.pi/2.,num=10)
+#incs = np.linspace(start=0.,stop=0.9*np.pi/2.,num=10)
 for j in np.arange(len(incs)):
     R = incs[j]/np.max(incs)
     G = 0.
@@ -154,7 +158,7 @@ plt.show(block=False)
 
 plt.close(5)
 plt.figure(num=5)
-incs = np.linspace(start=0.,stop=0.9*np.pi/2.,num=10)
+#incs = np.linspace(start=0.,stop=0.9*np.pi/2.,num=10)
 for j in np.arange(len(incs)):
     R = incs[j]/np.max(incs)
     G = 0.
@@ -167,7 +171,7 @@ plt.show(block=False)
 
 #plt.close(55)
 #plt.figure(num=55)
-incs = np.linspace(start=0.,stop=0.9*np.pi/2.,num=10)
+#incs = np.linspace(start=0.,stop=0.9*np.pi/2.,num=10)
 for j in np.arange(len(incs)):
     R = incs[j]/np.max(incs)
     G = 0.
@@ -181,7 +185,7 @@ plt.show(block=False)
 
 #plt.close(66)
 #plt.figure(num=66)
-incs = np.linspace(start=0.,stop=0.9*np.pi/2.,num=10)
+#incs = np.linspace(start=0.,stop=0.9*np.pi/2.,num=10)
 for j in np.arange(len(incs)):
     R = incs[j]/np.max(incs)
     G = 0.
