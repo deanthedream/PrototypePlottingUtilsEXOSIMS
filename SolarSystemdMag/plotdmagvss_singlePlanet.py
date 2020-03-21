@@ -116,6 +116,17 @@ def plotdmagvss(sma,eccen,inc,omega,Omega,ax=None,num=None):
     else:
         ax.plot(ss,dmags)
         #ax.scatter(ss,dmags,s=4)
+        #E = np.pi/2.-omega#-omega/2.#-omega
+        #nu = np.arccos((np.cos(E)-eccen)/(1.-eccen*np.cos(E))) + omega/2.*np.cos(inc)
+        nu = np.arccos(-eccen)
+        s = s_koe(sma,eccen,nu,inc,omega)
+        r = r_koe(sma,eccen,nu)
+        z = z_koe(r,inc,omega,Omega,nu)
+        beta = np.arcsin(z/r) #From my paper
+        Phi = phiLambert(beta*u.rad)
+        dmag = deltaMag(p=1.,Rp=1.*u.earthRad,d=r*u.AU,Phi=Phi)
+        ax.scatter(s,dmag)
+
         ra = sma*(1.+eccen)
         #DELETEax.plot([ra*np.sin(inc),ra*np.sin(inc)],[20.,23])
         ax.set_xlim([0.,ra])
@@ -175,6 +186,17 @@ def plotxyvskoe(sma,eccen,inc,omega,Omega,ax=None,num=None):
         return None
     else:
         ax.plot(xs,ys)
+        #E = np.pi/2.-omega#-omega/2.#-omega
+        #nu = np.arccos((np.cos(E)-eccen)/(1.-eccen*np.cos(E))) + omega/2.*np.cos(inc)
+        #Plot a specific point on orbit
+        nu = np.arccos(-eccen)
+        r = r_koe(sma,eccen,nu)#DELETE
+        x = x_koe(r,inc,omega,Omega,nu)#DELETE
+        y = y_koe(r,inc,omega,Omega,nu)#DELETE
+        z = z_koe(r,inc,omega,Omega,nu)#DELETE
+        ax.scatter(x,y)#DELETE
+        #Plot vector from Foci to Origin
+        c = 
         ra = sma*(1.+eccen)
         ax.set_ylim([-ra,ra])
         ax.set_xlim([-ra,ra])

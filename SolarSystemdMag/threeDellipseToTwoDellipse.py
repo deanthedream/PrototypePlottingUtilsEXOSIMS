@@ -89,7 +89,7 @@ projectedEllipseCenter = -axis1Unit_projected*C_2DFoci_to_origin
 
 #Axis 2 length
 #Solve the following for axis2_projected
-axis2_projected = 
+#axis2_projected = 
 [eqnX,eqnY,0] == projectedEllipseCenter + axis2_projected*axis2Unit_projected
 #Aha! Solve for axis2_projected for only one variable! (Easy?)
 
