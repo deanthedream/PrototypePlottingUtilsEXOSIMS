@@ -127,7 +127,7 @@ bwsklearn = (n * (d + 2) / 4.)**(-1. / (d + 4)) # silverman
 #bw = n**(-1./(d+4)) # scott
 print('SKLEARN bw (silverman): {}'.format(bwsklearn))
 
-kde2 = KernelDensity(bandwidth=bw, metric='minkowski',#'euclidean',#
+kde2 = KernelDensity(bandwidth=bwsklearn, metric='minkowski',#'euclidean',#
                     kernel='gaussian', algorithm='ball_tree').fit(values2.T, y=None, sample_weight=None) #Should have shape (n_samples, n_features)
 #out42 = kde2.fit(values2.T, y=None, sample_weight=None) #Should have shape (n_samples, n_features)
 

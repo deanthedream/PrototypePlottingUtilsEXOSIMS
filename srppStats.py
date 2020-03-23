@@ -113,7 +113,7 @@ for i in [0]:#np.arange(len(allres)):
 #Load pkl and outspec files
 try:
     with open(fullPathPKL, 'rb') as f:#load from cache
-        DRM = pickle.load(f)
+        DRM = pickle.load(f,encoding='latin1')
 except:
     vprint('Failed to open fullPathPKL %s'%fullPathPKL)
     pass
@@ -191,16 +191,21 @@ avgCharCNT = float(charCNT)/len(allres)
 lines.append('#### Maximum Theoretical Completeness #############################################################################')
 sInds = np.arange(TL.nStars)
 intTimes = (np.zeros(TL.nStars) + 1.0e10)*u.d
-mode = filter(lambda mode: mode['detectionMode'] == True, OS.observingModes)[0]
-dMag_max = TL.OpticalSystem.calc_dMag_per_intTime(intTimes,TL,sInds,SS.valfZmin,ZL.fEZ0,OS.WA0,mode,C_b,C_sp)
+mode = list(filter(lambda mode: mode['detectionMode'] == True, OS.observingModes))[0]
+_, C_b, C_sp = OS.Cp_Cb_Csp(TL, np.arange(TL.nStars), SS.valfZmin, ZL.fEZ0, 25.0, SS.WAint, mode)#OS.WA0
+dMag_max = TL.OpticalSystem.calc_dMag_per_intTime(intTimes,TL,sInds,SS.valfZmin,np.zeros(TL.nStars) + ZL.fEZ0, np.zeros(TL.nStars) + OS.WA0,mode,C_b=None,C_sp=None)
 
 Observable_dMagsMax = dMag_max[np.where(SS.t0.value>1e-10)[0]]
 min_dMag_lim = np.min(Observable_dMagsMax)
 max_dMag_lim = np.max(Observable_dMagsMax)
+print(min_dMag_lim)
+print(max_dMag_lim)
 ###########################################################################################################
 
-
-
+lam = mode['lam']
+mV = TL.starMag(sInds, lam)
+tmp = 10.**(-0.4*mV)
+_, C_bs, C_sps = OS.Cp_Cb_Csp(TL, sInds, SS.valfZmin, ZL.fEZ0, TL.Completeness.dMagLim, SS.WAint, mode)
 
 
 
