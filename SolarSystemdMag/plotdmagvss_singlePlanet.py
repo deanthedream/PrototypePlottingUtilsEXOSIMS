@@ -196,7 +196,7 @@ def plotxyvskoe(sma,eccen,inc,omega,Omega,ax=None,num=None):
         z = z_koe(r,inc,omega,Omega,nu)#DELETE
         ax.scatter(x,y)#DELETE
         #Plot vector from Foci to Origin
-        c = 
+        #c = 
         ra = sma*(1.+eccen)
         ax.set_ylim([-ra,ra])
         ax.set_xlim([-ra,ra])
