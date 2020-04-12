@@ -34,7 +34,7 @@ star_d = 13.802083302115193#distance (pc) ±0.028708172014593
 star_mass = 1.03 #0.05
 
 #### Randomly Generate 47 UMa c planet parameters
-n = 10**6
+n = 10**5
 inc, W, w = PPop.gen_angles(n,None)
 inc = inc.to('rad').value
 inc[np.where(inc>np.pi/2)[0]] = np.pi - inc[np.where(inc>np.pi/2)[0]]
@@ -50,6 +50,7 @@ e = rand.uniform(low=0.002,high=0.145,size=n)#(0.145-0.002)*rand.random(n)+0.02 
 Msini = rand.uniform(low=0.467,high=0.606,size=n)#(0.606-0.467)*rand.random(n)+0.467
 Mp = (Msini/np.sin(inc)*u.M_jup).to('M_earth')
 #TODO CHECK FOR INF/TOO LARGE
+print('Done Generating planets 1')
 
 Rp = PPM.calc_radius_from_mass(Mp)
 indsTooBig = np.where(Rp < 12*u.earthRad)[0] #throws out planets with radius 12x larger than Earth
@@ -63,6 +64,7 @@ M0 = M0[indsTooBig]
 E = E[indsTooBig]
 Mp = Mp[indsTooBig]
 p = PPM.calc_albedo_from_sma(a)
+print('Done Generating Planets 2')
 
 #Construct planet position vectors
 O = W
@@ -85,7 +87,7 @@ v2 = np.cos(E)
 r = (A*r1 + B*r2).T.to('AU')  
 d = np.linalg.norm(r, axis=1)*u.AU
 beta = np.arccos(r[:,2]/d)
-
+print('Done calculating r and beta stuff')
 
 
 #Shove Above Properties Into EXOSIMS
@@ -107,13 +109,16 @@ SU.w = w*u.rad              # argument of perigee
 SU.M0 = M0*u.rad            # initial mean anomany
 SU.E = eccanom(M0, e)                      # eccentric anomaly
 SU.Mp = Mp                            # planet masses
+print('Done Assigning to sim Properties')
 
 # Azimuth
 az = np.arctan2(SU.r[:,1],SU.r[:,0]) #azimuth angle in XY #ranges from -pi to pi
+print('Done calculating az')
 
 #DELETEPPM.calc_beta(Phi)
 Phi = PPM.calc_Phi(beta)
 dmags = deltaMag(p,Rp,d,Phi)
+print('Done calculating Phi, dmag')
 
 #bowtie limits??? # pulled from my limited knowledge of the bowtie
 az_lim1 = (np.pi-np.pi/6)*u.rad
@@ -125,19 +130,23 @@ az_lim4 = (-np.pi+np.pi/6)*u.rad
 pInBowtie1 = (az > az_lim1)*(az < az_lim4)
 pInBowtie2 = (az < az_lim2)*(az > az_lim3)
 pInBowtie = np.logical_or(pInBowtie1,pInBowtie2)
+print('Done checking in bowtie')
 
 #Calculate Planet WA's
 WA = (SU.s*u.AU/TL.dist).decompose()*u.rad
+print('Done calculating planet WA')
 
 #OWA IWA che k
 pInIWAOWA = (WA > OS.IWA.to('rad'))*(WA < OS.OWA.to('rad'))# Outside of IWA and inside of OWA
+print('Done checking in IWA OWA')
 
 ZL = sim.ZodiacalLight
 TL.starMag = lambda sInds, lam: 5.03 #Apparent StarMag from wikipedia
 sInds = np.zeros(len(pInIWAOWA))+0
 mode = mode = list(filter(lambda mode: mode['detectionMode'] == True, OS.observingModes))[0]
 dmagLims = OS.calc_dMag_per_intTime( np.zeros(len(sInds))+ 10**4*u.d, TL, sInds, np.zeros(len(sInds))+ZL.fZ0, np.zeros(len(sInds))+ZL.fEZ0, WA, mode, C_b=None, C_sp=None)
-pBrightEnough = dmags > dmagLims
+pBrightEnough = dmags < dmagLims
+print('Done checking bright enough')
 
 numObservablePlanetsInBowtie = pInBowTie*pInIWAOWA*pBrightEnough
 fracbservablePlanetsInBowtie = numObservablePlanetsInBowtie/n
