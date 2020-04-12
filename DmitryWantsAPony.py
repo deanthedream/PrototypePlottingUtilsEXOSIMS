@@ -150,7 +150,7 @@ print('Done checking bright enough')
 
 #ANSWER
 numObservablePlanetsInBowtie = pInBowtie*pInIWAOWA*pBrightEnough
-fracObservablePlanetsInBowtie = np.count_nonzero(numObservablePlanetsInBowtie)/n
+fracObservablePlanetsInBowtie = np.count_nonzero(numObservablePlanetsInBowtie)/len(indsTooBig)
 
 
 
