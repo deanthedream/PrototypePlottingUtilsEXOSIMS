@@ -148,8 +148,9 @@ dmagLims = OS.calc_dMag_per_intTime( np.zeros(len(sInds))+ 10**4*u.d, TL, sInds,
 pBrightEnough = dmags < dmagLims
 print('Done checking bright enough')
 
-numObservablePlanetsInBowtie = pInBowTie*pInIWAOWA*pBrightEnough
-fracbservablePlanetsInBowtie = numObservablePlanetsInBowtie/n
+#ANSWER
+numObservablePlanetsInBowtie = pInBowtie*pInIWAOWA*pBrightEnough
+fracObservablePlanetsInBowtie = np.count_nonzero(numObservablePlanetsInBowtie)/n
 
 
 
