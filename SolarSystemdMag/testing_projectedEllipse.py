@@ -19,7 +19,7 @@ a, e, p, Rp = PPop.gen_plan_params(n)
 a = a.to('AU').value
 
 ####
-dmajorp, dminorp, Psi, psi = projected_apbpPsipsi(a,e,W,w,inc)
+dmajorp, dminorp, Psi, psi, theta_OpQ_X, theta_OpQp_X = projected_apbpPsipsi(a,e,W,w,inc)
 O = projected_Op(a,e,W,w,inc)
 theta = projected_BpAngle(a,e,W,w,inc)
 c_3D_projected = projected_projectedLinearEccentricity(a,e,W,w,inc)
@@ -68,80 +68,96 @@ plt.scatter(Op[0][ind],Op[1][ind],color='black')
 print('a: ' + str(np.round(a[ind],2)) + ' e: ' + str(np.round(e[ind],2)) + ' W: ' + str(np.round(W[ind],2)) + ' w: ' + str(np.round(w[ind],2)) + ' i: ' + str(np.round(inc[ind],2)) +\
      ' Psi: ' + str(np.round(Psi[ind],2)) + ' psi: ' + str(np.round(psi[ind],2)) + ' theta: ' + str(np.round(theta[ind],2)))
 #print(dmajorp[ind]*np.cos(theta[ind]))#print(dmajorp[ind]*np.cos(theta[ind]))#print(dminorp[ind]*np.cos(theta[ind]+np.pi/2))#print(dminorp[ind]*np.sin(theta[ind]+np.pi/2))
-#++
-ang = Psi[ind]/2+psi[ind]
-dmajorpx1 = Op[0][ind] + dmajorp[ind]*np.cos(ang)
-dmajorpy1 = Op[1][ind] + dmajorp[ind]*np.sin(ang)
-dmajorpx2 = Op[0][ind] + dmajorp[ind]*np.cos(ang+np.pi)
-dmajorpy2 = Op[1][ind] + dmajorp[ind]*np.sin(ang+np.pi)
-plt.plot([Op[0][ind],dmajorpx1],[Op[1][ind],dmajorpy1],color='blue',linestyle='-.')
-plt.plot([Op[0][ind],dmajorpx2],[Op[1][ind],dmajorpy2],color='blue',linestyle='-.')
-dminorpx1 = Op[0][ind] + dminorp[ind]*np.cos(ang+np.pi/2)
-dminorpy1 = Op[1][ind] + dminorp[ind]*np.sin(ang+np.pi/2)
-dminorpx2 = Op[0][ind] + dminorp[ind]*np.cos(ang-np.pi/2)
-dminorpy2 = Op[1][ind] + dminorp[ind]*np.sin(ang-np.pi/2)
-plt.plot([Op[0][ind],dminorpx1],[Op[1][ind],dminorpy1],color='blue',linestyle='-.')
-plt.plot([Op[0][ind],dminorpx2],[Op[1][ind],dminorpy2],color='blue',linestyle='-.')
-#a: 6.097704110164751 e: 0.36553661863447884 W: 4.266191939230118 w: 0.8802451672239122 i: 1.3946387796309012 Psi: 1.6850746074297651 theta: -0.564260076376564
-#a: 3.9228410421458193 e: 0.3588279435807127 W: 2.9539995570747117 w: 4.629240940200019 i: 1.5585092161872263 Psi: 2.9634883254324995 theta: -0.0034592609918608725
-#a: 0.14 e: 0.25 W: 1.79 w: 5.56 i: 0.37 Psi: 1.03 psi: 1.05 theta: 0.71
 
-#--
-ang2 = -Psi[ind]/2-psi[ind] #-(Psi[ind]/2-psi[ind]+np.pi)#Psi[ind]/2-psi[ind]
+#DELETE
+# #++
+# ang = Psi[ind]/2+psi[ind]
+# dmajorpx1 = Op[0][ind] + dmajorp[ind]*np.cos(ang)
+# dmajorpy1 = Op[1][ind] + dmajorp[ind]*np.sin(ang)
+# dmajorpx2 = Op[0][ind] + dmajorp[ind]*np.cos(ang+np.pi)
+# dmajorpy2 = Op[1][ind] + dmajorp[ind]*np.sin(ang+np.pi)
+# plt.plot([Op[0][ind],dmajorpx1],[Op[1][ind],dmajorpy1],color='blue',linestyle='-.')
+# plt.plot([Op[0][ind],dmajorpx2],[Op[1][ind],dmajorpy2],color='blue',linestyle='-.')
+# dminorpx1 = Op[0][ind] + dminorp[ind]*np.cos(ang+np.pi/2)
+# dminorpy1 = Op[1][ind] + dminorp[ind]*np.sin(ang+np.pi/2)
+# dminorpx2 = Op[0][ind] + dminorp[ind]*np.cos(ang-np.pi/2)
+# dminorpy2 = Op[1][ind] + dminorp[ind]*np.sin(ang-np.pi/2)
+# plt.plot([Op[0][ind],dminorpx1],[Op[1][ind],dminorpy1],color='blue',linestyle='-.')
+# plt.plot([Op[0][ind],dminorpx2],[Op[1][ind],dminorpy2],color='blue',linestyle='-.')
+# #a: 6.097704110164751 e: 0.36553661863447884 W: 4.266191939230118 w: 0.8802451672239122 i: 1.3946387796309012 Psi: 1.6850746074297651 theta: -0.564260076376564
+# #a: 3.9228410421458193 e: 0.3588279435807127 W: 2.9539995570747117 w: 4.629240940200019 i: 1.5585092161872263 Psi: 2.9634883254324995 theta: -0.0034592609918608725
+# #a: 0.14 e: 0.25 W: 1.79 w: 5.56 i: 0.37 Psi: 1.03 psi: 1.05 theta: 0.71
+
+# #--
+# ang2 = -Psi[ind]/2-psi[ind] #-(Psi[ind]/2-psi[ind]+np.pi)#Psi[ind]/2-psi[ind]
+# dmajorpx1 = Op[0][ind] + dmajorp[ind]*np.cos(ang2)
+# dmajorpy1 = Op[1][ind] + dmajorp[ind]*np.sin(ang2)
+# dmajorpx2 = Op[0][ind] + dmajorp[ind]*np.cos(ang2+np.pi)
+# dmajorpy2 = Op[1][ind] + dmajorp[ind]*np.sin(ang2+np.pi)
+# plt.plot([Op[0][ind],dmajorpx1],[Op[1][ind],dmajorpy1],color='red',linestyle='-.')
+# plt.plot([Op[0][ind],dmajorpx2],[Op[1][ind],dmajorpy2],color='red',linestyle='-.')
+# dminorpx1 = Op[0][ind] + dminorp[ind]*np.cos(ang2+np.pi/2)
+# dminorpy1 = Op[1][ind] + dminorp[ind]*np.sin(ang2+np.pi/2)
+# dminorpx2 = Op[0][ind] + dminorp[ind]*np.cos(ang2-np.pi/2)
+# dminorpy2 = Op[1][ind] + dminorp[ind]*np.sin(ang2-np.pi/2)
+# plt.plot([Op[0][ind],dminorpx1],[Op[1][ind],dminorpy1],color='red',linestyle='-.')
+# plt.plot([Op[0][ind],dminorpx2],[Op[1][ind],dminorpy2],color='red',linestyle='-.')
+# #a: 1.7168557322511873 e: 0.15097872093230147 W: 4.35207664182757 w: 2.0114757894338244 i: 1.4581301267904243 Psi: 2.251074008822032 theta: 0.34848476093192177
+# #a: 0.2473100405968065 e: 0.2786294655014428 W: 0.2785594333623774 w: 5.996993094854193 i: 1.1585321049317279 Psi: 0.5431460616655733 theta: 0.15380855742377286
+# #a: 2.0201747823741223 e: 0.3439775778804735 W: 4.277060608690321 w: 2.3006138270099625 i: 1.225596172950174 Psi: 1.6028361975845478 theta: 0.46220249281949455
+# #a: 0.14 e: 0.25 W: 1.79 w: 5.56 i: 0.37 Psi: 1.03 psi: 1.05 theta: 0.71
+
+# #+-
+# ang2 = Psi[ind]/2-psi[ind]#-(Psi[ind]/2-psi[ind]+np.pi)#Psi[ind]/2-psi[ind]
+# dmajorpx1 = Op[0][ind] + dmajorp[ind]*np.cos(ang2)
+# dmajorpy1 = Op[1][ind] + dmajorp[ind]*np.sin(ang2)
+# dmajorpx2 = Op[0][ind] + dmajorp[ind]*np.cos(ang2+np.pi)
+# dmajorpy2 = Op[1][ind] + dmajorp[ind]*np.sin(ang2+np.pi)
+# plt.plot([Op[0][ind],dmajorpx1],[Op[1][ind],dmajorpy1],color='cyan',linestyle='-')
+# plt.plot([Op[0][ind],dmajorpx2],[Op[1][ind],dmajorpy2],color='cyan',linestyle='-')
+# dminorpx1 = Op[0][ind] + dminorp[ind]*np.cos(ang2+np.pi/2)
+# dminorpy1 = Op[1][ind] + dminorp[ind]*np.sin(ang2+np.pi/2)
+# dminorpx2 = Op[0][ind] + dminorp[ind]*np.cos(ang2-np.pi/2)
+# dminorpy2 = Op[1][ind] + dminorp[ind]*np.sin(ang2-np.pi/2)
+# plt.plot([Op[0][ind],dminorpx1],[Op[1][ind],dminorpy1],color='cyan',linestyle='-')
+# plt.plot([Op[0][ind],dminorpx2],[Op[1][ind],dminorpy2],color='cyan',linestyle='-')
+# #a: 1.32 e: 0.35 W: 2.91 w: 0.24 i: 1.43 Psi: 0.45 psi: 0.45 theta: 0.19
+# #a: 0.34 e: 0.18 W: 3.96 w: 1.11 i: 1.07 Psi: 2.2 psi: 0.27 theta: -0.55
+# #a: 9.99 e: 0.23 W: 3.57 w: 0.91 i: 1.38 Psi: 1.8 psi: 0.47 theta: -0.37
+# #a: 1.42 e: 0.05 W: 5.72 w: 4.63 i: 0.72 Psi: 2.98 psi: 2.06 theta: -0.53
+
+# #-+
+# ang2 = -Psi[ind]/2+psi[ind]#-(Psi[ind]/2-psi[ind]+np.pi)#Psi[ind]/2-psi[ind]
+# dmajorpx1 = Op[0][ind] + dmajorp[ind]*np.cos(ang2)
+# dmajorpy1 = Op[1][ind] + dmajorp[ind]*np.sin(ang2)
+# dmajorpx2 = Op[0][ind] + dmajorp[ind]*np.cos(ang2+np.pi)
+# dmajorpy2 = Op[1][ind] + dmajorp[ind]*np.sin(ang2+np.pi)
+# plt.plot([Op[0][ind],dmajorpx1],[Op[1][ind],dmajorpy1],color='orange',linestyle='-')
+# plt.plot([Op[0][ind],dmajorpx2],[Op[1][ind],dmajorpy2],color='orange',linestyle='-')
+# dminorpx1 = Op[0][ind] + dminorp[ind]*np.cos(ang2+np.pi/2)
+# dminorpy1 = Op[1][ind] + dminorp[ind]*np.sin(ang2+np.pi/2)
+# dminorpx2 = Op[0][ind] + dminorp[ind]*np.cos(ang2-np.pi/2)
+# dminorpy2 = Op[1][ind] + dminorp[ind]*np.sin(ang2-np.pi/2)
+# plt.plot([Op[0][ind],dminorpx1],[Op[1][ind],dminorpy1],color='orange',linestyle='-')
+# plt.plot([Op[0][ind],dminorpx2],[Op[1][ind],dminorpy2],color='orange',linestyle='-')
+# #a: 3.206311303449458 e: 0.40195688119098727 W: 6.250887614928386 w: 2.2309377840245026 i: 1.1329266513869831 Psi: 1.696028781147292 theta: 0.3407282252669677
+# #a: 2.431569003923111 e: 0.18301448021027053 W: 1.5194248555533574 w: 2.1468861274839703 i: 1.3812975181405962 Psi: 1.9726351205409203 theta: -0.4919682982679808
+# #a: 4.61 e: 0.3 W: 2.65 w: 2.86 i: 0.92 Psi: 0.51 psi: 2.89 theta: -0.54
+# #a: 5.14 e: 0.38 W: 3.03 w: 5.4 i: 0.82 Psi: 1.54 psi: 0.56 theta: 0.54
+
+ang2 = (theta_OpQ_X[ind]+theta_OpQp_X[ind])/2  #-(Psi[ind]/2-psi[ind]+np.pi)#Psi[ind]/2-psi[ind]
 dmajorpx1 = Op[0][ind] + dmajorp[ind]*np.cos(ang2)
 dmajorpy1 = Op[1][ind] + dmajorp[ind]*np.sin(ang2)
 dmajorpx2 = Op[0][ind] + dmajorp[ind]*np.cos(ang2+np.pi)
 dmajorpy2 = Op[1][ind] + dmajorp[ind]*np.sin(ang2+np.pi)
-plt.plot([Op[0][ind],dmajorpx1],[Op[1][ind],dmajorpy1],color='red',linestyle='-.')
-plt.plot([Op[0][ind],dmajorpx2],[Op[1][ind],dmajorpy2],color='red',linestyle='-.')
+plt.plot([Op[0][ind],dmajorpx1],[Op[1][ind],dmajorpy1],color='purple',linestyle='-')
+plt.plot([Op[0][ind],dmajorpx2],[Op[1][ind],dmajorpy2],color='purple',linestyle='-')
 dminorpx1 = Op[0][ind] + dminorp[ind]*np.cos(ang2+np.pi/2)
 dminorpy1 = Op[1][ind] + dminorp[ind]*np.sin(ang2+np.pi/2)
 dminorpx2 = Op[0][ind] + dminorp[ind]*np.cos(ang2-np.pi/2)
 dminorpy2 = Op[1][ind] + dminorp[ind]*np.sin(ang2-np.pi/2)
-plt.plot([Op[0][ind],dminorpx1],[Op[1][ind],dminorpy1],color='red',linestyle='-.')
-plt.plot([Op[0][ind],dminorpx2],[Op[1][ind],dminorpy2],color='red',linestyle='-.')
-#a: 1.7168557322511873 e: 0.15097872093230147 W: 4.35207664182757 w: 2.0114757894338244 i: 1.4581301267904243 Psi: 2.251074008822032 theta: 0.34848476093192177
-#a: 0.2473100405968065 e: 0.2786294655014428 W: 0.2785594333623774 w: 5.996993094854193 i: 1.1585321049317279 Psi: 0.5431460616655733 theta: 0.15380855742377286
-#a: 2.0201747823741223 e: 0.3439775778804735 W: 4.277060608690321 w: 2.3006138270099625 i: 1.225596172950174 Psi: 1.6028361975845478 theta: 0.46220249281949455
-#a: 0.14 e: 0.25 W: 1.79 w: 5.56 i: 0.37 Psi: 1.03 psi: 1.05 theta: 0.71
-
-#+-
-ang2 = Psi[ind]/2-psi[ind]#-(Psi[ind]/2-psi[ind]+np.pi)#Psi[ind]/2-psi[ind]
-dmajorpx1 = Op[0][ind] + dmajorp[ind]*np.cos(ang2)
-dmajorpy1 = Op[1][ind] + dmajorp[ind]*np.sin(ang2)
-dmajorpx2 = Op[0][ind] + dmajorp[ind]*np.cos(ang2+np.pi)
-dmajorpy2 = Op[1][ind] + dmajorp[ind]*np.sin(ang2+np.pi)
-plt.plot([Op[0][ind],dmajorpx1],[Op[1][ind],dmajorpy1],color='cyan',linestyle='-')
-plt.plot([Op[0][ind],dmajorpx2],[Op[1][ind],dmajorpy2],color='cyan',linestyle='-')
-dminorpx1 = Op[0][ind] + dminorp[ind]*np.cos(ang2+np.pi/2)
-dminorpy1 = Op[1][ind] + dminorp[ind]*np.sin(ang2+np.pi/2)
-dminorpx2 = Op[0][ind] + dminorp[ind]*np.cos(ang2-np.pi/2)
-dminorpy2 = Op[1][ind] + dminorp[ind]*np.sin(ang2-np.pi/2)
-plt.plot([Op[0][ind],dminorpx1],[Op[1][ind],dminorpy1],color='cyan',linestyle='-')
-plt.plot([Op[0][ind],dminorpx2],[Op[1][ind],dminorpy2],color='cyan',linestyle='-')
-#a: 1.32 e: 0.35 W: 2.91 w: 0.24 i: 1.43 Psi: 0.45 psi: 0.45 theta: 0.19
-#a: 0.34 e: 0.18 W: 3.96 w: 1.11 i: 1.07 Psi: 2.2 psi: 0.27 theta: -0.55
-#a: 9.99 e: 0.23 W: 3.57 w: 0.91 i: 1.38 Psi: 1.8 psi: 0.47 theta: -0.37
-#a: 1.42 e: 0.05 W: 5.72 w: 4.63 i: 0.72 Psi: 2.98 psi: 2.06 theta: -0.53
-
-#-+
-ang2 = -Psi[ind]/2+psi[ind]#-(Psi[ind]/2-psi[ind]+np.pi)#Psi[ind]/2-psi[ind]
-dmajorpx1 = Op[0][ind] + dmajorp[ind]*np.cos(ang2)
-dmajorpy1 = Op[1][ind] + dmajorp[ind]*np.sin(ang2)
-dmajorpx2 = Op[0][ind] + dmajorp[ind]*np.cos(ang2+np.pi)
-dmajorpy2 = Op[1][ind] + dmajorp[ind]*np.sin(ang2+np.pi)
-plt.plot([Op[0][ind],dmajorpx1],[Op[1][ind],dmajorpy1],color='orange',linestyle='-')
-plt.plot([Op[0][ind],dmajorpx2],[Op[1][ind],dmajorpy2],color='orange',linestyle='-')
-dminorpx1 = Op[0][ind] + dminorp[ind]*np.cos(ang2+np.pi/2)
-dminorpy1 = Op[1][ind] + dminorp[ind]*np.sin(ang2+np.pi/2)
-dminorpx2 = Op[0][ind] + dminorp[ind]*np.cos(ang2-np.pi/2)
-dminorpy2 = Op[1][ind] + dminorp[ind]*np.sin(ang2-np.pi/2)
-plt.plot([Op[0][ind],dminorpx1],[Op[1][ind],dminorpy1],color='orange',linestyle='-')
-plt.plot([Op[0][ind],dminorpx2],[Op[1][ind],dminorpy2],color='orange',linestyle='-')
-#a: 3.206311303449458 e: 0.40195688119098727 W: 6.250887614928386 w: 2.2309377840245026 i: 1.1329266513869831 Psi: 1.696028781147292 theta: 0.3407282252669677
-#a: 2.431569003923111 e: 0.18301448021027053 W: 1.5194248555533574 w: 2.1468861274839703 i: 1.3812975181405962 Psi: 1.9726351205409203 theta: -0.4919682982679808
-#a: 4.61 e: 0.3 W: 2.65 w: 2.86 i: 0.92 Psi: 0.51 psi: 2.89 theta: -0.54
-#a: 5.14 e: 0.38 W: 3.03 w: 5.4 i: 0.82 Psi: 1.54 psi: 0.56 theta: 0.54
+plt.plot([Op[0][ind],dminorpx1],[Op[1][ind],dminorpy1],color='purple',linestyle='-')
+plt.plot([Op[0][ind],dminorpx2],[Op[1][ind],dminorpy2],color='purple',linestyle='-')
 
 plt.show(block=False)
 
