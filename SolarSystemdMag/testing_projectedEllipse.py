@@ -10,7 +10,7 @@ filename = 'HabEx_CKL2_PPKL2.json'
 scriptfile = os.path.join(folder,filename)
 sim = EXOSIMS.MissionSim.MissionSim(scriptfile=scriptfile,nopar=True)
 PPop = sim.PlanetPopulation
-n = 10**4
+n = 10**3
 inc, W, w = PPop.gen_angles(n,None)
 inc = inc.to('rad').value
 inc[np.where(inc>np.pi/2)[0]] = np.pi - inc[np.where(inc>np.pi/2)[0]]
@@ -68,16 +68,15 @@ def plotProjectedEllipse(ind, sma, e, W, w, inc, theta_OpQ_X, theta_OpQp_X, dmaj
     plt.show(block=False)
     ####
 
-ind = random.randint(low=0,high=n)#2
+ind = random.randint(low=0,high=n)
 plotProjectedEllipse(ind, sma, e, W, w, inc, theta_OpQ_X, theta_OpQp_X, dmajorp, dminorp, Op, num=877)
-#DELETEplotProjectedEllipse(ind, sma, e, W, w, inc, theta_OpQ_X, theta_OpQp_X, dmajorp_v2, dminorp_v2, Op, num=878)
 
 #### Derotate Ellipse
 x, y, Phi = derotatedEllipse(theta_OpQ_X, theta_OpQp_X, Op)
 a = dmajorp
 b = dminorp
-#DELETEa_v2 = dmajorp_v2 #max difference between a_v2 and a is 1e-14
-#DELETEb_v2 = dminorp_v2 #max difference between b_v2 and b is 9e-15 #CONCLUSION, _V2 IS USELESS WASTE OF TIME
+mx = np.abs(x) #x converted to a strictly positive value
+my = np.abs(y) #y converted to a strictly positive value
 
 def plotDerotatedEllipse(ind, sma, e, W, w, inc, theta_OpQ_X, theta_OpQp_X, dmajorp, dminorp, Op, a, b, num=879):
     plt.close(num)
@@ -120,10 +119,8 @@ def plotDerotatedEllipse(ind, sma, e, W, w, inc, theta_OpQ_X, theta_OpQp_X, dmaj
     plt.show(block=False)
 
 plotDerotatedEllipse(ind, sma, e, W, w, inc, theta_OpQ_X, theta_OpQp_X, dmajorp, dminorp, Op, a, b, num=880)
-#plotDerotatedEllipse(ind, sma, e, W, w, inc, theta_OpQ_X, theta_OpQp_X, dmajorp_v2, dminorp_v2, Op, a_v2, b_v2, num=881)
 
-mx = np.abs(x)
-my = np.abs(y)
+
 
 def roots_vec(p):
     p = np.atleast_1d(p)
@@ -139,29 +136,7 @@ def roots_loop(p):
         r.append(np.roots(pp))
     return r
 
-
-# #From ipynb ellipse_to_quartic DE
-# A = 4*a**4 - 8*a**2*b**2 + 4*b**4
-# B = -8*a**4*mx + 8*a**2*b**2*mx
-# C = -8*a**6 + 16*a**4*b**2 + 4*a**4*mx**2 - 8*a**2*b**4 + 4*a**2*b**2*my**2
-# D = 16*a**6*mx - 16*a**4*b**2*mx
-# E = 4*a**8 - 8*a**6*b**2 - 8*a**6*mx**2 + 4*a**4*b**4 - 4*a**4*b**2*my**2
-# F = -8*a**8*mx + 8*a**6*b**2*mx
-# G = 4*a**8*mx**2
-
-# parr = np.asarray([A,B,C,D,E,F,G]).T #[B/A,C/A,D/A,E/A]
-# out = np.asarray(roots_loop(parr))
-
-
-#TRY 3
-xe3 = -a**2*mx/(2*my-a**2)
-ye3 = np.sqrt(b**2*(1-xe3**2/a**2))
-s3 = np.sqrt((xe3-mx)**2 + (ye3-my)**2)
-#s1_v2 = (xe1_v2-mx)**2 + (ye_1_v2-my)**2
-
-
-#################### THIS WORKS
-# TRY 4 QUARTIC ROOTS
+#### QUARTIC ROOTS #### THIS WORKS
 A = -(2 - 2*b**2/a**2)**2/a**2
 B = 4*mx*(2 - 2*b**2/a**2)/a**2
 C = -4*my**2*b**2/a**4 - 4*mx**2/a**2 + (2 - 2*b**2/a**2)**2
@@ -170,20 +145,20 @@ E = 4*mx**2
 
 parr = np.asarray([A,B,C,D,E]).T #[B/A,C/A,D/A,E/A]
 out = np.asarray(roots_loop(parr))
-real = np.real(out)
-x0 = real[:,0]
-x1 = real[:,1]
-x2 = real[:,2]
-x3 = real[:,3]
-print('Number of nan in x0: ' + str(np.count_nonzero(np.isnan(x0))))
-print('Number of nan in x1: ' + str(np.count_nonzero(np.isnan(x1))))
-print('Number of nan in x2: ' + str(np.count_nonzero(np.isnan(x2))))
-print('Number of nan in x3: ' + str(np.count_nonzero(np.isnan(x3))))
-print('Number of non-zero in x0: ' + str(np.count_nonzero(x0 != 0)))
-print('Number of non-zero in x1: ' + str(np.count_nonzero(x1 != 0)))
-print('Number of non-zero in x2: ' + str(np.count_nonzero(x2 != 0)))
-print('Number of non-zero in x3: ' + str(np.count_nonzero(x3 != 0)))
-print('Number of non-zero in x0+x1+x2+x3: ' + str(np.count_nonzero((x0 != 0)*(x1 != 0)*(x2 != 0)*(x3 != 0))))
+xreal = np.real(out)
+# x0 = xreal[:,0]
+# x1 = xreal[:,1]
+# x2 = xreal[:,2]
+# x3 = xreal[:,3]
+print('Number of nan in x0: ' + str(np.count_nonzero(np.isnan(xreal[:,0]))))
+print('Number of nan in x1: ' + str(np.count_nonzero(np.isnan(xreal[:,1]))))
+print('Number of nan in x2: ' + str(np.count_nonzero(np.isnan(xreal[:,2]))))
+print('Number of nan in x3: ' + str(np.count_nonzero(np.isnan(xreal[:,3]))))
+print('Number of non-zero in x0: ' + str(np.count_nonzero(xreal[:,0] != 0)))
+print('Number of non-zero in x1: ' + str(np.count_nonzero(xreal[:,1] != 0)))
+print('Number of non-zero in x2: ' + str(np.count_nonzero(xreal[:,2] != 0)))
+print('Number of non-zero in x3: ' + str(np.count_nonzero(xreal[:,3] != 0)))
+print('Number of non-zero in x0+x1+x2+x3: ' + str(np.count_nonzero((xreal[:,0] != 0)*(xreal[:,1] != 0)*(xreal[:,2] != 0)*(xreal[:,3] != 0))))
 imag = np.imag(out)
 x0_i = imag[:,0]
 x1_i = imag[:,1]
@@ -194,28 +169,104 @@ print('Number of non-zero in x1_i: ' + str(np.count_nonzero(x1_i != 0)))
 print('Number of non-zero in x2_i: ' + str(np.count_nonzero(x2_i != 0)))
 print('Number of non-zero in x3_i: ' + str(np.count_nonzero(x3_i != 0)))
 print('Number of non-zero in x0_i+x1_i+x2_i+x3_i: ' + str(np.count_nonzero((x0_i != 0)*(x1_i != 0)*(x2_i != 0)*(x3_i != 0))))
-y0 = np.sqrt(b**2*(1-x0**2/a**2))
-y1 = np.sqrt(b**2*(1-x1**2/a**2))
-y2 = np.sqrt(b**2*(1-x2**2/a**2))
-y3 = np.sqrt(b**2*(1-x3**2/a**2))
-s0_min = np.sqrt((x0-mx)**2 + (y0-my)**2)
-s1_min = np.sqrt((x1-mx)**2 + (y1-my)**2)
-s2_min = np.sqrt((x2-mx)**2 + (y2-my)**2)
-s3_min = np.sqrt((x3-mx)**2 + (y3-my)**2)
+yreal = np.asarray([np.sqrt(b**2*(1-xreal[:,0]**2/a**2)), np.sqrt(b**2*(1-xreal[:,1]**2/a**2)), np.sqrt(b**2*(1-xreal[:,2]**2/a**2)), np.sqrt(b**2*(1-xreal[:,3]**2/a**2))]).T
+# y0 = np.sqrt(b**2*(1-xreal[:,0]**2/a**2))
+# y1 = np.sqrt(b**2*(1-xreal[:,1]**2/a**2))
+# y2 = np.sqrt(b**2*(1-xreal[:,2]**2/a**2))
+# y3 = np.sqrt(b**2*(1-xreal[:,3]**2/a**2))
+# s0_min = np.sqrt((x0-mx)**2 + (y0-my)**2)
+# s1_min = np.sqrt((x1-mx)**2 + (y1-my)**2)
+# s2_min = np.sqrt((x2-mx)**2 + (y2-my)**2)
+# s3_min = np.sqrt((x3-mx)**2 + (y3-my)**2)
+s_min = np.asarray([np.sqrt((xreal[:,0]-mx)**2 + (yreal[:,0]-my)**2), np.sqrt((xreal[:,1]-mx)**2 + (yreal[:,1]-my)**2), np.sqrt((xreal[:,2]-mx)**2 + (yreal[:,2]-my)**2), np.sqrt((xreal[:,3]-mx)**2 + (yreal[:,3]-my)**2)])
 
-minSepsInds = np.nanargmin(np.asarray([s0_min,s1_min,s2_min,s3_min]),axis=0)
-minSeps = np.asarray([s0_min,s1_min,s2_min,s3_min]).T[:,minSepsInds][:,0] #Minimum Planet-StarSeparations
-minSeps_x = np.asarray([x0,x1,x2,x3]).T[:,minSepsInds][:,0] #Minimum Planet-StarSeparations x coord
-minSeps_y = np.asarray([y0,y1,y2,y3]).T[:,minSepsInds][:,0] #Minimum Planet-StarSeparations y coord
+#### Minimum Separations and x, y of minimum separation
+minSepInd = np.nanargmin(s_min,axis=0)
+minSep = s_min.T[:,minSepInd][:,0] #Minimum Planet-StarSeparations
+minSep_x = xreal[:,minSepInd][:,0] #Minimum Planet-StarSeparations x coord
+minSep_y = yreal[:,minSepInd][:,0] #Minimum Planet-StarSeparations y coord
+minSepMask = np.zeros((len(minSepInd),4), dtype=bool) 
+minSepMask[np.arange(len(minSepInd)),minSepInd] = 1 #contains 1's where the minimum separation occurs
+minNanMask = np.isnan(s_min.T) #places true where value is nan
+countMinNans = np.sum(minNanMask,axis=0) #number of Nans in each 4
+freqMinNans = np.unique(countMinNans, return_counts=True)
+minAndNanMask = minSepMask + minNanMask #Array of T/F of minSep and NanMask
+countMinAndNanMask = np.sum(minAndNanMask,axis=1) #counting number of minSep and NanMask for each star
+freqMinAndNanMask = np.unique(countMinAndNanMask,return_counts=True) #just gives the quantity of 1,2,3 accounted
+minIndsOf3 = np.where(countMinAndNanMask == 3)[0] #planetInds where 3 of the 4 soultions are accounted for
+minIndsOf2 = np.where(countMinAndNanMask == 2)[0]
+minIndsOf1 = np.where(countMinAndNanMask == 1)[0]
+# #For 3
+# #need to use minAndNanMask to find index of residual False term for the minIndsOf3 stars
+# for32smallest = np.nanmax(minSeps[minIndsOf3],axis=1)#*~minAndNanMask[minIndsOf3]
+# #For 2
+# #For 1
+# #order each of these?
 
-s0_max = np.sqrt((x0+mx)**2 + (y0+my)**2)
-s1_max = np.sqrt((x1+mx)**2 + (y1+my)**2)
-s2_max = np.sqrt((x2+mx)**2 + (y2+my)**2)
-s3_max = np.sqrt((x3+mx)**2 + (y3+my)**2)
-maxSepsInds = np.nanargmax(np.asarray([s0_max,s1_max,s2_max,s3_max]),axis=0)
-maxSeps = np.asarray([s0_max,s1_max,s2_max,s3_max]).T[:,maxSepsInds][:,0] #Maximum Planet-StarSeparations
-maxSeps_x = np.asarray([x0,x1,x2,x3]).T[:,maxSepsInds][:,0] #Maximum Planet-StarSeparations x coord
-maxSeps_y = np.asarray([y0,y1,y2,y3]).T[:,maxSepsInds][:,0] #Maximum Planet-StarSeparations y coord
+#Note: Last 2 indicies will be Nan
+sminOrderInds = np.argsort(s_min, axis=0)
+
+
+#Sort arrays
+minSeps = s_min[sminOrderInds,np.arange(len(minSepInd))].T
+#DELETEminSeps = s_min.T[:,sminOrderInds][:,0]
+minSeps_x = xreal[np.arange(len(minSepInd)),sminOrderInds]
+minSeps_y = yreal[np.arange(len(minSepInd)),sminOrderInds]
+
+
+
+#### Maximum Separations and x,y of maximum separation
+# s0_max = np.sqrt((x0+mx)**2 + (y0+my)**2)
+# s1_max = np.sqrt((x1+mx)**2 + (y1+my)**2)
+# s2_max = np.sqrt((x2+mx)**2 + (y2+my)**2)
+# s3_max = np.sqrt((x3+mx)**2 + (y3+my)**2)
+s_max = np.asarray([np.sqrt((xreal[:,0]+mx)**2 + (yreal[:,0]+my)**2), np.sqrt((xreal[:,1]+mx)**2 + (yreal[:,1]+my)**2), np.sqrt((xreal[:,2]+mx)**2 + (yreal[:,2]+my)**2), np.sqrt((xreal[:,3]+mx)**2 + (yreal[:,3]+my)**2)])
+#CHANGED THESE TWO LINES TO S_MAX FROM S_MIN
+maxSepInd = np.nanargmax(s_max,axis=0)
+maxSep = s_max.T[:,maxSepInd][:,0] #Maximum Planet-StarSeparations
+maxSep_x = xreal[:,maxSepInd][:,0] #Maximum Planet-StarSeparations x coord
+maxSep_y = yreal[:,maxSepInd][:,0] #Maximum Planet-StarSeparations y coord
+maxSepMask = np.zeros((len(maxSepInd),4), dtype=bool) 
+maxSepMask[np.arange(len(maxSepInd)),maxSepInd] = 1 #contains 1's where the maximum separation occurs
+maxNanMask = np.isnan(s_max.T)
+#countMaxNans = np.sum(maxNanMask,axis=0) #number of Nans in each 4 #EQUAL TO countMinNans
+#freqMaxNans = np.unique(countMaxNans, return_counts=True) #EQUAL TO countMaxNans
+#DO THE SAME WITH NAN MASKS AS I DO FOR MIN
+#Note: Last 2 indicies will be Nan
+smaxOrderInds = np.argsort(s_max, axis=0)
+
+#Sort arrays
+maxSeps = s_max[smaxOrderInds,np.arange(len(maxSepInd))].T
+#maxSeps = maxSeps[smaxOrderInds]
+maxSeps_x = xreal[np.arange(len(maxSepInd)),smaxOrderInds]
+#maxSeps_x = maxSeps_x[smaxOrderInds]
+maxSeps_y = yreal[np.arange(len(maxSepInd)),smaxOrderInds]#maxSep_y[smaxOrderInds]
+
+#Quadrant Star Belongs to
+bool1 = x > 0
+bool2 = y > 0
+
+#### Min Sep Point (Point on plot of Min Sep)
+minSepPoint_x = minSeps_x[0,ind]*(2*bool1[ind]-1)
+minSepPoint_y = minSeps_y[0,ind]*(2*bool2[ind]-1)
+
+#### Max Sep Point (Point on plot of max sep)
+maxSepPoint_x = maxSeps_x[0,ind]*(-2*bool1[ind]+1)
+maxSepPoint_y = maxSeps_y[0,ind]*(-2*bool2[ind]+1)
+
+# DELETE #TODO Parse out local min and local max
+# tmp = np.asarray([s0_max,s1_max,s2_max,s3_max])
+# SepNans = np.isnan(np.asarray([s0_max,s1_max,s2_max,s3_max]))
+# countNans = np.sum(SepNans,axis=0)
+
+#np.unique(countNans, return_counts=True) #tells me the frequency and number of Nans in solutions
+# zeroNanInds = np.where(countNans == 0)[0]
+# oneNanInds = np.where(countNans == 1)[0]
+# twoNanInds = np.where(countNans == 2)[0]
+#Do Operations for twoNans
+#Do Operations for 1 Nan
+#Do Operations for No Nan
+
 
 #################################################################################
 
@@ -226,7 +277,7 @@ plt.close(num)
 fig = plt.figure(num=num)
 ca = plt.gca()
 ca.axis('equal')
-plt.scatter([x0[ind],x1[ind],x2[ind],x3[ind]], [y0[ind],y1[ind],y2[ind],y3[ind]], color='purple')
+plt.scatter([xreal[ind,0],xreal[ind,1],xreal[ind,2],xreal[ind,3]], [yreal[ind,0],yreal[ind,1],yreal[ind,2],yreal[ind,3]], color='purple')
 plt.scatter([0],[0],color='orange')
 ## 3D Ellipse
 vs = np.linspace(start=0,stop=2*np.pi,num=300)
@@ -260,26 +311,44 @@ plt.scatter(x[ind],y[ind],color='orange',marker='x')
 c_ae = a[ind]*np.sqrt(1-b[ind]**2/a[ind]**2)
 plt.scatter([-c_ae,c_ae],[0,0],color='blue')
 
-#finding index where sun pos belongs
-bool1 = x > 0
-bool2 = y > 0
-#quadIndex = ~bool1*bool2 + ~bool1*~bool2*2 + bool1*~bool2*3 #+ bool1*bool2
-
 #Plot Min Sep Ellipse Intersection
-plt.scatter(minSeps_x[ind]*(2*bool1[ind]-1),minSeps_y[ind]*(2*bool2[ind]-1),color='red')
+plt.scatter(minSepPoint_x,minSepPoint_y,color='red')
 
+# #Plot Min Sep Circle
+# x_circ = minSep[ind]*np.cos(vs)
+# y_circ = minSep[ind]*np.sin(vs)
+# plt.plot(x[ind]+x_circ,y[ind]+y_circ,color='red')
 #Plot Min Sep Circle
-x_circ = minSeps[ind]*np.cos(vs)
-y_circ = minSeps[ind]*np.sin(vs)
+x_circ = minSeps[ind,0]*np.cos(vs)
+y_circ = minSeps[ind,0]*np.sin(vs)
 plt.plot(x[ind]+x_circ,y[ind]+y_circ,color='red')
+x_circ = minSeps[ind,1]*np.cos(vs)
+y_circ = minSeps[ind,1]*np.sin(vs)
+plt.plot(x[ind]+x_circ,y[ind]+y_circ,color='green')
+x_circ = minSeps[ind,2]*np.cos(vs)
+y_circ = minSeps[ind,2]*np.sin(vs)
+plt.plot(x[ind]+x_circ,y[ind]+y_circ,color='blue')
+x_circ = minSeps[ind,3]*np.cos(vs)
+y_circ = minSeps[ind,3]*np.sin(vs)
+plt.plot(x[ind]+x_circ,y[ind]+y_circ,color='orange')
+
 
 #Plot Max Sep Ellipse Intersection
-plt.scatter(maxSeps_x[ind]*(-2*bool1[ind]+1),maxSeps_y[ind]*(-2*bool2[ind]+1),color='red')
+plt.scatter(maxSepPoint_x,maxSepPoint_y,color='red')
 
 #Plot Max Sep Circle
-x_circ2 = maxSeps[ind]*np.cos(vs)
-y_circ2 = maxSeps[ind]*np.sin(vs)
-plt.plot(x[ind]+x_circ2,y[ind]+y_circ2,color='red')
+x_circ2 = maxSeps[ind,0]*np.cos(vs)
+y_circ2 = maxSeps[ind,0]*np.sin(vs)
+plt.plot(x[ind]+x_circ2,y[ind]+y_circ2,color='cyan')
+x_circ2 = maxSeps[ind,1]*np.cos(vs)
+y_circ2 = maxSeps[ind,1]*np.sin(vs)
+plt.plot(x[ind]+x_circ2,y[ind]+y_circ2,color='magenta')
+x_circ2 = maxSeps[ind,2]*np.cos(vs)
+y_circ2 = maxSeps[ind,2]*np.sin(vs)
+plt.plot(x[ind]+x_circ2,y[ind]+y_circ2,color='brown')
+x_circ2 = maxSeps[ind,3]*np.cos(vs)
+y_circ2 = maxSeps[ind,3]*np.sin(vs)
+plt.plot(x[ind]+x_circ2,y[ind]+y_circ2,color='gold')
 plt.show(block=False)
 
 
