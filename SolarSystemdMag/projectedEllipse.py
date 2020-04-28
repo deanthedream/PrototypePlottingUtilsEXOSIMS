@@ -395,8 +395,10 @@ def sepsMinMaxLminLmax(s_absmin, s_absmax, s_mp, xreal, yreal, x, y):
     #### Minimum Separations and x, y of minimum separation
     minSepInd = np.nanargmin(s_absmin,axis=1)
     minSep = s_absmin[np.arange(len(minSepInd)),minSepInd] #Minimum Planet-StarSeparations
-    minSep_x = xreal[:,minSepInd][:,0] #Minimum Planet-StarSeparations x coord
-    minSep_y = yreal[:,minSepInd][:,0] #Minimum Planet-StarSeparations y coord
+    minSep_x = xreal[np.arange(len(minSepInd)),minSepInd] #Minimum Planet-StarSeparations x coord
+    minSep_y = yreal[np.arange(len(minSepInd)),minSepInd] #Minimum Planet-StarSeparations y coord
+    # minSep_x = xreal[:,minSepInd][:,0] #Minimum Planet-StarSeparations x coord
+    # minSep_y = yreal[:,minSepInd][:,0] #Minimum Planet-StarSeparations y coord
     #DELETEminSepMask = np.zeros((len(minSepInd),4), dtype=bool) 
     #DELETEminSepMask[np.arange(len(minSepInd)),minSepInd] = 1 #contains 1's where the minimum separation occurs
     #DELETEminNanMask = np.isnan(s_absmin) #places true where value is nan
@@ -410,8 +412,10 @@ def sepsMinMaxLminLmax(s_absmin, s_absmax, s_mp, xreal, yreal, x, y):
     #### Maximum Separations and x,y of maximum separation
     maxSepInd = np.nanargmax(s_absmax,axis=1)
     maxSep = s_absmax[np.arange(len(maxSepInd)),maxSepInd] #Maximum Planet-StarSeparations
-    maxSep_x = xreal[:,maxSepInd][:,0] #Maximum Planet-StarSeparations x coord
-    maxSep_y = yreal[:,maxSepInd][:,0] #Maximum Planet-StarSeparations y coord
+    maxSep_x = xreal[np.arange(len(minSepInd)),maxSepInd] #Maximum Planet-StarSeparations x coord
+    maxSep_y = yreal[np.arange(len(minSepInd)),maxSepInd] #Maximum Planet-StarSeparations y coord
+    # maxSep_x = xreal[:,maxSepInd][:,0] #Maximum Planet-StarSeparations x coord
+    # maxSep_y = yreal[:,maxSepInd][:,0] #Maximum Planet-StarSeparations y coord
     #DELETEmaxSepMask = np.zeros((len(maxSepInd),4), dtype=bool) 
     #DELETEmaxSepMask[np.arange(len(maxSepInd)),maxSepInd] = 1 #contains 1's where the maximum separation occurs
     #DELETEmaxNanMask = np.isnan(s_absmax)
@@ -436,7 +440,8 @@ def sepsMinMaxLminLmax(s_absmin, s_absmax, s_mp, xreal, yreal, x, y):
 
     #Masking
     mask = np.zeros((len(maxSepInd),4), dtype=bool)
-    assert ~np.any(sminOrderInds[:,0] == smaxOrderInds[:,0]), 'Exception: A planet has smin == smax'
+    #assert ~np.any(sminOrderInds[:,0] == smaxOrderInds[:,0]), 'Exception: A planet has smin == smax'
+    print('Number of smaxInd == sminInd: ' + str(np.count_nonzero(sminOrderInds[:,0] == smaxOrderInds[:,0])))
     mask[np.arange(len(minSepInd)),sminOrderInds[:,0]] = 1 #contains 1's where the minimum separation occurs
     mask[np.arange(len(maxSepInd)),smaxOrderInds[:,0]] = 1 #contains 1's where the maximum separation occurs
     assert np.all(np.isnan(s_absmin) == np.isnan(s_absmax)), 'Exception: absmin and absmax have different nan values'
