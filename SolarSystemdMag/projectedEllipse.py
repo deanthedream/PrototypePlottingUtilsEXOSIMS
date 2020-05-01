@@ -1,5 +1,12 @@
 ####
 import numpy as np
+from numba import jit, cuda
+#pip3 install numba
+#https://developer.nvidia.com/cuda-downloads?target_os=Linux&target_arch=x86_64&target_distro=Ubuntu&target_version=1804&target_type=debnetwork
+#pip3 install jax
+#pip3 install jaxlib
+import jax
+#import jax.numpy as jxnp
 
 def projected_apbpPsipsi(a,e,W,w,inc):
     """
@@ -1165,3 +1172,43 @@ def sepsMinMaxLminLmax(s_absmin, s_absmax, s_mp, xreal, yreal, x, y):
 #     x3 =  (a**2*x)/(2*(a**2 - b**2)) + np.sqrt(sqrt2)/2 + np.sqrt((2*a**4*x**2)/(a**2 - b**2)**2 - porter/(3*marble) - yelp/(a**2 - b**2)**2 - (2**(1/3)*a**4*dip**2)/(3*marble*(randal + np.sqrt(sqrt1))**(1/3)) - (randal + np.sqrt(sqrt1))**(1/3)/(3*2**(1/3)*marble) + ((-16*a**4*x)/(a**2 - b**2) + (8*a**6*x**3)/(a**2 - b**2)**3 - (8*a**2*x*yelp)/(a**2 - b**2)**3)/(4*np.sqrt(sqrt2)))/2
 
 #     return x0, x1, x2, x3
+
+def quarticCoefficients_ellipse_to_Quarticipynb(a, b, x, y, r):
+    A = -4*a**2*x/(a**2 - b**2)
+    B = 2*a**2*(a**2*b**2 - a**2*r**2 + 3*a**2*x**2 + a**2*y**2 - b**4 + b**2*r**2 - b**2*x**2 + b**2*y**2)/(a**4 - 2*a**2*b**2 + b**4)
+    C = 4*a**4*x*(-b**2 + r**2 - x**2 - y**2)/(a**4 - 2*a**2*b**2 + b**4)
+    D = a**4*(b**4 - 2*b**2*r**2 + 2*b**2*x**2 - 2*b**2*y**2 + r**4 - 2*r**2*x**2 - 2*r**2*y**2 + x**4 + 2*x**2*y**2 + y**4)/(a**4 - 2*a**2*b**2 + b**4)
+    return A, B, C, D
+
+def quarticSolutions_ellipse_to_Quarticipynb(A, B, C, D):
+    """ Equations from ellipse_to_Quartic.ipynb
+    """
+    p0 = (-3*A**2/8+B)**3
+    p1 = (A*(A**2/8-B/2)+C)**2
+    p2 = -A*(A*(3*A**2/256-B/16)+C/4)+D
+    p3 = -3*A**2/8+B
+    p4 = 2*A*(A**2/8-B/2)
+    p5 = -p0/108-p1/8+p2*p3/3
+    p6 = (p0/216+p1/16-p2*p3/6+np.sqrt(p5**2/4+(-p2-p3**2/12)**3/27))**(1/3)
+    p7 = A**2/4-2*B/3
+    p8 = (2*p2+p3**2/6)/(3*p6)
+    #, (-2*p2-p3**2/6)/(3*p6)
+    p9 = np.sqrt(-2*p5**(1/3)+p7)
+    p10 = np.sqrt(2*p6+p7+p8)
+    p11 = A**2/2-4*B/3
+
+    #otherwise case
+    x0 = -A/4 - p10/2 - np.sqrt(p11 - 2*p6 + p8 + (2*C + p4)/p10)/2
+    x1 = -A/4 - p10/2 + np.sqrt(p11 - 2*p6 + p8 + (2*C + p4)/p10)/2
+    x2 = -A/4 + p10/2 + np.sqrt(p11 - 2*p6 + p8 + (-2*C - p4)/p10)/2
+    x3 = -A/4 + p10/2 + np.sqrt(p11 - 2*p6 + p8 + (-2*C - p4)/p10)/2
+    zeroInds = np.where(p2 + p3**2/12 == 0)[0] #piecewise condition
+    if len(zeroInds) != 0:
+        x0[zeroInds] = -A[zeroInds]/4 + p9[zeroInds]/2 - np.sqrt(p11[zeroInds] + 2*p5[zeroInds]**(1/3) + (-2*C[zeroInds] - p4[zeroInds])/p9[zeroInds])/2 
+        x1[zeroInds] = -A[zeroInds]/4 + p9[zeroInds]/2 + np.sqrt(p11[zeroInds] + 2*p5[zeroInds]**(1/3) - (2*C[zeroInds] + p4[zeroInds])/p9[zeroInds])/2  
+        x2[zeroInds] = -A[zeroInds]/4 - p9[zeroInds]/2 + np.sqrt(p11[zeroInds] + 2*p5[zeroInds]**(1/3) - (-2*C[zeroInds] - p4[zeroInds])/p9[zeroInds])/2 
+        x3[zeroInds] = -A[zeroInds]/4 - p9[zeroInds]/2 + np.sqrt(p11[zeroInds] + 2*p5[zeroInds]**(1/3) - (-2*C[zeroInds] - p4[zeroInds])/p9[zeroInds])/2
+    return x0, x1, x2, x3
+
+# Piecewise((-A/4 - p9/2 - sqrt(p11 + 2*p5**(1/3) + (2*C + p4)/p9)/2, Eq(p2 + p3**2/12, 0)),
+#  (-A/4 - p10/2 - sqrt(p11 - 2*p6 - p8 + (2*C + p4)/p10)/2, True))

@@ -3,6 +3,8 @@ from projectedEllipse import *
 import EXOSIMS.MissionSim
 import matplotlib.pyplot as plt
 import numpy.random as random
+from sys import getsizeof
+import time
 
 #### Randomly Generate Orbits
 folder = os.path.normpath(os.path.expandvars('$HOME/Documents/exosims/Scripts'))
@@ -10,7 +12,7 @@ filename = 'HabEx_CKL2_PPKL2.json'
 scriptfile = os.path.join(folder,filename)
 sim = EXOSIMS.MissionSim.MissionSim(scriptfile=scriptfile,nopar=True)
 PPop = sim.PlanetPopulation
-n = 10**3
+n = 10**4 #Dean's nice computer can go up to 10**8 what can atuin go up to?
 inc, W, w = PPop.gen_angles(n,None)
 inc = inc.to('rad').value
 inc[np.where(inc>np.pi/2)[0]] = np.pi - inc[np.where(inc>np.pi/2)[0]]
@@ -19,13 +21,18 @@ w = w.to('rad').value
 sma, e, p, Rp = PPop.gen_plan_params(n)
 sma = sma.to('AU').value
 
-####
+#### Calculate Projected Ellipse Angles and Minor Axis
+start0 = time.time()
 dmajorp, dminorp, Psi, psi, theta_OpQ_X, theta_OpQp_X, dmajorp_v2, dminorp_v2, Psi_v2, psi_v2 = projected_apbpPsipsi(sma,e,W,w,inc)
-O = projected_Op(sma,e,W,w,inc)
-#DELETE theta = projected_BpAngle(sma,e,W,w,inc)
-c_3D_projected = projected_projectedLinearEccentricity(sma,e,W,w,inc)
+stop0 = time.time()
+print('stop0: ' + str(stop0-start0))
+#DELETEO = projected_Op(sma,e,W,w,inc)
+#DELETEc_3D_projected = projected_projectedLinearEccentricity(sma,e,W,w,inc)
 #3D Ellipse Center
+start1 = time.time()
 Op = projected_Op(sma,e,W,w,inc)
+stop1 = time.time()
+print('stop1: ' + str(stop1-start1))
 
 # Checks
 assert np.all(dmajorp < sma), "Not all Semi-major axis of the projected ellipse are less than the original 3D ellipse"
@@ -72,7 +79,10 @@ ind = random.randint(low=0,high=n)
 plotProjectedEllipse(ind, sma, e, W, w, inc, theta_OpQ_X, theta_OpQp_X, dmajorp, dminorp, Op, num=877)
 
 #### Derotate Ellipse
+start2 = time.time()
 x, y, Phi = derotatedEllipse(theta_OpQ_X, theta_OpQp_X, Op)
+stop2 = time.time()
+print('stop2: ' + str(stop2-start2))
 a = dmajorp
 b = dminorp
 mx = np.abs(x) #x converted to a strictly positive value
@@ -118,20 +128,44 @@ def plotDerotatedEllipse(ind, sma, e, W, w, inc, theta_OpQ_X, theta_OpQp_X, dmaj
 
     plt.show(block=False)
 
+start3 = time.time()
 plotDerotatedEllipse(ind, sma, e, W, w, inc, theta_OpQ_X, theta_OpQp_X, dmajorp, dminorp, Op, a, b, num=880)
+stop3 = time.time()
+print('stop3: ' + str(stop3-start3))
 
 #### Calculate X,Y Position of Minimum and Maximums with Quartic
+start4 = time.time()
 xreal, imag = quarticSolutions(a, b, mx, my)
+stop4 = time.time()
+print('stop4: ' + str(stop4-start4))
+start5 = time.time()
 yreal = ellipseYFromX(xreal, a, b)
+stop5 = time.time()
+print('stop5: ' + str(stop5-start5))
 
 #### Calculate Separations
+start6 = time.time()
 s_mp, s_absmin, s_absmax = calculateSeparations(xreal, yreal, mx, my)
+stop6 = time.time()
+print('stop6: ' + str(stop6-start6))
 
 #### Calculate Min Max Separation Points
+start7 = time.time()
 minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y, minSep, maxSep, s_mplminSeps, s_mplmaxSeps = sepsMinMaxLminLmax(s_absmin, s_absmax, s_mp, xreal, yreal, x, y)
-
+stop7 = time.time()
+print('stop7: ' + str(stop7-start7))
 #################################################################################
 
+
+#### Memory Usage
+memories = [getsizeof(inc),getsizeof(W),getsizeof(w),getsizeof(sma),getsizeof(e),getsizeof(p),getsizeof(Rp),getsizeof(dmajorp),getsizeof(dminorp),getsizeof(Psi),getsizeof(psi),getsizeof(theta_OpQ_X),\
+getsizeof(theta_OpQp_X),getsizeof(dmajorp_v2),getsizeof(dminorp_v2),getsizeof(Psi_v2),getsizeof(psi_v2),getsizeof(Op),getsizeof(x),getsizeof(y),getsizeof(Phi),getsizeof(a),getsizeof(b),\
+getsizeof(mx),getsizeof(my),getsizeof(xreal),getsizeof(imag),getsizeof(yreal),getsizeof(s_mp),getsizeof(s_absmin),getsizeof(s_absmax),getsizeof(minSepPoints_x),getsizeof(minSepPoints_y),\
+getsizeof(maxSepPoints_x),getsizeof(maxSepPoints_y),getsizeof(lminSepPoints_x),getsizeof(lminSepPoints_y),getsizeof(lmaxSepPoints_x),getsizeof(lmaxSepPoints_y),getsizeof(minSep),\
+getsizeof(maxSep),getsizeof(s_mplminSeps),getsizeof(s_mplmaxSeps)]
+totalMemoryUsage = np.sum(memories)
+print('Total Data Used: ' + str(totalMemoryUsage/10**9) + ' GB')
+####
 
 
 num=960
@@ -220,3 +254,152 @@ plt.ylabel('Projected Separation in AU')
 plt.xlabel('Projected Ellipse E (rad)')
 plt.show(block=False)
 ####
+
+
+#### Testing ellipse_to_Quartic solution
+r = np.ones(len(a),dtype='complex128')
+a.astype('complex128')
+b.astype('complex128')
+mx.astype('complex128')
+my.astype('complex128')
+r.astype('complex128')
+A = -4*a**2*mx/(a**2 - b**2)
+B = 2*a**2*(a**2*b**2 - a**2*r**2 + 3*a**2*mx**2 + a**2*my**2 - b**4 + b**2*r**2 - b**2*mx**2 + b**2*my**2)/(a**4 - 2*a**2*b**2 + b**4)
+C = 4*a**4*mx*(-b**2 + r**2 - mx**2 - my**2)/(a**4 - 2*a**2*b**2 + b**4)
+D = a**4*(b**4 - 2*b**2*r**2 + 2*b**2*mx**2 - 2*b**2*my**2 + r**4 - 2*r**2*mx**2 - 2*r**2*my**2 + mx**4 + 2*mx**2*my**2 + my**4)/(a**4 - 2*a**2*b**2 + b**4)
+# A = -4*a**2*x/(a**2 - b**2)
+# B = 2*a**2*(a**2*b**2 - a**2*r**2 + 3*a**2*x**2 + a**2*y**2 - b**4 + b**2*r**2 - b**2*x**2 + b**2*y**2)/(a**4 - 2*a**2*b**2 + b**4)
+# C = 4*a**4*x*(-b**2 + r**2 - x**2 - y**2)/(a**4 - 2*a**2*b**2 + b**4)
+# D = a**4*(b**4 - 2*b**2*r**2 + 2*b**2*x**2 - 2*b**2*y**2 + r**4 - 2*r**2*x**2 - 2*r**2*y**2 + x**4 + 2*x**2*y**2 + y**4)/(a**4 - 2*a**2*b**2 + b**4)
+
+
+p0 = (-3*A**2/8+B)**3
+p1 = (A*(A**2/8-B/2)+C)**2
+p2 = -A*(A*(3*A**2/256-B/16)+C/4)+D
+p3 = -3*A**2/8+B
+p4 = 2*A*(A**2/8-B/2)
+p5 = -p0/108-p1/8+p2*p3/3
+p6 = (p0/216+p1/16-p2*p3/6+np.sqrt(p5**2/4+(-p2-p3**2/12)**3/27))**(1/3)
+p7 = A**2/4-2*B/3
+p8 = (2*p2+p3**2/6)/(3*p6)
+#, (-2*p2-p3**2/6)/(3*p6)
+p9 = np.sqrt(-2*p5**(1/3)+p7)
+p10 = np.sqrt(2*p6+p7+p8)
+p11 = A**2/2-4*B/3
+
+#otherwise case
+x0 = -A/4 - p10/2 - np.sqrt(p11 - 2*p6 - p8 + (2*C + p4)/p10)/2
+x1 = -A/4 - p10/2 + np.sqrt(p11 - 2*p6 - p8 + (2*C + p4)/p10)/2
+x2 = -A/4 + p10/2 - np.sqrt(p11 - 2*p6 - p8 + (-2*C - p4)/p10)/2
+x3 = -A/4 + p10/2 + np.sqrt(p11 - 2*p6 - p8 + (-2*C - p4)/p10)/2
+zeroInds = np.where(p2 + p3**2/12 == 0)[0] #piecewise condition
+if len(zeroInds) != 0:
+    x0[zeroInds] = -A[zeroInds]/4 - p9[zeroInds]/2 - np.sqrt(p11[zeroInds] + 2*np.cbrt(p5[zeroInds]) + (2*C[zeroInds] + p4[zeroInds])/p9[zeroInds])/2
+    x1[zeroInds] = -A[zeroInds]/4 - p9[zeroInds]/2 + np.sqrt(p11[zeroInds] + 2*np.cbrt(p5[zeroInds]) + (2*C[zeroInds] + p4[zeroInds])/p9[zeroInds])/2
+    x2[zeroInds] = -A[zeroInds]/4 + p9[zeroInds]/2 - np.sqrt(p11[zeroInds] + 2*np.cbrt(p5[zeroInds]) + (-2*C[zeroInds] - p4[zeroInds])/p9[zeroInds])/2
+    x3[zeroInds] = -A[zeroInds]/4 + p9[zeroInds]/2 + np.sqrt(p11[zeroInds] + 2*np.cbrt(p5[zeroInds]) + (-2*C[zeroInds] - p4[zeroInds])/p9[zeroInds])/2
+tmpxreals2 = np.asarray([x0, x1, x2, x3]).T
+xreals2 = np.asarray([x0, x1, x2, x3]).T
+# xreals2[np.abs(np.imag(xreals2)) > 0] = np.nan
+# xreals2 = np.real(xreals2)
+yreals2 = ellipseYFromX(xreals2, a, b)
+# seps2_0 = np.sqrt((xreals2[:,0]-x)**2 + (yreals2[:,0]-y)**2)
+# seps2_1 = np.sqrt((xreals2[:,1]-x)**2 + (yreals2[:,1]-y)**2)
+# seps2_2 = np.sqrt((xreals2[:,2]-x)**2 + (yreals2[:,2]-y)**2)
+# seps2_3 = np.sqrt((xreals2[:,3]-x)**2 + (yreals2[:,3]-y)**2)
+seps2_0 = np.sqrt((xreals2[:,0]-mx)**2 + (yreals2[:,0]-my)**2)
+seps2_1 = np.sqrt((xreals2[:,1]-mx)**2 + (yreals2[:,1]-my)**2)
+seps2_2 = np.sqrt((xreals2[:,2]-mx)**2 + (yreals2[:,2]-my)**2)
+seps2_3 = np.sqrt((xreals2[:,3]-mx)**2 + (yreals2[:,3]-my)**2)
+seps2 = np.asarray([seps2_0,seps2_1,seps2_2,seps2_3]).T
+
+delta = 256*D**3 - 192*A*C*D**2 - 128*B**2*D**2 + 144*B*C**2*D - 27*C**4\
+        + 144*A**2*B*D**2 - 6*A**2*C**2*D - 80*A*B**2*C*D + 18*A*B*C**3 + 16*B**4*D\
+        - 4*B**3*C**2 - 27*A**4*D**2 + 18*A**3*B*C*D - 4*A**3*C**3 - 4*A**2*B**3*D + A**2*B**2*C**2 #verified against wikipedia multiple times
+assert 0 == np.count_nonzero(np.imag(delta)), 'All delta are real'
+delta = np.real(delta)
+P = 8*B - 3*A**2
+assert 0 == np.count_nonzero(np.imag(P)), 'Not all P are real'
+P = np.real(P)
+D2 = 64*D - 16*B**2 + 16*A**2*B - 16*A*C - 3*A**4 #is 0 if the quartic has 2 double roots 
+assert 0 == np.count_nonzero(np.imag(D2)), 'Not all D2 are real'
+D2 = np.real(D2)
+R = A**3 + 8*C* - 4*A*B
+assert 0 == np.count_nonzero(np.imag(R)), 'Not all R are real'
+R = np.real(R)
+delta_0 = B**2 - 3*A*C + 12*D
+assert 0 == np.count_nonzero(np.imag(delta_0)), 'Not all delta_0 are real'
+delta_0 = np.real(delta_0)
+
+# #Number of Solutions 
+# deltagt0 = delta > 0
+# deltaIndsgt0 = np.where(delta > 0)[0]
+# Plt0 = P < 0
+# Pindslt0 = np.where(P < 0)[0]
+# D2lt0 = D2 < 0
+# D2indslt0 = np.where(D2 < 0)[0]
+
+assert ~np.any(p2+p3**2/12 == 0), 'Oops, looks like the sympy piecewise was true once!'
+
+# Root Types For Each Planet
+# If delta < 0, two distinct real roots, two complex
+twoRealDistinctInds = np.where(delta < 0)[0]
+# If delta > 0 and P < 0 and D < 0 four roots all real or none
+allRealDistinctInds = np.where((delta > 0)*(P < 0)*(D2 < 0))[0]
+# If delta > 0 and (P < 0 or D < 0)
+allImagInds = np.where((delta > 0)*((P > 0)|(D2 > 0)))[0]
+# If delta == 0, multiple root
+realDoubleRootTwoRealRootsInds = np.where((delta == 0)*(P < 0)*(D2 < 0)*(delta_0 != 0))[0] #delta=0 and P<0 and D2<0
+realDoubleRootTwoComplexInds = np.where((delta == 0)*((D2 > 0)|((P > 0)*((D2 != 0)|(R != 0)))))[0] #delta=0 and (D>0 or (P>0 and (D!=0 or R!=0)))
+tripleRootSimpleRootInds = np.where((delta == 0)*(delta_0 == 0)*(D2 !=0))[0]
+twoRealDoubleRootsInds = np.where((delta == 0)*(D2 == 0)*(P < 0))[0]
+twoComplexDoubleRootsInds = np.where((delta == 0)*(D2 == 0)*(P > 0)*(R == 0))[0]
+fourIdenticalRealRootsInds = np.where((delta == 0)*(D2 == 0)*(delta_0 == 0))[0]
+
+#Number of Solutions of Each Type
+numRootInds = [twoRealDistinctInds,allRealDistinctInds,allImagInds,realDoubleRootTwoRealRootsInds,realDoubleRootTwoComplexInds,\
+    tripleRootSimpleRootInds,twoRealDoubleRootsInds,twoComplexDoubleRootsInds,fourIdenticalRealRootsInds]
+
+#Number of Roots of Each Type
+lenNumRootsInds = [len(numRootInds[i]) for i in np.arange(len(numRootInds))]
+
+# case 1
+xreals2[twoRealDistinctInds[0]]
+residual = tmpxreals2[twoRealDistinctInds[0]]**4 + A[twoRealDistinctInds[0]]*tmpxreals2[twoRealDistinctInds[0]]**3 + B[twoRealDistinctInds[0]]*tmpxreals2[twoRealDistinctInds[0]]**2 + C[twoRealDistinctInds[0]]*tmpxreals2[twoRealDistinctInds[0]] + D[twoRealDistinctInds[0]]
+residual2 = xreals2[twoRealDistinctInds[0]]**4 + A[twoRealDistinctInds[0]]*xreals2[twoRealDistinctInds[0]]**3 + B[twoRealDistinctInds[0]]*xreals2[twoRealDistinctInds[0]]**2 + C[twoRealDistinctInds[0]]*xreals2[twoRealDistinctInds[0]] + D[twoRealDistinctInds[0]]
+residual3 = np.real(xreals2[twoRealDistinctInds[0]])**4 + A[twoRealDistinctInds[0]]*np.real(xreals2[twoRealDistinctInds[0]])**3 + B[twoRealDistinctInds[0]]*np.real(xreals2[twoRealDistinctInds[0]])**2 + C[twoRealDistinctInds[0]]*np.real(xreals2[twoRealDistinctInds[0]]) + D[twoRealDistinctInds[0]]
+
+#currently getting intersection points that are not physically possible
+
+# case 2
+xreals2[allRealDistinctInds[0]]
+# case 3
+xreals2[allImagInds[0]]
+# case 4
+xreals2[realDoubleRootTwoRealRootsInds[0]]
+# case 5
+xreals2[realDoubleRootTwoComplexInds[0]]
+
+
+
+minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y, minSep, maxSep, s_mplminSeps, s_mplmaxSeps = sepsMinMaxLminLmax(s_absmin, s_absmax, s_mp, xreal, yreal, x, y)
+
+
+
+
+
+#outputs
+#nWith4SolutionsIMAG = np.count_nonzero(np.count_nonzero(imag,axis=1)==0)
+
+
+np.count_nonzero(np.imag(x0))
+
+# tmp1 = 2b**3-9abc+27c**2+27a**2d-72bd
+# tmp2 = b**2-3*a*c+12*d
+# tmp3 = sp.sqrt(-4*tmp2**3+tmp1**2)
+# expression = -a/4-(1/2){sp.sqrt{a**2/4-2*b/3+(2**(1/3)tmp2)(3*(tmp1+tmp3)**(1/3))
+# +((tmp1+sp.sqrt(-4*tmp2**3+tmp1**2))/54)**(1/3)}}-(1/2)*sp.sqrt(a**2/2-4*b/3-
+# (2**(1/3)*tmp2)/(3*(tmp1+tmp3)**(1/3))-
+# ((tmp1+tmp3)/54)**(1/3)-(-a**3+4*a*b-8*c)/(4*sp.sqrt(a**2/4-2*b/3+(2**(1/3)(tmp2))/(3*(tmp1+tmp3)**(1/3))+((tmp1+tmp3)/54)**(1/3))))
+
+shouldBeZero = x0**4 + A*x0**3 + B*x0**2 + C*x0 + D
