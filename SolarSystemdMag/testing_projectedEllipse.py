@@ -235,6 +235,11 @@ plt.scatter(lminSepPoints_x[ind], lminSepPoints_y[ind],color='magenta')
 #### Plot Local Max Points
 plt.scatter(lmaxSepPoints_x[ind], lmaxSepPoints_y[ind],color='gold')
 
+#### r Intersection test
+x_circ2 = np.cos(vs)
+y_circ2 = np.sin(vs)
+plt.plot(x[ind]+x_circ2,y[ind]+y_circ2,color='green')
+
 plt.show(block=False)
 
 
@@ -254,6 +259,25 @@ plt.ylabel('Projected Separation in AU')
 plt.xlabel('Projected Ellipse E (rad)')
 plt.show(block=False)
 ####
+
+
+
+def checkResiduals(A,B,C,D,xreals2,inds,numSols):
+    residual_0 = xreals2[inds,0]**4 + A[inds]*xreals2[inds,0]**3 + B[inds]*xreals2[inds,0]**2 + C[inds]*xreals2[inds,0] + D[inds]
+    residual_1 = xreals2[inds,1]**4 + A[inds]*xreals2[inds,1]**3 + B[inds]*xreals2[inds,1]**2 + C[inds]*xreals2[inds,1] + D[inds]
+    residual_2 = np.zeros(residual_0.shape)
+    residual_3 = np.zeros(residual_0.shape)
+    if numSols > 2:
+        residual_2 = xreals2[inds,2]**4 + A[inds]*xreals2[inds,2]**3 + B[inds]*xreals2[inds,2]**2 + C[inds]*xreals2[inds,2] + D[inds]
+        if numSols > 3:
+            residual_3 = xreals2[inds,3]**4 + A[inds]*xreals2[inds,3]**3 + B[inds]*xreals2[inds,3]**2 + C[inds]*xreals2[inds,3] + D[inds]
+    residual = np.asarray([residual_0, residual_1, residual_2, residual_3]).T
+    isAll = np.all((np.real(residual) < 1e-7)*(np.imag(residual) < 1e-7))
+    maxRealResidual = np.max(np.real(residual))
+    maxImagResidual = np.max(np.imag(residual))
+    return residual, isAll, maxRealResidual, maxImagResidual
+
+
 
 
 #### Testing ellipse_to_Quartic solution
@@ -300,7 +324,7 @@ if len(zeroInds) != 0:
     x3[zeroInds] = -A[zeroInds]/4 + p9[zeroInds]/2 + np.sqrt(p11[zeroInds] + 2*np.cbrt(p5[zeroInds]) + (-2*C[zeroInds] - p4[zeroInds])/p9[zeroInds])/2
 tmpxreals2 = np.asarray([x0, x1, x2, x3]).T
 xreals2 = np.asarray([x0, x1, x2, x3]).T
-# xreals2[np.abs(np.imag(xreals2)) > 0] = np.nan
+# xreals2[np.abs(np.imag(xreals2)) > 1e-4] = np.nan #There is evidence from below that the residual resulting from entiring solutions with 3e-5j results in 0+1e-20j therefore we will nan above 1e-4
 # xreals2 = np.real(xreals2)
 yreals2 = ellipseYFromX(xreals2, a, b)
 # seps2_0 = np.sqrt((xreals2[:,0]-x)**2 + (yreals2[:,0]-y)**2)
@@ -339,15 +363,21 @@ delta_0 = np.real(delta_0)
 # D2lt0 = D2 < 0
 # D2indslt0 = np.where(D2 < 0)[0]
 
+#we are currently omitting all of these potential calculations so-long-as the following assert is never true
 assert ~np.any(p2+p3**2/12 == 0), 'Oops, looks like the sympy piecewise was true once!'
 
-# Root Types For Each Planet
+#### Root Types For Each Planet ##########################
+# If delta > 0 and P < 0 and D < 0 four roots all real or none
+#allRealDistinctInds = np.where((delta > 0)*(P < 0)*(D2 < 0))[0] #METHOD 1, out of 10000, this found 1638, missing ~54
+allRealDistinctInds = np.where(np.all(np.abs(np.imag(xreals2)) < 1e-9, axis=1))[0] #This found 1692
+residual_allreal, isAll_allreal, maxRealResidual_allreal, maxImagResidual_allreal = checkResiduals(A,B,C,D,xreals2,allRealDistinctInds,4)
+assert maxRealResidual_allreal < 1e-9, 'At least one all real residual is too large'
 # If delta < 0, two distinct real roots, two complex
 twoRealDistinctInds = np.where(delta < 0)[0]
-# If delta > 0 and P < 0 and D < 0 four roots all real or none
-allRealDistinctInds = np.where((delta > 0)*(P < 0)*(D2 < 0))[0]
+
 # If delta > 0 and (P < 0 or D < 0)
 allImagInds = np.where((delta > 0)*((P > 0)|(D2 > 0)))[0]
+
 # If delta == 0, multiple root
 realDoubleRootTwoRealRootsInds = np.where((delta == 0)*(P < 0)*(D2 < 0)*(delta_0 != 0))[0] #delta=0 and P<0 and D2<0
 realDoubleRootTwoComplexInds = np.where((delta == 0)*((D2 > 0)|((P > 0)*((D2 != 0)|(R != 0)))))[0] #delta=0 and (D>0 or (P>0 and (D!=0 or R!=0)))
@@ -356,6 +386,24 @@ twoRealDoubleRootsInds = np.where((delta == 0)*(D2 == 0)*(P < 0))[0]
 twoComplexDoubleRootsInds = np.where((delta == 0)*(D2 == 0)*(P > 0)*(R == 0))[0]
 fourIdenticalRealRootsInds = np.where((delta == 0)*(D2 == 0)*(delta_0 == 0))[0]
 
+#### Double checking root classification
+#twoRealDistinctInds #check that 2 of the 4 imags are below thresh
+numUnderThresh = np.sum(np.abs(np.imag(xreals2[twoRealDistinctInds])) > 1e-11, axis=1)
+indsUnderThresh = np.where(numUnderThresh != 2)[0]
+indsThatDontBelongIntwoRealDistinctInds = twoRealDistinctInds[indsUnderThresh]
+twoRealDistinctInds = np.delete(twoRealDistinctInds,indsThatDontBelongIntwoRealDistinctInds) #deletes the desired inds from aray
+#np.count_nonzero(numUnderThresh < 2)
+
+#### All Real Distinct Inds
+
+###########################
+
+
+#The 1e-5 here gave me the number as the Imag count
+allRealDistinctInds2 = np.where(np.all(np.abs(np.imag(xreals2)) > 1e-5, axis=1))[0]
+allRealDistinctInds2 = np.where(np.all(np.abs(np.imag(xreals2)) > 1e-9, axis=1))[0]
+
+
 #Number of Solutions of Each Type
 numRootInds = [twoRealDistinctInds,allRealDistinctInds,allImagInds,realDoubleRootTwoRealRootsInds,realDoubleRootTwoComplexInds,\
     tripleRootSimpleRootInds,twoRealDoubleRootsInds,twoComplexDoubleRootsInds,fourIdenticalRealRootsInds]
@@ -363,22 +411,95 @@ numRootInds = [twoRealDistinctInds,allRealDistinctInds,allImagInds,realDoubleRoo
 #Number of Roots of Each Type
 lenNumRootsInds = [len(numRootInds[i]) for i in np.arange(len(numRootInds))]
 
-# case 1
+# Calculate Residuals
+# residual_0 = xreals2[:,0]**4 + A*xreals2[:,0]**3 + B*xreals2[:,0]**2 + C*xreals2[:,0] + D
+# residual_1 = xreals2[:,1]**4 + A*xreals2[:,1]**3 + B*xreals2[:,1]**2 + C*xreals2[:,1] + D
+# residual_2 = xreals2[:,2]**4 + A*xreals2[:,2]**3 + B*xreals2[:,2]**2 + C*xreals2[:,2] + D
+# residual_3 = xreals2[:,3]**4 + A*xreals2[:,3]**3 + B*xreals2[:,3]**2 + C*xreals2[:,3] + D
+# residual = np.asarray([residual_0, residual_1, residual_2, residual_3]).T
+# #assert np.all((np.real(residual) < 1e-7)*(np.imag(residual) < 1e-7)), 'All residual are not less than 1e-7'
+# del residual_0, residual_1, residual_2, residual_3
+residual_all, isAll_all, maxRealResidual_all, maxImagResidual_all = checkResiduals(A,B,C,D,xreals2,np.arange(len(A)),4)
+
+
+#### NEED TO TEST MECHANISMS FOR STRIPING
+
+
+
+xfinal = np.zeros(xreals2.shape) + np.nan
+# case 1 Two Real Distinct Inds
+#find 2 xsols with smallest imag part
 xreals2[twoRealDistinctInds[0]]
-residual = tmpxreals2[twoRealDistinctInds[0]]**4 + A[twoRealDistinctInds[0]]*tmpxreals2[twoRealDistinctInds[0]]**3 + B[twoRealDistinctInds[0]]*tmpxreals2[twoRealDistinctInds[0]]**2 + C[twoRealDistinctInds[0]]*tmpxreals2[twoRealDistinctInds[0]] + D[twoRealDistinctInds[0]]
-residual2 = xreals2[twoRealDistinctInds[0]]**4 + A[twoRealDistinctInds[0]]*xreals2[twoRealDistinctInds[0]]**3 + B[twoRealDistinctInds[0]]*xreals2[twoRealDistinctInds[0]]**2 + C[twoRealDistinctInds[0]]*xreals2[twoRealDistinctInds[0]] + D[twoRealDistinctInds[0]]
-residual3 = np.real(xreals2[twoRealDistinctInds[0]])**4 + A[twoRealDistinctInds[0]]*np.real(xreals2[twoRealDistinctInds[0]])**3 + B[twoRealDistinctInds[0]]*np.real(xreals2[twoRealDistinctInds[0]])**2 + C[twoRealDistinctInds[0]]*np.real(xreals2[twoRealDistinctInds[0]]) + D[twoRealDistinctInds[0]]
+ximags2 = np.imag(xreals2[twoRealDistinctInds])
+ximags2smallImagInds = np.argsort(np.abs(ximags2),axis=1)[:,0:2] #sorts from smallest magnitude to largest magnitude
+xrealsTwoRealDistinct = np.asarray([xreals2[twoRealDistinctInds,ximags2smallImagInds[:,0]], xreals2[twoRealDistinctInds,ximags2smallImagInds[:,1]]]).T
+xfinal[twoRealDistinctInds,0:2]= np.real(xrealsTwoRealDistinct)
+#Check residuals
+# residual_0 = xrealsTwoRealDistinct[:,0]**4 + A[twoRealDistinctInds]*xrealsTwoRealDistinct[:,0]**3 + B[twoRealDistinctInds]*xrealsTwoRealDistinct[:,0]**2 + C[twoRealDistinctInds]*xrealsTwoRealDistinct[:,0] + D[twoRealDistinctInds]
+# residual_1 = xrealsTwoRealDistinct[:,1]**4 + A[twoRealDistinctInds]*xrealsTwoRealDistinct[:,1]**3 + B[twoRealDistinctInds]*xrealsTwoRealDistinct[:,1]**2 + C[twoRealDistinctInds]*xrealsTwoRealDistinct[:,1] + D[twoRealDistinctInds]
+# residual = np.asarray([residual_0, residual_1]).T
+# assert np.all((np.real(residual) < 1e-8)*(np.imag(residual) < 1e-8)), 'All residual, Two Real Distinct, are not less than 1e-8'
+# del residual_0, residual_1
+residual_case1, isAll_case1, maxRealResidual_case1, maxImagResidual_case1 = checkResiduals(A,B,C,D,xfinal,twoRealDistinctInds,2)
+#The following does not work
+# residual_0 = np.real(xrealsTwoRealDistinct[:,0])**4 + A[twoRealDistinctInds]*np.real(xrealsTwoRealDistinct[:,0])**3 + B[twoRealDistinctInds]*np.real(xrealsTwoRealDistinct[:,0])**2 + C[twoRealDistinctInds]*np.real(xrealsTwoRealDistinct[:,0]) + D[twoRealDistinctInds]
+# residual_1 = np.real(xrealsTwoRealDistinct[:,1])**4 + A[twoRealDistinctInds]*np.real(xrealsTwoRealDistinct[:,1])**3 + B[twoRealDistinctInds]*np.real(xrealsTwoRealDistinct[:,1])**2 + C[twoRealDistinctInds]*np.real(xrealsTwoRealDistinct[:,1]) + D[twoRealDistinctInds]
+# residual = np.asarray([residual_0, residual_1]).T
+# assert np.all((np.real(residual) < 1e-8)*(np.imag(residual) < 1e-8)), 'All residual are not less than 1e-8'
+# del residual_0, residual_1
+indsOfRebellious_0 = np.where(np.real(residual_case1[:,0]) > 1e-1)[0]
+indsOfRebellious_1 = np.where(np.real(residual_case1[:,1]) > 1e-1)[0]
+indsOfRebellious = np.unique(np.concatenate((indsOfRebellious_0,indsOfRebellious_1)))
+xrealIndsOfRebellious = twoRealDistinctInds[indsOfRebellious]
+
+#residual = tmpxreals2[twoRealDistinctInds[0]]**4 + A[twoRealDistinctInds[0]]*tmpxreals2[twoRealDistinctInds[0]]**3 + B[twoRealDistinctInds[0]]*tmpxreals2[twoRealDistinctInds[0]]**2 + C[twoRealDistinctInds[0]]*tmpxreals2[twoRealDistinctInds[0]] + D[twoRealDistinctInds[0]]
+#residual2 = xreals2[twoRealDistinctInds[0]]**4 + A[twoRealDistinctInds[0]]*xreals2[twoRealDistinctInds[0]]**3 + B[twoRealDistinctInds[0]]*xreals2[twoRealDistinctInds[0]]**2 + C[twoRealDistinctInds[0]]*xreals2[twoRealDistinctInds[0]] + D[twoRealDistinctInds[0]]
+#residual3 = np.real(xreals2[twoRealDistinctInds[0]])**4 + A[twoRealDistinctInds[0]]*np.real(xreals2[twoRealDistinctInds[0]])**3 + B[twoRealDistinctInds[0]]*np.real(xreals2[twoRealDistinctInds[0]])**2 + C[twoRealDistinctInds[0]]*np.real(xreals2[twoRealDistinctInds[0]]) + D[twoRealDistinctInds[0]]
 
 #currently getting intersection points that are not physically possible
 
-# case 2
-xreals2[allRealDistinctInds[0]]
-# case 3
-xreals2[allImagInds[0]]
-# case 4
-xreals2[realDoubleRootTwoRealRootsInds[0]]
-# case 5
-xreals2[realDoubleRootTwoComplexInds[0]]
+# case 2 All Real Distinct Inds
+xfinal[allRealDistinctInds] = np.real(xreals2[allRealDistinctInds])
+# residual_0 = xfinal[allRealDistinctInds,0]**4 + A[allRealDistinctInds]*xfinal[allRealDistinctInds,0]**3 + B[allRealDistinctInds]*xfinal[allRealDistinctInds,0]**2 + C[allRealDistinctInds]*xfinal[allRealDistinctInds,0] + D[allRealDistinctInds]
+# residual_1 = xfinal[allRealDistinctInds,1]**4 + A[allRealDistinctInds]*xfinal[allRealDistinctInds,1]**3 + B[allRealDistinctInds]*xfinal[allRealDistinctInds,1]**2 + C[allRealDistinctInds]*xfinal[allRealDistinctInds,1] + D[allRealDistinctInds]
+# residual_2 = xfinal[allRealDistinctInds,2]**4 + A[allRealDistinctInds]*xfinal[allRealDistinctInds,2]**3 + B[allRealDistinctInds]*xfinal[allRealDistinctInds,2]**2 + C[allRealDistinctInds]*xfinal[allRealDistinctInds,2] + D[allRealDistinctInds]
+# residual_3 = xfinal[allRealDistinctInds,3]**4 + A[allRealDistinctInds]*xfinal[allRealDistinctInds,3]**3 + B[allRealDistinctInds]*xfinal[allRealDistinctInds,3]**2 + C[allRealDistinctInds]*xfinal[allRealDistinctInds,3] + D[allRealDistinctInds]
+# residual = np.asarray([residual_0, residual_1, residual_2, residual_3]).T
+# assert np.all((np.real(residual) < 1e-7)*(np.imag(residual) < 1e-7)), 'All residual, All Real Distinct, are not less than 1e-7'
+# del residual_0, residual_1, residual_2, residual_3
+residual_case2, isAll_case2, maxRealResidual_case2, maxImagResidual_case2 = checkResiduals(A,B,C,D,xfinal,allRealDistinctInds,4)
+
+# case 3 All Imag Inds
+#NO REAL ROOTS
+#xreals2[allImagInds[0]]
+
+# case 4 a real double root and 2 real solutions (2 real solutions which are identical and 2 other real solutions)
+#xreals2[realDoubleRootTwoRealRootsInds[0]]
+ximags2 = np.imag(xreals2[realDoubleRootTwoRealRootsInds])
+ximags2smallImagInds = np.argsort(np.abs(ximags2),axis=1)[:,0:2] #sorts from smallest magnitude to largest magnitude
+xrealDoubleRootTwoRealRoots = np.asarray([xreals2[realDoubleRootTwoRealRootsInds,ximags2smallImagInds[:,0]], xreals2[realDoubleRootTwoRealRootsInds,ximags2smallImagInds[:,1]]]).T
+xfinal[realDoubleRootTwoRealRootsInds,0:2] = np.real(xrealDoubleRootTwoRealRoots)
+
+
+
+# case 5 a real double root
+#xreals2[realDoubleRootTwoComplexInds[0]]
+ximags2 = np.imag(xreals2[realDoubleRootTwoComplexInds])
+ximags2smallImagInds = np.argsort(np.abs(ximags2),axis=1)[:,0:2] #sorts from smallest magnitude to largest magnitude
+xrealDoubleRootTwoComplex = np.asarray([xreals2[realDoubleRootTwoComplexInds,ximags2smallImagInds[:,0]], xreals2[realDoubleRootTwoComplexInds,ximags2smallImagInds[:,1]]]).T
+xfinal[realDoubleRootTwoComplexInds,0:2] = np.real(xrealDoubleRootTwoComplex)
+
+yfinal = ellipseYFromX(xfinal, a, b)
+s_mpr, s_absminr, s_absmaxr = calculateSeparations(xfinal, yfinal, x, y)
+#TODO need to do what I did for the sepsMinMaxLminLmax function for x, y coordinate determination
+
+
+#### Notes
+#If r < smin, then all imag
+#if r > smin and r > slmin, then 2 real.
+#if r > slmin and r < slmax, then 4 real.
+#if r < smax and r > slmax, then 2 real.
+#if r > smax, then all imag.
 
 
 
