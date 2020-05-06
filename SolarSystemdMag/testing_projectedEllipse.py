@@ -238,24 +238,6 @@ ca.axis('equal')
 plt.scatter([0],[0],color='orange')
 ## 3D Ellipse
 vs = np.linspace(start=0,stop=2*np.pi,num=300)
-# r = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],vs)
-# x_3Dellipse = r[0,0,:]
-# y_3Dellipse = r[1,0,:]
-# plt.plot(x_3Dellipse,y_3Dellipse,color='black')
-# plt.scatter(Op[0][ind],Op[1][ind],color='black')
-# ang2 = (theta_OpQ_X[ind]+theta_OpQp_X[ind])/2
-# dmajorpx1 = Op[0][ind] + dmajorp[ind]*np.cos(ang2)
-# dmajorpy1 = Op[1][ind] + dmajorp[ind]*np.sin(ang2)
-# dmajorpx2 = Op[0][ind] + dmajorp[ind]*np.cos(ang2+np.pi)
-# dmajorpy2 = Op[1][ind] + dmajorp[ind]*np.sin(ang2+np.pi)
-# dminorpx1 = Op[0][ind] + dminorp[ind]*np.cos(ang2+np.pi/2)
-# dminorpy1 = Op[1][ind] + dminorp[ind]*np.sin(ang2+np.pi/2)
-# dminorpx2 = Op[0][ind] + dminorp[ind]*np.cos(ang2-np.pi/2)
-# dminorpy2 = Op[1][ind] + dminorp[ind]*np.sin(ang2-np.pi/2)
-# plt.plot([Op[0][ind],dmajorpx1],[Op[1][ind],dmajorpy1],color='purple',linestyle='-')
-# plt.plot([Op[0][ind],dmajorpx2],[Op[1][ind],dmajorpy2],color='purple',linestyle='-')
-# plt.plot([Op[0][ind],dminorpx1],[Op[1][ind],dminorpy1],color='purple',linestyle='-')
-# plt.plot([Op[0][ind],dminorpx2],[Op[1][ind],dminorpy2],color='purple',linestyle='-')
 #new plot stuff
 Erange = np.linspace(start=0.,stop=2*np.pi,num=400)
 plt.plot([-a[ind],a[ind]],[0,0],color='purple',linestyle='--') #major
@@ -269,32 +251,32 @@ c_ae = a[ind]*np.sqrt(1-b[ind]**2/a[ind]**2)
 plt.scatter([-c_ae,c_ae],[0,0],color='blue')
 
 #Plot Min Sep Circle
-x_circ = minSep[ind]*np.cos(vs)
-y_circ = minSep[ind]*np.sin(vs)
+x_circ = minSep2[ind]*np.cos(vs)
+y_circ = minSep2[ind]*np.sin(vs)
 plt.plot(x[ind]+x_circ,y[ind]+y_circ,color='cyan')
 
 #Plot Max Sep Circle
-x_circ2 = maxSep[ind]*np.cos(vs)
-y_circ2 = maxSep[ind]*np.sin(vs)
+x_circ2 = maxSep2[ind]*np.cos(vs)
+y_circ2 = maxSep2[ind]*np.sin(vs)
 plt.plot(x[ind]+x_circ2,y[ind]+y_circ2,color='red')
 
 #Plot lminSep Circle
-x_circ2 = s_mplminSeps[ind]*np.cos(vs)
-y_circ2 = s_mplminSeps[ind]*np.sin(vs)
+x_circ2 = s_mplminSeps2[ind]*np.cos(vs)
+y_circ2 = s_mplminSeps2[ind]*np.sin(vs)
 plt.plot(x[ind]+x_circ2,y[ind]+y_circ2,color='magenta')
 #Plot lmaxSep Circle
-x_circ2 = s_mplmaxSeps[ind]*np.cos(vs)
-y_circ2 = s_mplmaxSeps[ind]*np.sin(vs)
+x_circ2 = s_mplmaxSeps2[ind]*np.cos(vs)
+y_circ2 = s_mplmaxSeps2[ind]*np.sin(vs)
 plt.plot(x[ind]+x_circ2,y[ind]+y_circ2,color='gold')
 
 #Plot Min Sep Ellipse Intersection
-plt.scatter(minSepPoints_x[ind],minSepPoints_y[ind],color='cyan')
+plt.scatter(minSepPoints2_x[ind],minSepPoints2_y[ind],color='cyan')
 #Plot Max Sep Ellipse Intersection
-plt.scatter(maxSepPoints_x[ind],maxSepPoints_y[ind],color='red')
+plt.scatter(maxSepPoints2_x[ind],maxSepPoints2_y[ind],color='red')
 #### Plot Local Min
-plt.scatter(lminSepPoints_x[ind], lminSepPoints_y[ind],color='magenta')
+plt.scatter(lminSepPoints2_x[ind], lminSepPoints2_y[ind],color='magenta')
 #### Plot Local Max Points
-plt.scatter(lmaxSepPoints_x[ind], lmaxSepPoints_y[ind],color='gold')
+plt.scatter(lmaxSepPoints2_x[ind], lmaxSepPoints2_y[ind],color='gold')
 
 #### r Intersection test
 x_circ2 = np.cos(vs)
@@ -320,16 +302,6 @@ plt.ylabel('Projected Separation in AU')
 plt.xlabel('Projected Ellipse E (rad)')
 plt.show(block=False)
 ####
-
-
-
-
-print(saltyburrito)
-
-
-
-
-
 
 
 
