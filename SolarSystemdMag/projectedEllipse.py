@@ -368,12 +368,14 @@ def calculateSeparations(xreal, yreal, mx, my):
     """ 
     #Local min and Local max must lie in the same quadrant immediately above or below the quadrant the star belongs in
     s_mp = np.asarray([np.sqrt((xreal[:,0]-mx)**2 + (yreal[:,0]+my)**2), np.sqrt((xreal[:,1]-mx)**2 + (yreal[:,1]+my)**2), np.sqrt((xreal[:,2]-mx)**2 + (yreal[:,2]+my)**2), np.sqrt((xreal[:,3]-mx)**2 + (yreal[:,3]+my)**2)]).T
+    s_pm = np.asarray([np.sqrt((xreal[:,0]+mx)**2 + (yreal[:,0]-my)**2), np.sqrt((xreal[:,1]+mx)**2 + (yreal[:,1]-my)**2), np.sqrt((xreal[:,2]+mx)**2 + (yreal[:,2]-my)**2), np.sqrt((xreal[:,3]+mx)**2 + (yreal[:,3]-my)**2)]).T
+
 
     #Using Abs because some terms are negative???
     s_absmin = np.asarray([np.sqrt((np.abs(xreal[:,0])-mx)**2 + (np.abs(yreal[:,0])-my)**2), np.sqrt((np.abs(xreal[:,1])-mx)**2 + (np.abs(yreal[:,1])-my)**2), np.sqrt((np.abs(xreal[:,2])-mx)**2 + (np.abs(yreal[:,2])-my)**2), np.sqrt((np.abs(xreal[:,3])-mx)**2 + (np.abs(yreal[:,3])-my)**2)]).T
     s_absmax = np.asarray([np.sqrt((np.abs(xreal[:,0])+mx)**2 + (np.abs(yreal[:,0])+my)**2), np.sqrt((np.abs(xreal[:,1])+mx)**2 + (np.abs(yreal[:,1])+my)**2), np.sqrt((np.abs(xreal[:,2])+mx)**2 + (np.abs(yreal[:,2])+my)**2), np.sqrt((np.abs(xreal[:,3])+mx)**2 + (np.abs(yreal[:,3])+my)**2)]).T
 
-    return s_mp, s_absmin, s_absmax
+    return s_mp, s_pm, s_absmin, s_absmax
 
 def sepsMinMaxLminLmax(s_absmin, s_absmax, s_mp, xreal, yreal, x, y):
     """ Calculates Minimum, Maximum, Local Minimum, Local Maximum for Each star
@@ -1173,11 +1175,42 @@ def sepsMinMaxLminLmax(s_absmin, s_absmax, s_mp, xreal, yreal, x, y):
 
 #     return x0, x1, x2, x3
 
+def checkResiduals(A,B,C,D,xreals2,inds,numSols):
+    residual_0 = xreals2[inds,0]**4 + A[inds]*xreals2[inds,0]**3 + B[inds]*xreals2[inds,0]**2 + C[inds]*xreals2[inds,0] + D[inds]
+    residual_1 = xreals2[inds,1]**4 + A[inds]*xreals2[inds,1]**3 + B[inds]*xreals2[inds,1]**2 + C[inds]*xreals2[inds,1] + D[inds]
+    residual_2 = np.zeros(residual_0.shape)
+    residual_3 = np.zeros(residual_0.shape)
+    if numSols > 2:
+        residual_2 = xreals2[inds,2]**4 + A[inds]*xreals2[inds,2]**3 + B[inds]*xreals2[inds,2]**2 + C[inds]*xreals2[inds,2] + D[inds]
+        if numSols > 3:
+            residual_3 = xreals2[inds,3]**4 + A[inds]*xreals2[inds,3]**3 + B[inds]*xreals2[inds,3]**2 + C[inds]*xreals2[inds,3] + D[inds]
+    residual = np.asarray([residual_0, residual_1, residual_2, residual_3]).T
+    isAll = np.all((np.real(residual) < 1e-7)*(np.imag(residual) < 1e-7))
+    maxRealResidual = np.max(np.real(residual))
+    maxImagResidual = np.max(np.imag(residual))
+    return residual, isAll, maxRealResidual, maxImagResidual
+
 def quarticCoefficients_ellipse_to_Quarticipynb(a, b, x, y, r):
+    """ Calculates coefficients of the quartic expression solving for the intersection between a circle with radius r and ellipse with semi-major axis a
+    semi-minor axis b, and the center of the circle at x and y.
+    Coefficients for the quartic of form x**4 + A*x**3 + B*x**2 + C*x + D = 0
+    """
     A = -4*a**2*x/(a**2 - b**2)
     B = 2*a**2*(a**2*b**2 - a**2*r**2 + 3*a**2*x**2 + a**2*y**2 - b**4 + b**2*r**2 - b**2*x**2 + b**2*y**2)/(a**4 - 2*a**2*b**2 + b**4)
     C = 4*a**4*x*(-b**2 + r**2 - x**2 - y**2)/(a**4 - 2*a**2*b**2 + b**4)
     D = a**4*(b**4 - 2*b**2*r**2 + 2*b**2*x**2 - 2*b**2*y**2 + r**4 - 2*r**2*x**2 - 2*r**2*y**2 + x**4 + 2*x**2*y**2 + y**4)/(a**4 - 2*a**2*b**2 + b**4)
+    return A, B, C, D
+
+def quarticCoefficients_smin_smax_lmin_lmax(a, b, x, y):
+    """ Calculates coefficients of the quartic equation solving where ds2/dxe = 0 for the distance between a point and the ellipse
+    for an ellipse with semi-major axis a, semi-minor axis b, and point at x, y
+    """
+    Gamma = np.zeros(len(a),dtype='complex128')
+    Gamma = (4*a**4 - 8*a**2*b**2 + 4*b**4)/a**2
+    A = (-8*a**2*x + 8*b**2*x)/Gamma
+    B = (-4*a**4 + 8*a**2*b**2 + 4*a**2*x**2 - 4*b**4 + 4*b**2*y**2)/Gamma
+    C = (8*a**4*x - 8*a**2*b**2*x)/Gamma
+    D = (-4*a**4*x**2)/Gamma
     return A, B, C, D
 
 def quarticSolutions_ellipse_to_Quarticipynb(A, B, C, D):
@@ -1198,17 +1231,70 @@ def quarticSolutions_ellipse_to_Quarticipynb(A, B, C, D):
     p11 = A**2/2-4*B/3
 
     #otherwise case
-    x0 = -A/4 - p10/2 - np.sqrt(p11 - 2*p6 + p8 + (2*C + p4)/p10)/2
-    x1 = -A/4 - p10/2 + np.sqrt(p11 - 2*p6 + p8 + (2*C + p4)/p10)/2
-    x2 = -A/4 + p10/2 + np.sqrt(p11 - 2*p6 + p8 + (-2*C - p4)/p10)/2
-    x3 = -A/4 + p10/2 + np.sqrt(p11 - 2*p6 + p8 + (-2*C - p4)/p10)/2
+    x0 = -A/4 - p10/2 - np.sqrt(p11 - 2*p6 - p8 + (2*C + p4)/p10)/2
+    x1 = -A/4 - p10/2 + np.sqrt(p11 - 2*p6 - p8 + (2*C + p4)/p10)/2
+    x2 = -A/4 + p10/2 - np.sqrt(p11 - 2*p6 - p8 + (-2*C - p4)/p10)/2
+    x3 = -A/4 + p10/2 + np.sqrt(p11 - 2*p6 - p8 + (-2*C - p4)/p10)/2
     zeroInds = np.where(p2 + p3**2/12 == 0)[0] #piecewise condition
     if len(zeroInds) != 0:
-        x0[zeroInds] = -A[zeroInds]/4 + p9[zeroInds]/2 - np.sqrt(p11[zeroInds] + 2*p5[zeroInds]**(1/3) + (-2*C[zeroInds] - p4[zeroInds])/p9[zeroInds])/2 
-        x1[zeroInds] = -A[zeroInds]/4 + p9[zeroInds]/2 + np.sqrt(p11[zeroInds] + 2*p5[zeroInds]**(1/3) - (2*C[zeroInds] + p4[zeroInds])/p9[zeroInds])/2  
-        x2[zeroInds] = -A[zeroInds]/4 - p9[zeroInds]/2 + np.sqrt(p11[zeroInds] + 2*p5[zeroInds]**(1/3) - (-2*C[zeroInds] - p4[zeroInds])/p9[zeroInds])/2 
-        x3[zeroInds] = -A[zeroInds]/4 - p9[zeroInds]/2 + np.sqrt(p11[zeroInds] + 2*p5[zeroInds]**(1/3) - (-2*C[zeroInds] - p4[zeroInds])/p9[zeroInds])/2
-    return x0, x1, x2, x3
+        x0[zeroInds] = -A[zeroInds]/4 - p9[zeroInds]/2 - np.sqrt(p11[zeroInds] + 2*np.cbrt(p5[zeroInds]) + (2*C[zeroInds] + p4[zeroInds])/p9[zeroInds])/2
+        x1[zeroInds] = -A[zeroInds]/4 - p9[zeroInds]/2 + np.sqrt(p11[zeroInds] + 2*np.cbrt(p5[zeroInds]) + (2*C[zeroInds] + p4[zeroInds])/p9[zeroInds])/2
+        x2[zeroInds] = -A[zeroInds]/4 + p9[zeroInds]/2 - np.sqrt(p11[zeroInds] + 2*np.cbrt(p5[zeroInds]) + (-2*C[zeroInds] - p4[zeroInds])/p9[zeroInds])/2
+        x3[zeroInds] = -A[zeroInds]/4 + p9[zeroInds]/2 + np.sqrt(p11[zeroInds] + 2*np.cbrt(p5[zeroInds]) + (-2*C[zeroInds] - p4[zeroInds])/p9[zeroInds])/2
 
-# Piecewise((-A/4 - p9/2 - sqrt(p11 + 2*p5**(1/3) + (2*C + p4)/p9)/2, Eq(p2 + p3**2/12, 0)),
-#  (-A/4 - p10/2 - sqrt(p11 - 2*p6 - p8 + (2*C + p4)/p10)/2, True))
+    delta = 256*D**3 - 192*A*C*D**2 - 128*B**2*D**2 + 144*B*C**2*D - 27*C**4\
+        + 144*A**2*B*D**2 - 6*A**2*C**2*D - 80*A*B**2*C*D + 18*A*B*C**3 + 16*B**4*D\
+        - 4*B**3*C**2 - 27*A**4*D**2 + 18*A**3*B*C*D - 4*A**3*C**3 - 4*A**2*B**3*D + A**2*B**2*C**2 #verified against wikipedia multiple times
+    assert 0 == np.count_nonzero(np.imag(delta)), 'All delta are real'
+    delta = np.real(delta)
+    P = 8*B - 3*A**2
+    assert 0 == np.count_nonzero(np.imag(P)), 'Not all P are real'
+    P = np.real(P)
+    D2 = 64*D - 16*B**2 + 16*A**2*B - 16*A*C - 3*A**4 #is 0 if the quartic has 2 double roots 
+    assert 0 == np.count_nonzero(np.imag(D2)), 'Not all D2 are real'
+    D2 = np.real(D2)
+    R = A**3 + 8*C* - 4*A*B
+    assert 0 == np.count_nonzero(np.imag(R)), 'Not all R are real'
+    R = np.real(R)
+    delta_0 = B**2 - 3*A*C + 12*D
+    assert 0 == np.count_nonzero(np.imag(delta_0)), 'Not all delta_0 are real'
+    delta_0 = np.real(delta_0)
+
+    return np.asarray([x0, x1, x2, x3]).T, delta, P, D2, R, delta_0
+
+
+
+### LEAVING THIS HERE, HAVE ALTERNATIVE
+# #### SOLUTIONS TO ds2_dxe = 0
+# phi = (a**2 - b**2)
+# theta = (-a**6 + 2*a**4*b**2 + a**4*x**2 - a**2*b**4 + a**2*b**2*y**2)
+# gamma = (a**4*x**2/(2*phi**2) - theta/(2*(a**4 - 2*a**2*b**2 + b**4)))
+# beta = (3*a**4*x**2/(64*phi**2) - theta/(16*(a**4 - 2*a**2*b**2 + b**4)))
+# alpha = (-3*a**4*x**2/(2*phi**2) + theta/(a**4 - 2*a**2*b**2 + b**4))
+# epsilon = (-a**6*x**2/(a**4 - 2*a**2*b**2 + b**4) + 2*a**2*x*(a**4*x/(2*phi) - 2*a**2*x*beta/phi)/phi)
+# gamma = (-(2*a**4*x/phi - 2*a**2*x*gamma/phi)**2/8 - alpha**3/108 + alpha*epsilon/3)
+# gorg = (a**6*x**2/(a**4 - 2*a**2*b**2 + b**4) - 2*a**2*x*(a**4*x/(2*phi) - 2*a**2*x*beta/phi)/phi - alpha**2/12)
+# mini = ((2*a**4*x/phi - 2*a**2*x*gamma/phi)**2/16 + alpha**3/216 - alpha*epsilon/6 + sqrt(gorg**3/27 + gamma**2/4))
+
+# Piecewise((a**2*x/(2*phi) - sqrt(a**4*x**2/phi**2 - 2*gamma**(1/3) - 2*theta/(3*(a**4 - 2*a**2*b**2 + b**4)))/2 - sqrt(2*a**4*x**2/phi**2 + (4*a**4*x/phi - 4*a**2*x*gamma/phi)/sqrt(a**4*x**2/phi**2 - 2*gamma**(1/3) - 2*theta/(3*(a**4 - 2*a**2*b**2 + b**4))) + 2*gamma**(1/3) - 4*theta/(3*(a**4 - 2*a**2*b**2 + b**4)))/2 
+
+# Eq(-a**6*x**2/(a**4 - 2*a**2*b**2 + b**4) + 2*a**2*x*(a**4*x/(2*phi) - 2*a**2*x*beta/phi)/phi + alpha**2/12, 0)),
+# (a**2*x/(2*phi) - sqrt(a**4*x**2/phi**2 - 2*gorg/(3*mini**(1/3)) + 2*mini**(1/3) - 2*theta/(3*(a**4 - 2*a**2*b**2 + b**4)))/2 - sqrt(2*a**4*x**2/phi**2 + (4*a**4*x/phi - 4*a**2*x*gamma/phi)/sqrt(a**4*x**2/phi**2 - 2*gorg/(3*mini**(1/3)) + 2*mini**(1/3) - 2*theta/(3*(a**4 - 2*a**2*b**2 + b**4))) + 2*gorg/(3*mini**(1/3)) - 2*mini**(1/3) - 4*theta/(3*(a**4 - 2*a**2*b**2 + b**4)))/2, True)),
+
+
+# Piecewise((a**2*x/(2*phi) - sqrt(a**4*x**2/phi**2 - 2*gamma**(1/3) - 2*theta/(3*(a**4 - 2*a**2*b**2 + b**4)))/2 + sqrt(2*a**4*x**2/phi**2 + (4*a**4*x/phi - 4*a**2*x*gamma/phi)/sqrt(a**4*x**2/phi**2 - 2*gamma**(1/3) - 2*theta/(3*(a**4 - 2*a**2*b**2 + b**4))) + 2*gamma**(1/3) - 4*theta/(3*(a**4 - 2*a**2*b**2 + b**4)))/2, 
+
+# Eq(-a**6*x**2/(a**4 - 2*a**2*b**2 + b**4) + 2*a**2*x*(a**4*x/(2*phi) - 2*a**2*x*beta/phi)/phi + alpha**2/12, 0)), 
+# (a**2*x/(2*phi) - sqrt(a**4*x**2/phi**2 - 2*gorg/(3*mini**(1/3)) + 2*mini**(1/3) - 2*theta/(3*(a**4 - 2*a**2*b**2 + b**4)))/2 + sqrt(2*a**4*x**2/phi**2 + (4*a**4*x/phi - 4*a**2*x*gamma/phi)/sqrt(a**4*x**2/phi**2 - 2*gorg/(3*mini**(1/3)) + 2*mini**(1/3) - 2*theta/(3*(a**4 - 2*a**2*b**2 + b**4))) + 2*gorg/(3*mini**(1/3)) - 2*mini**(1/3) - 4*theta/(3*(a**4 - 2*a**2*b**2 + b**4)))/2, True)),
+
+
+# Piecewise((a**2*x/(2*phi) + sqrt(a**4*x**2/phi**2 - 2*gamma**(1/3) - 2*theta/(3*(a**4 - 2*a**2*b**2 + b**4)))/2 - sqrt(2*a**4*x**2/phi**2 - (4*a**4*x/phi - 4*a**2*x*gamma/phi)/sqrt(a**4*x**2/phi**2 - 2*gamma**(1/3) - 2*theta/(3*(a**4 - 2*a**2*b**2 + b**4))) + 2*gamma**(1/3) - 4*theta/(3*(a**4 - 2*a**2*b**2 + b**4)))/2, 
+
+# Eq(-a**6*x**2/(a**4 - 2*a**2*b**2 + b**4) + 2*a**2*x*(a**4*x/(2*phi) - 2*a**2*x*beta/phi)/phi + alpha**2/12, 0)), 
+# (a**2*x/(2*phi) + sqrt(a**4*x**2/phi**2 - 2*gorg/(3*mini**(1/3)) + 2*mini**(1/3) - 2*theta/(3*(a**4 - 2*a**2*b**2 + b**4)))/2 - sqrt(2*a**4*x**2/phi**2 - (4*a**4*x/phi - 4*a**2*x*gamma/phi)/sqrt(a**4*x**2/phi**2 - 2*gorg/(3*mini**(1/3)) + 2*mini**(1/3) - 2*theta/(3*(a**4 - 2*a**2*b**2 + b**4))) + 2*gorg/(3*mini**(1/3)) - 2*mini**(1/3) - 4*theta/(3*(a**4 - 2*a**2*b**2 + b**4)))/2, True))
+
+
+# Piecewise((a**2*x/(2*phi) + sqrt(a**4*x**2/phi**2 - 2*gamma**(1/3) - 2*theta/(3*(a**4 - 2*a**2*b**2 + b**4)))/2 + sqrt(2*a**4*x**2/phi**2 - (4*a**4*x/phi - 4*a**2*x*gamma/phi)/sqrt(a**4*x**2/phi**2 - 2*gamma**(1/3) - 2*theta/(3*(a**4 - 2*a**2*b**2 + b**4))) + 2*gamma**(1/3) - 4*theta/(3*(a**4 - 2*a**2*b**2 + b**4)))/2, 
+
+# Eq(-a**6*x**2/(a**4 - 2*a**2*b**2 + b**4) + 2*a**2*x*(a**4*x/(2*phi) - 2*a**2*x*beta/phi)/phi + alpha**2/12, 0)), 
+# (a**2*x/(2*phi) + sqrt(a**4*x**2/phi**2 - 2*gorg/(3*mini**(1/3)) + 2*mini**(1/3) - 2*theta/(3*(a**4 - 2*a**2*b**2 + b**4)))/2 + sqrt(2*a**4*x**2/phi**2 - (4*a**4*x/phi - 4*a**2*x*gamma/phi)/sqrt(a**4*x**2/phi**2 - 2*gorg/(3*mini**(1/3)) + 2*mini**(1/3) - 2*theta/(3*(a**4 - 2*a**2*b**2 + b**4))) + 2*gorg/(3*mini**(1/3)) - 2*mini**(1/3) - 4*theta/(3*(a**4 - 2*a**2*b**2 + b**4)))/2, True))
