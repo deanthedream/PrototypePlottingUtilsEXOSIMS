@@ -1253,7 +1253,7 @@ def quarticSolutions_ellipse_to_Quarticipynb(A, B, C, D):
     D2 = 64*D - 16*B**2 + 16*A**2*B - 16*A*C - 3*A**4 #is 0 if the quartic has 2 double roots 
     assert 0 == np.count_nonzero(np.imag(D2)), 'Not all D2 are real'
     D2 = np.real(D2)
-    R = A**3 + 8*C* - 4*A*B
+    R = A**3 + 8*C - 4*A*B
     assert 0 == np.count_nonzero(np.imag(R)), 'Not all R are real'
     R = np.real(R)
     delta_0 = B**2 - 3*A*C + 12*D
