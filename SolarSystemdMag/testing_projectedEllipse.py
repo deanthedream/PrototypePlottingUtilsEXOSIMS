@@ -142,65 +142,65 @@ print('stop3: ' + str(stop3-start3))
 #NEW METHOD USING ANALYTICAL
 start4_new = time.time()
 A, B, C, D = quarticCoefficients_smin_smax_lmin_lmax(a.astype('complex128'), b, mx, my)
-xreal_new, delta, P, D2, R, delta_0 = quarticSolutions_ellipse_to_Quarticipynb(A.astype('complex128'), B, C, D)
-assert np.max(np.nanmin(np.abs(np.imag(xreal_new)),axis=1)) < 1e-15, 'At least one row has min > 1e-15' #this ensures each row has a solution
-#xreal_new = np.real(xreal_new)
-#xreal_new = np.abs(xreal_new) #this operation strips imaginary components
-xreal_new.real = np.abs(xreal_new)
-#xreal_new = np.abs(np.real(xreal_new)) + np.imag(xreal_new)
+xreal, delta, P, D2, R, delta_0 = quarticSolutions_ellipse_to_Quarticipynb(A.astype('complex128'), B, C, D)
+assert np.max(np.nanmin(np.abs(np.imag(xreal)),axis=1)) < 1e-15, 'At least one row has min > 1e-15' #this ensures each row has a solution
+#xreal = np.real(xreal)
+#xreal = np.abs(xreal) #this operation strips imaginary components
+xreal.real = np.abs(xreal)
+#xreal = np.abs(np.real(xreal)) + np.imag(xreal)
 stop4_new = time.time()
 print('stop4_new: ' + str(stop4_new-start4_new))
 
 
 #Technically, each row must have at least 2 solutions, but whatever
-yreal_new = ellipseYFromX(xreal_new.astype('complex128'), a, b)
-yreal_newAllRealInds = np.where(np.all(np.abs(np.imag(yreal_new)) < 1e-5,axis=1))[0]
-yreal_new[np.abs(np.imag(yreal_new)) < 1e-5] = np.real(yreal_new[np.abs(np.imag(yreal_new)) < 1e-5]) #eliminate any unreasonably small imaginary components
-yreal_newImagInds = np.where(np.any(np.abs(np.imag(yreal_new)) >= 1e-5,axis=1))[0] #inds where any of the values are imaginary
-assert len(yreal_newImagInds) + len(yreal_newAllRealInds) == n, 'For some reason, this sum does not account for all planets'
-assert len(np.intersect1d(yreal_newImagInds,yreal_newAllRealInds)) == 0, 'For some reason, this sum does not account for all planets'
-#The following 7 lines can be deleted. it just says the first 2 cols of yreal_new have the smallest imaginary component
-yrealImagArgsortInds = np.argsort(np.abs(np.imag(yreal_new[yreal_newImagInds])),axis=1)
-assert len(yreal_newImagInds) == np.count_nonzero(yrealImagArgsortInds[:,0] == 0), "Not all first indicies have smallest Imag component"
-assert len(yreal_newImagInds) == np.count_nonzero(yrealImagArgsortInds[:,1] == 1), "Not all first indicies have second smallest Imag component"
-#maxImagFirstCol = np.max(np.imag(yreal_new[yreal_newImagInds,0]))
-assert np.max(np.imag(yreal_new[yreal_newImagInds,0])) == 0, 'max y imag component of column 0 is not 0'
-#maxImagSecondCol = np.max(np.imag(yreal_new[yreal_newImagInds,1]))
-assert np.max(np.imag(yreal_new[yreal_newImagInds,1])) == 0, 'max y imag component of column 1 is not 0'
-np.max(np.imag(yreal_new[yreal_newImagInds,2])) #this is quite large
-np.max(np.imag(yreal_new[yreal_newImagInds,3])) #this is quite large
+yreal = ellipseYFromX(xreal.astype('complex128'), a, b)
+yrealAllRealInds = np.where(np.all(np.abs(np.imag(yreal)) < 1e-5,axis=1))[0]
+yreal[np.abs(np.imag(yreal)) < 1e-5] = np.real(yreal[np.abs(np.imag(yreal)) < 1e-5]) #eliminate any unreasonably small imaginary components
+yrealImagInds = np.where(np.any(np.abs(np.imag(yreal)) >= 1e-5,axis=1))[0] #inds where any of the values are imaginary
+assert len(yrealImagInds) + len(yrealAllRealInds) == n, 'For some reason, this sum does not account for all planets'
+assert len(np.intersect1d(yrealImagInds,yrealAllRealInds)) == 0, 'For some reason, this sum does not account for all planets'
+#The following 7 lines can be deleted. it just says the first 2 cols of yreal have the smallest imaginary component
+yrealImagArgsortInds = np.argsort(np.abs(np.imag(yreal[yrealImagInds])),axis=1)
+assert len(yrealImagInds) == np.count_nonzero(yrealImagArgsortInds[:,0] == 0), "Not all first indicies have smallest Imag component"
+assert len(yrealImagInds) == np.count_nonzero(yrealImagArgsortInds[:,1] == 1), "Not all first indicies have second smallest Imag component"
+#maxImagFirstCol = np.max(np.imag(yreal[yrealImagInds,0]))
+assert np.max(np.imag(yreal[yrealImagInds,0])) == 0, 'max y imag component of column 0 is not 0'
+#maxImagSecondCol = np.max(np.imag(yreal[yrealImagInds,1]))
+assert np.max(np.imag(yreal[yrealImagInds,1])) == 0, 'max y imag component of column 1 is not 0'
+np.max(np.imag(yreal[yrealImagInds,2])) #this is quite large
+np.max(np.imag(yreal[yrealImagInds,3])) #this is quite large
 
 #Initialize minSep, lminSep, lmaxSep, maxSep
-minSep = np.zeros(xreal_new.shape[0])
-maxSep = np.zeros(xreal_new.shape[0])
-lminSep = np.zeros(len(yreal_newAllRealInds))
-lmaxSep = np.zeros(len(yreal_newAllRealInds))
+minSep = np.zeros(xreal.shape[0])
+maxSep = np.zeros(xreal.shape[0])
+lminSep = np.zeros(len(yrealAllRealInds))
+lmaxSep = np.zeros(len(yrealAllRealInds))
 #Initialize minSepPoints_x, minSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y, maxSepPoints_x, maxSepPoints_y
-minSepPoints_x = np.zeros(xreal_new.shape[0])
-minSepPoints_y = np.zeros(xreal_new.shape[0])
-lminSepPoints_x = np.zeros(len(yreal_newAllRealInds))
-lminSepPoints_y = np.zeros(len(yreal_newAllRealInds))
-lmaxSepPoints_x = np.zeros(len(yreal_newAllRealInds))
-lmaxSepPoints_y = np.zeros(len(yreal_newAllRealInds))
-maxSepPoints_x = np.zeros(xreal_new.shape[0])
-maxSepPoints_y = np.zeros(xreal_new.shape[0])
+minSepPoints_x = np.zeros(xreal.shape[0])
+minSepPoints_y = np.zeros(xreal.shape[0])
+lminSepPoints_x = np.zeros(len(yrealAllRealInds))
+lminSepPoints_y = np.zeros(len(yrealAllRealInds))
+lmaxSepPoints_x = np.zeros(len(yrealAllRealInds))
+lmaxSepPoints_y = np.zeros(len(yrealAllRealInds))
+maxSepPoints_x = np.zeros(xreal.shape[0])
+maxSepPoints_y = np.zeros(xreal.shape[0])
 ###################################################################################
 #### Smin and Smax Two Real Solutions Two Imaginary Solutions #####################
 #Smin and Smax need to be calculated separately for x,y with imaginary solutions vs those without
-#For yreal_newImagInds. Smin and Smax must be either first column of second column
-assert np.all(np.real(xreal_new[yreal_newImagInds,0]) > 0), 'not all xreal components are strictly negative'
-#assert np.all(np.real(xreal_new[yreal_newImagInds,0]) < 0), 'not all xreal components are strictly negative'
-assert np.all(np.real(yreal_new[yreal_newImagInds,0]) > 0), 'not all yreal components are strictly positive'
-assert np.all(np.real(xreal_new[yreal_newImagInds,1]) > 0), 'not all xreal components are strictly positive'
-assert np.all(np.real(yreal_new[yreal_newImagInds,1]) > 0), 'not all yreal components are strictly positive'
-smm0 = np.sqrt((np.real(xreal_new[yreal_newImagInds,0])-mx[yreal_newImagInds])**2 + (np.real(yreal_new[yreal_newImagInds,0])-my[yreal_newImagInds])**2)
-smp0 = np.sqrt((np.real(xreal_new[yreal_newImagInds,0])-mx[yreal_newImagInds])**2 + (np.real(yreal_new[yreal_newImagInds,0])+my[yreal_newImagInds])**2)
-spm0 = np.sqrt((np.real(xreal_new[yreal_newImagInds,0])+mx[yreal_newImagInds])**2 + (np.real(yreal_new[yreal_newImagInds,0])-my[yreal_newImagInds])**2)
-spp0 = np.sqrt((np.real(xreal_new[yreal_newImagInds,0])+mx[yreal_newImagInds])**2 + (np.real(yreal_new[yreal_newImagInds,0])+my[yreal_newImagInds])**2)
-smm1 = np.sqrt((np.real(xreal_new[yreal_newImagInds,1])-mx[yreal_newImagInds])**2 + (np.real(yreal_new[yreal_newImagInds,1])-my[yreal_newImagInds])**2)
-smp1 = np.sqrt((np.real(xreal_new[yreal_newImagInds,1])-mx[yreal_newImagInds])**2 + (np.real(yreal_new[yreal_newImagInds,1])+my[yreal_newImagInds])**2)
-spm1 = np.sqrt((np.real(xreal_new[yreal_newImagInds,1])+mx[yreal_newImagInds])**2 + (np.real(yreal_new[yreal_newImagInds,1])-my[yreal_newImagInds])**2)
-spp1 = np.sqrt((np.real(xreal_new[yreal_newImagInds,1])+mx[yreal_newImagInds])**2 + (np.real(yreal_new[yreal_newImagInds,1])+my[yreal_newImagInds])**2)
+#For yrealImagInds. Smin and Smax must be either first column of second column
+assert np.all(np.real(xreal[yrealImagInds,0]) > 0), 'not all xreal components are strictly negative'
+#assert np.all(np.real(xreal[yrealImagInds,0]) < 0), 'not all xreal components are strictly negative'
+assert np.all(np.real(yreal[yrealImagInds,0]) > 0), 'not all yreal components are strictly positive'
+assert np.all(np.real(xreal[yrealImagInds,1]) > 0), 'not all xreal components are strictly positive'
+assert np.all(np.real(yreal[yrealImagInds,1]) > 0), 'not all yreal components are strictly positive'
+smm0 = np.sqrt((np.real(xreal[yrealImagInds,0])-mx[yrealImagInds])**2 + (np.real(yreal[yrealImagInds,0])-my[yrealImagInds])**2)
+smp0 = np.sqrt((np.real(xreal[yrealImagInds,0])-mx[yrealImagInds])**2 + (np.real(yreal[yrealImagInds,0])+my[yrealImagInds])**2)
+spm0 = np.sqrt((np.real(xreal[yrealImagInds,0])+mx[yrealImagInds])**2 + (np.real(yreal[yrealImagInds,0])-my[yrealImagInds])**2)
+spp0 = np.sqrt((np.real(xreal[yrealImagInds,0])+mx[yrealImagInds])**2 + (np.real(yreal[yrealImagInds,0])+my[yrealImagInds])**2)
+smm1 = np.sqrt((np.real(xreal[yrealImagInds,1])-mx[yrealImagInds])**2 + (np.real(yreal[yrealImagInds,1])-my[yrealImagInds])**2)
+smp1 = np.sqrt((np.real(xreal[yrealImagInds,1])-mx[yrealImagInds])**2 + (np.real(yreal[yrealImagInds,1])+my[yrealImagInds])**2)
+spm1 = np.sqrt((np.real(xreal[yrealImagInds,1])+mx[yrealImagInds])**2 + (np.real(yreal[yrealImagInds,1])-my[yrealImagInds])**2)
+spp1 = np.sqrt((np.real(xreal[yrealImagInds,1])+mx[yrealImagInds])**2 + (np.real(yreal[yrealImagInds,1])+my[yrealImagInds])**2)
 
 #Search for Smallest
 smm = np.asarray([smm0,smm1])
@@ -218,150 +218,100 @@ smp0Inds = np.where((smp0 < smm1)*(smp0 < spm1)*(smp0 < spp1))[0]
 #spp1Inds = np.where((smp0 < smm1)*(smp0 < spm1)*(smp0 < spp1))[0]
 spm1Inds = np.where((spm1 < smp0)*(spm1 < smm1)*(spm1 < spp1))[0]
 spp1Inds = np.where((spp1 < smp0)*(spp1 < spm1)*(spp1 < smm1))[0]
-assert len(yreal_newImagInds) == len(smm1Inds) + len(smp0Inds) + len(spm1Inds) + len(spp1Inds), 'Have not covered all cases'
+assert len(yrealImagInds) == len(smm1Inds) + len(smp0Inds) + len(spm1Inds) + len(spp1Inds), 'Have not covered all cases'
 if len(smm1Inds) > 0:
-    minSep[yreal_newImagInds[smm1Inds]] = smm1[smm1Inds]
-    minSepPoints_x[yreal_newImagInds[smm1Inds]] = np.real(xreal_new[yreal_newImagInds[smm1Inds],1])
-    minSepPoints_y[yreal_newImagInds[smm1Inds]] = np.real(yreal_new[yreal_newImagInds[smm1Inds],1])
+    minSep[yrealImagInds[smm1Inds]] = smm1[smm1Inds]
+    minSepPoints_x[yrealImagInds[smm1Inds]] = np.real(xreal[yrealImagInds[smm1Inds],1])
+    minSepPoints_y[yrealImagInds[smm1Inds]] = np.real(yreal[yrealImagInds[smm1Inds],1])
 if len(smp0Inds) > 0:
-    minSep[yreal_newImagInds[smp0Inds]] = smp0[smp0Inds]
-    minSepPoints_x[yreal_newImagInds[smp0Inds]] = np.real(xreal_new[yreal_newImagInds[smp0Inds],0])
-    minSepPoints_y[yreal_newImagInds[smp0Inds]] = np.real(yreal_new[yreal_newImagInds[smp0Inds],0])
+    minSep[yrealImagInds[smp0Inds]] = smp0[smp0Inds]
+    minSepPoints_x[yrealImagInds[smp0Inds]] = np.real(xreal[yrealImagInds[smp0Inds],0])
+    minSepPoints_y[yrealImagInds[smp0Inds]] = np.real(yreal[yrealImagInds[smp0Inds],0])
 if len(spm1Inds) > 0:
-    minSep[yreal_newImagInds[spm1Inds]] = smp0[spm1Inds]
-    minSepPoints_x[yreal_newImagInds[spm1Inds]] = np.real(xreal_new[yreal_newImagInds[spm1Inds],1])
-    minSepPoints_y[yreal_newImagInds[spm1Inds]] = np.real(yreal_new[yreal_newImagInds[spm1Inds],1])
+    minSep[yrealImagInds[spm1Inds]] = smp0[spm1Inds]
+    minSepPoints_x[yrealImagInds[spm1Inds]] = np.real(xreal[yrealImagInds[spm1Inds],1])
+    minSepPoints_y[yrealImagInds[spm1Inds]] = np.real(yreal[yrealImagInds[spm1Inds],1])
 if len(spp1Inds) > 0:
-    minSep[yreal_newImagInds[spp1Inds]] = spp1[spp1Inds]
-    minSepPoints_x[yreal_newImagInds[spp1Inds]] = np.real(xreal_new[yreal_newImagInds[spp1Inds],1])
-    minSepPoints_y[yreal_newImagInds[spp1Inds]] = np.real(yreal_new[yreal_newImagInds[spp1Inds],1])
+    minSep[yrealImagInds[spp1Inds]] = spp1[spp1Inds]
+    minSepPoints_x[yrealImagInds[spp1Inds]] = np.real(xreal[yrealImagInds[spp1Inds],1])
+    minSepPoints_y[yrealImagInds[spp1Inds]] = np.real(yreal[yrealImagInds[spp1Inds],1])
 #above says largest must be one of these: smm0, smp0, spm1, spp1
 smm0Inds = np.where((smm0 > smp0)*(smm0 > spm1)*(smm0 > spp0))[0]
 smp0Inds = np.where((smp0 > smm0)*(smp0 > spm1)*(smp0 > spp0))[0]
 spm1Inds = np.where((spm1 > smp0)*(spm1 > smm0)*(spm1 > spp0))[0]
 spp0Inds = np.where((spp0 > smp0)*(spp0 > spm1)*(spp0 > smm0))[0]
 if len(smm0Inds) > 0:
-    maxSep[yreal_newImagInds[smm0Inds]] = smm0[smm0Inds]
-    maxSepPoints_x[yreal_newImagInds[smm0Inds]] = np.real(xreal_new[yreal_newImagInds[smm0Inds],0])
-    maxSepPoints_y[yreal_newImagInds[smm0Inds]] = np.real(yreal_new[yreal_newImagInds[smm0Inds],0])
+    maxSep[yrealImagInds[smm0Inds]] = smm0[smm0Inds]
+    maxSepPoints_x[yrealImagInds[smm0Inds]] = np.real(xreal[yrealImagInds[smm0Inds],0])
+    maxSepPoints_y[yrealImagInds[smm0Inds]] = np.real(yreal[yrealImagInds[smm0Inds],0])
 if len(smp0Inds) > 0:
-    maxSep[yreal_newImagInds[smp0Inds]] = smp0[smp0Inds]
-    maxSepPoints_x[yreal_newImagInds[smp0Inds]] = np.real(xreal_new[yreal_newImagInds[smp0Inds],0])
-    maxSepPoints_y[yreal_newImagInds[smp0Inds]] = np.real(yreal_new[yreal_newImagInds[smp0Inds],0])
+    maxSep[yrealImagInds[smp0Inds]] = smp0[smp0Inds]
+    maxSepPoints_x[yrealImagInds[smp0Inds]] = np.real(xreal[yrealImagInds[smp0Inds],0])
+    maxSepPoints_y[yrealImagInds[smp0Inds]] = np.real(yreal[yrealImagInds[smp0Inds],0])
 if len(spm1Inds) > 0:
-    maxSep[yreal_newImagInds[spm1Inds]] = spm1[spm1Inds]
-    maxSepPoints_x[yreal_newImagInds[spm1Inds]] = np.real(xreal_new[yreal_newImagInds[spm1Inds],1])
-    maxSepPoints_y[yreal_newImagInds[spm1Inds]] = np.real(yreal_new[yreal_newImagInds[spm1Inds],1])
+    maxSep[yrealImagInds[spm1Inds]] = spm1[spm1Inds]
+    maxSepPoints_x[yrealImagInds[spm1Inds]] = np.real(xreal[yrealImagInds[spm1Inds],1])
+    maxSepPoints_y[yrealImagInds[spm1Inds]] = np.real(yreal[yrealImagInds[spm1Inds],1])
 if len(spp0Inds) > 0:
-    maxSep[yreal_newImagInds[spp0Inds]] = spp0[spp0Inds]
-    maxSepPoints_x[yreal_newImagInds[spp0Inds]] = np.real(xreal_new[yreal_newImagInds[spp0Inds],0])
-    maxSepPoints_y[yreal_newImagInds[spp0Inds]] = np.real(yreal_new[yreal_newImagInds[spp0Inds],0])
+    maxSep[yrealImagInds[spp0Inds]] = spp0[spp0Inds]
+    maxSepPoints_x[yrealImagInds[spp0Inds]] = np.real(xreal[yrealImagInds[spp0Inds],0])
+    maxSepPoints_y[yrealImagInds[spp0Inds]] = np.real(yreal[yrealImagInds[spp0Inds],0])
 
 #not currentyl assigning x,y values or lmin lmax for 2 solutions with 2 complex
 ########################################################
 #### 4 Real Solutions ##################################
-smm = np.zeros((4,len(yreal_newAllRealInds)))
-smp = np.zeros((4,len(yreal_newAllRealInds)))
-#DELETEspm = np.zeros((4,len(yreal_newAllRealInds)))
-spp = np.zeros((4,len(yreal_newAllRealInds)))
+smm = np.zeros((4,len(yrealAllRealInds)))
+smp = np.zeros((4,len(yrealAllRealInds)))
+#DELETEspm = np.zeros((4,len(yrealAllRealInds)))
+spp = np.zeros((4,len(yrealAllRealInds)))
 for i in [0,1,2,3]:
-    smm[i] = np.sqrt((np.real(xreal_new[yreal_newAllRealInds,i])-mx[yreal_newAllRealInds])**2 + (np.abs(np.real(yreal_new[yreal_newAllRealInds,i]))-my[yreal_newAllRealInds])**2)
-    smp[i] = np.sqrt((np.real(xreal_new[yreal_newAllRealInds,i])-mx[yreal_newAllRealInds])**2 + (np.abs(np.real(yreal_new[yreal_newAllRealInds,i]))+my[yreal_newAllRealInds])**2)
-    #DELETEspm[i] = np.sqrt((np.real(xreal_new[yreal_newAllRealInds,i])+mx[yreal_newAllRealInds])**2 + (np.abs(np.real(yreal_new[yreal_newAllRealInds,i]))-my[yreal_newAllRealInds])**2)
-    spp[i] = np.sqrt((np.real(xreal_new[yreal_newAllRealInds,i])+mx[yreal_newAllRealInds])**2 + (np.abs(np.real(yreal_new[yreal_newAllRealInds,i]))+my[yreal_newAllRealInds])**2)
+    smm[i] = np.sqrt((np.real(xreal[yrealAllRealInds,i])-mx[yrealAllRealInds])**2 + (np.abs(np.real(yreal[yrealAllRealInds,i]))-my[yrealAllRealInds])**2)
+    smp[i] = np.sqrt((np.real(xreal[yrealAllRealInds,i])-mx[yrealAllRealInds])**2 + (np.abs(np.real(yreal[yrealAllRealInds,i]))+my[yrealAllRealInds])**2)
+    #DELETEspm[i] = np.sqrt((np.real(xreal[yrealAllRealInds,i])+mx[yrealAllRealInds])**2 + (np.abs(np.real(yreal[yrealAllRealInds,i]))-my[yrealAllRealInds])**2)
+    spp[i] = np.sqrt((np.real(xreal[yrealAllRealInds,i])+mx[yrealAllRealInds])**2 + (np.abs(np.real(yreal[yrealAllRealInds,i]))+my[yrealAllRealInds])**2)
 smm = smm.T
 smp = smp.T
 #DELETEspm = spm.T
 spp = spp.T
 
-#DELETE
-# #### minSep
-# # Finds SXXY searching over Y
-# smmMinInds = np.argmin(smm,axis=1)
-# smpMinInds = np.argmin(smp,axis=1)
-# spmMinInds = np.argmin(spm,axis=1)
-# sppMinInds = np.argmin(spp,axis=1)
-# #All mins occur in SXX1 with the exception of 21. Do they come from another place? 2
-# #We can remove the mp and pp when searching for min. It appears none have this index for the minimum. found by np.unique(sXXMinInds)
-# sXXmins = np.asarray([smm[np.arange(len(yreal_newAllRealInds)),smmMinInds],smp[np.arange(len(yreal_newAllRealInds)),smpMinInds],spm[np.arange(len(yreal_newAllRealInds)),spmMinInds],spp[np.arange(len(yreal_newAllRealInds)),sppMinInds]]).T
-# sXXMinInds = np.argmin(sXXmins,axis=1)
-# minSep[yreal_newAllRealInds] = sXXmins[np.arange(len(yreal_newAllRealInds)),sXXMinInds]
-# #The following two asserts prove I can simply use smm to find minimum separation
-# #assert np.all(sXXMinInds == 0), '' #mostly true but might be numerically false
-# #assert np.all(smmMinInds == 1), '' #mostly true but might be numerically false
-# #convert xreal used in smin to nan so I can use nanmin and nanmax
-# sXXInds1 = np.asarray([smmMinInds,smpMinInds,spmMinInds,sppMinInds]).T
-# elimInds1 = sXXInds1[np.arange(len(yreal_newAllRealInds)),sXXMinInds]
-# # smm[np.arange(len(yreal_newAllRealInds)),elimInds1] = np.nan
-# # smp[np.arange(len(yreal_newAllRealInds)),elimInds1] = np.nan
-# # spm[np.arange(len(yreal_newAllRealInds)),elimInds1] = np.nan
-# # spp[np.arange(len(yreal_newAllRealInds)),elimInds1] = np.nan
-# minSepPoints_x[yreal_newAllRealInds] = xreal_new[yreal_newAllRealInds,elimInds1]
-# minSepPoints_y[yreal_newAllRealInds] = yreal_new[yreal_newAllRealInds,elimInds1]
+
 
 #KEEP
 #### minSep
-minSep[yreal_newAllRealInds] = smm[:,1]
-minSepPoints_x[yreal_newAllRealInds] = xreal_new[yreal_newAllRealInds,1]
-minSepPoints_y[yreal_newAllRealInds] = yreal_new[yreal_newAllRealInds,1]
+minSep[yrealAllRealInds] = smm[:,1]
+minSepPoints_x[yrealAllRealInds] = xreal[yrealAllRealInds,1]
+minSepPoints_y[yrealAllRealInds] = yreal[yrealAllRealInds,1]
 ####
-
-#DELETE
-# #### maxSep
-# # Finds SXXY searching over Y
-# smmMaxInds = np.nanargmax(smm,axis=1)
-# smpMaxInds = np.nanargmax(smp,axis=1)
-# spmMaxInds = np.nanargmax(spm,axis=1)
-# sppMaxInds = np.nanargmax(spp,axis=1)
-# #All mins occur in SXX1 with the exception of 21. Do they come from another place? 2
-# #We can remove the mp and pp when searching for min. It appears none have this index for the minimum. found by np.unique(sXXMinInds)
-# sXXmaxs = np.asarray([smm[np.arange(len(yreal_newAllRealInds)),smmMaxInds],smp[np.arange(len(yreal_newAllRealInds)),smpMaxInds],spm[np.arange(len(yreal_newAllRealInds)),spmMaxInds],spp[np.arange(len(yreal_newAllRealInds)),sppMaxInds]]).T
-# sXXMaxInds = np.nanargmax(sXXmaxs,axis=1) #CHOOSES BETWEEN smm, smp, spm, spp
-# maxSep[yreal_newAllRealInds] = sXXmaxs[np.arange(len(yreal_newAllRealInds)),sXXMaxInds]
-# #convert xreal used in smax to nan so I can use nanmin and nanmax
-# sXXInds0 = np.asarray([smmMaxInds,smpMaxInds,spmMaxInds,sppMaxInds]).T
-# elimInds0 = sXXInds0[np.arange(len(yreal_newAllRealInds)),sXXMaxInds]
-# # smm[np.arange(len(yreal_newAllRealInds)),elimInds0] = np.nan
-# # smp[np.arange(len(yreal_newAllRealInds)),elimInds0] = np.nan
-# # spm[np.arange(len(yreal_newAllRealInds)),elimInds0] = np.nan
-# # spp[np.arange(len(yreal_newAllRealInds)),elimInds0] = np.nan
-# maxSepPoints_x[yreal_newAllRealInds] = xreal_new[yreal_newAllRealInds,elimInds0]
-# maxSepPoints_y[yreal_newAllRealInds] = yreal_new[yreal_newAllRealInds,elimInds0]
-# np.unique(np.count_nonzero(np.isnan(smm),axis=1),return_counts=True)
-# assert ~np.any(elimInds0 == elimInds1), 'Oops, looks like some xreal were used for smin and smax...'
-# #assert np.all(sXXMaxInds == 0), '' #almost all follow this
-# #assert np.all(smmMaxInds == 1), '' #almost all follow this
-# #Note sometimes 3 is numerically the maximum np.unique(np.argmax(spp,axis=1),return_counts=True)
 
 #KEEP
 #### maxSep
-maxSep[yreal_newAllRealInds] = spp[:,0]
-maxSepPoints_x[yreal_newAllRealInds] = xreal_new[yreal_newAllRealInds,0]
-maxSepPoints_y[yreal_newAllRealInds] = yreal_new[yreal_newAllRealInds,0]
+maxSep[yrealAllRealInds] = spp[:,0]
+maxSepPoints_x[yrealAllRealInds] = xreal[yrealAllRealInds,0]
+maxSepPoints_y[yrealAllRealInds] = yreal[yrealAllRealInds,0]
 ####
 
 #KEEP
-smp2 = np.sqrt((np.real(xreal_new[yreal_newAllRealInds,2])-mx[yreal_newAllRealInds])**2 + (np.abs(np.real(yreal_new[yreal_newAllRealInds,2]))+my[yreal_newAllRealInds])**2)
-smp3 = np.sqrt((np.real(xreal_new[yreal_newAllRealInds,3])-mx[yreal_newAllRealInds])**2 + (np.abs(np.real(yreal_new[yreal_newAllRealInds,3]))+my[yreal_newAllRealInds])**2)
+smp2 = np.sqrt((np.real(xreal[yrealAllRealInds,2])-mx[yrealAllRealInds])**2 + (np.abs(np.real(yreal[yrealAllRealInds,2]))+my[yrealAllRealInds])**2)
+smp3 = np.sqrt((np.real(xreal[yrealAllRealInds,3])-mx[yrealAllRealInds])**2 + (np.abs(np.real(yreal[yrealAllRealInds,3]))+my[yrealAllRealInds])**2)
 smp = np.asarray([smp2,smp3]).T
 #### slmax
 slmaxInds = np.argmax(smp,axis=1)
-lmaxSep = smp[np.arange(len(yreal_newAllRealInds)),slmaxInds]
-lmaxSepPoints_x = xreal_new[yreal_newAllRealInds, 2+slmaxInds]
-lmaxSepPoints_y = yreal_new[yreal_newAllRealInds, 2+slmaxInds]
+lmaxSep = smp[np.arange(len(yrealAllRealInds)),slmaxInds]
+lmaxSepPoints_x = xreal[yrealAllRealInds, 2+slmaxInds]
+lmaxSepPoints_y = yreal[yrealAllRealInds, 2+slmaxInds]
 #### slmin
 slminInds = np.argmin(smp,axis=1)
-lminSep = smp[np.arange(len(yreal_newAllRealInds)),slminInds]
-lminSepPoints_x = xreal_new[yreal_newAllRealInds, 2+slminInds]
-lminSepPoints_y = yreal_new[yreal_newAllRealInds, 2+slminInds]
+lminSep = smp[np.arange(len(yrealAllRealInds)),slminInds]
+lminSepPoints_x = xreal[yrealAllRealInds, 2+slminInds]
+lminSepPoints_y = yreal[yrealAllRealInds, 2+slminInds]
 ####
 
 #Comment
 #Checks on minSep <= lminSep <= lmaxSep <= maxSep
 assert ~np.any(minSep == 0), 'Oops, a minSep was missed'
 assert ~np.any(maxSep == 0), 'Oops, a maxSep was missed'
-assert np.all(minSep[yreal_newAllRealInds] <= lminSep), 'Not all minSep < lminSep'
-assert np.all(maxSep[yreal_newAllRealInds] >= lmaxSep), 'Not all maxSep > lmaxSep'
+assert np.all(minSep[yrealAllRealInds] <= lminSep), 'Not all minSep < lminSep'
+assert np.all(maxSep[yrealAllRealInds] >= lmaxSep), 'Not all maxSep > lmaxSep'
 assert np.all(lminSep <= lmaxSep), 'Not all lminSep < lmaxSep'
 ################################################################################################# Done with separations
 
@@ -380,11 +330,11 @@ minSepPoints_y = minSepPoints_y*(2*bool2-1)
 maxSepPoints_x = maxSepPoints_x*(-2*bool1+1)
 maxSepPoints_y = maxSepPoints_y*(-2*bool2+1)
 #### Local Min Sep Points
-lminSepPoints_x = lminSepPoints_x*(2*bool1[yreal_newAllRealInds]-1)
-lminSepPoints_y = lminSepPoints_y*(-2*bool2[yreal_newAllRealInds]+1)
+lminSepPoints_x = lminSepPoints_x*(2*bool1[yrealAllRealInds]-1)
+lminSepPoints_y = lminSepPoints_y*(-2*bool2[yrealAllRealInds]+1)
 #### Local Max Sep Points
-lmaxSepPoints_x = lmaxSepPoints_x*(2*bool1[yreal_newAllRealInds]-1)
-lmaxSepPoints_y = lmaxSepPoints_y*(-2*bool2[yreal_newAllRealInds]+1)
+lmaxSepPoints_x = lmaxSepPoints_x*(2*bool1[yrealAllRealInds]-1)
+lmaxSepPoints_y = lmaxSepPoints_y*(-2*bool2[yrealAllRealInds]+1)
 
 
 #APPLY BOOLEAN OPERATIONS TO GET _X PTS IN CORRECT QUADRANTS
@@ -424,8 +374,8 @@ plt.scatter(minSepPoints_x[ind],minSepPoints_y[ind],color='cyan')
 #Plot Max Sep Ellipse Intersection
 plt.scatter(maxSepPoints_x[ind],maxSepPoints_y[ind],color='red')
 
-if ind in yreal_newAllRealInds:
-    tind = np.where(yreal_newAllRealInds == ind)[0]
+if ind in yrealAllRealInds:
+    tind = np.where(yrealAllRealInds == ind)[0]
     #Plot lminSep Circle
     x_circ2 = lminSep[tind]*np.cos(vs)
     y_circ2 = lminSep[tind]*np.sin(vs)
@@ -445,49 +395,6 @@ if ind in yreal_newAllRealInds:
 # plt.plot(x[ind]+x_circ2,y[ind]+y_circ2,color='green')
 
 plt.show(block=False)
-
-
-
-
-
-# #DELETEyreal_new2 = ellipseYFromX(np.real(xreal_new).astype('complex128'), a, b)
-# s_mp_new, s_pm_new, s_absmin_new, s_absmax_new = calculateSeparations(xreal_new, yreal_new, mx, my)
-# assert np.all(np.nanmin(s_absmin_new,axis=1) < np.nanmin(s_absmax_new,axis=1)), 'minimum of s_absmin_new < maximum of s_absmax_new'
-# np.count_nonzero(np.nanmin(s_absmin_new,axis=1) < np.nanmin(s_pm_new,axis=1))
-# np.count_nonzero(np.nanmin(s_absmin_new,axis=1) < np.nanmin(s_mp_new,axis=1))
-# residual_new, isAll_new, maxRealResidual_new, maxImagResidual_new = checkResiduals(A,B,C,D,xreal_new,np.arange(len(xreal_new)),4)
-
-# #### assign nans
-# #nanmask = (np.imag(xreal_new) > 2.5e-5) #where imaginary numbers are dominant
-
-# #### Smin, Smax, Lmin, Lmax Root Types For Each Planet #######################################################
-# # If delta > 0 and P < 0 and D < 0 four roots all real or none
-# allRealDistinctInds = np.where((delta > 0)*(P < 0)*(D2 < 0))[0] #METHOD 1, out of 10000, this found 1638, missing ~54
-# residual_allreal, isAll_allreal, maxRealResidual_allreal, maxImagResidual_allreal = checkResiduals(A,B,C,D,xreal_new,allRealDistinctInds,4)
-# #Check residual are sufficiently small
-# assert np.max(residual_allreal) < 1e-9, 'Not all residual_allreal detected using delta are sufficiently small'
-
-# # If delta < 0, two distinct real roots, two complex
-# xrealsImagInds = np.argsort(np.abs(np.imag(xreal_new)),axis=1)
-# xrealsImagInds2 = np.asarray([xrealsImagInds[:,0],xrealsImagInds[:,1]])
-# del xrealsImagInds
-# xrealOfSmallest2Imags = np.real(xreal_new[np.arange(len(a)),xrealsImagInds2]).T
-# ximagOfSmallest2Imags = np.imag(xreal_new[np.arange(len(a)),xrealsImagInds2]).T
-# twoRealTwoComplexInds = np.where((np.abs(ximagOfSmallest2Imags[:,0]) < 1e-9)*(np.abs(ximagOfSmallest2Imags[:,1]) < 1e-9)*~((delta > 0)*(P < 0)*(D2 < 0)))[0]
-# del ximagOfSmallest2Imags
-# xrealsTwoRealTwoComplex = np.real(np.asarray([xreal_new[twoRealTwoComplexInds,xrealsImagInds2[0,twoRealTwoComplexInds]],xreal_new[twoRealTwoComplexInds,xrealsImagInds2[1,twoRealTwoComplexInds]]]).T)
-# residual_twoRealTwoComplex, isAll_twoRealTwoComplex, maxRealResidual_twoRealTwoComplex, maxImagResidual_twoRealTwoComplex = checkResiduals(A[twoRealTwoComplexInds],B[twoRealTwoComplexInds],C[twoRealTwoComplexInds],D[twoRealTwoComplexInds],xrealsTwoRealTwoComplex,np.arange(len(xrealsTwoRealTwoComplex)),2)
-# #Check residual are sufficiently small
-# #assert np.max(residual_twoRealTwoComplex) < 1e-9, 'Not all residual_twoRealTwoComplex detected using delta are sufficiently small'
-# #Check ind intersection with allreal
-# assert len(np.intersect1d(allRealDistinctInds,twoRealTwoComplexInds)) == 0, 'There is intersection between Two Real Distinct and the 4 real solution inds, investigate'
-
-# tmp = np.zeros((len(twoRealTwoComplexInds), 2)) + np.nan
-# xreal_new[twoRealTwoComplexInds] = np.concatenate((xrealsTwoRealTwoComplex, tmp), axis=1)  
-# del tmp
-# minSepPoints2_x, minSepPoints2_y, maxSepPoints2_x, maxSepPoints2_y, lminSepPoints2_x, lminSepPoints2_y, lmaxSepPoints2_x, lmaxSepPoints2_y, minSep2, maxSep2, s_mplminSeps2, s_mplmaxSeps2 = sepsMinMaxLminLmax(s_absmin_new, s_absmax_new, s_mp_new, xreal_new, yreal_new, x, y)
-# np.count_nonzero(np.abs(np.imag(s_mplminSeps2))>1e-5) #finds large imaginary component values and counts how many there are
-# np.count_nonzero(np.abs(minSep2 - s_mplminSeps2) < 1e-5)
 
 
 # #Note: the solving method breaks down when the inclination is nearly zero and the star 
@@ -520,7 +427,7 @@ plt.show(block=False)
 #### Memory Usage
 memories = [getsizeof(inc),getsizeof(W),getsizeof(w),getsizeof(sma),getsizeof(e),getsizeof(p),getsizeof(Rp),getsizeof(dmajorp),getsizeof(dminorp),getsizeof(Psi),getsizeof(psi),getsizeof(theta_OpQ_X),\
 getsizeof(theta_OpQp_X),getsizeof(dmajorp_v2),getsizeof(dminorp_v2),getsizeof(Psi_v2),getsizeof(psi_v2),getsizeof(Op),getsizeof(x),getsizeof(y),getsizeof(Phi),getsizeof(a),getsizeof(b),\
-getsizeof(mx),getsizeof(my),getsizeof(xreal),getsizeof(imag),getsizeof(yreal),getsizeof(s_mp),getsizeof(s_absmin),getsizeof(s_absmax),getsizeof(minSepPoints_x),getsizeof(minSepPoints_y),\
+getsizeof(mx),getsizeof(my),getsizeof(xreal),getsizeof(yreal),getsizeof(s_mp),getsizeof(s_absmin),getsizeof(s_absmax),getsizeof(minSepPoints_x),getsizeof(minSepPoints_y),\
 getsizeof(maxSepPoints_x),getsizeof(maxSepPoints_y),getsizeof(lminSepPoints_x),getsizeof(lminSepPoints_y),getsizeof(lmaxSepPoints_x),getsizeof(lmaxSepPoints_y),getsizeof(minSep),\
 getsizeof(maxSep),getsizeof(s_mplminSeps),getsizeof(s_mplmaxSeps)]
 totalMemoryUsage = np.sum(memories)
