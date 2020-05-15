@@ -192,6 +192,454 @@ totalMemoryUsage = np.sum(memories)
 print('Total Data Used: ' + str(totalMemoryUsage/10**9) + ' GB')
 ####
 
+#### Plot separation vs vs parameter
+num=961
+plt.close(num)
+fig = plt.figure(num=num)
+Erange = np.linspace(start=0.,stop=2*np.pi,num=400)
+xellipsetmp = a[ind]*np.cos(Erange)
+yellipsetmp = b[ind]*np.sin(Erange)
+septmp = np.sqrt((xellipsetmp - x[ind])**2 + (yellipsetmp - y[ind])**2)
+plt.plot(Erange,septmp,color='black')
+plt.plot([0,2.*np.pi],[0,0],color='black',linestyle='--') #0 sep line
+plt.plot([0,2*np.pi],[minSep[ind],minSep[ind]],color='cyan')
+plt.plot([0,2*np.pi],[maxSep[ind],maxSep[ind]],color='red')
+if ind in yrealAllRealInds:
+    tind = np.where(yrealAllRealInds == ind)[0]
+    plt.plot([0,2*np.pi],[lminSep[tind],lminSep[tind]],color='magenta')
+    plt.plot([0,2*np.pi],[lmaxSep[tind],lmaxSep[tind]],color='gold')
+plt.plot([0,2*np.pi],[1,1],color='green')
+plt.xlim([0,2.*np.pi])
+plt.ylabel('Projected Separation in AU')
+plt.xlabel('Projected Ellipse E (rad)')
+plt.show(block=False)
+####
+
+
+
+#### Ellipse Circle Intersection
+#### Testing ellipse_to_Quartic solution
+r = np.ones(len(a),dtype='complex128')
+a.astype('complex128')
+b.astype('complex128')
+mx.astype('complex128')
+my.astype('complex128')
+r.astype('complex128')
+A, B, C, D = quarticCoefficients_ellipse_to_Quarticipynb(a, b, mx, my, r)
+xreal2, delta, P, D2, R, delta_0 = quarticSolutions_ellipse_to_Quarticipynb(A, B, C, D)
+yreal2 = ellipseYFromX(xreal2.astype('complex128'), a, b)
+
+#### All Real Inds
+#Where r is...
+gtMinSepBool = (minSep[yrealAllRealInds] < r[yrealAllRealInds])
+ltMaxSepBool = (maxSep[yrealAllRealInds] >= r[yrealAllRealInds])
+gtLMaxSepBool = (lmaxSep < r[yrealAllRealInds])
+ltLMaxSepBool = (lmaxSep > r[yrealAllRealInds])
+gtLMinSepBool = (lminSep <= r[yrealAllRealInds])
+ltLMinSepBool = (lminSep > r[yrealAllRealInds])
+
+#Two intersections on same y-side of projected ellipse
+twoIntSameYInds = np.where(gtMinSepBool*ltLMinSepBool)[0]
+#Four intersections total
+fourIntInds = np.where(gtLMinSepBool*ltLMaxSepBool)[0]
+#Two intersections opposite x-side
+twoIntOppositeXInds = np.where(ltMaxSepBool*gtLMaxSepBool)[0]
+
+#Solution Checks
+assert np.max(np.imag(xreal2[yrealAllRealInds[fourIntInds]])) < 1e-7, 'an Imag component of the all reals is too low!'
+
+
+#### Four Intersection Points
+#DELETEfourInt_x = np.real(xreal2[yrealAllRealInds[fourIntInds]])
+fourInt_dx = (np.real(xreal2[yrealAllRealInds[fourIntInds]]).T - mx[yrealAllRealInds[fourIntInds]]).T
+fourIntSortInds = np.argsort(fourInt_dx, axis=1)
+sameYOppositeXInds = fourIntSortInds[:,0]
+assert np.all(sameYOppositeXInds==0), 'not all 0'
+sameYXInds = fourIntSortInds[:,3]
+assert np.all(sameYXInds==3), 'not all 3'
+oppositeYOppositeXInds = fourIntSortInds[:,1]
+assert np.all(oppositeYOppositeXInds==1), 'not all 1'
+oppositeYSameXInds = fourIntSortInds[:,2]
+assert np.all(oppositeYSameXInds==2), 'not all 2'
+fourInt_y = np.zeros((len(fourIntInds),4))
+fourInt_x = np.zeros((len(fourIntInds),4))
+fourInt_x[:,0] = xreal2[yrealAllRealInds[fourIntInds],sameYOppositeXInds]
+fourInt_x[:,1] = xreal2[yrealAllRealInds[fourIntInds],sameYXInds]
+fourInt_x[:,2] = xreal2[yrealAllRealInds[fourIntInds],oppositeYOppositeXInds]
+fourInt_x[:,3] = xreal2[yrealAllRealInds[fourIntInds],oppositeYSameXInds]
+fourInt_y = ellipseYFromX(np.abs(fourInt_x), a[yrealAllRealInds[fourIntInds]], b[yrealAllRealInds[fourIntInds]])
+fourInt_y[:,2] = -fourInt_y[:,2]
+fourInt_y[:,3] = -fourInt_y[:,3]
+#Quadrant Star Belongs to
+bool1 = x > 0
+bool2 = y > 0
+#Quadrant 1 if T,T
+#Quadrant 2 if F,T
+#Quadrant 3 if F,F
+#Quadrant 4 if T,F
+#### Four Intercept Points
+fourInt_x = (fourInt_x.T*(2*bool1[yrealAllRealInds[fourIntInds]]-1)).T
+fourInt_y = (fourInt_y.T*(2*bool2[yrealAllRealInds[fourIntInds]]-1)).T
+####
+#### Two Intersection Points twoIntSameYInds
+twoIntSameY_x = np.zeros((len(twoIntSameYInds),2))
+twoIntSameY_y = np.zeros((len(twoIntSameYInds),2))
+assert np.max(np.imag(xreal2[yrealAllRealInds[twoIntSameYInds],0])) < 1e-12, ''
+twoIntSameY_x[:,0] = np.real(xreal2[yrealAllRealInds[twoIntSameYInds],0])
+smallImagInds = np.where(np.abs(np.imag(xreal2[yrealAllRealInds[twoIntSameYInds],1])) < 1e-10)[0]
+largeImagInds = np.where(np.abs(np.imag(xreal2[yrealAllRealInds[twoIntSameYInds],1])) > 1e-10)[0]
+twoIntSameY_x[smallImagInds,1] = np.real(xreal2[yrealAllRealInds[twoIntSameYInds[smallImagInds]],1])
+twoIntSameY_x[largeImagInds,1] = np.real(xreal2[yrealAllRealInds[twoIntSameYInds[largeImagInds]],3])
+twoIntSameY_y = np.asarray([np.sqrt(b[yrealAllRealInds[twoIntSameYInds]]**2*(1-twoIntSameY_x[:,0]**2/a[yrealAllRealInds[twoIntSameYInds]]**2)),\
+        np.sqrt(b[yrealAllRealInds[twoIntSameYInds]]**2*(1-twoIntSameY_x[:,1]**2/a[yrealAllRealInds[twoIntSameYInds]]**2))]).T
+twoIntSameY_y = (twoIntSameY_y.T*(2*bool2[yrealAllRealInds[twoIntSameYInds]]-1)).T
+#Quadrant Star Belongs to
+bool1 = x > 0
+bool2 = y > 0
+#Quadrant 1 if T,T
+#Quadrant 2 if F,T
+#Quadrant 3 if F,F
+#Quadrant 4 if T,F
+twoIntSameY_x = (twoIntSameY_x.T*(2*bool1[yrealAllRealInds[twoIntSameYInds]]-1)).T
+twoIntSameY_y = (twoIntSameY_y.T*(2*bool2[yrealAllRealInds[twoIntSameYInds]]-1)).T
+####
+#### Two Intersection Points twoIntOppositeXInds
+twoIntOppositeX_x = np.zeros((len(twoIntOppositeXInds),2))
+twoIntOppositeX_y = np.zeros((len(twoIntOppositeXInds),2))
+assert np.max(np.imag(xreal2[yrealAllRealInds[twoIntOppositeXInds],0])) < 1e-12, ''
+twoIntOppositeX_x[:,0] = np.real(xreal2[yrealAllRealInds[twoIntOppositeXInds],0])
+twoIntOppositeX_x[:,1] = np.real(xreal2[yrealAllRealInds[twoIntOppositeXInds],1])
+twoIntOppositeX_y = np.asarray([np.sqrt(b[yrealAllRealInds[twoIntOppositeXInds]]**2*(1-np.abs(twoIntOppositeX_x[:,0])**2/a[yrealAllRealInds[twoIntOppositeXInds]]**2)),\
+        np.sqrt(b[yrealAllRealInds[twoIntOppositeXInds]]**2*(1-np.abs(twoIntOppositeX_x[:,1])**2/a[yrealAllRealInds[twoIntOppositeXInds]]**2))]).T
+twoIntOppositeX_x = (twoIntOppositeX_x.T*(-2*bool1[yrealAllRealInds[twoIntOppositeXInds]]+1)).T
+twoIntOppositeX_y[:,1] = -twoIntOppositeX_y[:,1]
+#Quadrant Star Belongs to
+bool1 = x > 0
+bool2 = y > 0
+#Quadrant 1 if T,T
+#Quadrant 2 if F,T
+#Quadrant 3 if F,F
+#Quadrant 4 if T,F
+twoIntOppositeX_x = (twoIntOppositeX_x.T*(2*bool1[yrealAllRealInds[twoIntOppositeXInds]]-1)).T
+twoIntOppositeX_y = (twoIntOppositeX_y.T*(2*bool2[yrealAllRealInds[twoIntOppositeXInds]]-1)).T
+####
+
+
+#Testing a hypothesis
+xIntercept = a/2 - b**2/(2*a)
+#yline = mx*a/b - a**2/(2*b) + b/2 #between first quadrant a,b
+yline = -mx*a/b + a**2/(2*b) - b/2 #between 4th quadrant a,b
+#DLEETErelxInds = np.where(mx < xIntercept)[0]
+xltXIntercept = np.where(mx <= xIntercept)[0]
+xgtXIntercept = np.where(mx > xIntercept)[0]
+yaboveInds = np.where((my > yline)*(mx > xIntercept))[0]
+ybelowInds = np.where((my < yline)*(mx > xIntercept))[0]
+intersect1 = np.intersect1d(np.concatenate((xltXIntercept,yaboveInds)),yrealAllRealInds)
+intersect2 = np.intersect1d(ybelowInds,yrealAllRealInds)
+print(len(intersect1))
+print(len(yrealAllRealInds))
+print(len(np.concatenate((xltXIntercept,yaboveInds))))
+print(len(intersect2))
+yaboveInds2 = np.where((my > yline)*(mx < xIntercept))[0]
+ybelowInds2 = np.where((my < yline)*(mx < xIntercept))[0]
+inter3 = np.intersect1d(yaboveInds2,yrealAllRealInds)
+inter4 = np.intersect1d(ybelowInds2,yrealAllRealInds)
+inter5 = np.intersect1d(xgtXIntercept,yrealAllRealInds)
+inter6 = np.intersect1d(yaboveInds2,yrealImagInds)
+inter7 = np.intersect1d(ybelowInds2,yrealImagInds)
+inter8 = np.intersect1d(xgtXIntercept,yrealImagInds)
+print(len(inter3))
+print(len(inter4))
+print(len(inter5))
+print(len(inter6))
+print(len(inter7))
+print(len(inter8))
+plt.close(1000)
+plt.figure(1000)
+# plt.scatter(x[yaboveInds],yline[yaboveInds] - y[yaboveInds],color='blue')
+# plt.scatter(x[ybelowInds],yline[ybelowInds] - y[ybelowInds],color='red')
+# yrealAllRealInds
+# yrealImagInds
+# plt.scatter(mx,my,color='blue')
+# plt.scatter(mx[yrealAllRealInds]-xIntercept[yrealAllRealInds],my[yrealAllRealInds]-yline[yrealAllRealInds],color='blue',s=1)
+# plt.scatter(mx[yrealImagInds]-xIntercept[yrealImagInds],my[yrealImagInds] - yline[yrealImagInds],color='red',s=1)
+#plt.scatter(mx[xltXIntercept]/a[xltXIntercept],my[xltXIntercept]/b[xltXIntercept],color='blue',s=1)
+# plt.scatter(mx[yrealAllRealInds]/a[yrealAllRealInds],my[yrealAllRealInds]-yline[yrealAllRealInds],color='blue',s=1)
+# plt.scatter(mx[yrealImagInds]/a[yrealImagInds],my[yrealImagInds] - yline[yrealImagInds],color='red',s=1)
+
+# ## GOOD KEEP
+# plt.scatter(mx[xgtXIntercept]/a[xgtXIntercept],my[xgtXIntercept]-yline[xgtXIntercept],color='blue',s=1)
+# plt.scatter(mx[yaboveInds2]/a[yaboveInds2],my[yaboveInds2]-yline[yaboveInds2],color='blue',s=1)
+# plt.scatter(mx[ybelowInds2]/a[ybelowInds2],my[ybelowInds2]-yline[ybelowInds2],color='red',s=1)
+# ##
+
+## GOOD KEEP
+plt.scatter(mx[yrealAllRealInds]/a[yrealAllRealInds],my[yrealAllRealInds]-yline[yrealAllRealInds],color='blue',s=1)
+#DELETEplt.scatter(mx[yaboveInds2]/a[yaboveInds2],my[yaboveInds2]-yline[yaboveInds2],color='blue',s=1)
+plt.scatter(mx[yrealImagInds]/a[yrealImagInds],my[yrealImagInds]-yline[yrealImagInds],color='red',s=1)
+##
+
+plt.plot([0,np.max(x)],[0,0],color='black')
+#plt.yscale('log')
+plt.xlim([0,0.7])
+plt.ylim([-6,4])
+plt.show(block=False)
+
+
+
+
+
+#### ONLY 2 Real Inds (No Local Min/Max)
+#DELETEgtMaxSepInds = np.where(maxSep[yrealImagInds] < r[yrealImagInds])[0]
+#DELETEltMinSepInds = np.where(r[yrealImagInds] < minSep[yrealImagInds])[0]
+sepsInsideInds = np.where((maxSep[yrealImagInds] >= r[yrealImagInds]) & (r[yrealImagInds] >= minSep[yrealImagInds]))[0] #inds where r is within the minimum and maximum separations
+only2RealInds = yrealImagInds[sepsInsideInds] #indicies of planets with only 2 real interesections
+#lets try usnig separation bounds
+#We will calculate separation at [0,+/-b] and [+/-a,0]
+sepbp = np.sqrt(mx[only2RealInds]**2+(b[only2RealInds]+my[only2RealInds])**2)
+sepbm = np.sqrt(mx[only2RealInds]**2+(b[only2RealInds]-my[only2RealInds])**2)
+sepap = np.sqrt((a[only2RealInds]+mx[only2RealInds])**2+my[only2RealInds]**2)
+sepam = np.sqrt((a[only2RealInds]-mx[only2RealInds])**2+my[only2RealInds]**2)
+
+#Bisector Points
+#Each quadrant has a bisector where [0,b] and [a,0] distances are equal.
+#The bisector line goes through point [a/2,b/2] and has slope 
+bisect_slopes = a[only2RealInds]/b[only2RealInds]
+bisect_yintercept = b[only2RealInds]/2 - a[only2RealInds]**2/(2*b[only2RealInds])
+#THINKING THIS CAN BE USED TO DETERMINE QUADRANTS OF INTERSECTIONS
+
+
+#Types of Star Locations In Projected Ellipse
+typeInds0 = np.where(sepap < sepbp)[0]
+typeInds1 = np.where(sepbp < sepam)[0]
+typeInds2 = np.where((sepam < sepbp)*(sepbp < sepap)*(sepbm < sepam))[0]
+typeInds3 = np.where(sepam < sepbm)[0]
+print(len(typeInds0))
+print(len(typeInds1))
+print(len(typeInds2))
+print(len(typeInds3))
+
+xIntersectionsOnly2 = np.zeros((len(only2RealInds),2))
+yIntersectionsOnly2 = np.zeros((len(only2RealInds),2))
+#Separation Order For Each Location Type
+#Intersection quadrants for each star location type
+# #Type0 sepbm, sepam, sepap, sepbp
+#     if (r[yrealImagInds] < sepbm):
+#         #two intersections occur in quadrant 1
+#         #np.argmax(np.real(xreal2[only2RealInds,0:2]),axis=1)
+#     if (sepbm < r[yrealImagInds])*(r[yrealImagInds] < sepam):
+#         #intersection in quadrant 1, intersection in quadrant 2
+#     if (sepam < r[yrealImagInds])*(r[yrealImagInds] < sepap):
+#         #intersection in quadrant 4, intersection in quadrant 2
+#     if (sepap < r[yrealImagInds])*(r[yrealImagInds] < sepbp):
+#         #intersection in quadrant 3, intersection in quadrant 4
+#     if (sepbp < r[yrealImagInds]):
+#         #two intersections occur in quadrant 3
+# #Type1 sepbm, sepbp, sepam, sepap #NOTE: Type1 should not be yrealImagInds
+#     if (r[yrealImagInds] < sepbm):
+#         #two intersections occur in quadrant 1
+#     if (sepbm < r[yrealImagInds])*(r[yrealImagInds] < sepbp):
+#         #intersection in quadrant 1, intersection in quadrant 2
+#     if (sepbp < r[yrealImagInds])*(r[yrealImagInds] < sepam):
+#         #intersection in quadrant 1, intersection in quadrant 2
+#         #intersection in quadrant 3, intersection in quadrant 4
+#     if (sepam < r[yrealImagInds])*(r[yrealImagInds] < sepap)
+#         #intersection in quadrant 2, intersection in quadrant 3
+#     if (sepap < r[yrealImagInds]):
+#         #two intersections in quadrant 3
+# #Type2 sepbm, sepam, sepbp, sepap
+#     if (r[yrealImagInds] < sepbm):
+#         #two intersections in quadrant 1
+#     if (sepbm < r[yrealImagInds])*(r[yrealImagInds] < sepam):
+#         #intersection in quadrant 1, intersection in quadrant 2
+#     if (sepam < r[yrealImagInds])*(r[yrealImagInds] < sepbp):
+#         #intersection in quadrant4, intersection in quadrant 2
+#     if (sepbp < r[yrealImagInds])*(r[yrealImagInds] < sepap):
+#         #intersection in quadrant 2, intersection in quadrant 3
+#     if (sepap < r[yrealImagInds]):
+#         #two intersectin in quadrant 3
+# #Type3 sepam, sepbm, sepbp, sepap
+#     if (r[yrealImagInds] < sepam):
+#         #two intersections in quadrant 1
+#     if (sepam < r[yrealImagInds])*(r[yrealImagInds] < sepbm):
+#         #intersection in quadrant 1, intersection in quadrant 4
+#     if (sepbm < r[yrealImagInds])*(r[yrealImagInds] < sepbp):
+#         #intersection in quadrant 2, intersection in quadrant 4
+#     if (sepbp < r[yrealImagInds])*(r[yrealImagInds] < sepap):
+#         #intersection in quadrant 2, intersection in quadrant 3
+#     if (sepap < r[yrealImagInds]):
+#         #two intersection in quadrant 3
+
+#With Inds
+#Type0
+type0_0Inds = np.where((sepap < sepbp)*(r[only2RealInds] < sepbm))[0]
+xIntersectionsOnly2[type0_0Inds] = np.real(xreal2[only2RealInds[type0_0Inds],0:2])
+yIntersectionsOnly2[type0_0Inds] = np.real(yreal2[only2RealInds[type0_0Inds],0:2])
+type0_1Inds = np.where((sepap < sepbp)*(sepbm < r[only2RealInds])*(r[only2RealInds] < sepam))[0]
+xIntersectionsOnly2[type0_1Inds] = np.real(np.asarray([xreal2[only2RealInds[type0_1Inds],0],xreal2[only2RealInds[type0_1Inds],1]]).T) #-x is already in solution
+yIntersectionsOnly2[type0_1Inds] = np.real(yreal2[only2RealInds[type0_1Inds],0:2])
+type0_2Inds = np.where((sepap < sepbp)*(sepam < r[only2RealInds])*(r[only2RealInds] < sepap))[0]
+xIntersectionsOnly2[type0_2Inds] = np.real(np.asarray([xreal2[only2RealInds[type0_2Inds],0],xreal2[only2RealInds[type0_2Inds],1]]).T) #-x is already in solution
+yIntersectionsOnly2[type0_2Inds] = np.real(np.asarray([yreal2[only2RealInds[type0_2Inds],0],-yreal2[only2RealInds[type0_2Inds],1]]).T)
+type0_3Inds = np.where((sepap < sepbp)*(sepap < r[only2RealInds])*(r[only2RealInds] < sepbp))[0]
+xIntersectionsOnly2[type0_3Inds] = np.real(np.asarray([xreal2[only2RealInds[type0_3Inds],0],xreal2[only2RealInds[type0_3Inds],1]]).T) #-x is already in solution
+yIntersectionsOnly2[type0_3Inds] = np.real(np.asarray([-yreal2[only2RealInds[type0_3Inds],0],-yreal2[only2RealInds[type0_3Inds],1]]).T)
+type0_4Inds = np.where((sepap < sepbp)*(sepbp < r[only2RealInds]))[0]
+xIntersectionsOnly2[type0_4Inds] = np.real(np.asarray([xreal2[only2RealInds[type0_4Inds],0],xreal2[only2RealInds[type0_4Inds],1]]).T) #-x is already in solution
+yIntersectionsOnly2[type0_4Inds] = np.real(np.asarray([-yreal2[only2RealInds[type0_4Inds],0],-yreal2[only2RealInds[type0_4Inds],1]]).T)
+    # if (r[yrealImagInds] < sepbm):
+    #     #two intersections occur in quadrant 1
+    #     #np.argmax(np.real(xreal2[only2RealInds,0:2]),axis=1)
+    # if (sepbm < r[yrealImagInds])*(r[yrealImagInds] < sepam):
+    #     #intersection in quadrant 1, intersection in quadrant 2
+
+    # if (sepam < r[yrealImagInds])*(r[yrealImagInds] < sepap):
+    #     #intersection in quadrant 4, intersection in quadrant 2
+    # if (sepap < r[yrealImagInds])*(r[yrealImagInds] < sepbp):
+    #     #intersection in quadrant 3, intersection in quadrant 4
+    # if (sepbp < r[yrealImagInds]):
+    #     #two intersections occur in quadrant 3
+#TODO FIX ALL THE STUFF HERE. FIRST FIND WHEN TYPE 1 Situations Occur (Should they have 4 real solutions always?)
+type1_0Inds = np.where((sepbp < sepam)*(r[only2RealInds] < sepbm))[0]
+xIntersectionsOnly2[type1_0Inds] = np.real(xreal2[only2RealInds[type1_0Inds],0:2])
+yIntersectionsOnly2[type1_0Inds] = np.real(yreal2[only2RealInds[type1_0Inds],0:2])
+type1_1Inds = np.where((sepbp < sepam)*(sepbm < r[only2RealInds])*(r[only2RealInds] < sepbp))[0]
+xIntersectionsOnly2[type1_1Inds] = np.real(np.asarray([-xreal2[only2RealInds[type1_1Inds],0],xreal2[only2RealInds[type1_1Inds],1]]).T)
+yIntersectionsOnly2[type1_1Inds] = np.real(np.asarray([yreal2[only2RealInds[type1_1Inds],0],yreal2[only2RealInds[type1_1Inds],1]]).T)
+type1_2Inds = np.where((sepbp < sepam)*(sepbp < r[only2RealInds])*(r[only2RealInds] < sepam))[0]
+xIntersectionsOnly2[type1_2Inds] = np.real(np.asarray([-xreal2[only2RealInds[type1_2Inds],0],xreal2[only2RealInds[type1_2Inds],1]]).T)
+yIntersectionsOnly2[type1_2Inds] = np.real(np.asarray([yreal2[only2RealInds[type1_2Inds],0],yreal2[only2RealInds[type1_2Inds],1]]).T)
+type1_3Inds = np.where((sepbp < sepam)*(sepam < r[only2RealInds])*(r[only2RealInds] < sepap))[0]
+xIntersectionsOnly2[type1_3Inds] = np.real(np.asarray([-xreal2[only2RealInds[type1_3Inds],0],-xreal2[only2RealInds[type1_3Inds],1]]).T)
+yIntersectionsOnly2[type1_3Inds] = np.real(np.asarray([yreal2[only2RealInds[type1_3Inds],0],-yreal2[only2RealInds[type1_3Inds],1]]).T)
+type1_4Inds = np.where((sepbp < sepam)*(sepap < r[only2RealInds]))[0]
+xIntersectionsOnly2[type1_4Inds] = np.real(np.asarray([-xreal2[only2RealInds[type1_4Inds],0],-xreal2[only2RealInds[type1_4Inds],1]]).T)
+yIntersectionsOnly2[type1_4Inds] = np.real(np.asarray([-yreal2[only2RealInds[type1_4Inds],0],-yreal2[only2RealInds[type1_4Inds],1]]).T)
+#Type1 sepbm, sepbp, sepam, sepap #NOTE: Type1 should not be yrealImagInds
+    # if (r[yrealImagInds] < sepbm):
+    #     #two intersections occur in quadrant 1
+    # if (sepbm < r[yrealImagInds])*(r[yrealImagInds] < sepbp):
+    #     #intersection in quadrant 1, intersection in quadrant 2
+    # if (sepbp < r[yrealImagInds])*(r[yrealImagInds] < sepam):
+    #     #intersection in quadrant 1, intersection in quadrant 2
+    #     #intersection in quadrant 3, intersection in quadrant 4
+    # if (sepam < r[yrealImagInds])*(r[yrealImagInds] < sepap)
+    #     #intersection in quadrant 2, intersection in quadrant 3
+    # if (sepap < r[yrealImagInds]):
+    #     #two intersections in quadrant 3
+#Type2 sepbm, sepam, sepbp, sepap
+type2_0Inds = np.where((sepam < sepbp)*(sepbp < sepap)*(sepbm < sepam)*(r[only2RealInds] < sepbm))[0]
+xIntersectionsOnly2[type2_0Inds] = np.real(np.asarray([xreal2[only2RealInds[type2_0Inds],0],xreal2[only2RealInds[type2_0Inds],1]]).T)
+yIntersectionsOnly2[type2_0Inds] = np.real(np.asarray([yreal2[only2RealInds[type2_0Inds],0],yreal2[only2RealInds[type2_0Inds],1]]).T)
+type2_1Inds = np.where((sepam < sepbp)*(sepbp < sepap)*(sepbm < sepam)*(sepbm < r[only2RealInds])*(r[only2RealInds] < sepam))[0]
+xIntersectionsOnly2[type2_1Inds] = np.real(np.asarray([xreal2[only2RealInds[type2_1Inds],0],xreal2[only2RealInds[type2_1Inds],1]]).T)#-x is already in solution
+yIntersectionsOnly2[type2_1Inds] = np.real(np.asarray([yreal2[only2RealInds[type2_1Inds],0],yreal2[only2RealInds[type2_1Inds],1]]).T)
+type2_2Inds = np.where((sepam < sepbp)*(sepbp < sepap)*(sepbm < sepam)*(sepam < r[only2RealInds])*(r[only2RealInds] < sepbp))[0]
+xIntersectionsOnly2[type2_2Inds] = np.real(np.asarray([xreal2[only2RealInds[type2_2Inds],0],xreal2[only2RealInds[type2_2Inds],1]]).T)#-x is already in solution
+yIntersectionsOnly2[type2_2Inds] = np.real(np.asarray([yreal2[only2RealInds[type2_2Inds],0],-yreal2[only2RealInds[type2_2Inds],1]]).T)
+type2_3Inds = np.where((sepam < sepbp)*(sepbp < sepap)*(sepbm < sepam)*(sepbp < r[only2RealInds])*(r[only2RealInds] < sepap))[0]
+xIntersectionsOnly2[type2_3Inds] = np.real(np.asarray([xreal2[only2RealInds[type2_3Inds],0],xreal2[only2RealInds[type2_3Inds],1]]).T)#-x is already in solution
+yIntersectionsOnly2[type2_3Inds] = np.real(np.asarray([yreal2[only2RealInds[type2_3Inds],0],-yreal2[only2RealInds[type2_3Inds],1]]).T)
+type2_4Inds = np.where((sepam < sepbp)*(sepbp < sepap)*(sepbm < sepam)*(sepap < r[only2RealInds]))[0]
+xIntersectionsOnly2[type2_4Inds] = np.real(np.asarray([xreal2[only2RealInds[type2_4Inds],0],xreal2[only2RealInds[type2_4Inds],1]]).T)#-x is already in solution
+yIntersectionsOnly2[type2_4Inds] = np.real(np.asarray([-yreal2[only2RealInds[type2_4Inds],0],-yreal2[only2RealInds[type2_4Inds],1]]).T)
+    # if (r[yrealImagInds] < sepbm):
+    #     #two intersections in quadrant 1
+    # if (sepbm < r[yrealImagInds])*(r[yrealImagInds] < sepam):
+    #     #intersection in quadrant 1, intersection in quadrant 2
+    # if (sepam < r[yrealImagInds])*(r[yrealImagInds] < sepbp):
+    #     #intersection in quadrant4, intersection in quadrant 2
+    # if (sepbp < r[yrealImagInds])*(r[yrealImagInds] < sepap):
+    #     #intersection in quadrant 2, intersection in quadrant 3
+    # if (sepap < r[yrealImagInds]):
+    #     #two intersectin in quadrant 3
+#Type3 sepam, sepbm, sepbp, sepap
+type3_0Inds = np.where((sepam < sepbm)*(r[only2RealInds] < sepam))[0]
+xIntersectionsOnly2[type3_0Inds] = np.real(np.asarray([xreal2[only2RealInds[type3_0Inds],0],xreal2[only2RealInds[type3_0Inds],1]]).T)
+yIntersectionsOnly2[type3_0Inds] = np.real(np.asarray([yreal2[only2RealInds[type3_0Inds],0],yreal2[only2RealInds[type3_0Inds],1]]).T)
+type3_1Inds = np.where((sepam < sepbm)*(sepam < r[only2RealInds])*(r[only2RealInds] < sepbm))[0]
+xIntersectionsOnly2[type3_1Inds] = np.real(np.asarray([xreal2[only2RealInds[type3_1Inds],0],xreal2[only2RealInds[type3_1Inds],1]]).T)
+yIntersectionsOnly2[type3_1Inds] = np.real(np.asarray([yreal2[only2RealInds[type3_1Inds],0],-yreal2[only2RealInds[type3_1Inds],1]]).T)
+type3_2Inds = np.where((sepam < sepbm)*(sepbm < r[only2RealInds])*(r[only2RealInds] < sepbp))[0]
+xIntersectionsOnly2[type3_2Inds] = np.real(np.asarray([xreal2[only2RealInds[type3_2Inds],0],xreal2[only2RealInds[type3_2Inds],1]]).T)#-x is already in solution
+yIntersectionsOnly2[type3_2Inds] = np.real(np.asarray([yreal2[only2RealInds[type3_2Inds],0],-yreal2[only2RealInds[type3_2Inds],1]]).T)
+type3_3Inds = np.where((sepam < sepbm)*(sepbp < r[only2RealInds])*(r[only2RealInds] < sepap))[0]
+xIntersectionsOnly2[type3_3Inds] = np.real(np.asarray([xreal2[only2RealInds[type3_3Inds],0],xreal2[only2RealInds[type3_3Inds],1]]).T)#-x is already in solution
+yIntersectionsOnly2[type3_3Inds] = np.real(np.asarray([yreal2[only2RealInds[type3_3Inds],0],-yreal2[only2RealInds[type3_3Inds],1]]).T)
+type3_4Inds = np.where((sepam < sepbm)*(sepap < r[only2RealInds]))[0]
+xIntersectionsOnly2[type3_4Inds] = np.real(np.asarray([xreal2[only2RealInds[type3_4Inds],0],xreal2[only2RealInds[type3_4Inds],1]]).T)#-x is already in solution
+yIntersectionsOnly2[type3_4Inds] = np.real(np.asarray([-yreal2[only2RealInds[type3_4Inds],0],-yreal2[only2RealInds[type3_4Inds],1]]).T)
+    # if (r[yrealImagInds] < sepam):
+    #     #two intersections in quadrant 1
+    # if (sepam < r[yrealImagInds])*(r[yrealImagInds] < sepbm):
+    #     #intersection in quadrant 1, intersection in quadrant 4
+    # if (sepbm < r[yrealImagInds])*(r[yrealImagInds] < sepbp):
+    #     #intersection in quadrant 2, intersection in quadrant 4
+    # if (sepbp < r[yrealImagInds])*(r[yrealImagInds] < sepap):
+    #     #intersection in quadrant 2, intersection in quadrant 3
+    # if (sepap < r[yrealImagInds]):
+    #     #two intersection in quadrant 3
+#Quadrant Star Belongs to
+bool1 = x > 0
+bool2 = y > 0
+#Quadrant 1 if T,T
+#Quadrant 2 if F,T
+#Quadrant 3 if F,F
+#Quadrant 4 if T,F
+xIntersectionsOnly2 = (xIntersectionsOnly2.T*(2*bool1[only2RealInds]-1)).T
+yIntersectionsOnly2 = (yIntersectionsOnly2.T*(2*bool2[only2RealInds]-1)).T
+################################################
+allIndsUsed = np.concatenate((type0_0Inds,type0_1Inds,type0_2Inds,type0_3Inds,type0_4Inds,type1_0Inds,type1_1Inds,type1_2Inds,type1_3Inds,type1_4Inds,
+        type2_0Inds,type2_1Inds,type2_2Inds,type2_3Inds,type2_4Inds,type3_0Inds,type3_1Inds,type3_2Inds,type3_3Inds,type3_4Inds))
+
+#works
+ind = yrealAllRealInds[fourIntInds[0]]
+#works
+ind = yrealAllRealInds[twoIntSameYInds[0]]
+#works
+ind = yrealAllRealInds[twoIntOppositeXInds[1]]
+#in progress
+#GOOD KEEP ind = only2RealInds[4]
+ind = only2RealInds[4]
+
+
+
+#type0 checks out
+ind = only2RealInds[typeInds0[0]]
+# #type1 checks out
+# ind = only2RealInds[typeInds1[0]]
+# #type2 checks out
+# ind = only2RealInds[typeInds2[0]]
+# #type3 checks out
+# ind = only2RealInds[typeInds3[0]]
+
+#type0_0 #OK
+ind = only2RealInds[type0_0Inds[0]]#works
+ind = only2RealInds[type0_1Inds[0]]#works
+ind = only2RealInds[type0_2Inds[0]]#works
+ind = only2RealInds[type0_3Inds[0]]#works
+ind = only2RealInds[type0_4Inds[0]]#works
+#type1 skipping since empty
+#type2 #OK
+ind = only2RealInds[type2_0Inds[0]]#works
+ind = only2RealInds[type2_1Inds[0]]#works
+ind = only2RealInds[type2_2Inds[0]]#works
+ind = only2RealInds[type2_3Inds[0]]#works
+ind = only2RealInds[type2_4Inds[0]]#works
+#type3
+ind = only2RealInds[type3_0Inds[0]]
+ind = only2RealInds[type3_1Inds[0]]
+ind = only2RealInds[type3_2Inds[0]]
+ind = only2RealInds[type3_3Inds[0]]
+ind = only2RealInds[type3_4Inds[0]]
+
+
+# tmp = (mx[only2RealInds]**2 + my[only2RealInds]**2)/a[only2RealInds]
+# plt.figure()
+# plt.scatter(mx[only2RealInds],my[only2RealInds],s=1,color='blue')
+# plt.show(block=False)
+
+
 num=960
 plt.close(num)
 fig = plt.figure(num=num)
@@ -209,85 +657,165 @@ xellipsetmp = a[ind]*np.cos(Erange)
 yellipsetmp = b[ind]*np.sin(Erange)
 plt.plot(xellipsetmp,yellipsetmp,color='black')
 plt.scatter(x[ind],y[ind],color='orange',marker='x')
+if ind in only2RealInds[typeInds0]:
+    plt.scatter(x[ind],y[ind],edgecolors='cyan',marker='o',s=64,facecolors='none')
+if ind in only2RealInds[typeInds1]:
+    plt.scatter(x[ind],y[ind],edgecolors='red',marker='o',s=64,facecolors='none')
+if ind in only2RealInds[typeInds2]:
+    plt.scatter(x[ind],y[ind],edgecolors='blue',marker='o',s=64,facecolors='none')
+if ind in only2RealInds[typeInds3]:
+    plt.scatter(x[ind],y[ind],edgecolors='magenta',marker='o',s=64,facecolors='none')
 
 c_ae = a[ind]*np.sqrt(1-b[ind]**2/a[ind]**2)
 plt.scatter([-c_ae,c_ae],[0,0],color='blue')
 
-#Plot Min Sep Circle
-x_circ = minSep[ind]*np.cos(vs)
-y_circ = minSep[ind]*np.sin(vs)
-plt.plot(x[ind]+x_circ,y[ind]+y_circ,color='cyan')
-#Plot Max Sep Circle
-x_circ2 = maxSep[ind]*np.cos(vs)
-y_circ2 = maxSep[ind]*np.sin(vs)
-plt.plot(x[ind]+x_circ2,y[ind]+y_circ2,color='red')
+# #Plot Min Sep Circle
+# x_circ = minSep[ind]*np.cos(vs)
+# y_circ = minSep[ind]*np.sin(vs)
+# plt.plot(x[ind]+x_circ,y[ind]+y_circ,color='cyan')
+# #Plot Max Sep Circle
+# x_circ2 = maxSep[ind]*np.cos(vs)
+# y_circ2 = maxSep[ind]*np.sin(vs)
+# plt.plot(x[ind]+x_circ2,y[ind]+y_circ2,color='red')
 #Plot Min Sep Ellipse Intersection
-plt.scatter(minSepPoints_x[ind],minSepPoints_y[ind],color='cyan')
+plt.scatter(minSepPoints_x[ind],minSepPoints_y[ind],color='cyan',marker='D')
 #Plot Max Sep Ellipse Intersection
-plt.scatter(maxSepPoints_x[ind],maxSepPoints_y[ind],color='red')
+plt.scatter(maxSepPoints_x[ind],maxSepPoints_y[ind],color='red',marker='D')
 
 if ind in yrealAllRealInds:
     tind = np.where(yrealAllRealInds == ind)[0]
-    #Plot lminSep Circle
-    x_circ2 = lminSep[tind]*np.cos(vs)
-    y_circ2 = lminSep[tind]*np.sin(vs)
-    plt.plot(x[ind]+x_circ2,y[ind]+y_circ2,color='magenta')
-    #Plot lmaxSep Circle
-    x_circ2 = lmaxSep[tind]*np.cos(vs)
-    y_circ2 = lmaxSep[tind]*np.sin(vs)
-    plt.plot(x[ind]+x_circ2,y[ind]+y_circ2,color='gold')
+    # #Plot lminSep Circle
+    # x_circ2 = lminSep[tind]*np.cos(vs)
+    # y_circ2 = lminSep[tind]*np.sin(vs)
+    # plt.plot(x[ind]+x_circ2,y[ind]+y_circ2,color='magenta')
+    # #Plot lmaxSep Circle
+    # x_circ2 = lmaxSep[tind]*np.cos(vs)
+    # y_circ2 = lmaxSep[tind]*np.sin(vs)
+    # plt.plot(x[ind]+x_circ2,y[ind]+y_circ2,color='gold')
     #### Plot Local Min
-    plt.scatter(lminSepPoints_x[tind], lminSepPoints_y[tind],color='magenta')
+    plt.scatter(lminSepPoints_x[tind], lminSepPoints_y[tind],color='magenta',marker='D')
     #### Plot Local Max Points
-    plt.scatter(lmaxSepPoints_x[tind], lmaxSepPoints_y[tind],color='gold')
+    plt.scatter(lmaxSepPoints_x[tind], lmaxSepPoints_y[tind],color='gold',marker='D')
 
-# #### r Intersection test
-# x_circ2 = np.cos(vs)
-# y_circ2 = np.sin(vs)
-# plt.plot(x[ind]+x_circ2,y[ind]+y_circ2,color='green')
+#### r Intersection test
+x_circ2 = np.cos(vs)
+y_circ2 = np.sin(vs)
+plt.plot(x[ind]+x_circ2,y[ind]+y_circ2,color='green')
+#### Intersection Points
+if ind in yrealAllRealInds[fourIntInds]:
+    yind = np.where(yrealAllRealInds[fourIntInds] == ind)[0]
+    plt.scatter(fourInt_x[yind],fourInt_y[yind], color='green',marker='o')
+elif ind in yrealAllRealInds[twoIntSameYInds]: #Same Y
+    yind = np.where(yrealAllRealInds[twoIntSameYInds] == ind)[0]
+    plt.scatter(twoIntSameY_x[yind],twoIntSameY_y[yind], color='green',marker='o')
+elif ind in yrealAllRealInds[twoIntOppositeXInds]: #Same X
+    yind = np.where(yrealAllRealInds[twoIntOppositeXInds] == ind)[0]
+    plt.scatter(twoIntOppositeX_x[yind],twoIntOppositeX_y[yind], color='green',marker='o')
+    #### Type0
+elif ind in only2RealInds[type0_0Inds]:
+    gind = np.where(only2RealInds == ind)[0]
+    plt.scatter(xIntersectionsOnly2[gind],yIntersectionsOnly2[gind], color='green',marker='o')
+    print('plotted')
+elif ind in only2RealInds[type0_1Inds]:
+    gind = np.where(only2RealInds == ind)[0]
+    plt.scatter(xIntersectionsOnly2[gind],yIntersectionsOnly2[gind], color='green',marker='o')
+elif ind in only2RealInds[type0_2Inds]:
+    gind = np.where(only2RealInds == ind)[0]
+    plt.scatter(xIntersectionsOnly2[gind],yIntersectionsOnly2[gind], color='green',marker='o')
+elif ind in only2RealInds[type0_3Inds]:
+    gind = np.where(only2RealInds == ind)[0]
+    plt.scatter(xIntersectionsOnly2[gind],yIntersectionsOnly2[gind], color='green',marker='o')
+elif ind in only2RealInds[type0_4Inds]:
+    gind = np.where(only2RealInds == ind)[0]
+    plt.scatter(xIntersectionsOnly2[gind],yIntersectionsOnly2[gind], color='green',marker='o')
+    #### Type1
+elif ind in only2RealInds[type1_0Inds]:
+    gind = np.where(only2RealInds == ind)[0]
+    plt.scatter(xIntersectionsOnly2[gind],yIntersectionsOnly2[gind], color='green',marker='o')
+elif ind in only2RealInds[type1_1Inds]:
+    gind = np.where(only2RealInds == ind)[0]
+    plt.scatter(xIntersectionsOnly2[gind],yIntersectionsOnly2[gind], color='green',marker='o')
+elif ind in only2RealInds[type1_2Inds]:
+    gind = np.where(only2RealInds == ind)[0]
+    plt.scatter(xIntersectionsOnly2[gind],yIntersectionsOnly2[gind], color='green',marker='o')
+elif ind in only2RealInds[type1_3Inds]:
+    gind = np.where(only2RealInds == ind)[0]
+    plt.scatter(xIntersectionsOnly2[gind],yIntersectionsOnly2[gind], color='green',marker='o')
+elif ind in only2RealInds[type1_4Inds]:
+    gind = np.where(only2RealInds == ind)[0]
+    plt.scatter(xIntersectionsOnly2[gind],yIntersectionsOnly2[gind], color='green',marker='o')
+    #### Type2
+elif ind in only2RealInds[type2_0Inds]:
+    gind = np.where(only2RealInds == ind)[0]
+    plt.scatter(xIntersectionsOnly2[gind],yIntersectionsOnly2[gind], color='green',marker='o')
+elif ind in only2RealInds[type2_1Inds]:
+    gind = np.where(only2RealInds == ind)[0]
+    plt.scatter(xIntersectionsOnly2[gind],yIntersectionsOnly2[gind], color='green',marker='o')
+elif ind in only2RealInds[type2_2Inds]:
+    gind = np.where(only2RealInds == ind)[0]
+    plt.scatter(xIntersectionsOnly2[gind],yIntersectionsOnly2[gind], color='green',marker='o')
+elif ind in only2RealInds[type2_3Inds]:
+    gind = np.where(only2RealInds == ind)[0]
+    plt.scatter(xIntersectionsOnly2[gind],yIntersectionsOnly2[gind], color='green',marker='o')
+elif ind in only2RealInds[type2_4Inds]:
+    gind = np.where(only2RealInds == ind)[0]
+    plt.scatter(xIntersectionsOnly2[gind],yIntersectionsOnly2[gind], color='green',marker='o')
+    #### Type3
+elif ind in only2RealInds[type3_0Inds]:
+    gind = np.where(only2RealInds == ind)[0]
+    plt.scatter(xIntersectionsOnly2[gind],yIntersectionsOnly2[gind], color='green',marker='o')
+elif ind in only2RealInds[type3_1Inds]:
+    gind = np.where(only2RealInds == ind)[0]
+    plt.scatter(xIntersectionsOnly2[gind],yIntersectionsOnly2[gind], color='green',marker='o')
+elif ind in only2RealInds[type3_2Inds]:
+    gind = np.where(only2RealInds == ind)[0]
+    plt.scatter(xIntersectionsOnly2[gind],yIntersectionsOnly2[gind], color='green',marker='o')
+elif ind in only2RealInds[type3_3Inds]:
+    gind = np.where(only2RealInds == ind)[0]
+    plt.scatter(xIntersectionsOnly2[gind],yIntersectionsOnly2[gind], color='green',marker='o')
+elif ind in only2RealInds[type3_4Inds]:
+    gind = np.where(only2RealInds == ind)[0]
+    plt.scatter(xIntersectionsOnly2[gind],yIntersectionsOnly2[gind], color='green',marker='o')
+
+
+#Plot Star Location Type Dividers
+xran = np.linspace(start=(a[ind]*(a[ind]**2*(a[ind] - b[ind])*(a[ind] + b[ind]) - b[ind]**2*np.sqrt(3*a[ind]**4 + 2*a[ind]**2*b[ind]**2 + 3*b[ind]**4))/(2*(a[ind]**4 + b[ind]**4))),\
+    stop=(a[ind]*(a[ind]**2*(a[ind] - b[ind])*(a[ind] + b[ind]) + b[ind]**2*np.sqrt(3*a[ind]**4 + 2*a[ind]**2*b[ind]**2 + 3*b[ind]**4))/(2*(a[ind]**4 + b[ind]**4))), num=3, endpoint=True)
+ylineQ1 = xran*a[ind]/b[ind] - a[ind]**2/(2*b[ind]) + b[ind]/2 #between first quadrant a,b
+ylineQ4 = -xran*a[ind]/b[ind] + a[ind]**2/(2*b[ind]) - b[ind]/2 #between 4th quadrant a,b
+plt.plot(xran, ylineQ1, color='brown', linestyle='-.', )
+plt.plot(-xran, ylineQ4, color='grey', linestyle='-.')
+plt.plot(-xran, ylineQ1, color='orange', linestyle='-.')
+plt.plot(xran, ylineQ4, color='red', linestyle='-.')
+
+
+plt.xlim([-1.2*a[ind],1.2*a[ind]])
+plt.ylim([-1.2*b[ind],1.2*b[ind]])
 
 plt.show(block=False)
 
 
 
-#### Plot separation vs vs parameter
-num=961
-plt.close(num)
-fig = plt.figure(num=num)
-xellipsetmp = a[ind]*np.cos(Erange)
-yellipsetmp = b[ind]*np.sin(Erange)
-septmp = (x[ind] - xellipsetmp)**2 + (y[ind] - yellipsetmp)**2
-plt.plot(Erange,septmp,color='black')
-plt.plot([0,2.*np.pi],[0,0],color='black',linestyle='--') #0 sep line
-plt.xlim([0,2.*np.pi])
-plt.ylabel('Projected Separation in AU')
-plt.xlabel('Projected Ellipse E (rad)')
-plt.show(block=False)
-####
 
 
 
-#### Testing ellipse_to_Quartic solution
-r = np.ones(len(a),dtype='complex128')
-a.astype('complex128')
-b.astype('complex128')
-mx.astype('complex128')
-my.astype('complex128')
-r.astype('complex128')
-A, B, C, D = quarticCoefficients_ellipse_to_Quarticipynb(a, b, mx, my, r)
-xreals2, delta, P, D2, R, delta_0 = quarticSolutions_ellipse_to_Quarticipynb(A, B, C, D)
 
-# xreals2[np.abs(np.imag(xreals2)) > 1e-4] = np.nan #There is evidence from below that the residual resulting from entiring solutions with 3e-5j results in 0+1e-20j therefore we will nan above 1e-4
-# xreals2 = np.real(xreals2)
-yreals2 = ellipseYFromX(xreals2, a, b)
-# seps2_0 = np.sqrt((xreals2[:,0]-x)**2 + (yreals2[:,0]-y)**2)
-# seps2_1 = np.sqrt((xreals2[:,1]-x)**2 + (yreals2[:,1]-y)**2)
-# seps2_2 = np.sqrt((xreals2[:,2]-x)**2 + (yreals2[:,2]-y)**2)
-# seps2_3 = np.sqrt((xreals2[:,3]-x)**2 + (yreals2[:,3]-y)**2)
-seps2_0 = np.sqrt((xreals2[:,0]-mx)**2 + (yreals2[:,0]-my)**2)
-seps2_1 = np.sqrt((xreals2[:,1]-mx)**2 + (yreals2[:,1]-my)**2)
-seps2_2 = np.sqrt((xreals2[:,2]-mx)**2 + (yreals2[:,2]-my)**2)
-seps2_3 = np.sqrt((xreals2[:,3]-mx)**2 + (yreals2[:,3]-my)**2)
+
+
+
+
+# xreal2[np.abs(np.imag(xreal2)) > 1e-4] = np.nan #There is evidence from below that the residual resulting from entiring solutions with 3e-5j results in 0+1e-20j therefore we will nan above 1e-4
+# xreal2 = np.real(xreal2)
+yreal2 = ellipseYFromX(xreal2, a, b)
+seps2_0 = np.sqrt((xreal2[:,0]-x)**2 + (yreal2[:,0]-y)**2)
+seps2_1 = np.sqrt((xreal2[:,1]-x)**2 + (yreal2[:,1]-y)**2)
+seps2_2 = np.sqrt((xreal2[:,2]-x)**2 + (yreal2[:,2]-y)**2)
+seps2_3 = np.sqrt((xreal2[:,3]-x)**2 + (yreal2[:,3]-y)**2)
+
+# seps2_0 = np.sqrt((xreal2[:,0]-mx)**2 + (yreal2[:,0]-my)**2)
+# seps2_1 = np.sqrt((xreal2[:,1]-mx)**2 + (yreal2[:,1]-my)**2)
+# seps2_2 = np.sqrt((xreal2[:,2]-mx)**2 + (yreal2[:,2]-my)**2)
+# seps2_3 = np.sqrt((xreal2[:,3]-mx)**2 + (yreal2[:,3]-my)**2)
 seps2 = np.asarray([seps2_0,seps2_1,seps2_2,seps2_3]).T
 
 #we are currently omitting all of these potential calculations so-long-as the following assert is never true
@@ -297,33 +825,33 @@ seps2 = np.asarray([seps2_0,seps2_1,seps2_2,seps2_3]).T
 #ORDER HAS BEEN CHANGED
 # If delta > 0 and P < 0 and D < 0 four roots all real or none
 #allRealDistinctInds = np.where((delta > 0)*(P < 0)*(D2 < 0))[0] #METHOD 1, out of 10000, this found 1638, missing ~54
-allRealDistinctInds = np.where(np.all(np.abs(np.imag(xreals2)) < 2.5*1e-5, axis=1))[0]#1e-9, axis=1))[0] #This found 1692
-residual_allreal, isAll_allreal, maxRealResidual_allreal, maxImagResidual_allreal = checkResiduals(A,B,C,D,xreals2,allRealDistinctInds,4)
+allRealDistinctInds = np.where(np.all(np.abs(np.imag(xreal2)) < 2.5*1e-5, axis=1))[0]#1e-9, axis=1))[0] #This found 1692
+residual_allreal, isAll_allreal, maxRealResidual_allreal, maxImagResidual_allreal = checkResiduals(A,B,C,D,xreal2,allRealDistinctInds,4)
 assert maxRealResidual_allreal < 1e-9, 'At least one all real residual is too large'
 # If delta < 0, two distinct real roots, two complex
 #DELETEtwoRealDistinctInds = np.where(delta < 0)[0]
-#DELETE UNNECESSARYxrealsImag = np.abs(np.imag(xreals2))
-xrealsImagInds = np.argsort(np.abs(np.imag(xreals2)),axis=1)
+#DELETE UNNECESSARYxrealsImag = np.abs(np.imag(xreal2))
+xrealsImagInds = np.argsort(np.abs(np.imag(xreal2)),axis=1)
 xrealsImagInds2 = np.asarray([xrealsImagInds[:,0],xrealsImagInds[:,1]])
-xrealOfSmallest2Imags = np.real(xreals2[np.arange(len(a)),xrealsImagInds2]).T
-ximagOfSmallest2Imags = np.imag(xreals2[np.arange(len(a)),xrealsImagInds2]).T
-#~np.all(np.abs(np.imag(xreals2)) < 1e-9, axis=1) removes solutions with 4 distinct real roots
+xrealOfSmallest2Imags = np.real(xreal2[np.arange(len(a)),xrealsImagInds2]).T
+ximagOfSmallest2Imags = np.imag(xreal2[np.arange(len(a)),xrealsImagInds2]).T
+#~np.all(np.abs(np.imag(xreal2)) < 1e-9, axis=1) removes solutions with 4 distinct real roots
 #The other two are thresholds that happend to work well once
-indsOf2RealSols = np.where((np.abs(ximagOfSmallest2Imags[:,0]) < 2.5*1e-5)*(np.abs(ximagOfSmallest2Imags[:,1]) < 2.5*1e-5)*~np.all(np.abs(np.imag(xreals2)) < 2.5*1e-5, axis=1))[0]
+indsOf2RealSols = np.where((np.abs(ximagOfSmallest2Imags[:,0]) < 2.5*1e-5)*(np.abs(ximagOfSmallest2Imags[:,1]) < 2.5*1e-5)*~np.all(np.abs(np.imag(xreal2)) < 2.5*1e-5, axis=1))[0]
 #DELETElen(indsOf2RealSols) - len(allRealDistinctInds)
-xrealsTwoRealSols = np.real(np.asarray([xreals2[indsOf2RealSols,xrealsImagInds2[0,indsOf2RealSols]],xreals2[indsOf2RealSols,xrealsImagInds2[1,indsOf2RealSols]]]).T)
+xrealsTwoRealSols = np.real(np.asarray([xreal2[indsOf2RealSols,xrealsImagInds2[0,indsOf2RealSols]],xreal2[indsOf2RealSols,xrealsImagInds2[1,indsOf2RealSols]]]).T)
 residual_TwoRealSols, isAll_TwoRealSols, maxRealResidual_TwoRealSols, maxImagResidual_TwoRealSols = checkResiduals(A[indsOf2RealSols],B[indsOf2RealSols],C[indsOf2RealSols],D[indsOf2RealSols],xrealsTwoRealSols,np.arange(len(xrealsTwoRealSols)),2)
 assert len(np.intersect1d(allRealDistinctInds,indsOf2RealSols)) == 0, 'There is intersection between Two Real Distinct and the 4 real solution inds, investigate'
 
 #DELETE cruft
-# twoRealDistinctInds2 = np.where(np.all(np.abs(np.imag(xreals2)) < 1e-9, axis=1))[0] #This found 1692
-# twoRealSorting = np.argsort(np.abs(np.imag(xreals2[twoRealDistinctInds,:])),axis=1)
-# tmpxReals = np.asarray([xreals2[np.arange(len(twoRealDistinctInds)),twoRealSorting[:,0]], xreals2[np.arange(len(twoRealDistinctInds)),twoRealSorting[:,1]]]).T
+# twoRealDistinctInds2 = np.where(np.all(np.abs(np.imag(xreal2)) < 1e-9, axis=1))[0] #This found 1692
+# twoRealSorting = np.argsort(np.abs(np.imag(xreal2[twoRealDistinctInds,:])),axis=1)
+# tmpxReals = np.asarray([xreal2[np.arange(len(twoRealDistinctInds)),twoRealSorting[:,0]], xreal2[np.arange(len(twoRealDistinctInds)),twoRealSorting[:,1]]]).T
 
 # If delta > 0 and (P < 0 or D < 0)
 #allImagInds = np.where((delta > 0)*((P > 0)|(D2 > 0)))[0]
-#allImagInds = np.where(np.all(np.abs(np.imag(xreals2)) >= 1e-9, axis=1))[0]
-allImagInds = np.where(np.all(np.abs(np.imag(xreals2)) >= 2.5*1e-5, axis=1))[0]
+#allImagInds = np.where(np.all(np.abs(np.imag(xreal2)) >= 1e-9, axis=1))[0]
+allImagInds = np.where(np.all(np.abs(np.imag(xreal2)) >= 2.5*1e-5, axis=1))[0]
 assert len(np.intersect1d(allRealDistinctInds,allImagInds)) == 0, 'There is intersection between All Imag and the 4 real solution inds, investigate'
 assert len(np.intersect1d(indsOf2RealSols,allImagInds)) == 0, 'There is intersection between All Imag and the Two Real Distinct solution inds, investigate'
 
@@ -338,7 +866,7 @@ fourIdenticalRealRootsInds = np.where((delta == 0)*(D2 == 0)*(delta_0 == 0))[0]
 #DELETE cruft?
 # #### Double checking root classification
 # #twoRealDistinctInds #check that 2 of the 4 imags are below thresh
-# numUnderThresh = np.sum(np.abs(np.imag(xreals2[twoRealDistinctInds])) > 1e-11, axis=1)
+# numUnderThresh = np.sum(np.abs(np.imag(xreal2[twoRealDistinctInds])) > 1e-11, axis=1)
 # indsUnderThresh = np.where(numUnderThresh != 2)[0]
 # indsThatDontBelongIntwoRealDistinctInds = twoRealDistinctInds[indsUnderThresh]
 # twoRealDistinctInds = np.delete(twoRealDistinctInds,indsThatDontBelongIntwoRealDistinctInds) #deletes the desired inds from aray
@@ -346,8 +874,8 @@ fourIdenticalRealRootsInds = np.where((delta == 0)*(D2 == 0)*(delta_0 == 0))[0]
 
 #DELETE IN FUTURE
 #The 1e-5 here gave me the number as the Imag count
-#allRealDistinctInds2 = np.where(np.all(np.abs(np.imag(xreals2)) > 1e-5, axis=1))[0]
-#allRealDistinctInds2 = np.where(np.all(np.abs(np.imag(xreals2)) > 1e-9, axis=1))[0]
+#allRealDistinctInds2 = np.where(np.all(np.abs(np.imag(xreal2)) > 1e-5, axis=1))[0]
+#allRealDistinctInds2 = np.where(np.all(np.abs(np.imag(xreal2)) > 1e-9, axis=1))[0]
 
 
 #Number of Solutions of Each Type
@@ -361,24 +889,24 @@ assert len(indsOf2RealSols)+len(allRealDistinctInds)+len(allImagInds)-len(realDo
 
 
 # Calculate Residuals
-# residual_0 = xreals2[:,0]**4 + A*xreals2[:,0]**3 + B*xreals2[:,0]**2 + C*xreals2[:,0] + D
-# residual_1 = xreals2[:,1]**4 + A*xreals2[:,1]**3 + B*xreals2[:,1]**2 + C*xreals2[:,1] + D
-# residual_2 = xreals2[:,2]**4 + A*xreals2[:,2]**3 + B*xreals2[:,2]**2 + C*xreals2[:,2] + D
-# residual_3 = xreals2[:,3]**4 + A*xreals2[:,3]**3 + B*xreals2[:,3]**2 + C*xreals2[:,3] + D
+# residual_0 = xreal2[:,0]**4 + A*xreal2[:,0]**3 + B*xreal2[:,0]**2 + C*xreal2[:,0] + D
+# residual_1 = xreal2[:,1]**4 + A*xreal2[:,1]**3 + B*xreal2[:,1]**2 + C*xreal2[:,1] + D
+# residual_2 = xreal2[:,2]**4 + A*xreal2[:,2]**3 + B*xreal2[:,2]**2 + C*xreal2[:,2] + D
+# residual_3 = xreal2[:,3]**4 + A*xreal2[:,3]**3 + B*xreal2[:,3]**2 + C*xreal2[:,3] + D
 # residual = np.asarray([residual_0, residual_1, residual_2, residual_3]).T
 # #assert np.all((np.real(residual) < 1e-7)*(np.imag(residual) < 1e-7)), 'All residual are not less than 1e-7'
 # del residual_0, residual_1, residual_2, residual_3
-residual_all, isAll_all, maxRealResidual_all, maxImagResidual_all = checkResiduals(A,B,C,D,xreals2,np.arange(len(A)),4)
+residual_all, isAll_all, maxRealResidual_all, maxImagResidual_all = checkResiduals(A,B,C,D,xreal2,np.arange(len(A)),4)
 
 
 
-xfinal = np.zeros(xreals2.shape) + np.nan
+xfinal = np.zeros(xreal2.shape) + np.nan
 # case 1 Two Real Distinct Inds
 #find 2 xsols with smallest imag part
-#xreals2[indsOf2RealSols[0]]
-#ximags2 = np.imag(xreals2[indsOf2RealSols])
+#xreal2[indsOf2RealSols[0]]
+#ximags2 = np.imag(xreal2[indsOf2RealSols])
 #ximags2smallImagInds = np.argsort(np.abs(ximags2),axis=1)[:,0:2] #sorts from smallest magnitude to largest magnitude
-#xrealsTwoRealDistinct = np.asarray([xreals2[indsOf2RealSols,ximags2smallImagInds[:,0]], xreals2[indsOf2RealSols,ximags2smallImagInds[:,1]]]).T
+#xrealsTwoRealDistinct = np.asarray([xreal2[indsOf2RealSols,ximags2smallImagInds[:,0]], xreal2[indsOf2RealSols,ximags2smallImagInds[:,1]]]).T
 xfinal[indsOf2RealSols,0:2] = xrealOfSmallest2Imags[indsOf2RealSols]#np.real(xrealsTwoRealDistinct)
 #Check residuals
 residual_case1, isAll_case1, maxRealResidual_case1, maxImagResidual_case1 = checkResiduals(A,B,C,D,xfinal,indsOf2RealSols,2)
@@ -393,14 +921,14 @@ indsOfRebellious_1 = np.where(np.real(residual_case1[:,1]) > 1e-1)[0]
 indsOfRebellious = np.unique(np.concatenate((indsOfRebellious_0,indsOfRebellious_1)))
 xrealIndsOfRebellious = indsOf2RealSols[indsOfRebellious]
 
-#residual = tmpxreals2[twoRealDistinctInds[0]]**4 + A[twoRealDistinctInds[0]]*tmpxreals2[twoRealDistinctInds[0]]**3 + B[twoRealDistinctInds[0]]*tmpxreals2[twoRealDistinctInds[0]]**2 + C[twoRealDistinctInds[0]]*tmpxreals2[twoRealDistinctInds[0]] + D[twoRealDistinctInds[0]]
-#residual2 = xreals2[twoRealDistinctInds[0]]**4 + A[twoRealDistinctInds[0]]*xreals2[twoRealDistinctInds[0]]**3 + B[twoRealDistinctInds[0]]*xreals2[twoRealDistinctInds[0]]**2 + C[twoRealDistinctInds[0]]*xreals2[twoRealDistinctInds[0]] + D[twoRealDistinctInds[0]]
-#residual3 = np.real(xreals2[twoRealDistinctInds[0]])**4 + A[twoRealDistinctInds[0]]*np.real(xreals2[twoRealDistinctInds[0]])**3 + B[twoRealDistinctInds[0]]*np.real(xreals2[twoRealDistinctInds[0]])**2 + C[twoRealDistinctInds[0]]*np.real(xreals2[twoRealDistinctInds[0]]) + D[twoRealDistinctInds[0]]
+#residual = tmpxreal2[twoRealDistinctInds[0]]**4 + A[twoRealDistinctInds[0]]*tmpxreal2[twoRealDistinctInds[0]]**3 + B[twoRealDistinctInds[0]]*tmpxreal2[twoRealDistinctInds[0]]**2 + C[twoRealDistinctInds[0]]*tmpxreal2[twoRealDistinctInds[0]] + D[twoRealDistinctInds[0]]
+#residual2 = xreal2[twoRealDistinctInds[0]]**4 + A[twoRealDistinctInds[0]]*xreal2[twoRealDistinctInds[0]]**3 + B[twoRealDistinctInds[0]]*xreal2[twoRealDistinctInds[0]]**2 + C[twoRealDistinctInds[0]]*xreal2[twoRealDistinctInds[0]] + D[twoRealDistinctInds[0]]
+#residual3 = np.real(xreal2[twoRealDistinctInds[0]])**4 + A[twoRealDistinctInds[0]]*np.real(xreal2[twoRealDistinctInds[0]])**3 + B[twoRealDistinctInds[0]]*np.real(xreal2[twoRealDistinctInds[0]])**2 + C[twoRealDistinctInds[0]]*np.real(xreal2[twoRealDistinctInds[0]]) + D[twoRealDistinctInds[0]]
 
 #currently getting intersection points that are not physically possible
 
 # case 2 All Real Distinct Inds
-xfinal[allRealDistinctInds] = np.real(xreals2[allRealDistinctInds])
+xfinal[allRealDistinctInds] = np.real(xreal2[allRealDistinctInds])
 # residual_0 = xfinal[allRealDistinctInds,0]**4 + A[allRealDistinctInds]*xfinal[allRealDistinctInds,0]**3 + B[allRealDistinctInds]*xfinal[allRealDistinctInds,0]**2 + C[allRealDistinctInds]*xfinal[allRealDistinctInds,0] + D[allRealDistinctInds]
 # residual_1 = xfinal[allRealDistinctInds,1]**4 + A[allRealDistinctInds]*xfinal[allRealDistinctInds,1]**3 + B[allRealDistinctInds]*xfinal[allRealDistinctInds,1]**2 + C[allRealDistinctInds]*xfinal[allRealDistinctInds,1] + D[allRealDistinctInds]
 # residual_2 = xfinal[allRealDistinctInds,2]**4 + A[allRealDistinctInds]*xfinal[allRealDistinctInds,2]**3 + B[allRealDistinctInds]*xfinal[allRealDistinctInds,2]**2 + C[allRealDistinctInds]*xfinal[allRealDistinctInds,2] + D[allRealDistinctInds]
@@ -412,22 +940,22 @@ residual_case2, isAll_case2, maxRealResidual_case2, maxImagResidual_case2 = chec
 
 # case 3 All Imag Inds
 #NO REAL ROOTS
-#xreals2[allImagInds[0]]
+#xreal2[allImagInds[0]]
 
 # # case 4 a real double root and 2 real solutions (2 real solutions which are identical and 2 other real solutions)
-# #xreals2[realDoubleRootTwoRealRootsInds[0]]
-# ximags2 = np.imag(xreals2[realDoubleRootTwoRealRootsInds])
+# #xreal2[realDoubleRootTwoRealRootsInds[0]]
+# ximags2 = np.imag(xreal2[realDoubleRootTwoRealRootsInds])
 # ximags2smallImagInds = np.argsort(np.abs(ximags2),axis=1)[:,0:2] #sorts from smallest magnitude to largest magnitude
-# xrealDoubleRootTwoRealRoots = np.asarray([xreals2[realDoubleRootTwoRealRootsInds,ximags2smallImagInds[:,0]], xreals2[realDoubleRootTwoRealRootsInds,ximags2smallImagInds[:,1]]]).T
+# xrealDoubleRootTwoRealRoots = np.asarray([xreal2[realDoubleRootTwoRealRootsInds,ximags2smallImagInds[:,0]], xreal2[realDoubleRootTwoRealRootsInds,ximags2smallImagInds[:,1]]]).T
 # xfinal[realDoubleRootTwoRealRootsInds,0:2] = np.real(xrealDoubleRootTwoRealRoots)
 
 
 
 # # case 5 a real double root
-# #xreals2[realDoubleRootTwoComplexInds[0]]
-# ximags2 = np.imag(xreals2[realDoubleRootTwoComplexInds])
+# #xreal2[realDoubleRootTwoComplexInds[0]]
+# ximags2 = np.imag(xreal2[realDoubleRootTwoComplexInds])
 # ximags2smallImagInds = np.argsort(np.abs(ximags2),axis=1)[:,0:2] #sorts from smallest magnitude to largest magnitude
-# xrealDoubleRootTwoComplex = np.asarray([xreals2[realDoubleRootTwoComplexInds,ximags2smallImagInds[:,0]], xreals2[realDoubleRootTwoComplexInds,ximags2smallImagInds[:,1]]]).T
+# xrealDoubleRootTwoComplex = np.asarray([xreal2[realDoubleRootTwoComplexInds,ximags2smallImagInds[:,0]], xreal2[realDoubleRootTwoComplexInds,ximags2smallImagInds[:,1]]]).T
 # xfinal[realDoubleRootTwoComplexInds,0:2] = np.real(xrealDoubleRootTwoComplex)
 
 yfinal = ellipseYFromX(xfinal, a, b)
