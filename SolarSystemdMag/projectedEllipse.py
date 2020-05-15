@@ -1302,6 +1302,10 @@ def quarticSolutions_ellipse_to_Quarticipynb(A, B, C, D):
 
 def smin_smax_slmin_slmax(n, xreal, yreal, mx, my, x, y):
     """
+
+    Returns:
+        yrealAllRealInds - these indicies must have min, max, local min, local max
+        yrealImagInds - these indicies must have min, max
     """
     yrealAllRealInds = np.where(np.all(np.abs(np.imag(yreal)) < 1e-5,axis=1))[0]
     yreal[np.abs(np.imag(yreal)) < 1e-5] = np.real(yreal[np.abs(np.imag(yreal)) < 1e-5]) #eliminate any unreasonably small imaginary components
