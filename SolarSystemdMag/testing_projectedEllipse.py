@@ -2,6 +2,7 @@ import os
 from projectedEllipse import *
 import EXOSIMS.MissionSim
 import matplotlib.pyplot as plt
+from mpl_toolkits.mplot3d import Axes3D
 import numpy.random as random
 from sys import getsizeof
 import time
@@ -20,6 +21,15 @@ W = W.to('rad').value
 w = w.to('rad').value
 sma, e, p, Rp = PPop.gen_plan_params(n)
 sma = sma.to('AU').value
+
+#### SAVED PLANET FOR Plot 3D Ellipse to 2D Ellipse Projection Diagram
+ind = 23 #22
+sma[ind] = 1.2164387563540457
+e[ind] = 0.531071885292766
+w[ind] = 3.477496280463054
+W[ind] = 5.333215834002414
+inc[ind] = 1.025093642138022
+####
 
 #### Calculate Projected Ellipse Angles and Minor Axis
 start0 = time.time()
@@ -78,6 +88,129 @@ def plotProjectedEllipse(ind, sma, e, W, w, inc, theta_OpQ_X, theta_OpQp_X, dmaj
 ind = random.randint(low=0,high=n)
 plotProjectedEllipse(ind, sma, e, W, w, inc, theta_OpQ_X, theta_OpQp_X, dmajorp, dminorp, Op, num=877)
 
+
+
+#### Plot 3D Ellipse to 2D Ellipse Projection Diagram
+
+num = 666999888777
+plt.close(num)
+fig = plt.figure(num)
+ax = fig.add_subplot(111, projection='3d')
+
+## 3D Ellipse
+vs = np.linspace(start=0,stop=2*np.pi,num=300)
+r = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],vs)
+x_3Dellipse = r[0,0,:]
+y_3Dellipse = r[1,0,:]
+z_3Dellipse = r[2,0,:]
+ax.plot(x_3Dellipse,y_3Dellipse,z_3Dellipse,color='black',label='Planet Orbit')
+min_z = np.min(z_3Dellipse)
+
+## Central Sun
+ax.scatter(0,0,0,color='orange',marker='o',s=25) #of 3D ellipse
+ax.text(0,0,0.15*np.abs(min_z), 'F', None)
+ax.plot([0,0],[0,0],[0,1.3*min_z],color='orange',linestyle=':') #connecting line
+ax.scatter(0,0,1.3*min_z,color='orange',marker='x',s=25) #of 2D ellipse
+ax.text(0,0,1.5*min_z, 'F\'', None)
+
+## Plot 3D Ellipse semi-major/minor axis
+rper = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],0.) #planet position perigee
+rapo = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],np.pi) #planet position apogee
+ax.plot([rper[0][0],rapo[0][0]],[rper[1][0],rapo[1][0]],[rper[2][0],rapo[2][0]],color='purple', linestyle='-') #3D Ellipse Semi-major axis
+ax.scatter(rper[0][0],rper[1][0],rper[2][0],color='black',marker='D',s=25) #3D Ellipse Perigee Diamond
+ax.text(1.2*rper[0][0],1.2*rper[1][0],rper[2][0], 'A', None)#(rper[0][0],rper[1][0],0))
+ax.scatter(rper[0][0],rper[1][0],1.3*min_z,color='red',marker='D',s=25) #2D Ellipse Perigee Diamond
+ax.text(1.1*rper[0][0],1.1*rper[1][0],1.3*min_z, 'A\'', None)#(rper[0][0],rper[1][0],0))
+ax.plot([rper[0][0],rper[0][0]],[rper[1][0],rper[1][0]],[rper[2][0],1.3*min_z],color='black',linestyle=':') #3D to 2D Ellipse Perigee Diamond
+ax.scatter(rapo[0][0],rapo[1][0],rapo[2][0],color='black', marker='D',s=25) #3D Ellipse Apogee Diamond
+ax.text(1.1*rapo[0][0],1.1*rapo[1][0],1.2*rapo[2][0], 'B', None)#(rapo[0][0],rapo[1][0],0))
+ax.scatter(rapo[0][0],rapo[1][0],1.3*min_z,color='red',marker='D',s=25) #2D Ellipse Perigee Diamond
+ax.text(1.1*rapo[0][0],1.1*rapo[1][0],1.3*min_z, 'B\'', None)#(rapo[0][0],rapo[1][0],0))
+
+ax.plot([rapo[0][0],rapo[0][0]],[rapo[1][0],rapo[1][0]],[rapo[2][0],1.3*min_z],color='black',linestyle=':') #3D to 2D Ellipse Apogee Diamond
+rbp = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],np.arccos((np.cos(np.pi/2)-e[ind])/(1-e[ind]*np.cos(np.pi/2)))) #3D Ellipse E=90
+rbm = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],-np.arccos((np.cos(-np.pi/2)-e[ind])/(1-e[ind]*np.cos(-np.pi/2)))) #3D Ellipse E=-90
+ax.plot([rbp[0][0],rbm[0][0]],[rbp[1][0],rbm[1][0]],[rbp[2][0],rbm[2][0]],color='purple', linestyle='-') #
+ax.scatter(rbp[0][0],rbp[1][0],rbp[2][0],color='black',marker='D',s=25) #3D ellipse minor +
+ax.text(1.1*rbp[0][0],1.1*rbp[1][0],1.2*rbp[2][0], 'C', None)#(rbp[0][0],rbp[1][0],0))
+ax.scatter(rbp[0][0],rbp[1][0],1.3*min_z,color='red',marker='D',s=25) #2D ellipse minor+ projection
+ax.text(1.1*rbp[0][0],1.1*rbp[1][0],1.3*min_z, 'C\'', None)#(rbp[0][0],rbp[1][0],0))
+ax.plot([rbp[0][0],rbp[0][0]],[rbp[1][0],rbp[1][0]],[rbp[2][0],1.3*min_z],color='black',linestyle=':') #3D to 2D Ellipse minor + Diamond
+ax.scatter(rbm[0][0],rbm[1][0],rbm[2][0],color='black', marker='D',s=25) #3D ellipse minor -
+ax.text(1.1*rbm[0][0],0.5*(rbm[1][0]-Op[1][ind]),rbm[2][0], 'D', None)#(rbm[0][0],rbm[1][0],0))
+ax.scatter(rbm[0][0],rbm[1][0],1.3*min_z,color='red', marker='D',s=25) #2D ellipse minor- projection
+ax.text(1.1*rbm[0][0],0.5*(rbm[1][0]-Op[1][ind]),1.3*min_z, 'D\'', None)#(rbm[0][0],rbm[1][0],0))
+ax.plot([rbm[0][0],rbm[0][0]],[rbm[1][0],rbm[1][0]],[rbm[2][0],1.3*min_z],color='black',linestyle=':') #3D to 2D Ellipse minor - Diamond
+
+## Plot Conjugate Diameters
+ax.plot([rbp[0][0],rbm[0][0]],[rbp[1][0],rbm[1][0]],[1.3*min_z,1.3*min_z],color='blue',linestyle='-') #2D ellipse minor+ projection
+ax.plot([rper[0][0],rapo[0][0]],[rper[1][0],rapo[1][0]],[1.3*min_z,1.3*min_z],color='blue',linestyle='-') #2D Ellipse Perigee Diamond
+
+## Plot Ellipse Center
+ax.scatter((rper[0][0] + rapo[0][0])/2,(rper[1][0] + rapo[1][0])/2,(rper[2][0] + rapo[2][0])/2,color='black',marker='o',s=36) #3D Ellipse
+ax.text(1.2*(rper[0][0] + rapo[0][0])/2,1.2*(rper[1][0] + rapo[1][0])/2,1.31*(rper[2][0] + rapo[2][0])/2, 'O', None)
+ax.scatter(Op[0][ind],Op[1][ind], 1.3*min_z, color='black', marker='o',s=25) #2D Ellipse Center
+ax.text(1.2*(rper[0][0] + rapo[0][0])/2,1.2*(rper[1][0] + rapo[1][0])/2,1.4*min_z, 'O\'', None)
+ax.plot([(rper[0][0] + rapo[0][0])/2,Op[0][ind]],[(rper[1][0] + rapo[1][0])/2,Op[1][ind]],[(rper[2][0] + rapo[2][0])/2,1.3*min_z],color='black',linestyle=':')
+print('a: ' + str(np.round(sma[ind],2)) + ' e: ' + str(np.round(e[ind],2)) + ' W: ' + str(np.round(W[ind],2)) + ' w: ' + str(np.round(w[ind],2)) + ' i: ' + str(np.round(inc[ind],2)) +\
+     ' Psi: ' + str(np.round(Psi[ind],2)) + ' psi: ' + str(np.round(psi[ind],2)))# + ' theta: ' + str(np.round(theta[ind],2)))
+
+
+ang2 = (theta_OpQ_X[ind]+theta_OpQp_X[ind])/2
+dmajorpx1 = Op[0][ind] + dmajorp[ind]*np.cos(ang2)
+dmajorpy1 = Op[1][ind] + dmajorp[ind]*np.sin(ang2)
+dmajorpx2 = Op[0][ind] + dmajorp[ind]*np.cos(ang2+np.pi)
+dmajorpy2 = Op[1][ind] + dmajorp[ind]*np.sin(ang2+np.pi)
+ax.plot([Op[0][ind],dmajorpx1],[Op[1][ind],dmajorpy1],[1.3*min_z,1.3*min_z],color='purple',linestyle='-')
+ax.plot([Op[0][ind],dmajorpx2],[Op[1][ind],dmajorpy2],[1.3*min_z,1.3*min_z],color='purple',linestyle='-')
+dminorpx1 = Op[0][ind] + dminorp[ind]*np.cos(ang2+np.pi/2)
+dminorpy1 = Op[1][ind] + dminorp[ind]*np.sin(ang2+np.pi/2)
+dminorpx2 = Op[0][ind] + dminorp[ind]*np.cos(ang2-np.pi/2)
+dminorpy2 = Op[1][ind] + dminorp[ind]*np.sin(ang2-np.pi/2)
+ax.plot([Op[0][ind],dminorpx1],[Op[1][ind],dminorpy1],[1.3*min_z,1.3*min_z],color='purple',linestyle='-')
+ax.plot([Op[0][ind],dminorpx2],[Op[1][ind],dminorpy2],[1.3*min_z,1.3*min_z],color='purple',linestyle='-')
+
+dmajorpx1 = Op[0][ind] + dmajorp[ind]*np.cos(ang2)
+dmajorpy1 = Op[1][ind] + dmajorp[ind]*np.sin(ang2)
+dmajorpx2 = Op[0][ind] + dmajorp[ind]*np.cos(ang2+np.pi)
+dmajorpy2 = Op[1][ind] + dmajorp[ind]*np.sin(ang2+np.pi)
+dminorpx1 = Op[0][ind] + dminorp[ind]*np.cos(ang2+np.pi/2)
+dminorpy1 = Op[1][ind] + dminorp[ind]*np.sin(ang2+np.pi/2)
+dminorpx2 = Op[0][ind] + dminorp[ind]*np.cos(ang2-np.pi/2)
+dminorpy2 = Op[1][ind] + dminorp[ind]*np.sin(ang2-np.pi/2)
+ax.plot([Op[0][ind],dmajorpx1],[Op[1][ind],dmajorpy1],[1.3*min_z,1.3*min_z],color='purple',linestyle='-')
+ax.plot([Op[0][ind],dmajorpx2],[Op[1][ind],dmajorpy2],[1.3*min_z,1.3*min_z],color='purple',linestyle='-')
+ax.plot([Op[0][ind],dminorpx1],[Op[1][ind],dminorpy1],[1.3*min_z,1.3*min_z],color='purple',linestyle='-')
+ax.plot([Op[0][ind],dminorpx2],[Op[1][ind],dminorpy2],[1.3*min_z,1.3*min_z],color='purple',linestyle='-')
+ax.scatter([dmajorpx1,dmajorpx2,dminorpx1,dminorpx2],[dmajorpy1,dmajorpy2,dminorpy1,dminorpy2],[1.3*min_z,1.3*min_z,1.3*min_z,1.3*min_z],color='grey',marker='o',s=25,zorder=2)
+ax.text(1.05*dmajorpx1,1.05*dmajorpy1,1.3*min_z, 'I', None)#(dmajorpx1,dmajorpy1,0))
+ax.text(1.1*dmajorpx2,1.1*dmajorpy2,1.3*min_z, 'R', None)#(dmajorpx2,dmajorpy2,0))
+ax.text(1.05*dminorpx1,0.1*(dminorpy1-Op[1][ind]),1.3*min_z, 'S', None)#(dminorpx1,dminorpy1,0))
+ax.text(1.05*dminorpx2,1.05*dminorpy2,1.3*min_z, 'T', None)#(dminorpx2,dminorpy2,0))
+#ax.text(x,y,z, label, zdir)
+x_projEllipse = Op[0][ind] + dmajorp[ind]*np.cos(vs)*np.cos(ang2) - dminorp[ind]*np.sin(vs)*np.sin(ang2)
+y_projEllipse = Op[1][ind] + dmajorp[ind]*np.cos(vs)*np.sin(ang2) + dminorp[ind]*np.sin(vs)*np.cos(ang2)
+ax.plot(x_projEllipse,y_projEllipse,1.3*min_z*np.ones(len(vs)), color='red', linestyle='-',zorder=7)
+
+ax.set_xlabel('X')
+ax.set_ylabel('Y')
+ax.set_zlabel('Z')
+ax.grid(False)
+#artificial box
+xmax = np.max([np.abs(rper[0][0]),np.abs(rapo[0][0]),np.abs(1.3*min_z)])
+ax.scatter([-xmax,xmax],[-xmax,xmax],[-0.2-np.abs(1.3*min_z),0.2+1.3*min_z],color=None,alpha=0)
+ax.set_xlim3d(-0.99*xmax+Op[0][ind],0.99*xmax+Op[0][ind])
+ax.set_ylim3d(-0.99*xmax+Op[1][ind],0.99*xmax+Op[1][ind])
+ax.set_zlim3d(-0.99*xmax,0.99*xmax)
+ax.xaxis.set_pane_color((1.0, 1.0, 1.0, 0.0)) #remove background color
+ax.set_axis_off() #removes axes
+plt.show(block=False)
+####
+
+#### Create Projected Ellipse Conjugate Diameters and QQ' construction diagram
+####
+
+
 #### Derotate Ellipse
 start2 = time.time()
 x, y, Phi = derotatedEllipse(theta_OpQ_X, theta_OpQp_X, Op)
@@ -94,13 +227,15 @@ def plotDerotatedEllipse(ind, sma, e, W, w, inc, theta_OpQ_X, theta_OpQp_X, dmaj
     ca = plt.gca()
     ca.axis('equal')
     plt.scatter([0],[0],color='orange')
-    ## 3D Ellipse
+    ## Plot 3D Ellipse
     vs = np.linspace(start=0,stop=2*np.pi,num=300)
     r = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],vs)
     x_3Dellipse = r[0,0,:]
     y_3Dellipse = r[1,0,:]
     plt.plot(x_3Dellipse,y_3Dellipse,color='black')
+    ## Plot 3D Ellipse Center
     plt.scatter(Op[0][ind],Op[1][ind],color='black')
+    ## Plot Rotated Ellipse
     ang2 = (theta_OpQ_X[ind]+theta_OpQp_X[ind])/2
     dmajorpx1 = Op[0][ind] + dmajorp[ind]*np.cos(ang2)
     dmajorpy1 = Op[1][ind] + dmajorp[ind]*np.sin(ang2)
@@ -143,6 +278,7 @@ print('stop3: ' + str(stop3-start3))
 start4_new = time.time()
 A, B, C, D = quarticCoefficients_smin_smax_lmin_lmax(a.astype('complex128'), b, mx, my)
 xreal, delta, P, D2, R, delta_0 = quarticSolutions_ellipse_to_Quarticipynb(A.astype('complex128'), B, C, D)
+del A, B, C, D #delting for memory efficiency
 assert np.max(np.nanmin(np.abs(np.imag(xreal)),axis=1)) < 1e-15, 'At least one row has min > 1e-15' #this ensures each row has a solution
 xreal.real = np.abs(xreal)
 stop4_new = time.time()
@@ -227,6 +363,7 @@ my.astype('complex128')
 r.astype('complex128')
 A, B, C, D = quarticCoefficients_ellipse_to_Quarticipynb(a, b, mx, my, r)
 xreal2, delta, P, D2, R, delta_0 = quarticSolutions_ellipse_to_Quarticipynb(A, B, C, D)
+del A, B, C, D #delting for memory efficiency
 yreal2 = ellipseYFromX(xreal2.astype('complex128'), a, b)
 
 #### All Real Inds
@@ -244,13 +381,13 @@ twoIntSameYInds = np.where(gtMinSepBool*ltLMinSepBool)[0]
 fourIntInds = np.where(gtLMinSepBool*ltLMaxSepBool)[0]
 #Two intersections opposite x-side
 twoIntOppositeXInds = np.where(ltMaxSepBool*gtLMaxSepBool)[0]
+del gtMinSepBool, ltMaxSepBool, gtLMaxSepBool, ltLMaxSepBool, gtLMinSepBool, ltLMinSepBool #for memory efficiency
 
 #Solution Checks
 assert np.max(np.imag(xreal2[yrealAllRealInds[fourIntInds]])) < 1e-7, 'an Imag component of the all reals is too low!'
 
 
 #### Four Intersection Points
-#DELETEfourInt_x = np.real(xreal2[yrealAllRealInds[fourIntInds]])
 fourInt_dx = (np.real(xreal2[yrealAllRealInds[fourIntInds]]).T - mx[yrealAllRealInds[fourIntInds]]).T
 fourIntSortInds = np.argsort(fourInt_dx, axis=1)
 sameYOppositeXInds = fourIntSortInds[:,0]
@@ -329,7 +466,6 @@ twoIntOppositeX_y = (twoIntOppositeX_y.T*(2*bool2[yrealAllRealInds[twoIntOpposit
 xIntercept = a/2 - b**2/(2*a)
 #yline = mx*a/b - a**2/(2*b) + b/2 #between first quadrant a,b
 yline = -mx*a/b + a**2/(2*b) - b/2 #between 4th quadrant a,b
-#DLEETErelxInds = np.where(mx < xIntercept)[0]
 xltXIntercept = np.where(mx <= xIntercept)[0]
 xgtXIntercept = np.where(mx > xIntercept)[0]
 yaboveInds = np.where((my > yline)*(mx > xIntercept))[0]
@@ -354,6 +490,8 @@ print(len(inter5))
 print(len(inter6))
 print(len(inter7))
 print(len(inter8))
+
+
 plt.close(1000)
 plt.figure(1000)
 # plt.scatter(x[yaboveInds],yline[yaboveInds] - y[yaboveInds],color='blue')
@@ -386,12 +524,7 @@ plt.ylim([-6,4])
 plt.show(block=False)
 
 
-
-
-
 #### ONLY 2 Real Inds (No Local Min/Max)
-#DELETEgtMaxSepInds = np.where(maxSep[yrealImagInds] < r[yrealImagInds])[0]
-#DELETEltMinSepInds = np.where(r[yrealImagInds] < minSep[yrealImagInds])[0]
 sepsInsideInds = np.where((maxSep[yrealImagInds] >= r[yrealImagInds]) & (r[yrealImagInds] >= minSep[yrealImagInds]))[0] #inds where r is within the minimum and maximum separations
 only2RealInds = yrealImagInds[sepsInsideInds] #indicies of planets with only 2 real interesections
 #lets try usnig separation bounds
@@ -400,14 +533,6 @@ sepbp = np.sqrt(mx[only2RealInds]**2+(b[only2RealInds]+my[only2RealInds])**2)
 sepbm = np.sqrt(mx[only2RealInds]**2+(b[only2RealInds]-my[only2RealInds])**2)
 sepap = np.sqrt((a[only2RealInds]+mx[only2RealInds])**2+my[only2RealInds]**2)
 sepam = np.sqrt((a[only2RealInds]-mx[only2RealInds])**2+my[only2RealInds]**2)
-
-#Bisector Points
-#Each quadrant has a bisector where [0,b] and [a,0] distances are equal.
-#The bisector line goes through point [a/2,b/2] and has slope 
-bisect_slopes = a[only2RealInds]/b[only2RealInds]
-bisect_yintercept = b[only2RealInds]/2 - a[only2RealInds]**2/(2*b[only2RealInds])
-#THINKING THIS CAN BE USED TO DETERMINE QUADRANTS OF INTERSECTIONS
-
 
 #Types of Star Locations In Projected Ellipse
 typeInds0 = np.where(sepap < sepbp)[0]
@@ -421,56 +546,7 @@ print(len(typeInds3))
 
 xIntersectionsOnly2 = np.zeros((len(only2RealInds),2))
 yIntersectionsOnly2 = np.zeros((len(only2RealInds),2))
-#Separation Order For Each Location Type
-#Intersection quadrants for each star location type
-# #Type0 sepbm, sepam, sepap, sepbp
-#     if (r[yrealImagInds] < sepbm):
-#         #two intersections occur in quadrant 1
-#         #np.argmax(np.real(xreal2[only2RealInds,0:2]),axis=1)
-#     if (sepbm < r[yrealImagInds])*(r[yrealImagInds] < sepam):
-#         #intersection in quadrant 1, intersection in quadrant 2
-#     if (sepam < r[yrealImagInds])*(r[yrealImagInds] < sepap):
-#         #intersection in quadrant 4, intersection in quadrant 2
-#     if (sepap < r[yrealImagInds])*(r[yrealImagInds] < sepbp):
-#         #intersection in quadrant 3, intersection in quadrant 4
-#     if (sepbp < r[yrealImagInds]):
-#         #two intersections occur in quadrant 3
-# #Type1 sepbm, sepbp, sepam, sepap #NOTE: Type1 should not be yrealImagInds
-#     if (r[yrealImagInds] < sepbm):
-#         #two intersections occur in quadrant 1
-#     if (sepbm < r[yrealImagInds])*(r[yrealImagInds] < sepbp):
-#         #intersection in quadrant 1, intersection in quadrant 2
-#     if (sepbp < r[yrealImagInds])*(r[yrealImagInds] < sepam):
-#         #intersection in quadrant 1, intersection in quadrant 2
-#         #intersection in quadrant 3, intersection in quadrant 4
-#     if (sepam < r[yrealImagInds])*(r[yrealImagInds] < sepap)
-#         #intersection in quadrant 2, intersection in quadrant 3
-#     if (sepap < r[yrealImagInds]):
-#         #two intersections in quadrant 3
-# #Type2 sepbm, sepam, sepbp, sepap
-#     if (r[yrealImagInds] < sepbm):
-#         #two intersections in quadrant 1
-#     if (sepbm < r[yrealImagInds])*(r[yrealImagInds] < sepam):
-#         #intersection in quadrant 1, intersection in quadrant 2
-#     if (sepam < r[yrealImagInds])*(r[yrealImagInds] < sepbp):
-#         #intersection in quadrant4, intersection in quadrant 2
-#     if (sepbp < r[yrealImagInds])*(r[yrealImagInds] < sepap):
-#         #intersection in quadrant 2, intersection in quadrant 3
-#     if (sepap < r[yrealImagInds]):
-#         #two intersectin in quadrant 3
-# #Type3 sepam, sepbm, sepbp, sepap
-#     if (r[yrealImagInds] < sepam):
-#         #two intersections in quadrant 1
-#     if (sepam < r[yrealImagInds])*(r[yrealImagInds] < sepbm):
-#         #intersection in quadrant 1, intersection in quadrant 4
-#     if (sepbm < r[yrealImagInds])*(r[yrealImagInds] < sepbp):
-#         #intersection in quadrant 2, intersection in quadrant 4
-#     if (sepbp < r[yrealImagInds])*(r[yrealImagInds] < sepap):
-#         #intersection in quadrant 2, intersection in quadrant 3
-#     if (sepap < r[yrealImagInds]):
-#         #two intersection in quadrant 3
-
-#With Inds
+#Separation Order For Each Location Type with Inds
 #Type0
 type0_0Inds = np.where((sepap < sepbp)*(r[only2RealInds] < sepbm))[0]
 xIntersectionsOnly2[type0_0Inds] = np.real(xreal2[only2RealInds[type0_0Inds],0:2])
@@ -487,18 +563,6 @@ yIntersectionsOnly2[type0_3Inds] = np.real(np.asarray([-yreal2[only2RealInds[typ
 type0_4Inds = np.where((sepap < sepbp)*(sepbp < r[only2RealInds]))[0]
 xIntersectionsOnly2[type0_4Inds] = np.real(np.asarray([xreal2[only2RealInds[type0_4Inds],0],xreal2[only2RealInds[type0_4Inds],1]]).T) #-x is already in solution
 yIntersectionsOnly2[type0_4Inds] = np.real(np.asarray([-yreal2[only2RealInds[type0_4Inds],0],-yreal2[only2RealInds[type0_4Inds],1]]).T)
-    # if (r[yrealImagInds] < sepbm):
-    #     #two intersections occur in quadrant 1
-    #     #np.argmax(np.real(xreal2[only2RealInds,0:2]),axis=1)
-    # if (sepbm < r[yrealImagInds])*(r[yrealImagInds] < sepam):
-    #     #intersection in quadrant 1, intersection in quadrant 2
-
-    # if (sepam < r[yrealImagInds])*(r[yrealImagInds] < sepap):
-    #     #intersection in quadrant 4, intersection in quadrant 2
-    # if (sepap < r[yrealImagInds])*(r[yrealImagInds] < sepbp):
-    #     #intersection in quadrant 3, intersection in quadrant 4
-    # if (sepbp < r[yrealImagInds]):
-    #     #two intersections occur in quadrant 3
 #TODO FIX ALL THE STUFF HERE. FIRST FIND WHEN TYPE 1 Situations Occur (Should they have 4 real solutions always?)
 type1_0Inds = np.where((sepbp < sepam)*(r[only2RealInds] < sepbm))[0]
 xIntersectionsOnly2[type1_0Inds] = np.real(xreal2[only2RealInds[type1_0Inds],0:2])
@@ -516,17 +580,6 @@ type1_4Inds = np.where((sepbp < sepam)*(sepap < r[only2RealInds]))[0]
 xIntersectionsOnly2[type1_4Inds] = np.real(np.asarray([-xreal2[only2RealInds[type1_4Inds],0],-xreal2[only2RealInds[type1_4Inds],1]]).T)
 yIntersectionsOnly2[type1_4Inds] = np.real(np.asarray([-yreal2[only2RealInds[type1_4Inds],0],-yreal2[only2RealInds[type1_4Inds],1]]).T)
 #Type1 sepbm, sepbp, sepam, sepap #NOTE: Type1 should not be yrealImagInds
-    # if (r[yrealImagInds] < sepbm):
-    #     #two intersections occur in quadrant 1
-    # if (sepbm < r[yrealImagInds])*(r[yrealImagInds] < sepbp):
-    #     #intersection in quadrant 1, intersection in quadrant 2
-    # if (sepbp < r[yrealImagInds])*(r[yrealImagInds] < sepam):
-    #     #intersection in quadrant 1, intersection in quadrant 2
-    #     #intersection in quadrant 3, intersection in quadrant 4
-    # if (sepam < r[yrealImagInds])*(r[yrealImagInds] < sepap)
-    #     #intersection in quadrant 2, intersection in quadrant 3
-    # if (sepap < r[yrealImagInds]):
-    #     #two intersections in quadrant 3
 #Type2 sepbm, sepam, sepbp, sepap
 type2_0Inds = np.where((sepam < sepbp)*(sepbp < sepap)*(sepbm < sepam)*(r[only2RealInds] < sepbm))[0]
 xIntersectionsOnly2[type2_0Inds] = np.real(np.asarray([xreal2[only2RealInds[type2_0Inds],0],xreal2[only2RealInds[type2_0Inds],1]]).T)
@@ -543,16 +596,6 @@ yIntersectionsOnly2[type2_3Inds] = np.real(np.asarray([yreal2[only2RealInds[type
 type2_4Inds = np.where((sepam < sepbp)*(sepbp < sepap)*(sepbm < sepam)*(sepap < r[only2RealInds]))[0]
 xIntersectionsOnly2[type2_4Inds] = np.real(np.asarray([xreal2[only2RealInds[type2_4Inds],0],xreal2[only2RealInds[type2_4Inds],1]]).T)#-x is already in solution
 yIntersectionsOnly2[type2_4Inds] = np.real(np.asarray([-yreal2[only2RealInds[type2_4Inds],0],-yreal2[only2RealInds[type2_4Inds],1]]).T)
-    # if (r[yrealImagInds] < sepbm):
-    #     #two intersections in quadrant 1
-    # if (sepbm < r[yrealImagInds])*(r[yrealImagInds] < sepam):
-    #     #intersection in quadrant 1, intersection in quadrant 2
-    # if (sepam < r[yrealImagInds])*(r[yrealImagInds] < sepbp):
-    #     #intersection in quadrant4, intersection in quadrant 2
-    # if (sepbp < r[yrealImagInds])*(r[yrealImagInds] < sepap):
-    #     #intersection in quadrant 2, intersection in quadrant 3
-    # if (sepap < r[yrealImagInds]):
-    #     #two intersectin in quadrant 3
 #Type3 sepam, sepbm, sepbp, sepap
 type3_0Inds = np.where((sepam < sepbm)*(r[only2RealInds] < sepam))[0]
 xIntersectionsOnly2[type3_0Inds] = np.real(np.asarray([xreal2[only2RealInds[type3_0Inds],0],xreal2[only2RealInds[type3_0Inds],1]]).T)
@@ -569,16 +612,6 @@ yIntersectionsOnly2[type3_3Inds] = np.real(np.asarray([yreal2[only2RealInds[type
 type3_4Inds = np.where((sepam < sepbm)*(sepap < r[only2RealInds]))[0]
 xIntersectionsOnly2[type3_4Inds] = np.real(np.asarray([xreal2[only2RealInds[type3_4Inds],0],xreal2[only2RealInds[type3_4Inds],1]]).T)#-x is already in solution
 yIntersectionsOnly2[type3_4Inds] = np.real(np.asarray([-yreal2[only2RealInds[type3_4Inds],0],-yreal2[only2RealInds[type3_4Inds],1]]).T)
-    # if (r[yrealImagInds] < sepam):
-    #     #two intersections in quadrant 1
-    # if (sepam < r[yrealImagInds])*(r[yrealImagInds] < sepbm):
-    #     #intersection in quadrant 1, intersection in quadrant 4
-    # if (sepbm < r[yrealImagInds])*(r[yrealImagInds] < sepbp):
-    #     #intersection in quadrant 2, intersection in quadrant 4
-    # if (sepbp < r[yrealImagInds])*(r[yrealImagInds] < sepap):
-    #     #intersection in quadrant 2, intersection in quadrant 3
-    # if (sepap < r[yrealImagInds]):
-    #     #two intersection in quadrant 3
 #Quadrant Star Belongs to
 bool1 = x > 0
 bool2 = y > 0
@@ -627,11 +660,11 @@ ind = only2RealInds[type2_2Inds[0]]#works
 ind = only2RealInds[type2_3Inds[0]]#works
 ind = only2RealInds[type2_4Inds[0]]#works
 #type3
-ind = only2RealInds[type3_0Inds[0]]
-ind = only2RealInds[type3_1Inds[0]]
-ind = only2RealInds[type3_2Inds[0]]
-ind = only2RealInds[type3_3Inds[0]]
-ind = only2RealInds[type3_4Inds[0]]
+#ind = only2RealInds[type3_0Inds[0]]#works
+ind = only2RealInds[type3_1Inds[0]]#works
+#ind = only2RealInds[type3_2Inds[0]]#works
+#ind = only2RealInds[type3_3Inds[0]]#works
+#ind = only2RealInds[type3_4Inds[0]]#works
 
 
 # tmp = (mx[only2RealInds]**2 + my[only2RealInds]**2)/a[only2RealInds]
