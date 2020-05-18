@@ -91,121 +91,196 @@ plotProjectedEllipse(ind, sma, e, W, w, inc, theta_OpQ_X, theta_OpQp_X, dmajorp,
 
 
 #### Plot 3D Ellipse to 2D Ellipse Projection Diagram
+def plot3DEllipseto2DEllipseProjectionDiagram(ind, sma, e, W, w, inc, num):
+    """
+    """
+    plt.close(num)
+    fig = plt.figure(num)
+    ax = fig.add_subplot(111, projection='3d')
+
+    ## 3D Ellipse
+    vs = np.linspace(start=0,stop=2*np.pi,num=300)
+    r = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],vs)
+    x_3Dellipse = r[0,0,:]
+    y_3Dellipse = r[1,0,:]
+    z_3Dellipse = r[2,0,:]
+    ax.plot(x_3Dellipse,y_3Dellipse,z_3Dellipse,color='black',label='Planet Orbit',linewidth=2)
+    min_z = np.min(z_3Dellipse)
+
+    ## Central Sun
+    ax.scatter(0,0,0,color='orange',marker='o',s=25) #of 3D ellipse
+    ax.text(0,0,0.15*np.abs(min_z), 'F', None)
+    ax.plot([0,0],[0,0],[0,1.3*min_z],color='orange',linestyle='--',linewidth=2) #connecting line
+    ax.scatter(0,0,1.3*min_z,color='orange',marker='x',s=25) #of 2D ellipse
+    ax.text(0,0,1.5*min_z, 'F\'', None)
+
+    ## Plot 3D Ellipse semi-major/minor axis
+    rper = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],0.) #planet position perigee
+    rapo = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],np.pi) #planet position apogee
+    ax.plot([rper[0][0],rapo[0][0]],[rper[1][0],rapo[1][0]],[rper[2][0],rapo[2][0]],color='purple', linestyle='-',linewidth=2) #3D Ellipse Semi-major axis
+    ax.scatter(rper[0][0],rper[1][0],rper[2][0],color='grey',marker='D',s=25) #3D Ellipse Perigee Diamond
+    ax.text(1.2*rper[0][0],1.2*rper[1][0],rper[2][0], 'A', None)
+    ax.scatter(rper[0][0],rper[1][0],1.3*min_z,color='blue',marker='D',s=25) #2D Ellipse Perigee Diamond
+    ax.text(1.1*rper[0][0],1.1*rper[1][0],1.3*min_z, 'A\'', None)
+    ax.plot([rper[0][0],rper[0][0]],[rper[1][0],rper[1][0]],[rper[2][0],1.3*min_z],color='grey',linestyle='--',linewidth=2) #3D to 2D Ellipse Perigee Diamond
+    ax.scatter(rapo[0][0],rapo[1][0],rapo[2][0],color='grey', marker='D',s=25) #3D Ellipse Apogee Diamond
+    ax.text(1.1*rapo[0][0],1.1*rapo[1][0],1.2*rapo[2][0], 'B', None)
+    ax.scatter(rapo[0][0],rapo[1][0],1.3*min_z,color='blue',marker='D',s=25) #2D Ellipse Perigee Diamond
+    ax.text(1.1*rapo[0][0],1.1*rapo[1][0],1.3*min_z, 'B\'', None)
+
+    ax.plot([rapo[0][0],rapo[0][0]],[rapo[1][0],rapo[1][0]],[rapo[2][0],1.3*min_z],color='grey',linestyle='--',linewidth=2) #3D to 2D Ellipse Apogee Diamond
+    rbp = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],np.arccos((np.cos(np.pi/2)-e[ind])/(1-e[ind]*np.cos(np.pi/2)))) #3D Ellipse E=90
+    rbm = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],-np.arccos((np.cos(-np.pi/2)-e[ind])/(1-e[ind]*np.cos(-np.pi/2)))) #3D Ellipse E=-90
+    ax.plot([rbp[0][0],rbm[0][0]],[rbp[1][0],rbm[1][0]],[rbp[2][0],rbm[2][0]],color='purple', linestyle='-',linewidth=2) #
+    ax.scatter(rbp[0][0],rbp[1][0],rbp[2][0],color='grey',marker='D',s=25) #3D ellipse minor +
+    ax.text(1.1*rbp[0][0],1.1*rbp[1][0],1.2*rbp[2][0], 'C', None)
+    ax.scatter(rbp[0][0],rbp[1][0],1.3*min_z,color='blue',marker='D',s=25) #2D ellipse minor+ projection
+    ax.text(1.1*rbp[0][0],1.1*rbp[1][0],1.3*min_z, 'C\'', None)
+    ax.plot([rbp[0][0],rbp[0][0]],[rbp[1][0],rbp[1][0]],[rbp[2][0],1.3*min_z],color='grey',linestyle='--',linewidth=2) #3D to 2D Ellipse minor + Diamond
+    ax.scatter(rbm[0][0],rbm[1][0],rbm[2][0],color='grey', marker='D',s=25) #3D ellipse minor -
+    ax.text(1.1*rbm[0][0],0.5*(rbm[1][0]-Op[1][ind]),rbm[2][0]+0.05, 'D', None)
+    ax.scatter(rbm[0][0],rbm[1][0],1.3*min_z,color='blue', marker='D',s=25) #2D ellipse minor- projection
+    ax.text(1.1*rbm[0][0],0.5*(rbm[1][0]-Op[1][ind]),1.3*min_z, 'D\'', None)
+    ax.plot([rbm[0][0],rbm[0][0]],[rbm[1][0],rbm[1][0]],[rbm[2][0],1.3*min_z],color='grey',linestyle='--',linewidth=2) #3D to 2D Ellipse minor - Diamond
+
+    ## Plot K, H, P
+    ax.scatter(0.6*(rapo[0][0] - (rper[0][0] + rapo[0][0])/2) + (rper[0][0] + rapo[0][0])/2,\
+            0.6*(rapo[1][0] - (rper[1][0] + rapo[1][0])/2) + (rper[1][0] + rapo[1][0])/2,\
+            0.6*(rapo[2][0] - (rper[2][0] + rapo[2][0])/2) + (rper[2][0] + rapo[2][0])/2,color='green', marker='x',s=36) #Point along OB, point H
+    ax.text(0.6*(rapo[0][0] - (rper[0][0] + rapo[0][0])/2) + (rper[0][0] + rapo[0][0])/2,\
+            0.6*(rapo[1][0] - (rper[1][0] + rapo[1][0])/2) + (rper[1][0] + rapo[1][0])/2,\
+            0.6*(rapo[2][0] - (rper[2][0] + rapo[2][0])/2) + (rper[2][0] + rapo[2][0])/2+0.1,'H', None) #Point along OB, point H
+    xscaletmp = np.sqrt(1-.6**2)
+    ax.scatter(xscaletmp*(rbp[0][0] - (rper[0][0] + rapo[0][0])/2) + (rper[0][0] + rapo[0][0])/2,\
+            xscaletmp*(rbp[1][0] - (rper[1][0] + rapo[1][0])/2) + (rper[1][0] + rapo[1][0])/2,\
+            xscaletmp*(rbp[2][0] - (rper[2][0] + rapo[2][0])/2) + (rper[2][0] + rapo[2][0])/2,color='green',marker='x',s=36) #point along OC, point K
+    ax.text(xscaletmp*(rbp[0][0] - (rper[0][0] + rapo[0][0])/2) + (rper[0][0] + rapo[0][0])/2,\
+            xscaletmp*(rbp[1][0] - (rper[1][0] + rapo[1][0])/2) + (rper[1][0] + rapo[1][0])/2,\
+            xscaletmp*(rbp[2][0] - (rper[2][0] + rapo[2][0])/2) + (rper[2][0] + rapo[2][0])/2+0.1,'K',None) #point along OC, point K
+    angtmp = np.arctan2(0.6,xscaletmp)
+    ax.scatter(np.cos(angtmp)*(rbp[0][0] - (rper[0][0] + rapo[0][0])/2) + (rapo[0][0] - (rper[0][0] + rapo[0][0])/2)*np.sin(angtmp) + (rper[0][0] + rapo[0][0])/2,\
+        np.cos(angtmp)*(rbp[1][0] - (rper[1][0] + rapo[1][0])/2) + (rapo[1][0] - (rper[1][0] + rapo[1][0])/2)*np.sin(angtmp) + (rper[1][0] + rapo[1][0])/2,\
+        np.cos(angtmp)*(rbp[2][0] - (rper[2][0] + rapo[2][0])/2) + (rapo[2][0] - (rper[2][0] + rapo[2][0])/2)*np.sin(angtmp) + (rper[2][0] + rapo[2][0])/2,color='green',marker='o',s=25) #Point P on 3D Ellipse
+    ax.text(np.cos(angtmp)*(rbp[0][0] - (rper[0][0] + rapo[0][0])/2) + (rapo[0][0] - (rper[0][0] + rapo[0][0])/2)*np.sin(angtmp) + (rper[0][0] + rapo[0][0])/2,\
+        np.cos(angtmp)*(rbp[1][0] - (rper[1][0] + rapo[1][0])/2) + (rapo[1][0] - (rper[1][0] + rapo[1][0])/2)*np.sin(angtmp) + (rper[1][0] + rapo[1][0])/2,\
+        np.cos(angtmp)*(rbp[2][0] - (rper[2][0] + rapo[2][0])/2) + (rapo[2][0] - (rper[2][0] + rapo[2][0])/2)*np.sin(angtmp) + (rper[2][0] + rapo[2][0])/2+0.1,'P',None) #Point P on 3D Ellipse
+    ## Plot KP, HP
+    ax.plot([0.6*(rapo[0][0] - (rper[0][0] + rapo[0][0])/2) + (rper[0][0] + rapo[0][0])/2,np.cos(angtmp)*(rbp[0][0] - (rper[0][0] + rapo[0][0])/2) + (rapo[0][0] - (rper[0][0] + rapo[0][0])/2)*np.sin(angtmp) + (rper[0][0] + rapo[0][0])/2],\
+            [0.6*(rapo[1][0] - (rper[1][0] + rapo[1][0])/2) + (rper[1][0] + rapo[1][0])/2,np.cos(angtmp)*(rbp[1][0] - (rper[1][0] + rapo[1][0])/2) + (rapo[1][0] - (rper[1][0] + rapo[1][0])/2)*np.sin(angtmp) + (rper[1][0] + rapo[1][0])/2],\
+            [0.6*(rapo[2][0] - (rper[2][0] + rapo[2][0])/2) + (rper[2][0] + rapo[2][0])/2,np.cos(angtmp)*(rbp[2][0] - (rper[2][0] + rapo[2][0])/2) + (rapo[2][0] - (rper[2][0] + rapo[2][0])/2)*np.sin(angtmp) + (rper[2][0] + rapo[2][0])/2],linestyle=':',color='black') #H to P line
+    ax.plot([xscaletmp*(rbp[0][0] - (rper[0][0] + rapo[0][0])/2) + (rper[0][0] + rapo[0][0])/2,np.cos(angtmp)*(rbp[0][0] - (rper[0][0] + rapo[0][0])/2) + (rapo[0][0] - (rper[0][0] + rapo[0][0])/2)*np.sin(angtmp) + (rper[0][0] + rapo[0][0])/2],\
+            [xscaletmp*(rbp[1][0] - (rper[1][0] + rapo[1][0])/2) + (rper[1][0] + rapo[1][0])/2,np.cos(angtmp)*(rbp[1][0] - (rper[1][0] + rapo[1][0])/2) + (rapo[1][0] - (rper[1][0] + rapo[1][0])/2)*np.sin(angtmp) + (rper[1][0] + rapo[1][0])/2],\
+            [xscaletmp*(rbp[2][0] - (rper[2][0] + rapo[2][0])/2) + (rper[2][0] + rapo[2][0])/2,np.cos(angtmp)*(rbp[2][0] - (rper[2][0] + rapo[2][0])/2) + (rapo[2][0] - (rper[2][0] + rapo[2][0])/2)*np.sin(angtmp) + (rper[2][0] + rapo[2][0])/2],linestyle=':',color='black') #K to P line
+    ## Plot K', H', P'
+    ax.scatter(0.6*(rapo[0][0] - (rper[0][0] + rapo[0][0])/2) + (rper[0][0] + rapo[0][0])/2,\
+            0.6*(rapo[1][0] - (rper[1][0] + rapo[1][0])/2) + (rper[1][0] + rapo[1][0])/2,\
+            1.3*min_z,color='magenta', marker='x',s=36) #Point along O'B', point H'
+    ax.text(0.6*(rapo[0][0] - (rper[0][0] + rapo[0][0])/2) + (rper[0][0] + rapo[0][0])/2,\
+            0.6*(rapo[1][0] - (rper[1][0] + rapo[1][0])/2) + (rper[1][0] + rapo[1][0])/2,\
+            1.3*min_z-0.1,'H\'',None) #Point along O'B', point H'
+    xscaletmp = np.sqrt(1-.6**2)
+    ax.scatter(xscaletmp*(rbp[0][0] - (rper[0][0] + rapo[0][0])/2) + (rper[0][0] + rapo[0][0])/2,\
+            xscaletmp*(rbp[1][0] - (rper[1][0] + rapo[1][0])/2) + (rper[1][0] + rapo[1][0])/2,\
+            1.3*min_z,color='magenta',marker='x',s=36) #point along O'C', point K'
+    ax.text(xscaletmp*(rbp[0][0] - (rper[0][0] + rapo[0][0])/2) + (rper[0][0] + rapo[0][0])/2,\
+            xscaletmp*(rbp[1][0] - (rper[1][0] + rapo[1][0])/2) + (rper[1][0] + rapo[1][0])/2,\
+            1.3*min_z-0.1,'K\'',None) #point along O'C', point K'
+    angtmp = np.arctan2(0.6,xscaletmp)
+    ax.scatter(np.cos(angtmp)*(rbp[0][0] - (rper[0][0] + rapo[0][0])/2) + (rapo[0][0] - (rper[0][0] + rapo[0][0])/2)*np.sin(angtmp) + (rper[0][0] + rapo[0][0])/2,\
+        np.cos(angtmp)*(rbp[1][0] - (rper[1][0] + rapo[1][0])/2) + (rapo[1][0] - (rper[1][0] + rapo[1][0])/2)*np.sin(angtmp) + (rper[1][0] + rapo[1][0])/2,\
+        1.3*min_z,color='magenta',marker='o',s=25) #Point P' on 2D Ellipse
+    ax.text(np.cos(angtmp)*(rbp[0][0] - (rper[0][0] + rapo[0][0])/2) + (rapo[0][0] - (rper[0][0] + rapo[0][0])/2)*np.sin(angtmp) + (rper[0][0] + rapo[0][0])/2,\
+        np.cos(angtmp)*(rbp[1][0] - (rper[1][0] + rapo[1][0])/2) + (rapo[1][0] - (rper[1][0] + rapo[1][0])/2)*np.sin(angtmp) + (rper[1][0] + rapo[1][0])/2,\
+        1.3*min_z-0.1,'P\'',None) #Point P' on 2D Ellipse
+    ## Plot K'P', H'P'
+    ax.plot([0.6*(rapo[0][0] - (rper[0][0] + rapo[0][0])/2) + (rper[0][0] + rapo[0][0])/2,np.cos(angtmp)*(rbp[0][0] - (rper[0][0] + rapo[0][0])/2) + (rapo[0][0] - (rper[0][0] + rapo[0][0])/2)*np.sin(angtmp) + (rper[0][0] + rapo[0][0])/2],\
+            [0.6*(rapo[1][0] - (rper[1][0] + rapo[1][0])/2) + (rper[1][0] + rapo[1][0])/2,np.cos(angtmp)*(rbp[1][0] - (rper[1][0] + rapo[1][0])/2) + (rapo[1][0] - (rper[1][0] + rapo[1][0])/2)*np.sin(angtmp) + (rper[1][0] + rapo[1][0])/2],\
+            [1.3*min_z,1.3*min_z],linestyle=':',color='black') #H to P line
+    ax.plot([xscaletmp*(rbp[0][0] - (rper[0][0] + rapo[0][0])/2) + (rper[0][0] + rapo[0][0])/2,np.cos(angtmp)*(rbp[0][0] - (rper[0][0] + rapo[0][0])/2) + (rapo[0][0] - (rper[0][0] + rapo[0][0])/2)*np.sin(angtmp) + (rper[0][0] + rapo[0][0])/2],\
+            [xscaletmp*(rbp[1][0] - (rper[1][0] + rapo[1][0])/2) + (rper[1][0] + rapo[1][0])/2,np.cos(angtmp)*(rbp[1][0] - (rper[1][0] + rapo[1][0])/2) + (rapo[1][0] - (rper[1][0] + rapo[1][0])/2)*np.sin(angtmp) + (rper[1][0] + rapo[1][0])/2],\
+            [1.3*min_z,1.3*min_z],linestyle=':',color='black') #K to P line
+    ## Plot PP', KK', HH'
+    ax.plot([np.cos(angtmp)*(rbp[0][0] - (rper[0][0] + rapo[0][0])/2) + (rapo[0][0] - (rper[0][0] + rapo[0][0])/2)*np.sin(angtmp) + (rper[0][0] + rapo[0][0])/2,np.cos(angtmp)*(rbp[0][0] - (rper[0][0] + rapo[0][0])/2) + (rapo[0][0] - (rper[0][0] + rapo[0][0])/2)*np.sin(angtmp) + (rper[0][0] + rapo[0][0])/2],\
+        [np.cos(angtmp)*(rbp[1][0] - (rper[1][0] + rapo[1][0])/2) + (rapo[1][0] - (rper[1][0] + rapo[1][0])/2)*np.sin(angtmp) + (rper[1][0] + rapo[1][0])/2,np.cos(angtmp)*(rbp[1][0] - (rper[1][0] + rapo[1][0])/2) + (rapo[1][0] - (rper[1][0] + rapo[1][0])/2)*np.sin(angtmp) + (rper[1][0] + rapo[1][0])/2],\
+        [np.cos(angtmp)*(rbp[2][0] - (rper[2][0] + rapo[2][0])/2) + (rapo[2][0] - (rper[2][0] + rapo[2][0])/2)*np.sin(angtmp) + (rper[2][0] + rapo[2][0])/2,1.3*min_z],color='black',linestyle=':') #PP'
+    ax.plot([0.6*(rapo[0][0] - (rper[0][0] + rapo[0][0])/2) + (rper[0][0] + rapo[0][0])/2,0.6*(rapo[0][0] - (rper[0][0] + rapo[0][0])/2) + (rper[0][0] + rapo[0][0])/2],\
+            [0.6*(rapo[1][0] - (rper[1][0] + rapo[1][0])/2) + (rper[1][0] + rapo[1][0])/2,0.6*(rapo[1][0] - (rper[1][0] + rapo[1][0])/2) + (rper[1][0] + rapo[1][0])/2],\
+            [0.6*(rapo[2][0] - (rper[2][0] + rapo[2][0])/2) + (rper[2][0] + rapo[2][0])/2,1.3*min_z],color='black',linestyle=':') #HH'
+    ax.plot([xscaletmp*(rbp[0][0] - (rper[0][0] + rapo[0][0])/2) + (rper[0][0] + rapo[0][0])/2,xscaletmp*(rbp[0][0] - (rper[0][0] + rapo[0][0])/2) + (rper[0][0] + rapo[0][0])/2],\
+            [xscaletmp*(rbp[1][0] - (rper[1][0] + rapo[1][0])/2) + (rper[1][0] + rapo[1][0])/2,xscaletmp*(rbp[1][0] - (rper[1][0] + rapo[1][0])/2) + (rper[1][0] + rapo[1][0])/2],\
+            [xscaletmp*(rbp[2][0] - (rper[2][0] + rapo[2][0])/2) + (rper[2][0] + rapo[2][0])/2,1.3*min_z],color='black',linestyle=':') #KK'
+
+
+
+    ## Plot Conjugate Diameters
+    ax.plot([rbp[0][0],rbm[0][0]],[rbp[1][0],rbm[1][0]],[1.3*min_z,1.3*min_z],color='blue',linestyle='-',linewidth=2) #2D ellipse minor+ projection
+    ax.plot([rper[0][0],rapo[0][0]],[rper[1][0],rapo[1][0]],[1.3*min_z,1.3*min_z],color='blue',linestyle='-',linewidth=2) #2D Ellipse Perigee Diamond
+
+    ## Plot Ellipse Center
+    ax.scatter((rper[0][0] + rapo[0][0])/2,(rper[1][0] + rapo[1][0])/2,(rper[2][0] + rapo[2][0])/2,color='grey',marker='o',s=36) #3D Ellipse
+    ax.text(1.2*(rper[0][0] + rapo[0][0])/2,1.2*(rper[1][0] + rapo[1][0])/2,1.31*(rper[2][0] + rapo[2][0])/2, 'O', None)
+    ax.scatter(Op[0][ind],Op[1][ind], 1.3*min_z, color='grey', marker='o',s=25) #2D Ellipse Center
+    ax.text(1.2*(rper[0][0] + rapo[0][0])/2,1.2*(rper[1][0] + rapo[1][0])/2,1.4*min_z, 'O\'', None)
+    ax.plot([(rper[0][0] + rapo[0][0])/2,Op[0][ind]],[(rper[1][0] + rapo[1][0])/2,Op[1][ind]],[(rper[2][0] + rapo[2][0])/2,1.3*min_z],color='grey',linestyle='--',linewidth=2) #Plot ) to )''
+    print('a: ' + str(np.round(sma[ind],2)) + ' e: ' + str(np.round(e[ind],2)) + ' W: ' + str(np.round(W[ind],2)) + ' w: ' + str(np.round(w[ind],2)) + ' i: ' + str(np.round(inc[ind],2)) +\
+         ' Psi: ' + str(np.round(Psi[ind],2)) + ' psi: ' + str(np.round(psi[ind],2)))# + ' theta: ' + str(np.round(theta[ind],2)))
+
+
+    ang2 = (theta_OpQ_X[ind]+theta_OpQp_X[ind])/2
+    dmajorpx1 = Op[0][ind] + dmajorp[ind]*np.cos(ang2)
+    dmajorpy1 = Op[1][ind] + dmajorp[ind]*np.sin(ang2)
+    dmajorpx2 = Op[0][ind] + dmajorp[ind]*np.cos(ang2+np.pi)
+    dmajorpy2 = Op[1][ind] + dmajorp[ind]*np.sin(ang2+np.pi)
+    ax.plot([Op[0][ind],dmajorpx1],[Op[1][ind],dmajorpy1],[1.3*min_z,1.3*min_z],color='purple',linestyle='-',linewidth=2)
+    ax.plot([Op[0][ind],dmajorpx2],[Op[1][ind],dmajorpy2],[1.3*min_z,1.3*min_z],color='purple',linestyle='-',linewidth=2)
+    dminorpx1 = Op[0][ind] + dminorp[ind]*np.cos(ang2+np.pi/2)
+    dminorpy1 = Op[1][ind] + dminorp[ind]*np.sin(ang2+np.pi/2)
+    dminorpx2 = Op[0][ind] + dminorp[ind]*np.cos(ang2-np.pi/2)
+    dminorpy2 = Op[1][ind] + dminorp[ind]*np.sin(ang2-np.pi/2)
+    ax.plot([Op[0][ind],dminorpx1],[Op[1][ind],dminorpy1],[1.3*min_z,1.3*min_z],color='purple',linestyle='-',linewidth=2)
+    ax.plot([Op[0][ind],dminorpx2],[Op[1][ind],dminorpy2],[1.3*min_z,1.3*min_z],color='purple',linestyle='-',linewidth=2)
+
+    dmajorpx1 = Op[0][ind] + dmajorp[ind]*np.cos(ang2)
+    dmajorpy1 = Op[1][ind] + dmajorp[ind]*np.sin(ang2)
+    dmajorpx2 = Op[0][ind] + dmajorp[ind]*np.cos(ang2+np.pi)
+    dmajorpy2 = Op[1][ind] + dmajorp[ind]*np.sin(ang2+np.pi)
+    dminorpx1 = Op[0][ind] + dminorp[ind]*np.cos(ang2+np.pi/2)
+    dminorpy1 = Op[1][ind] + dminorp[ind]*np.sin(ang2+np.pi/2)
+    dminorpx2 = Op[0][ind] + dminorp[ind]*np.cos(ang2-np.pi/2)
+    dminorpy2 = Op[1][ind] + dminorp[ind]*np.sin(ang2-np.pi/2)
+    ax.plot([Op[0][ind],dmajorpx1],[Op[1][ind],dmajorpy1],[1.3*min_z,1.3*min_z],color='purple',linestyle='-',linewidth=2)
+    ax.plot([Op[0][ind],dmajorpx2],[Op[1][ind],dmajorpy2],[1.3*min_z,1.3*min_z],color='purple',linestyle='-',linewidth=2)
+    ax.plot([Op[0][ind],dminorpx1],[Op[1][ind],dminorpy1],[1.3*min_z,1.3*min_z],color='purple',linestyle='-',linewidth=2)
+    ax.plot([Op[0][ind],dminorpx2],[Op[1][ind],dminorpy2],[1.3*min_z,1.3*min_z],color='purple',linestyle='-',linewidth=2)
+    ax.scatter([dmajorpx1,dmajorpx2,dminorpx1,dminorpx2],[dmajorpy1,dmajorpy2,dminorpy1,dminorpy2],[1.3*min_z,1.3*min_z,1.3*min_z,1.3*min_z],color='black',marker='o',s=25,zorder=6)
+    ax.text(1.05*dmajorpx1,1.05*dmajorpy1,1.3*min_z, 'I', None)#(dmajorpx1,dmajorpy1,0))
+    ax.text(1.1*dmajorpx2,1.1*dmajorpy2,1.3*min_z, 'R', None)#(dmajorpx2,dmajorpy2,0))
+    ax.text(1.05*dminorpx1,0.1*(dminorpy1-Op[1][ind]),1.3*min_z, 'S', None)#(dminorpx1,dminorpy1,0))
+    ax.text(1.05*dminorpx2,1.05*dminorpy2,1.3*min_z, 'T', None)#(dminorpx2,dminorpy2,0))
+    #ax.text(x,y,z, label, zdir)
+    x_projEllipse = Op[0][ind] + dmajorp[ind]*np.cos(vs)*np.cos(ang2) - dminorp[ind]*np.sin(vs)*np.sin(ang2)
+    y_projEllipse = Op[1][ind] + dmajorp[ind]*np.cos(vs)*np.sin(ang2) + dminorp[ind]*np.sin(vs)*np.cos(ang2)
+    ax.plot(x_projEllipse,y_projEllipse,1.3*min_z*np.ones(len(vs)), color='red', linestyle='-',zorder=5,linewidth=2)
+
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.set_zlabel('Z')
+    ax.grid(False)
+    #artificial box
+    xmax = np.max([np.abs(rper[0][0]),np.abs(rapo[0][0]),np.abs(1.3*min_z)])
+    ax.scatter([-xmax,xmax],[-xmax,xmax],[-0.2-np.abs(1.3*min_z),0.2+1.3*min_z],color=None,alpha=0)
+    ax.set_xlim3d(-0.99*xmax+Op[0][ind],0.99*xmax+Op[0][ind])
+    ax.set_ylim3d(-0.99*xmax+Op[1][ind],0.99*xmax+Op[1][ind])
+    ax.set_zlim3d(-0.99*xmax,0.99*xmax)
+    ax.xaxis.set_pane_color((1.0, 1.0, 1.0, 0.0)) #remove background color
+    ax.set_axis_off() #removes axes
+    plt.show(block=False)
+    ####
 
 num = 666999888777
-plt.close(num)
-fig = plt.figure(num)
-ax = fig.add_subplot(111, projection='3d')
-
-## 3D Ellipse
-vs = np.linspace(start=0,stop=2*np.pi,num=300)
-r = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],vs)
-x_3Dellipse = r[0,0,:]
-y_3Dellipse = r[1,0,:]
-z_3Dellipse = r[2,0,:]
-ax.plot(x_3Dellipse,y_3Dellipse,z_3Dellipse,color='black',label='Planet Orbit')
-min_z = np.min(z_3Dellipse)
-
-## Central Sun
-ax.scatter(0,0,0,color='orange',marker='o',s=25) #of 3D ellipse
-ax.text(0,0,0.15*np.abs(min_z), 'F', None)
-ax.plot([0,0],[0,0],[0,1.3*min_z],color='orange',linestyle=':') #connecting line
-ax.scatter(0,0,1.3*min_z,color='orange',marker='x',s=25) #of 2D ellipse
-ax.text(0,0,1.5*min_z, 'F\'', None)
-
-## Plot 3D Ellipse semi-major/minor axis
-rper = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],0.) #planet position perigee
-rapo = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],np.pi) #planet position apogee
-ax.plot([rper[0][0],rapo[0][0]],[rper[1][0],rapo[1][0]],[rper[2][0],rapo[2][0]],color='purple', linestyle='-') #3D Ellipse Semi-major axis
-ax.scatter(rper[0][0],rper[1][0],rper[2][0],color='black',marker='D',s=25) #3D Ellipse Perigee Diamond
-ax.text(1.2*rper[0][0],1.2*rper[1][0],rper[2][0], 'A', None)#(rper[0][0],rper[1][0],0))
-ax.scatter(rper[0][0],rper[1][0],1.3*min_z,color='red',marker='D',s=25) #2D Ellipse Perigee Diamond
-ax.text(1.1*rper[0][0],1.1*rper[1][0],1.3*min_z, 'A\'', None)#(rper[0][0],rper[1][0],0))
-ax.plot([rper[0][0],rper[0][0]],[rper[1][0],rper[1][0]],[rper[2][0],1.3*min_z],color='black',linestyle=':') #3D to 2D Ellipse Perigee Diamond
-ax.scatter(rapo[0][0],rapo[1][0],rapo[2][0],color='black', marker='D',s=25) #3D Ellipse Apogee Diamond
-ax.text(1.1*rapo[0][0],1.1*rapo[1][0],1.2*rapo[2][0], 'B', None)#(rapo[0][0],rapo[1][0],0))
-ax.scatter(rapo[0][0],rapo[1][0],1.3*min_z,color='red',marker='D',s=25) #2D Ellipse Perigee Diamond
-ax.text(1.1*rapo[0][0],1.1*rapo[1][0],1.3*min_z, 'B\'', None)#(rapo[0][0],rapo[1][0],0))
-
-ax.plot([rapo[0][0],rapo[0][0]],[rapo[1][0],rapo[1][0]],[rapo[2][0],1.3*min_z],color='black',linestyle=':') #3D to 2D Ellipse Apogee Diamond
-rbp = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],np.arccos((np.cos(np.pi/2)-e[ind])/(1-e[ind]*np.cos(np.pi/2)))) #3D Ellipse E=90
-rbm = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],-np.arccos((np.cos(-np.pi/2)-e[ind])/(1-e[ind]*np.cos(-np.pi/2)))) #3D Ellipse E=-90
-ax.plot([rbp[0][0],rbm[0][0]],[rbp[1][0],rbm[1][0]],[rbp[2][0],rbm[2][0]],color='purple', linestyle='-') #
-ax.scatter(rbp[0][0],rbp[1][0],rbp[2][0],color='black',marker='D',s=25) #3D ellipse minor +
-ax.text(1.1*rbp[0][0],1.1*rbp[1][0],1.2*rbp[2][0], 'C', None)#(rbp[0][0],rbp[1][0],0))
-ax.scatter(rbp[0][0],rbp[1][0],1.3*min_z,color='red',marker='D',s=25) #2D ellipse minor+ projection
-ax.text(1.1*rbp[0][0],1.1*rbp[1][0],1.3*min_z, 'C\'', None)#(rbp[0][0],rbp[1][0],0))
-ax.plot([rbp[0][0],rbp[0][0]],[rbp[1][0],rbp[1][0]],[rbp[2][0],1.3*min_z],color='black',linestyle=':') #3D to 2D Ellipse minor + Diamond
-ax.scatter(rbm[0][0],rbm[1][0],rbm[2][0],color='black', marker='D',s=25) #3D ellipse minor -
-ax.text(1.1*rbm[0][0],0.5*(rbm[1][0]-Op[1][ind]),rbm[2][0], 'D', None)#(rbm[0][0],rbm[1][0],0))
-ax.scatter(rbm[0][0],rbm[1][0],1.3*min_z,color='red', marker='D',s=25) #2D ellipse minor- projection
-ax.text(1.1*rbm[0][0],0.5*(rbm[1][0]-Op[1][ind]),1.3*min_z, 'D\'', None)#(rbm[0][0],rbm[1][0],0))
-ax.plot([rbm[0][0],rbm[0][0]],[rbm[1][0],rbm[1][0]],[rbm[2][0],1.3*min_z],color='black',linestyle=':') #3D to 2D Ellipse minor - Diamond
-
-## Plot Conjugate Diameters
-ax.plot([rbp[0][0],rbm[0][0]],[rbp[1][0],rbm[1][0]],[1.3*min_z,1.3*min_z],color='blue',linestyle='-') #2D ellipse minor+ projection
-ax.plot([rper[0][0],rapo[0][0]],[rper[1][0],rapo[1][0]],[1.3*min_z,1.3*min_z],color='blue',linestyle='-') #2D Ellipse Perigee Diamond
-
-## Plot Ellipse Center
-ax.scatter((rper[0][0] + rapo[0][0])/2,(rper[1][0] + rapo[1][0])/2,(rper[2][0] + rapo[2][0])/2,color='black',marker='o',s=36) #3D Ellipse
-ax.text(1.2*(rper[0][0] + rapo[0][0])/2,1.2*(rper[1][0] + rapo[1][0])/2,1.31*(rper[2][0] + rapo[2][0])/2, 'O', None)
-ax.scatter(Op[0][ind],Op[1][ind], 1.3*min_z, color='black', marker='o',s=25) #2D Ellipse Center
-ax.text(1.2*(rper[0][0] + rapo[0][0])/2,1.2*(rper[1][0] + rapo[1][0])/2,1.4*min_z, 'O\'', None)
-ax.plot([(rper[0][0] + rapo[0][0])/2,Op[0][ind]],[(rper[1][0] + rapo[1][0])/2,Op[1][ind]],[(rper[2][0] + rapo[2][0])/2,1.3*min_z],color='black',linestyle=':')
-print('a: ' + str(np.round(sma[ind],2)) + ' e: ' + str(np.round(e[ind],2)) + ' W: ' + str(np.round(W[ind],2)) + ' w: ' + str(np.round(w[ind],2)) + ' i: ' + str(np.round(inc[ind],2)) +\
-     ' Psi: ' + str(np.round(Psi[ind],2)) + ' psi: ' + str(np.round(psi[ind],2)))# + ' theta: ' + str(np.round(theta[ind],2)))
-
-
-ang2 = (theta_OpQ_X[ind]+theta_OpQp_X[ind])/2
-dmajorpx1 = Op[0][ind] + dmajorp[ind]*np.cos(ang2)
-dmajorpy1 = Op[1][ind] + dmajorp[ind]*np.sin(ang2)
-dmajorpx2 = Op[0][ind] + dmajorp[ind]*np.cos(ang2+np.pi)
-dmajorpy2 = Op[1][ind] + dmajorp[ind]*np.sin(ang2+np.pi)
-ax.plot([Op[0][ind],dmajorpx1],[Op[1][ind],dmajorpy1],[1.3*min_z,1.3*min_z],color='purple',linestyle='-')
-ax.plot([Op[0][ind],dmajorpx2],[Op[1][ind],dmajorpy2],[1.3*min_z,1.3*min_z],color='purple',linestyle='-')
-dminorpx1 = Op[0][ind] + dminorp[ind]*np.cos(ang2+np.pi/2)
-dminorpy1 = Op[1][ind] + dminorp[ind]*np.sin(ang2+np.pi/2)
-dminorpx2 = Op[0][ind] + dminorp[ind]*np.cos(ang2-np.pi/2)
-dminorpy2 = Op[1][ind] + dminorp[ind]*np.sin(ang2-np.pi/2)
-ax.plot([Op[0][ind],dminorpx1],[Op[1][ind],dminorpy1],[1.3*min_z,1.3*min_z],color='purple',linestyle='-')
-ax.plot([Op[0][ind],dminorpx2],[Op[1][ind],dminorpy2],[1.3*min_z,1.3*min_z],color='purple',linestyle='-')
-
-dmajorpx1 = Op[0][ind] + dmajorp[ind]*np.cos(ang2)
-dmajorpy1 = Op[1][ind] + dmajorp[ind]*np.sin(ang2)
-dmajorpx2 = Op[0][ind] + dmajorp[ind]*np.cos(ang2+np.pi)
-dmajorpy2 = Op[1][ind] + dmajorp[ind]*np.sin(ang2+np.pi)
-dminorpx1 = Op[0][ind] + dminorp[ind]*np.cos(ang2+np.pi/2)
-dminorpy1 = Op[1][ind] + dminorp[ind]*np.sin(ang2+np.pi/2)
-dminorpx2 = Op[0][ind] + dminorp[ind]*np.cos(ang2-np.pi/2)
-dminorpy2 = Op[1][ind] + dminorp[ind]*np.sin(ang2-np.pi/2)
-ax.plot([Op[0][ind],dmajorpx1],[Op[1][ind],dmajorpy1],[1.3*min_z,1.3*min_z],color='purple',linestyle='-')
-ax.plot([Op[0][ind],dmajorpx2],[Op[1][ind],dmajorpy2],[1.3*min_z,1.3*min_z],color='purple',linestyle='-')
-ax.plot([Op[0][ind],dminorpx1],[Op[1][ind],dminorpy1],[1.3*min_z,1.3*min_z],color='purple',linestyle='-')
-ax.plot([Op[0][ind],dminorpx2],[Op[1][ind],dminorpy2],[1.3*min_z,1.3*min_z],color='purple',linestyle='-')
-ax.scatter([dmajorpx1,dmajorpx2,dminorpx1,dminorpx2],[dmajorpy1,dmajorpy2,dminorpy1,dminorpy2],[1.3*min_z,1.3*min_z,1.3*min_z,1.3*min_z],color='grey',marker='o',s=25,zorder=2)
-ax.text(1.05*dmajorpx1,1.05*dmajorpy1,1.3*min_z, 'I', None)#(dmajorpx1,dmajorpy1,0))
-ax.text(1.1*dmajorpx2,1.1*dmajorpy2,1.3*min_z, 'R', None)#(dmajorpx2,dmajorpy2,0))
-ax.text(1.05*dminorpx1,0.1*(dminorpy1-Op[1][ind]),1.3*min_z, 'S', None)#(dminorpx1,dminorpy1,0))
-ax.text(1.05*dminorpx2,1.05*dminorpy2,1.3*min_z, 'T', None)#(dminorpx2,dminorpy2,0))
-#ax.text(x,y,z, label, zdir)
-x_projEllipse = Op[0][ind] + dmajorp[ind]*np.cos(vs)*np.cos(ang2) - dminorp[ind]*np.sin(vs)*np.sin(ang2)
-y_projEllipse = Op[1][ind] + dmajorp[ind]*np.cos(vs)*np.sin(ang2) + dminorp[ind]*np.sin(vs)*np.cos(ang2)
-ax.plot(x_projEllipse,y_projEllipse,1.3*min_z*np.ones(len(vs)), color='red', linestyle='-',zorder=7)
-
-ax.set_xlabel('X')
-ax.set_ylabel('Y')
-ax.set_zlabel('Z')
-ax.grid(False)
-#artificial box
-xmax = np.max([np.abs(rper[0][0]),np.abs(rapo[0][0]),np.abs(1.3*min_z)])
-ax.scatter([-xmax,xmax],[-xmax,xmax],[-0.2-np.abs(1.3*min_z),0.2+1.3*min_z],color=None,alpha=0)
-ax.set_xlim3d(-0.99*xmax+Op[0][ind],0.99*xmax+Op[0][ind])
-ax.set_ylim3d(-0.99*xmax+Op[1][ind],0.99*xmax+Op[1][ind])
-ax.set_zlim3d(-0.99*xmax,0.99*xmax)
-ax.xaxis.set_pane_color((1.0, 1.0, 1.0, 0.0)) #remove background color
-ax.set_axis_off() #removes axes
-plt.show(block=False)
+plot3DEllipseto2DEllipseProjectionDiagram(ind, sma, e, W, w, inc, num=num)
 ####
+
 
 #### Create Projected Ellipse Conjugate Diameters and QQ' construction diagram
 ####
