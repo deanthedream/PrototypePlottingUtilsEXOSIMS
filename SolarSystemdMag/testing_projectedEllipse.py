@@ -6,6 +6,8 @@ from mpl_toolkits.mplot3d import Axes3D
 import numpy.random as random
 from sys import getsizeof
 import time
+from astropy import constants as const
+import astropy.units as u
 
 #### Randomly Generate Orbits
 folder = os.path.normpath(os.path.expandvars('$HOME/Documents/exosims/Scripts'))
@@ -87,8 +89,7 @@ def plotProjectedEllipse(ind, sma, e, W, w, inc, theta_OpQ_X, theta_OpQp_X, dmaj
 
 ind = random.randint(low=0,high=n)
 plotProjectedEllipse(ind, sma, e, W, w, inc, theta_OpQ_X, theta_OpQp_X, dmajorp, dminorp, Op, num=877)
-
-
+####
 
 #### Plot 3D Ellipse to 2D Ellipse Projection Diagram
 def plot3DEllipseto2DEllipseProjectionDiagram(ind, sma, e, W, w, inc, num):
@@ -281,10 +282,122 @@ num = 666999888777
 plot3DEllipseto2DEllipseProjectionDiagram(ind, sma, e, W, w, inc, num=num)
 ####
 
-
 #### Create Projected Ellipse Conjugate Diameters and QQ' construction diagram
-####
+def plotEllipseMajorAxisFromConjugate(ind, sma, e, W, w, inc, num):
+    """ Plots the Q and Q' points as well as teh line 
+    """
+    plt.close(num)
+    fig = plt.figure(num)
+    ax = plt.gca()
 
+    ## 3D Ellipse
+    vs = np.linspace(start=0,stop=2*np.pi,num=300)
+    r = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],vs)
+    x_3Dellipse = r[0,0,:]
+    y_3Dellipse = r[1,0,:]
+    z_3Dellipse = r[2,0,:]
+    ax.plot(x_3Dellipse,y_3Dellipse,color='black',label='Planet Orbit',linewidth=2)
+    min_z = np.min(z_3Dellipse)
+
+    ## Central Sun
+    ax.scatter(0,0,color='orange',marker='x',s=25,zorder=20) #of 2D ellipse
+    ax.text(0-.1,0-.1, 'F\'', None)
+
+    ## Plot 3D Ellipse semi-major/minor axis
+    rper = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],0.) #planet position perigee
+    rapo = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],np.pi) #planet position apogee
+    ax.scatter(rper[0][0],rper[1][0],color='blue',marker='D',s=25,zorder=25) #2D Ellipse Perigee Diamond
+    ax.text(1.1*rper[0][0],1.1*rper[1][0], 'A\'', None)
+    ax.scatter(rapo[0][0],rapo[1][0],color='blue',marker='D',s=25,zorder=25) #2D Ellipse Perigee Diamond
+    ax.text(1.1*rapo[0][0]-0.1,1.1*rapo[1][0], 'B\'', None)
+
+    rbp = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],np.arccos((np.cos(np.pi/2)-e[ind])/(1-e[ind]*np.cos(np.pi/2)))) #3D Ellipse E=90
+    rbm = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],-np.arccos((np.cos(-np.pi/2)-e[ind])/(1-e[ind]*np.cos(-np.pi/2)))) #3D Ellipse E=-90
+    ax.plot([rbp[0][0],rbm[0][0]],[rbp[1][0],rbm[1][0]],color='purple', linestyle='-',linewidth=2) #
+    ax.scatter(rbp[0][0],rbp[1][0],color='blue',marker='D',s=25,zorder=20) #2D ellipse minor+ projection
+    ax.text(1.1*rbp[0][0]-.01,1.1*rbp[1][0]-.05, 'C\'', None)
+    ax.scatter(rbm[0][0],rbm[1][0],color='blue', marker='D',s=25,zorder=20) #2D ellipse minor- projection
+    ax.text(1.1*rbm[0][0],0.5*(rbm[1][0]-Op[1][ind])-.05, 'D\'', None)
+
+    ## Plot QQ' Line
+    #rapo[0][0],rapo[1][0] #B'
+    #rbp[0][0],rbp[1][0] #C'
+    #Op[0][ind],Op[1][ind] #O'
+    tmp = np.asarray([-(rbp[1][0]-Op[1][ind]),(rbp[0][0]-Op[0][ind])])
+    QQp_hat = tmp/np.linalg.norm(tmp)
+    dOpCp = np.sqrt((rbp[0][0]-Op[0][ind])**2 + (rbp[1][0]-Op[1][ind])**2)
+    #Q = Bp - dOpCp*QQp_hat
+    Qx = rapo[0][0] - dOpCp*QQp_hat[0]
+    Qy = rapo[1][0] - dOpCp*QQp_hat[1]
+    #Qp = Bp + DOpCp*QQp_hat
+    Qpx = rapo[0][0] + dOpCp*QQp_hat[0]
+    Qpy = rapo[1][0] + dOpCp*QQp_hat[1]
+    ax.plot([Op[0][ind],Qx],[Op[1][ind],Qy],color='black',linestyle='-',linewidth=2,zorder=29) #OpQ
+    ax.plot([Op[0][ind],Qpx],[Op[1][ind],Qpy],color='black',linestyle='-',linewidth=2,zorder=29) #OpQp
+    ax.plot([Qx,Qpx],[Qy,Qpy],color='grey',linestyle='-',linewidth=2,zorder=29)
+    ax.scatter([Qx,Qpx],[Qy,Qpy],color='grey',marker='s',s=36,zorder=30)
+    ax.text(Qx,Qy-0.1,'Q', None)
+    ax.text(Qpx,Qpy+0.05,'Q\'', None)
+
+    ## Plot Conjugate Diameters
+    ax.plot([rbp[0][0],rbm[0][0]],[rbp[1][0],rbm[1][0]],color='blue',linestyle='-',linewidth=2) #2D ellipse minor+ projection
+    ax.plot([rper[0][0],rapo[0][0]],[rper[1][0],rapo[1][0]],color='blue',linestyle='-',linewidth=2) #2D Ellipse Perigee Diamond
+
+    ## Plot Ellipse Center
+    ax.scatter(Op[0][ind],Op[1][ind], color='grey', marker='o',s=25,zorder=30) #2D Ellipse Center
+    ax.text(1.2*(rper[0][0] + rapo[0][0])/2,1.2*(rper[1][0] + rapo[1][0])/2+0.05, 'O\'', None)
+    print('a: ' + str(np.round(sma[ind],2)) + ' e: ' + str(np.round(e[ind],2)) + ' W: ' + str(np.round(W[ind],2)) + ' w: ' + str(np.round(w[ind],2)) + ' i: ' + str(np.round(inc[ind],2)) +\
+         ' Psi: ' + str(np.round(Psi[ind],2)) + ' psi: ' + str(np.round(psi[ind],2)))# + ' theta: ' + str(np.round(theta[ind],2)))
+
+    ang2 = (theta_OpQ_X[ind]+theta_OpQp_X[ind])/2
+    dmajorpx1 = Op[0][ind] + dmajorp[ind]*np.cos(ang2)
+    dmajorpy1 = Op[1][ind] + dmajorp[ind]*np.sin(ang2)
+    dmajorpx2 = Op[0][ind] + dmajorp[ind]*np.cos(ang2+np.pi)
+    dmajorpy2 = Op[1][ind] + dmajorp[ind]*np.sin(ang2+np.pi)
+    ax.plot([Op[0][ind],dmajorpx1],[Op[1][ind],dmajorpy1],color='purple',linestyle='-',linewidth=2)
+    ax.plot([Op[0][ind],dmajorpx2],[Op[1][ind],dmajorpy2],color='purple',linestyle='-',linewidth=2)
+    dminorpx1 = Op[0][ind] + dminorp[ind]*np.cos(ang2+np.pi/2)
+    dminorpy1 = Op[1][ind] + dminorp[ind]*np.sin(ang2+np.pi/2)
+    dminorpx2 = Op[0][ind] + dminorp[ind]*np.cos(ang2-np.pi/2)
+    dminorpy2 = Op[1][ind] + dminorp[ind]*np.sin(ang2-np.pi/2)
+    ax.plot([Op[0][ind],dminorpx1],[Op[1][ind],dminorpy1],color='purple',linestyle='-',linewidth=2)
+    ax.plot([Op[0][ind],dminorpx2],[Op[1][ind],dminorpy2],color='purple',linestyle='-',linewidth=2)
+
+    dmajorpx1 = Op[0][ind] + dmajorp[ind]*np.cos(ang2)
+    dmajorpy1 = Op[1][ind] + dmajorp[ind]*np.sin(ang2)
+    dmajorpx2 = Op[0][ind] + dmajorp[ind]*np.cos(ang2+np.pi)
+    dmajorpy2 = Op[1][ind] + dmajorp[ind]*np.sin(ang2+np.pi)
+    dminorpx1 = Op[0][ind] + dminorp[ind]*np.cos(ang2+np.pi/2)
+    dminorpy1 = Op[1][ind] + dminorp[ind]*np.sin(ang2+np.pi/2)
+    dminorpx2 = Op[0][ind] + dminorp[ind]*np.cos(ang2-np.pi/2)
+    dminorpy2 = Op[1][ind] + dminorp[ind]*np.sin(ang2-np.pi/2)
+    ax.plot([Op[0][ind],dmajorpx1],[Op[1][ind],dmajorpy1],color='purple',linestyle='-',linewidth=2)
+    ax.plot([Op[0][ind],dmajorpx2],[Op[1][ind],dmajorpy2],color='purple',linestyle='-',linewidth=2)
+    ax.plot([Op[0][ind],dminorpx1],[Op[1][ind],dminorpy1],color='purple',linestyle='-',linewidth=2)
+    ax.plot([Op[0][ind],dminorpx2],[Op[1][ind],dminorpy2],color='purple',linestyle='-',linewidth=2)
+    ax.scatter([dmajorpx1,dmajorpx2,dminorpx1,dminorpx2],[dmajorpy1,dmajorpy2,dminorpy1,dminorpy2],color='black',marker='o',s=25,zorder=6)
+    ax.text(1.05*dmajorpx1,1.05*dmajorpy1, 'I', None)
+    ax.text(1.1*dmajorpx2,1.1*dmajorpy2, 'R', None)
+    ax.text(1.05*dminorpx1,0.1*(dminorpy1-Op[1][ind])-.05, 'S', None)
+    ax.text(1.05*dminorpx2-0.1,1.05*dminorpy2-.075, 'T', None)
+    x_projEllipse = Op[0][ind] + dmajorp[ind]*np.cos(vs)*np.cos(ang2) - dminorp[ind]*np.sin(vs)*np.sin(ang2)
+    y_projEllipse = Op[1][ind] + dmajorp[ind]*np.cos(vs)*np.sin(ang2) + dminorp[ind]*np.sin(vs)*np.cos(ang2)
+    ax.plot(x_projEllipse,y_projEllipse, color='red', linestyle='-',zorder=5,linewidth=2)
+
+    ax.set_xlabel('X')
+    ax.set_ylabel('Y')
+    ax.grid(False)
+    xmax = np.max([np.abs(rper[0][0]),np.abs(rapo[0][0]),np.abs(1.3*min_z), np.abs(Qpx), np.abs(Qx)])
+    ax.scatter([-xmax,xmax],[-xmax,xmax],color=None,alpha=0)
+    ax.set_xlim(-0.99*xmax+Op[0][ind],0.99*xmax+Op[0][ind])
+    ax.set_ylim(-0.99*xmax+Op[1][ind],0.99*xmax+Op[1][ind])
+    ax.set_axis_off() #removes axes
+    ax.axis('equal')
+    plt.show(block=False)
+
+num = 3335555888
+plotEllipseMajorAxisFromConjugate(ind, sma, e, W, w, inc, num)
+####
 
 #### Derotate Ellipse
 start2 = time.time()
@@ -296,7 +409,7 @@ b = dminorp
 mx = np.abs(x) #x converted to a strictly positive value
 my = np.abs(y) #y converted to a strictly positive value
 
-def plotDerotatedEllipse(ind, sma, e, W, w, inc, theta_OpQ_X, theta_OpQp_X, dmajorp, dminorp, Op, a, b, num=879):
+def plotDerotatedEllipse(ind, sma, e, W, w, inc, theta_OpQ_X, theta_OpQp_X, dmajorp, dminorp, Op, a, b, x, y, num=879):
     plt.close(num)
     fig = plt.figure(num=num)
     ca = plt.gca()
@@ -339,17 +452,11 @@ def plotDerotatedEllipse(ind, sma, e, W, w, inc, theta_OpQ_X, theta_OpQp_X, dmaj
     plt.show(block=False)
 
 start3 = time.time()
-plotDerotatedEllipse(ind, sma, e, W, w, inc, theta_OpQ_X, theta_OpQp_X, dmajorp, dminorp, Op, a, b, num=880)
+plotDerotatedEllipse(ind, sma, e, W, w, inc, theta_OpQ_X, theta_OpQp_X, dmajorp, dminorp, Op, a, b, x, y, num=880)
 stop3 = time.time()
 print('stop3: ' + str(stop3-start3))
 
 #### Calculate X,Y Position of Minimum and Maximums with Quartic
-# start4 = time.time()
-# #OLD METHOD USING NUMPY ROOT
-# xreal, imag = quarticSolutions(a, b, mx, my)
-# stop4 = time.time()
-# print('stop4: ' + str(stop4-start4))
-#NEW METHOD USING ANALYTICAL
 start4_new = time.time()
 A, B, C, D = quarticCoefficients_smin_smax_lmin_lmax(a.astype('complex128'), b, mx, my)
 xreal, delta, P, D2, R, delta_0 = quarticSolutions_ellipse_to_Quarticipynb(A.astype('complex128'), B, C, D)
@@ -365,6 +472,60 @@ yreal = ellipseYFromX(xreal.astype('complex128'), a, b)
 
 #### Calculate Minimum, Maximum, Local Minimum, Local Maximum Separations
 minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y, minSep, maxSep, lminSep, lmaxSep, yrealAllRealInds, yrealImagInds = smin_smax_slmin_slmax(n, xreal, yreal, mx, my, x, y)
+
+
+#DELETE later. PROOF Rerotation method works
+# num=880
+# plt.close(num)
+# fig = plt.figure(num=num)
+# ca = plt.gca()
+# ca.axis('equal')
+# plt.scatter([0],[0],color='orange')
+# ## Plot 3D Ellipse
+# vs = np.linspace(start=0,stop=2*np.pi,num=300)
+# r = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],vs)
+# x_3Dellipse = r[0,0,:]
+# y_3Dellipse = r[1,0,:]
+# plt.plot(x_3Dellipse,y_3Dellipse,color='black')
+# ## Plot 3D Ellipse Center
+# plt.scatter(Op[0][ind],Op[1][ind],color='black')
+# ## Plot Rotated Ellipse
+# ang2 = (theta_OpQ_X[ind]+theta_OpQp_X[ind])/2
+# dmajorpx1 = Op[0][ind] + dmajorp[ind]*np.cos(ang2)
+# dmajorpy1 = Op[1][ind] + dmajorp[ind]*np.sin(ang2)
+# dmajorpx2 = Op[0][ind] + dmajorp[ind]*np.cos(ang2+np.pi)
+# dmajorpy2 = Op[1][ind] + dmajorp[ind]*np.sin(ang2+np.pi)
+# dminorpx1 = Op[0][ind] + dminorp[ind]*np.cos(ang2+np.pi/2)
+# dminorpy1 = Op[1][ind] + dminorp[ind]*np.sin(ang2+np.pi/2)
+# dminorpx2 = Op[0][ind] + dminorp[ind]*np.cos(ang2-np.pi/2)
+# dminorpy2 = Op[1][ind] + dminorp[ind]*np.sin(ang2-np.pi/2)
+# plt.plot([Op[0][ind],dmajorpx1],[Op[1][ind],dmajorpy1],color='purple',linestyle='-')
+# plt.plot([Op[0][ind],dmajorpx2],[Op[1][ind],dmajorpy2],color='purple',linestyle='-')
+# plt.plot([Op[0][ind],dminorpx1],[Op[1][ind],dminorpy1],color='purple',linestyle='-')
+# plt.plot([Op[0][ind],dminorpx2],[Op[1][ind],dminorpy2],color='purple',linestyle='-')
+# #new plot stuff
+# Erange = np.linspace(start=0.,stop=2*np.pi,num=400)
+# plt.plot([-a[ind],a[ind]],[0,0],color='purple',linestyle='--') #major
+# plt.plot([0,0],[-b[ind],b[ind]],color='purple',linestyle='--') #minor
+# xellipsetmp = a[ind]*np.cos(Erange)
+# yellipsetmp = b[ind]*np.sin(Erange)
+# plt.plot(xellipsetmp,yellipsetmp,color='black')
+# plt.scatter(x[ind],y[ind],color='orange',marker='x')
+
+# c_ae = a[ind]*np.sqrt(1-b[ind]**2/a[ind]**2)
+# plt.scatter([-c_ae,c_ae],[0,0],color='blue')
+# plt.scatter(minSepPoints_x[ind],minSepPoints_y[ind],color='magenta')
+# ux = np.cos(Phi[ind])*minSepPoints_x[ind] - np.sin(Phi[ind])*minSepPoints_y[ind] + Op[0][ind] 
+# uy = np.sin(Phi[ind])*minSepPoints_x[ind] + np.cos(Phi[ind])*minSepPoints_y[ind] + Op[1][ind] 
+# plt.scatter(ux,uy,color='green')
+
+# plt.show(block=False)
+
+
+
+
+
+
 
 # #Note: the solving method breaks down when the inclination is nearly zero and the star 
 # #Correction for 0 inclination planets where star is nearly centers in x and y
@@ -407,11 +568,19 @@ print('Total Data Used: ' + str(totalMemoryUsage/10**9) + ' GB')
 num=961
 plt.close(num)
 fig = plt.figure(num=num)
+plt.rc('axes',linewidth=2)
+plt.rc('lines',linewidth=2)
+plt.rcParams['axes.linewidth']=2
+plt.rc('font',weight='bold')
 Erange = np.linspace(start=0.,stop=2*np.pi,num=400)
+Mrange = Erange - e[ind]*np.sin(Erange)
+period = (2*np.pi*np.sqrt((sma[ind]*u.AU)**3/(const.G.to('AU3 / (kg s2)')*const.M_sun))).to('year').value
+trange = Mrange/(2*np.pi/period)#*(t-tau) #omitting temporal phasing for now
 xellipsetmp = a[ind]*np.cos(Erange)
 yellipsetmp = b[ind]*np.sin(Erange)
 septmp = np.sqrt((xellipsetmp - x[ind])**2 + (yellipsetmp - y[ind])**2)
-plt.plot(Erange,septmp,color='black')
+#plt.plot(Erange,septmp,color='black')
+plt.plot(trange,septmp,color='black')
 plt.plot([0,2.*np.pi],[0,0],color='black',linestyle='--') #0 sep line
 plt.plot([0,2*np.pi],[minSep[ind],minSep[ind]],color='cyan')
 plt.plot([0,2*np.pi],[maxSep[ind],maxSep[ind]],color='red')
@@ -420,9 +589,11 @@ if ind in yrealAllRealInds:
     plt.plot([0,2*np.pi],[lminSep[tind],lminSep[tind]],color='magenta')
     plt.plot([0,2*np.pi],[lmaxSep[tind],lmaxSep[tind]],color='gold')
 plt.plot([0,2*np.pi],[1,1],color='green')
-plt.xlim([0,2.*np.pi])
-plt.ylabel('Projected Separation in AU')
-plt.xlabel('Projected Ellipse E (rad)')
+#plt.xlim([0,2.*np.pi])
+plt.xlim([0,period])
+plt.ylabel('Projected Separation in AU',weight='bold')
+#plt.xlabel('Projected Ellipse E (rad)',weight='bold')
+plt.xlabel('Time Past Periastron t (years)',weight='bold')
 plt.show(block=False)
 ####
 
@@ -438,7 +609,6 @@ my.astype('complex128')
 r.astype('complex128')
 A, B, C, D = quarticCoefficients_ellipse_to_Quarticipynb(a, b, mx, my, r)
 xreal2, delta, P, D2, R, delta_0 = quarticSolutions_ellipse_to_Quarticipynb(A, B, C, D)
-del A, B, C, D #delting for memory efficiency
 yreal2 = ellipseYFromX(xreal2.astype('complex128'), a, b)
 
 #### All Real Inds
@@ -700,6 +870,10 @@ yIntersectionsOnly2 = (yIntersectionsOnly2.T*(2*bool2[only2RealInds]-1)).T
 allIndsUsed = np.concatenate((type0_0Inds,type0_1Inds,type0_2Inds,type0_3Inds,type0_4Inds,type1_0Inds,type1_1Inds,type1_2Inds,type1_3Inds,type1_4Inds,
         type2_0Inds,type2_1Inds,type2_2Inds,type2_3Inds,type2_4Inds,type3_0Inds,type3_1Inds,type3_2Inds,type3_3Inds,type3_4Inds))
 
+
+
+
+
 #works
 ind = yrealAllRealInds[fourIntInds[0]]
 #works
@@ -713,7 +887,7 @@ ind = only2RealInds[4]
 
 
 #type0 checks out
-ind = only2RealInds[typeInds0[0]]
+# ind = only2RealInds[typeInds0[0]]
 # #type1 checks out
 # ind = only2RealInds[typeInds1[0]]
 # #type2 checks out
@@ -722,18 +896,18 @@ ind = only2RealInds[typeInds0[0]]
 # ind = only2RealInds[typeInds3[0]]
 
 #type0_0 #OK
-ind = only2RealInds[type0_0Inds[0]]#works
-ind = only2RealInds[type0_1Inds[0]]#works
-ind = only2RealInds[type0_2Inds[0]]#works
-ind = only2RealInds[type0_3Inds[0]]#works
-ind = only2RealInds[type0_4Inds[0]]#works
+# ind = only2RealInds[type0_0Inds[0]]#works
+# ind = only2RealInds[type0_1Inds[0]]#works
+# ind = only2RealInds[type0_2Inds[0]]#works
+# ind = only2RealInds[type0_3Inds[0]]#works
+# ind = only2RealInds[type0_4Inds[0]]#works
 #type1 skipping since empty
 #type2 #OK
-ind = only2RealInds[type2_0Inds[0]]#works
-ind = only2RealInds[type2_1Inds[0]]#works
-ind = only2RealInds[type2_2Inds[0]]#works
-ind = only2RealInds[type2_3Inds[0]]#works
-ind = only2RealInds[type2_4Inds[0]]#works
+# ind = only2RealInds[type2_0Inds[0]]#works
+# ind = only2RealInds[type2_1Inds[0]]#works
+# ind = only2RealInds[type2_2Inds[0]]#works
+# ind = only2RealInds[type2_3Inds[0]]#works
+# ind = only2RealInds[type2_4Inds[0]]#works
 #type3
 #ind = only2RealInds[type3_0Inds[0]]#works
 ind = only2RealInds[type3_1Inds[0]]#works
@@ -886,7 +1060,7 @@ elif ind in only2RealInds[type3_4Inds]:
     plt.scatter(xIntersectionsOnly2[gind],yIntersectionsOnly2[gind], color='green',marker='o')
 
 
-#Plot Star Location Type Dividers
+# Plot Star Location Type Dividers
 xran = np.linspace(start=(a[ind]*(a[ind]**2*(a[ind] - b[ind])*(a[ind] + b[ind]) - b[ind]**2*np.sqrt(3*a[ind]**4 + 2*a[ind]**2*b[ind]**2 + 3*b[ind]**4))/(2*(a[ind]**4 + b[ind]**4))),\
     stop=(a[ind]*(a[ind]**2*(a[ind] - b[ind])*(a[ind] + b[ind]) + b[ind]**2*np.sqrt(3*a[ind]**4 + 2*a[ind]**2*b[ind]**2 + 3*b[ind]**4))/(2*(a[ind]**4 + b[ind]**4))), num=3, endpoint=True)
 ylineQ1 = xran*a[ind]/b[ind] - a[ind]**2/(2*b[ind]) + b[ind]/2 #between first quadrant a,b
@@ -895,22 +1069,42 @@ plt.plot(xran, ylineQ1, color='brown', linestyle='-.', )
 plt.plot(-xran, ylineQ4, color='grey', linestyle='-.')
 plt.plot(-xran, ylineQ1, color='orange', linestyle='-.')
 plt.plot(xran, ylineQ4, color='red', linestyle='-.')
-
-
 plt.xlim([-1.2*a[ind],1.2*a[ind]])
 plt.ylim([-1.2*b[ind],1.2*b[ind]])
-
 plt.show(block=False)
+####
+
+#### Rerotate Extrema and Intersection Points
+minSepPoints_x, minSepPoints_y = rerotateEllipsePoints(minSepPoints_x, minSepPoints_y,Phi,Op[0],Op[1])
+maxSepPoints_x, maxSepPoints_y = rerotateEllipsePoints(maxSepPoints_x, maxSepPoints_y,Phi,Op[0],Op[1])
+lminSepPoints_x, lminSepPoints_y = rerotateEllipsePoints(lminSepPoints_x, lminSepPoints_y,Phi,Op[0],Op[1])
+lmaxSepPoints_x, lmaxSepPoints_y = rerotateEllipsePoints(lmaxSepPoints_x, lmaxSepPoints_y,Phi,Op[0],Op[1])
+fourInt_x, fourInt_y = rerotateEllipsePoints(fourInt_x, fourInt_y,Phi,Op[0],Op[1])
+twoIntSameY_x, twoIntSameY_y = rerotateEllipsePoints(xpts,ypts,Phi,Op[0],Op[1])
+twoIntOppositeX_x, twoIntOppositeX_y = rerotateEllipsePoints(xpts,ypts,Phi,Op[0],Op[1])
+xIntersectionsOnly2, yIntersectionsOnly2 = rerotateEllipsePoints(xpts,ypts,Phi,Op[0],Op[1])
+####
+
+#### Calculate True Anomalies of Points
+#theta_OpQ_X, theta_OpQp_X = 
+nu_minSepPoints = trueAnomalyFromXY(minSepPoints_x, minSepPoints_y,W,w,inc)
+nu_maxSepPoints = trueAnomalyFromXY(maxSepPoints_x, maxSepPoints_y,W,w,inc)
+nu_lminSepPoints = trueAnomalyFromXY(lminSepPoints_x, lminSepPoints_y,W,w,inc)
+nu_lmaxSepPoints = trueAnomalyFromXY(lmaxSepPoints_x, lmaxSepPoints_y,W,w,inc)
+nu_fourInt = trueAnomalyFromXY(fourInt_x, fourInt_y,W,w,inc)
+nu_twoIntSameY = trueAnomalyFromXY(twoIntSameY_x, twoIntSameY_y,W,w,inc)
+nu_twoIntOppositeX = trueAnomalyFromXY(twoIntOppositeX_x, twoIntOppositeX_y,W,w,inc)
+nu_IntersectionsOnly2 = trueAnomalyFromXY(xIntersectionsOnly2, yIntersectionsOnly2,W,w,inc)
+#Now can I delete the x,y points?
+del minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y, fourInt_x, fourInt_y
+del twoIntSameY_x, twoIntSameY_y, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2
 
 
 
 
 
 
-
-
-
-
+#IS ANY OF THE FOLLOWING NECESSARY
 
 # xreal2[np.abs(np.imag(xreal2)) > 1e-4] = np.nan #There is evidence from below that the residual resulting from entiring solutions with 3e-5j results in 0+1e-20j therefore we will nan above 1e-4
 # xreal2 = np.real(xreal2)
@@ -935,6 +1129,7 @@ seps2 = np.asarray([seps2_0,seps2_1,seps2_2,seps2_3]).T
 #allRealDistinctInds = np.where((delta > 0)*(P < 0)*(D2 < 0))[0] #METHOD 1, out of 10000, this found 1638, missing ~54
 allRealDistinctInds = np.where(np.all(np.abs(np.imag(xreal2)) < 2.5*1e-5, axis=1))[0]#1e-9, axis=1))[0] #This found 1692
 residual_allreal, isAll_allreal, maxRealResidual_allreal, maxImagResidual_allreal = checkResiduals(A,B,C,D,xreal2,allRealDistinctInds,4)
+del A, B, C, D #delting for memory efficiency
 assert maxRealResidual_allreal < 1e-9, 'At least one all real residual is too large'
 # If delta < 0, two distinct real roots, two complex
 #DELETEtwoRealDistinctInds = np.where(delta < 0)[0]
@@ -1092,24 +1287,4 @@ print(np.nanmax(s_mpr[indsOf2RealSols]))
 print(np.nanmax(s_pmr[indsOf2RealSols]))
 print(np.nanmax(minSepr[indsOf2RealSols]))
 print(np.nanmax(maxSepr[indsOf2RealSols]))
-
-PMRsols = np.asarray([np.nanmin(s_mpr[allRealDistinctInds],axis=1),np.nanmin(s_pmr[allRealDistinctInds],axis=1),np.nanmin(minSepr[allRealDistinctInds],axis=1),np.nanmin(maxSepr[allRealDistinctInds],axis=1)]).T
-
-bool1 = x > 0
-bool2 = y > 0
-s_mpr2, s_pmr2, minSepr2, maxSepr2 = calculateSeparations(xfinal, yfinal, x, y)
-
-
-np.nanmin(minSepr,axis=1)
-
-#### Notes
-#If r < smin, then all imag
-#if r > smin and r > slmin, then 2 real.
-#if r > slmin and r < slmax, then 4 real.
-#if r < smax and r > slmax, then 2 real.
-#if r > smax, then all imag.
-
-
-
-#DELETEminSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y, minSep, maxSep, s_mplminSeps, s_mplmaxSeps = sepsMinMaxLminLmax(minSep, maxSep, s_mp, xreal, yreal, x, y)
 
