@@ -237,7 +237,9 @@ def derotate_arbitraryPoint(x,y,phi):
     return -x2, -y2
 
 def derotatedEllipse(theta_OpQ_X, theta_OpQp_X, Op):
-    """
+    """ Take the position and angle of the geometric center of the projected ellipse (relative to the orbiting Foci located at 0,0)
+    and, assuming the geometric center of the ellipse is now at (0,0) return the location of the orbiting foci relative to (0,0)
+    of the derotated ellipse
     Args:
         theta_OpQ_X (numpy array):
             angle of OpQ from x-axis
@@ -256,6 +258,31 @@ def derotatedEllipse(theta_OpQ_X, theta_OpQp_X, Op):
     Phi = (theta_OpQ_X+theta_OpQp_X)/2
     x, y = derotate_arbitraryPoint(Op[0],Op[1],Phi)
     return x, y, Phi
+
+def rerotateEllipsePoints(xpts,ypts,Phi,Ox,Oy):
+    """ A function designed to take a point on the derotated ellipse and convert it to the corresponding point on the rotated ellipse
+    Args:
+        xpts (numpy array):
+            the x points in the derotated frame to rerotate
+        ypts (numpy array):
+            the y points in the derotated frame to rerotate
+        Phi (numpy array):
+            the angle to rotate these points by
+        Ox (numpy array):
+            the x component of the geometric origin of the projected ellipse
+        Oy (numpy array):
+            the y component of the geometric origin of the projected ellipse
+    Returns:
+        ux (numpy array):
+            the rerotated x points
+        uy (numpy array):
+            the rerotated y points
+    """
+    ux = np.cos(Phi)*xpts - np.sin(Phi)*ypts + Ox
+    uy = np.sin(Phi)*xpts + np.cos(Phi)*ypts + Oy
+    #DELETE ux = np.cos(Phi[ind])*minSepPoints_x[ind] - np.sin(Phi[ind])*minSepPoints_y[ind] + Op[0][ind] 
+    #DELETE uy = np.sin(Phi[ind])*minSepPoints_x[ind] + np.cos(Phi[ind])*minSepPoints_y[ind] + Op[1][ind] 
+    return ux, uy
 
 
 
@@ -1415,16 +1442,16 @@ def smin_smax_slmin_slmax(n, xreal, yreal, mx, my, x, y):
     #### 4 Real Solutions ##################################
     smm = np.zeros((4,len(yrealAllRealInds)))
     smp = np.zeros((4,len(yrealAllRealInds)))
-    #DELETEspm = np.zeros((4,len(yrealAllRealInds)))
+    #spm = np.zeros((4,len(yrealAllRealInds))) #removed for efficiency
     spp = np.zeros((4,len(yrealAllRealInds)))
     for i in [0,1,2,3]:
         smm[i] = np.sqrt((np.real(xreal[yrealAllRealInds,i])-mx[yrealAllRealInds])**2 + (np.abs(np.real(yreal[yrealAllRealInds,i]))-my[yrealAllRealInds])**2)
         smp[i] = np.sqrt((np.real(xreal[yrealAllRealInds,i])-mx[yrealAllRealInds])**2 + (np.abs(np.real(yreal[yrealAllRealInds,i]))+my[yrealAllRealInds])**2)
-        #DELETEspm[i] = np.sqrt((np.real(xreal[yrealAllRealInds,i])+mx[yrealAllRealInds])**2 + (np.abs(np.real(yreal[yrealAllRealInds,i]))-my[yrealAllRealInds])**2)
+        #spm[i] = np.sqrt((np.real(xreal[yrealAllRealInds,i])+mx[yrealAllRealInds])**2 + (np.abs(np.real(yreal[yrealAllRealInds,i]))-my[yrealAllRealInds])**2) #removed for efficiency
         spp[i] = np.sqrt((np.real(xreal[yrealAllRealInds,i])+mx[yrealAllRealInds])**2 + (np.abs(np.real(yreal[yrealAllRealInds,i]))+my[yrealAllRealInds])**2)
     smm = smm.T
     smp = smp.T
-    #DELETEspm = spm.T
+    #spm = spm.T #removed for efficiency
     spp = spp.T
 
 
@@ -1490,4 +1517,19 @@ def smin_smax_slmin_slmax(n, xreal, yreal, mx, my, x, y):
     lmaxSepPoints_y = lmaxSepPoints_y*(-2*bool2[yrealAllRealInds]+1)
 
     return minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y, minSep, maxSep, lminSep, lmaxSep, yrealAllRealInds, yrealImagInds
+
+def trueAnomalyFromXY(X,Y,W,w,inc):
+    """ Calculated true anomaly from X, Y, and KOE
+    Args:
+        X (numpy array): x component of body in 3D elliptical orbit
+        Y (numpy array): y component of body in 3D elliptical orbit
+        W (numpy array): Longitude of the ascending node of the body
+        w (numpy array): argument of periapsis of the body
+        inc (numpy array): inclination of the body's orbit
+    Returns:
+        nu (numpy array):
+    """
+    nu = np.arctan2( -X/Y*np.sin(W)*np.cos(w) -X/Y*np.cos(W)*np.cos(inc)*np.sin(w) + np.cos(W)*np.cos(w) - np.sin(W)*np.cos(inc)*np.cos(w),\
+                -X/Y*np.sin(W)*np.sin(w) + X/Y*np.cos(W)*np.cos(inc)*np.cos(w) + np.cos(W)*np.sin(w) + np.sin(W)*np.cos(inc)*np.cos(w) )
+    return nu
 
