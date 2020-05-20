@@ -1003,29 +1003,38 @@ minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x,
 ####
 
 #### Calculate True Anomalies of Points
-#theta_OpQ_X, theta_OpQp_X = 
-nu_minSepPoints = trueAnomalyFromXY(minSepPoints_x, minSepPoints_y,W,w,inc)
-nu_maxSepPoints = trueAnomalyFromXY(maxSepPoints_x, maxSepPoints_y,W,w,inc)
-nu_lminSepPoints = trueAnomalyFromXY(lminSepPoints_x, lminSepPoints_y,W[yrealAllRealInds],w[yrealAllRealInds],inc[yrealAllRealInds])
-nu_lmaxSepPoints = trueAnomalyFromXY(lmaxSepPoints_x, lmaxSepPoints_y,W[yrealAllRealInds],w[yrealAllRealInds],inc[yrealAllRealInds])
-nu_fourInt = np.zeros(fourInt_x.shape)
-nu_fourInt[:,0] = trueAnomalyFromXY(fourInt_x[:,0], fourInt_y[:,0],W[yrealAllRealInds[fourIntInds]],w[yrealAllRealInds[fourIntInds]],inc[yrealAllRealInds[fourIntInds]])
-nu_fourInt[:,1] = trueAnomalyFromXY(fourInt_x[:,1], fourInt_y[:,1],W[yrealAllRealInds[fourIntInds]],w[yrealAllRealInds[fourIntInds]],inc[yrealAllRealInds[fourIntInds]])
-nu_fourInt[:,2] = trueAnomalyFromXY(fourInt_x[:,2], fourInt_y[:,2],W[yrealAllRealInds[fourIntInds]],w[yrealAllRealInds[fourIntInds]],inc[yrealAllRealInds[fourIntInds]])
-nu_fourInt[:,3] = trueAnomalyFromXY(fourInt_x[:,3], fourInt_y[:,3],W[yrealAllRealInds[fourIntInds]],w[yrealAllRealInds[fourIntInds]],inc[yrealAllRealInds[fourIntInds]])
-nu_twoIntSameY = np.zeros(twoIntSameY_x.shape)
-nu_twoIntSameY[:,0] = trueAnomalyFromXY(twoIntSameY_x[:,0], twoIntSameY_y[:,0],W[yrealAllRealInds[twoIntSameYInds]],w[yrealAllRealInds[twoIntSameYInds]],inc[yrealAllRealInds[twoIntSameYInds]])
-nu_twoIntSameY[:,1] = trueAnomalyFromXY(twoIntSameY_x[:,1], twoIntSameY_y[:,1],W[yrealAllRealInds[twoIntSameYInds]],w[yrealAllRealInds[twoIntSameYInds]],inc[yrealAllRealInds[twoIntSameYInds]])
-nu_twoIntOppositeX = np.zeros(twoIntOppositeX_x.shape)
-nu_twoIntOppositeX[:,0] = trueAnomalyFromXY(twoIntOppositeX_x[:,0], twoIntOppositeX_y[:,0],W[yrealAllRealInds[twoIntOppositeXInds]],w[yrealAllRealInds[twoIntOppositeXInds]],inc[yrealAllRealInds[twoIntOppositeXInds]])
-nu_twoIntOppositeX[:,1] = trueAnomalyFromXY(twoIntOppositeX_x[:,1], twoIntOppositeX_y[:,1],W[yrealAllRealInds[twoIntOppositeXInds]],w[yrealAllRealInds[twoIntOppositeXInds]],inc[yrealAllRealInds[twoIntOppositeXInds]])
-nu_IntersectionsOnly2 = np.zeros(xIntersectionsOnly2.shape)
-nu_IntersectionsOnly2[:,0] = trueAnomalyFromXY(xIntersectionsOnly2[:,0], yIntersectionsOnly2[:,0],W[only2RealInds],w[only2RealInds],inc[only2RealInds])
-nu_IntersectionsOnly2[:,1] = trueAnomalyFromXY(xIntersectionsOnly2[:,1], yIntersectionsOnly2[:,1],W[only2RealInds],w[only2RealInds],inc[only2RealInds])
+def trueAnomaliesOfPoints(minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y,\
+    fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2,\
+    yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds, W, w, inc):
+    nu_minSepPoints = trueAnomalyFromXY(minSepPoints_x, minSepPoints_y,W,w,inc)
+    nu_maxSepPoints = trueAnomalyFromXY(maxSepPoints_x, maxSepPoints_y,W,w,inc)
+    nu_lminSepPoints = trueAnomalyFromXY(lminSepPoints_x, lminSepPoints_y,W[yrealAllRealInds],w[yrealAllRealInds],inc[yrealAllRealInds])
+    nu_lmaxSepPoints = trueAnomalyFromXY(lmaxSepPoints_x, lmaxSepPoints_y,W[yrealAllRealInds],w[yrealAllRealInds],inc[yrealAllRealInds])
+    nu_fourInt = np.zeros(fourInt_x.shape)
+    nu_fourInt[:,0] = trueAnomalyFromXY(fourInt_x[:,0], fourInt_y[:,0],W[yrealAllRealInds[fourIntInds]],w[yrealAllRealInds[fourIntInds]],inc[yrealAllRealInds[fourIntInds]])
+    nu_fourInt[:,1] = trueAnomalyFromXY(fourInt_x[:,1], fourInt_y[:,1],W[yrealAllRealInds[fourIntInds]],w[yrealAllRealInds[fourIntInds]],inc[yrealAllRealInds[fourIntInds]])
+    nu_fourInt[:,2] = trueAnomalyFromXY(fourInt_x[:,2], fourInt_y[:,2],W[yrealAllRealInds[fourIntInds]],w[yrealAllRealInds[fourIntInds]],inc[yrealAllRealInds[fourIntInds]])
+    nu_fourInt[:,3] = trueAnomalyFromXY(fourInt_x[:,3], fourInt_y[:,3],W[yrealAllRealInds[fourIntInds]],w[yrealAllRealInds[fourIntInds]],inc[yrealAllRealInds[fourIntInds]])
+    nu_twoIntSameY = np.zeros(twoIntSameY_x.shape)
+    nu_twoIntSameY[:,0] = trueAnomalyFromXY(twoIntSameY_x[:,0], twoIntSameY_y[:,0],W[yrealAllRealInds[twoIntSameYInds]],w[yrealAllRealInds[twoIntSameYInds]],inc[yrealAllRealInds[twoIntSameYInds]])
+    nu_twoIntSameY[:,1] = trueAnomalyFromXY(twoIntSameY_x[:,1], twoIntSameY_y[:,1],W[yrealAllRealInds[twoIntSameYInds]],w[yrealAllRealInds[twoIntSameYInds]],inc[yrealAllRealInds[twoIntSameYInds]])
+    nu_twoIntOppositeX = np.zeros(twoIntOppositeX_x.shape)
+    nu_twoIntOppositeX[:,0] = trueAnomalyFromXY(twoIntOppositeX_x[:,0], twoIntOppositeX_y[:,0],W[yrealAllRealInds[twoIntOppositeXInds]],w[yrealAllRealInds[twoIntOppositeXInds]],inc[yrealAllRealInds[twoIntOppositeXInds]])
+    nu_twoIntOppositeX[:,1] = trueAnomalyFromXY(twoIntOppositeX_x[:,1], twoIntOppositeX_y[:,1],W[yrealAllRealInds[twoIntOppositeXInds]],w[yrealAllRealInds[twoIntOppositeXInds]],inc[yrealAllRealInds[twoIntOppositeXInds]])
+    nu_IntersectionsOnly2 = np.zeros(xIntersectionsOnly2.shape)
+    nu_IntersectionsOnly2[:,0] = trueAnomalyFromXY(xIntersectionsOnly2[:,0], yIntersectionsOnly2[:,0],W[only2RealInds],w[only2RealInds],inc[only2RealInds])
+    nu_IntersectionsOnly2[:,1] = trueAnomalyFromXY(xIntersectionsOnly2[:,1], yIntersectionsOnly2[:,1],W[only2RealInds],w[only2RealInds],inc[only2RealInds])
+    return nu_minSepPoints, nu_maxSepPoints, nu_lminSepPoints, nu_lmaxSepPoints, nu_fourInt, nu_twoIntSameY, nu_twoIntOppositeX, nu_IntersectionsOnly2
+
+nu_minSepPoints, nu_maxSepPoints, nu_lminSepPoints, nu_lmaxSepPoints, nu_fourInt, nu_twoIntSameY, nu_twoIntOppositeX, nu_IntersectionsOnly2\
+     = trueAnomaliesOfPoints(minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y,\
+    fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2,\
+    yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds, W, w, inc)
+
 #Now can I delete the x,y points?
 del minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y, fourInt_x, fourInt_y
 del twoIntSameY_x, twoIntSameY_y, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2
-
+####
 
 
 
