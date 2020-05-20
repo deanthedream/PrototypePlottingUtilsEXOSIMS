@@ -15,7 +15,7 @@ filename = 'HabEx_CKL2_PPKL2.json'
 scriptfile = os.path.join(folder,filename)
 sim = EXOSIMS.MissionSim.MissionSim(scriptfile=scriptfile,nopar=True)
 PPop = sim.PlanetPopulation
-n = 10**4 #Dean's nice computer can go up to 10**8 what can atuin go up to?
+n = 10**5 #Dean's nice computer can go up to 10**8 what can atuin go up to?
 inc, W, w = PPop.gen_angles(n,None)
 inc = inc.to('rad').value
 inc[np.where(inc>np.pi/2)[0]] = np.pi - inc[np.where(inc>np.pi/2)[0]]
@@ -55,6 +55,7 @@ assert np.all(dmajorp < sma), "Not all Semi-major axis of the projected ellipse 
 assert np.all(dminorp < dmajorp), "All projected Semi-minor axes are less than all projected semi-major axes"
 
 #### Plotting Projected Ellipse
+start2 = time.time()
 def plotProjectedEllipse(ind, sma, e, W, w, inc, theta_OpQ_X, theta_OpQp_X, dmajorp, dminorp, Op, num):
     plt.close(num)
     fig = plt.figure(num=num)
@@ -93,10 +94,14 @@ def plotProjectedEllipse(ind, sma, e, W, w, inc, theta_OpQ_X, theta_OpQp_X, dmaj
 
 ind = random.randint(low=0,high=n)
 plotProjectedEllipse(ind, sma, e, W, w, inc, theta_OpQ_X, theta_OpQp_X, dmajorp, dminorp, Op, num=877)
+stop2 = time.time()
+print('stop2: ' + str(stop2-start2))
+del start2, stop2
 ####
 
 
 #### Plot 3D Ellipse to 2D Ellipse Projection Diagram
+start3 = time.time()
 def plot3DEllipseto2DEllipseProjectionDiagram(ind, sma, e, W, w, inc, num):
     """
     """
@@ -285,10 +290,14 @@ def plot3DEllipseto2DEllipseProjectionDiagram(ind, sma, e, W, w, inc, num):
 
 num = 666999888777
 plot3DEllipseto2DEllipseProjectionDiagram(ind, sma, e, W, w, inc, num=num)
+stop3 = time.time()
+print('stop3: ' + str(stop3-start3))
+del start3, stop3
 ####
 
 
 #### Create Projected Ellipse Conjugate Diameters and QQ' construction diagram
+start4 = time.time()
 def plotEllipseMajorAxisFromConjugate(ind, sma, e, W, w, inc, num):
     """ Plots the Q and Q' points as well as teh line 
     """
@@ -403,20 +412,24 @@ def plotEllipseMajorAxisFromConjugate(ind, sma, e, W, w, inc, num):
 
 num = 3335555888
 plotEllipseMajorAxisFromConjugate(ind, sma, e, W, w, inc, num)
+stop4 = time.time()
+print('stop4: ' + str(stop4-start4))
+del start4, stop4
 ####
 
 
 #### Derotate Ellipse
-start2 = time.time()
+start5 = time.time()
 x, y, Phi = derotatedEllipse(theta_OpQ_X, theta_OpQp_X, Op)
-stop2 = time.time()
-print('stop2: ' + str(stop2-start2))
-del start2, stop2
+stop5 = time.time()
+print('stop5: ' + str(stop5-start5))
+del start5, stop5
 a = dmajorp
 b = dminorp
 mx = np.abs(x) #x converted to a strictly positive value
 my = np.abs(y) #y converted to a strictly positive value
 
+start6 = time.time()
 def plotDerotatedEllipse(ind, sma, e, W, w, inc, theta_OpQ_X, theta_OpQp_X, dmajorp, dminorp, Op, a, b, x, y, num=879):
     plt.close(num)
     fig = plt.figure(num=num)
@@ -459,32 +472,39 @@ def plotDerotatedEllipse(ind, sma, e, W, w, inc, theta_OpQ_X, theta_OpQp_X, dmaj
 
     plt.show(block=False)
 
-start3 = time.time()
 plotDerotatedEllipse(ind, sma, e, W, w, inc, theta_OpQ_X, theta_OpQp_X, dmajorp, dminorp, Op, a, b, x, y, num=880)
-stop3 = time.time()
-print('stop3: ' + str(stop3-start3))
-del start3, stop3
+stop6 = time.time()
+print('stop6: ' + str(stop6-start6))
+del start6, stop6
 
 #### Calculate X,Y Position of Minimum and Maximums with Quartic
-start4 = time.time()
+start7 = time.time()
 A, B, C, D = quarticCoefficients_smin_smax_lmin_lmax(a.astype('complex128'), b, mx, my)
 xreal, delta, P, D2, R, delta_0 = quarticSolutions_ellipse_to_Quarticipynb(A.astype('complex128'), B, C, D)
 del A, B, C, D #delting for memory efficiency
 assert np.max(np.nanmin(np.abs(np.imag(xreal)),axis=1)) < 1e-15, 'At least one row has min > 1e-15' #this ensures each row has a solution
 xreal.real = np.abs(xreal)
-stop4 = time.time()
-print('stop4: ' + str(stop4-start4))
-del stop4, start4
+stop7 = time.time()
+print('stop7: ' + str(stop7-start7))
+del stop7, start7
 
 #Technically, each row must have at least 2 solutions, but whatever
+start8 = time.time()
 yreal = ellipseYFromX(xreal.astype('complex128'), a, b)
+stop8 = time.time()
+print('stop8: ' + str(stop8-start8))
+del start8, stop8
 
 
 #### Calculate Minimum, Maximum, Local Minimum, Local Maximum Separations
+start9 = time.time()
 minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y, minSep, maxSep, lminSep, lmaxSep, yrealAllRealInds, yrealImagInds = smin_smax_slmin_slmax(n, xreal, yreal, mx, my, x, y)
-
+stop9 = time.time()
+print('stop9: ' + str(stop9-start9))
+del start9, stop9
 
 ##### Plov Proving Rerotation method works
+start10 = time.time()
 def plotReorientationMethod(ind, sma, e, W, w, inc, Op, theta_OpQ_X, theta_OpQp_X, dmajorp, dminorp, num):
     plt.close(num)
     fig = plt.figure(num=num)
@@ -533,6 +553,9 @@ def plotReorientationMethod(ind, sma, e, W, w, inc, Op, theta_OpQ_X, theta_OpQp_
 
 num=880
 plotReorientationMethod(ind, sma, e, W, w, inc, Op, theta_OpQ_X, theta_OpQp_X, dmajorp, dminorp, num)
+stop10 = time.time()
+print('stop10: ' + str(stop10-start10))
+del start10, stop10
 ####
 
 
@@ -574,6 +597,7 @@ print('Total Data Used: ' + str(totalMemoryUsage/10**9) + ' GB')
 ####
 
 #### Ellipse Circle Intersection #######################################################################
+start11 = time.time()
 def ellipseCircleIntersections(r, a, b, mx, my, minSep, maxSep, lminSep, lmaxSep, yrealAllRealInds):
     #### Testing ellipse_to_Quartic solution
     if r == None:
@@ -779,6 +803,9 @@ a, b, only2RealInds, typeInds0, typeInds1, typeInds2, typeInds3, minSepPoints_x,
         type0_0Inds,type0_1Inds,type0_2Inds,type0_3Inds,type0_4Inds,type1_0Inds,type1_1Inds,type1_2Inds,type1_3Inds,type1_4Inds,\
         type2_0Inds,type2_1Inds,type2_2Inds,type2_3Inds,type2_4Inds,type3_0Inds,type3_1Inds,type3_2Inds,type3_3Inds,type3_4Inds,\
         allIndsUsed = ellipseCircleIntersections(None, a, b, mx, my, minSep, maxSep, lminSep, lmaxSep, yrealAllRealInds)
+stop11 = time.time()
+print('stop11: ' + str(stop11-start11))
+del start11, stop11
 ####
 
 #Testing plotting inds
@@ -809,6 +836,7 @@ ind = only2RealInds[type3_1Inds[0]]#works
 #ind = only2RealInds[type3_4Inds[0]]#works
 
 #### Plot Derotated Intersections, Min/Max, and Star Location Type Bounds
+start12 = time.time()
 def plotDerotatedIntersectionsMinMaxStarLocBounds(ind, a, b, only2RealInds, typeInds0, typeInds1, typeInds2, typeInds3, minSepPoints_x,\
     minSepPoints_y, yrealAllRealInds, lminSepPoints_x, lminSepPoints_y, fourIntInds, fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y,\
     twoIntOppositeXInds, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2,\
@@ -971,10 +999,14 @@ plotDerotatedIntersectionsMinMaxStarLocBounds(ind, a, b, only2RealInds, typeInds
         twoIntOppositeXInds, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2,\
         type0_0Inds, type0_1Inds, type0_2Inds, type0_3Inds, type0_4Inds, type1_0Inds, type1_1Inds, type1_2Inds, type1_3Inds, type1_4Inds,\
         type2_0Inds, type2_1Inds, type2_2Inds, type2_3Inds, type2_4Inds, type3_0Inds, type3_1Inds, type3_2Inds, type3_3Inds, type3_4Inds, num)
+stop12 = time.time()
+print('stop12: ' + str(stop12-start12))
+del start12, stop12
 ####
 
 
 #### Rerotate Extrema and Intersection Points
+start13 = time.time()
 def rerotateExtremaAndIntersectionPoints(minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y,\
     fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2,\
     Phi, Op, yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds):
@@ -1000,9 +1032,13 @@ minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x,
     rerotateExtremaAndIntersectionPoints(minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y,\
     fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2,\
     Phi, Op, yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds)
+stop13 = time.time()
+print('stop13: ' + str(stop13-start13))
+del start13, stop13
 ####
 
 #### Calculate True Anomalies of Points
+start14 = time.time()
 def trueAnomaliesOfPoints(minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y,\
     fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2,\
     yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds, W, w, inc):
@@ -1030,7 +1066,9 @@ nu_minSepPoints, nu_maxSepPoints, nu_lminSepPoints, nu_lmaxSepPoints, nu_fourInt
      = trueAnomaliesOfPoints(minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y,\
     fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2,\
     yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds, W, w, inc)
-
+stop14 = time.time()
+print('stop14: ' + str(stop14-start14))
+del start14, stop14
 #Now can I delete the x,y points?
 del minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y, fourInt_x, fourInt_y
 del twoIntSameY_x, twoIntSameY_y, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2
