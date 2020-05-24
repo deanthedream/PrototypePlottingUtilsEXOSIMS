@@ -1120,6 +1120,11 @@ def plotRerotatedFromNus(ind, sma, e, W, w, inc, Op, yrealAllRealInds, fourIntIn
         r_int1 = xyz_3Dellipse(sma,e,W,w,inc,nu_twoIntSameY[yind,1])
         plt.scatter(r_int1[0],r_int1[1],color='green',marker='o')
 
+        r_int0 = xyz_3Dellipse(sma,e,W,w,inc,nu_twoIntSameY[yind,0]+np.pi)
+        plt.scatter(r_int0[0],r_int0[1],color='magenta',marker='o')
+        r_int1 = xyz_3Dellipse(sma,e,W,w,inc,nu_twoIntSameY[yind,1]+np.pi)
+        plt.scatter(r_int1[0],r_int1[1],color='magenta',marker='o')
+
         r_int0 = xyz_3Dellipse(sma,e,W,w,inc,np.pi - nu_twoIntSameY[yind,0])
         plt.scatter(r_int0[0],r_int0[1],color='green',marker='x')
         r_int1 = xyz_3Dellipse(sma,e,W,w,inc,np.pi - nu_twoIntSameY[yind,1])
@@ -1135,7 +1140,7 @@ def plotRerotatedFromNus(ind, sma, e, W, w, inc, Op, yrealAllRealInds, fourIntIn
         r_int1 = xyz_3Dellipse(sma,e,W,w,inc,-nu_twoIntSameY[yind,1])
         plt.scatter(r_int1[0],r_int1[1],color='blue',marker='x')
 
-        plt.scatter(twoIntSameY_x[yind], twoIntSameY_y[yind],color='blue',marker='o')
+        #plt.scatter(twoIntSameY_x[yind], twoIntSameY_y[yind],color='blue',marker='o')
 
     if ind in yrealAllRealInds[twoIntOppositeXInds]:
         yind = np.where(yrealAllRealInds[twoIntOppositeXInds] == ind)[0]
@@ -1253,70 +1258,70 @@ plt.plot(np.arange(len(fourIntInds)),np.abs(np.sort(-errors_fourInt2)[np.arange(
 nu_fourInt[:,3], errors_fourInt3 = nuCorrections(sma,e,W,w,inc,r,nu_fourInt[:,3],yrealAllRealInds,fourIntInds)
 plt.plot(np.arange(len(fourIntInds)),np.abs(np.sort(-errors_fourInt3)[np.arange(len(fourIntInds))]),label='Four Int 3')
 ####
-def nuCorrectionsTwoIntSameY(sma,e,W,w,inc,r,nus,mainInds,subInds):
-    r_fourInt0 = xyz_3Dellipse(sma[mainInds[subInds]],e[mainInds[subInds]],W[mainInds[subInds]],w[mainInds[subInds]],inc[mainInds[subInds]],nus)
-    tmp_fourInt0Seps = np.sqrt(r_fourInt0[0,0]**2 + r_fourInt0[1,0]**2)
-    wrong_fourInt0Inds = np.where(np.abs(r[mainInds[subInds]] - tmp_fourInt0Seps) > 3e-2)[0]#1e-6)[0]
-    if len(wrong_fourInt0Inds) > 0:
-        nus[wrong_fourInt0Inds] = nus[wrong_fourInt0Inds] + np.pi
-        r_fourInt0 = xyz_3Dellipse(sma[mainInds[subInds]],e[mainInds[subInds]],W[mainInds[subInds]],w[mainInds[subInds]],inc[mainInds[subInds]],nus)
-        tmp_fourInt0Seps = np.sqrt(r_fourInt0[0,0]**2 + r_fourInt0[1,0]**2)
-        wrong_fourInt0Inds = np.where(np.abs(r[mainInds[subInds]] - tmp_fourInt0Seps) > 3e-2)[0]
-    print(len(wrong_fourInt0Inds))
-    print(wrong_fourInt0Inds)
-    if len(wrong_fourInt0Inds) > 0: #now choose the smaller error of the two
-        r_fourInt0_2 = xyz_3Dellipse(sma[mainInds[subInds[wrong_fourInt0Inds]]],e[mainInds[subInds[wrong_fourInt0Inds]]],W[mainInds[subInds[wrong_fourInt0Inds]]],w[mainInds[subInds[wrong_fourInt0Inds]]],inc[mainInds[subInds[wrong_fourInt0Inds]]],nus[wrong_fourInt0Inds])
-        tmp_fourInt0Seps_2 = np.sqrt(r_fourInt0_2[0,0]**2 + r_fourInt0_2[1,0]**2)
-        r_fourInt0_3 = xyz_3Dellipse(sma[mainInds[subInds[wrong_fourInt0Inds]]],e[mainInds[subInds[wrong_fourInt0Inds]]],W[mainInds[subInds[wrong_fourInt0Inds]]],w[mainInds[subInds[wrong_fourInt0Inds]]],inc[mainInds[subInds[wrong_fourInt0Inds]]],nus[wrong_fourInt0Inds] + np.pi)
-        tmp_fourInt0Seps_3 = np.sqrt(r_fourInt0_3[0,0]**2 + r_fourInt0_3[1,0]**2)
-        indsToSwap = np.where(np.abs(r[mainInds[subInds[wrong_fourInt0Inds]]] - tmp_fourInt0Seps_2) > np.abs(r[mainInds[fourIntInds[wrong_fourInt0Inds]]] - tmp_fourInt0Seps_3))[0]
-        if len(indsToSwap) > 0:
-            nus[wrong_fourInt0Inds[indsToSwap]] = nus[wrong_fourInt0Inds[indsToSwap]] + np.pi
-    r_fourInt0 = xyz_3Dellipse(sma[mainInds[subInds]],e[mainInds[subInds]],W[mainInds[subInds]],w[mainInds[subInds]],inc[mainInds[subInds]],nus)
-    tmp_fourInt0Seps = np.sqrt(r_fourInt0[0,0]**2 + r_fourInt0[1,0]**2)
-    errors = np.abs(r[mainInds[subInds]] - tmp_fourInt0Seps)
-    maxError_fourInt0 = np.max(errors)
-    print(maxError_fourInt0)
-    return nus, errors
+# DELETEdef nuCorrectionsTwoIntSameY(sma,e,W,w,inc,r,nus,mainInds,subInds):
+#     r_fourInt0 = xyz_3Dellipse(sma[mainInds[subInds]],e[mainInds[subInds]],W[mainInds[subInds]],w[mainInds[subInds]],inc[mainInds[subInds]],nus)
+#     tmp_fourInt0Seps = np.sqrt(r_fourInt0[0,0]**2 + r_fourInt0[1,0]**2)
+#     wrong_fourInt0Inds = np.where(np.abs(r[mainInds[subInds]] - tmp_fourInt0Seps) > 3e-2)[0]#1e-6)[0]
+#     if len(wrong_fourInt0Inds) > 0:
+#         nus[wrong_fourInt0Inds] = nus[wrong_fourInt0Inds] + np.pi
+#         r_fourInt0 = xyz_3Dellipse(sma[mainInds[subInds]],e[mainInds[subInds]],W[mainInds[subInds]],w[mainInds[subInds]],inc[mainInds[subInds]],nus)
+#         tmp_fourInt0Seps = np.sqrt(r_fourInt0[0,0]**2 + r_fourInt0[1,0]**2)
+#         wrong_fourInt0Inds = np.where(np.abs(r[mainInds[subInds]] - tmp_fourInt0Seps) > 3e-2)[0]
+#     print(len(wrong_fourInt0Inds))
+#     print(wrong_fourInt0Inds)
+#     if len(wrong_fourInt0Inds) > 0: #now choose the smaller error of the two
+#         r_fourInt0_2 = xyz_3Dellipse(sma[mainInds[subInds[wrong_fourInt0Inds]]],e[mainInds[subInds[wrong_fourInt0Inds]]],W[mainInds[subInds[wrong_fourInt0Inds]]],w[mainInds[subInds[wrong_fourInt0Inds]]],inc[mainInds[subInds[wrong_fourInt0Inds]]],nus[wrong_fourInt0Inds])
+#         tmp_fourInt0Seps_2 = np.sqrt(r_fourInt0_2[0,0]**2 + r_fourInt0_2[1,0]**2)
+#         r_fourInt0_3 = xyz_3Dellipse(sma[mainInds[subInds[wrong_fourInt0Inds]]],e[mainInds[subInds[wrong_fourInt0Inds]]],W[mainInds[subInds[wrong_fourInt0Inds]]],w[mainInds[subInds[wrong_fourInt0Inds]]],inc[mainInds[subInds[wrong_fourInt0Inds]]],nus[wrong_fourInt0Inds] + np.pi)
+#         tmp_fourInt0Seps_3 = np.sqrt(r_fourInt0_3[0,0]**2 + r_fourInt0_3[1,0]**2)
+#         indsToSwap = np.where(np.abs(r[mainInds[subInds[wrong_fourInt0Inds]]] - tmp_fourInt0Seps_2) > np.abs(r[mainInds[fourIntInds[wrong_fourInt0Inds]]] - tmp_fourInt0Seps_3))[0]
+#         if len(indsToSwap) > 0:
+#             nus[wrong_fourInt0Inds[indsToSwap]] = nus[wrong_fourInt0Inds[indsToSwap]] + np.pi
+#     r_fourInt0 = xyz_3Dellipse(sma[mainInds[subInds]],e[mainInds[subInds]],W[mainInds[subInds]],w[mainInds[subInds]],inc[mainInds[subInds]],nus)
+#     tmp_fourInt0Seps = np.sqrt(r_fourInt0[0,0]**2 + r_fourInt0[1,0]**2)
+#     errors = np.abs(r[mainInds[subInds]] - tmp_fourInt0Seps)
+#     maxError_fourInt0 = np.max(errors)
+#     print(maxError_fourInt0)
+#     return nus, errors
 #### yrealAllRealInds[twoIntSameYInds]
-nu_twoIntSameY[:,0], errors_twoIntSameY0 = nuCorrectionsTwoIntSameY(sma,e,W,w,inc,r,nu_twoIntSameY[:,0],yrealAllRealInds,twoIntSameYInds)
+nu_twoIntSameY[:,0], errors_twoIntSameY0 = nuCorrections(sma,e,W,w,inc,r,nu_twoIntSameY[:,0],yrealAllRealInds,twoIntSameYInds)
 plt.plot(np.arange(len(twoIntSameYInds)),np.abs(np.sort(-errors_twoIntSameY0)),label='Two Int Same Y 0')
-plt.legend()
-plt.show(block=False)
 
 
-ind = yrealAllRealInds[twoIntSameYInds[np.argsort(-errors_twoIntSameY0)[0]]]
-#ind = yrealAllRealInds[twoIntSameYInds[0]]
-plotRerotatedFromNus(ind, sma[ind], e[ind], W[ind], w[ind], inc[ind], Op[:,ind], yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds,\
-    nu_minSepPoints, nu_maxSepPoints, nu_lminSepPoints, nu_lmaxSepPoints, nu_fourInt, nu_twoIntSameY, nu_twoIntOppositeX, nu_IntersectionsOnly2,\
-    twoIntSameY_x, twoIntSameY_y, num=8000)
 
-from scipy.optimize import fsolve
-def errorFunc(x,sma,e,W,w,inc):
-    """
-    """
-    r_0 = xyz_3Dellipse(sma,e,W,w,inc,x)
-    error = np.abs(1-np.sqrt(r_0[0,0]**2 + r_0[1,0]**2))
-    return error
-yind = np.where(ind == yrealAllRealInds[twoIntSameYInds])[0]
-out0 = fsolve(errorFunc,nu_twoIntSameY[yind,0],args=(sma[ind],e[ind],W[ind],w[ind],inc[ind]))
-out1 = fsolve(errorFunc,nu_twoIntSameY[yind,1],args=(sma[ind],e[ind],W[ind],w[ind],inc[ind]))
-print('Goal0: ' + str(out0))
-print('Goal0: ' + str(out0 - 2*np.pi))
-print('Goal0: ' + str(out0 + np.pi))
-print('Goal1: ' + str(out1))
-print('Goal1: ' + str(out1 - 2*np.pi))
-print('Goal1: ' + str(out1 + np.pi))
-print('Goal1: ' + str(np.pi - out1))
-print(nu_twoIntSameY[yind,0])
-print(2*np.pi - nu_twoIntSameY[yind,0])
-print(np.pi - nu_twoIntSameY[yind,0])
-print(nu_twoIntSameY[yind,1])
-print(2*np.pi - nu_twoIntSameY[yind,1])
-print(np.pi - nu_twoIntSameY[yind,1])
-rout = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],0.372)
-sepout = np.sqrt(rout[0]**2 + rout[1]**2)
-print(sepout)
+#DELETE
+# ind = yrealAllRealInds[twoIntSameYInds[np.argsort(-errors_twoIntSameY0)[0]]]
+# #ind = yrealAllRealInds[twoIntSameYInds[0]]
+# plotRerotatedFromNus(ind, sma[ind], e[ind], W[ind], w[ind], inc[ind], Op[:,ind], yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds,\
+#     nu_minSepPoints, nu_maxSepPoints, nu_lminSepPoints, nu_lmaxSepPoints, nu_fourInt, nu_twoIntSameY, nu_twoIntOppositeX, nu_IntersectionsOnly2,\
+#     twoIntSameY_x, twoIntSameY_y, num=8000)
+
+# from scipy.optimize import fsolve
+# def errorFunc(x,sma,e,W,w,inc):
+#     """
+#     """
+#     r_0 = xyz_3Dellipse(sma,e,W,w,inc,x)
+#     error = np.abs(1-np.sqrt(r_0[0,0]**2 + r_0[1,0]**2))
+#     return error
+# yind = np.where(ind == yrealAllRealInds[twoIntSameYInds])[0]
+# out0 = fsolve(errorFunc,nu_twoIntSameY[yind,0],args=(sma[ind],e[ind],W[ind],w[ind],inc[ind]))
+# out1 = fsolve(errorFunc,nu_twoIntSameY[yind,1],args=(sma[ind],e[ind],W[ind],w[ind],inc[ind]))
+# print('Goal0: ' + str(out0))
+# print('Goal0: ' + str(out0 - 2*np.pi))
+# print('Goal0: ' + str(out0 + np.pi))
+# print('Goal1: ' + str(out1))
+# print('Goal1: ' + str(out1 - 2*np.pi))
+# print('Goal1: ' + str(out1 + np.pi))
+# print('Goal1: ' + str(np.pi - out1))
+# print(nu_twoIntSameY[yind,0])
+# print(2*np.pi - nu_twoIntSameY[yind,0])
+# print(np.pi - nu_twoIntSameY[yind,0])
+# print(nu_twoIntSameY[yind,1])
+# print(2*np.pi - nu_twoIntSameY[yind,1])
+# print(np.pi - nu_twoIntSameY[yind,1])
+# rout = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],0.372)
+# sepout = np.sqrt(rout[0]**2 + rout[1]**2)
+# print(sepout)
 
 
 # r_twoIntSameY0 = xyz_3Dellipse(sma[yrealAllRealInds[twoIntSameYInds]],e[yrealAllRealInds[twoIntSameYInds]],W[yrealAllRealInds[twoIntSameYInds]],w[yrealAllRealInds[twoIntSameYInds]],inc[yrealAllRealInds[twoIntSameYInds]],nu_twoIntSameY[:,0])
@@ -1329,15 +1334,19 @@ print(sepout)
 #     wrong_twoIntSameY0Inds = np.where(np.abs(r[yrealAllRealInds[twoIntSameYInds]] - tmp_twoIntSameY0Seps) > 5e-3)[0]#1e-6)[0]
 # assert len(wrong_twoIntSameY0Inds) == 0, 'at least 1 wrong nu_twoIntSameY0'
 #
-r_twoIntSameY1 = xyz_3Dellipse(sma[yrealAllRealInds[twoIntSameYInds]],e[yrealAllRealInds[twoIntSameYInds]],W[yrealAllRealInds[twoIntSameYInds]],w[yrealAllRealInds[twoIntSameYInds]],inc[yrealAllRealInds[twoIntSameYInds]],nu_twoIntSameY[:,1])
-tmp_twoIntSameY1Seps = np.sqrt(r_twoIntSameY1[0,0]**2 + r_twoIntSameY1[1,0]**2)
-wrong_twoIntSameY1Inds = np.where(np.abs(r[yrealAllRealInds[twoIntSameYInds]] - tmp_twoIntSameY1Seps) > 1e-6)[0]
-if len(wrong_twoIntSameY1Inds) > 0:
-    nu_twoIntSameY[wrong_twoIntSameY1Inds,1] = nu_twoIntSameY[wrong_twoIntSameY1Inds,1] + np.pi
-    r_twoIntSameY1 = xyz_3Dellipse(sma[yrealAllRealInds[twoIntSameYInds]],e[yrealAllRealInds[twoIntSameYInds]],W[yrealAllRealInds[twoIntSameYInds]],w[yrealAllRealInds[twoIntSameYInds]],inc[yrealAllRealInds[twoIntSameYInds]],nu_twoIntSameY[:,1])
-    tmp_twoIntSameY1Seps = np.sqrt(r_twoIntSameY1[0,0]**2 + r_twoIntSameY1[1,0]**2)
-    wrong_twoIntSameY1Inds = np.where(np.abs(r[yrealAllRealInds[twoIntSameYInds]] - tmp_twoIntSameY1Seps) > 1e-6)[0]
-assert len(wrong_twoIntSameY1Inds) == 0, 'at least 1 wrong nu_twoIntSameY1'
+nu_twoIntSameY[:,1], errors_twoIntSameY1 = nuCorrections(sma,e,W,w,inc,r,nu_twoIntSameY[:,1],yrealAllRealInds,twoIntSameYInds)
+plt.plot(np.arange(len(twoIntSameYInds)),np.abs(np.sort(-errors_twoIntSameY1)),label='Two Int Same Y 1')
+plt.legend()
+plt.show(block=False)
+#DELETE# r_twoIntSameY1 = xyz_3Dellipse(sma[yrealAllRealInds[twoIntSameYInds]],e[yrealAllRealInds[twoIntSameYInds]],W[yrealAllRealInds[twoIntSameYInds]],w[yrealAllRealInds[twoIntSameYInds]],inc[yrealAllRealInds[twoIntSameYInds]],nu_twoIntSameY[:,1])
+# tmp_twoIntSameY1Seps = np.sqrt(r_twoIntSameY1[0,0]**2 + r_twoIntSameY1[1,0]**2)
+# wrong_twoIntSameY1Inds = np.where(np.abs(r[yrealAllRealInds[twoIntSameYInds]] - tmp_twoIntSameY1Seps) > 1e-6)[0]
+# if len(wrong_twoIntSameY1Inds) > 0:
+#     nu_twoIntSameY[wrong_twoIntSameY1Inds,1] = nu_twoIntSameY[wrong_twoIntSameY1Inds,1] + np.pi
+#     r_twoIntSameY1 = xyz_3Dellipse(sma[yrealAllRealInds[twoIntSameYInds]],e[yrealAllRealInds[twoIntSameYInds]],W[yrealAllRealInds[twoIntSameYInds]],w[yrealAllRealInds[twoIntSameYInds]],inc[yrealAllRealInds[twoIntSameYInds]],nu_twoIntSameY[:,1])
+#     tmp_twoIntSameY1Seps = np.sqrt(r_twoIntSameY1[0,0]**2 + r_twoIntSameY1[1,0]**2)
+#     wrong_twoIntSameY1Inds = np.where(np.abs(r[yrealAllRealInds[twoIntSameYInds]] - tmp_twoIntSameY1Seps) > 1e-6)[0]
+# assert len(wrong_twoIntSameY1Inds) == 0, 'at least 1 wrong nu_twoIntSameY1'
 ####
 #### yrealAllRealInds[twoIntOppositeXInds]
 r_twoIntOppositeX0 = xyz_3Dellipse(sma[yrealAllRealInds[twoIntOppositeXInds]],e[yrealAllRealInds[twoIntOppositeXInds]],W[yrealAllRealInds[twoIntOppositeXInds]],w[yrealAllRealInds[twoIntOppositeXInds]],inc[yrealAllRealInds[twoIntOppositeXInds]],nu_twoIntOppositeX[:,0])
