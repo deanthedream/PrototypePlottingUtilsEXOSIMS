@@ -512,7 +512,7 @@ stop9 = time.time()
 print('stop9: ' + str(stop9-start9))
 del start9, stop9
 
-##### Plov Proving Rerotation method works
+##### Plot Proving Rerotation method works
 start10 = time.time()
 def plotReorientationMethod(ind, sma, e, W, w, inc, Op, theta_OpQ_X, theta_OpQp_X, dmajorp, dminorp, num):
     plt.close(num)
@@ -817,6 +817,18 @@ print('stop11: ' + str(stop11-start11))
 del start11, stop11
 ####
 
+#### Correct Ellipse Circle Intersections fourInt1 
+seps_fourInt1 = np.sqrt((fourInt_x[:,1]-x[yrealAllRealInds[fourIntInds]])**2 + (fourInt_y[:,1]-y[yrealAllRealInds[fourIntInds]])**2)
+errors_fourInt1 = np.abs(np.sort(-np.abs(np.ones(len(seps_fourInt1)) - seps_fourInt1)))
+indsToFix = np.argsort(-np.abs(np.ones(len(seps_fourInt1)) - seps_fourInt1))[np.where(errors_fourInt1 > 1e-7)[0]]
+fourInt_y[indsToFix,1] = -fourInt_y[indsToFix,1]
+seps_fourInt1 = np.sqrt((fourInt_x[:,1]-x[yrealAllRealInds[fourIntInds]])**2 + (fourInt_y[:,1]-y[yrealAllRealInds[fourIntInds]])**2)
+errors_fourInt1 = np.abs(np.sort(-np.abs(np.ones(len(seps_fourInt1)) - seps_fourInt1)))
+indsToFix = np.argsort(-np.abs(np.ones(len(seps_fourInt1)) - seps_fourInt1))[np.where(errors_fourInt1 > 1e-7)[0]]
+del seps_fourInt1, errors_fourInt1, indsToFix
+####
+
+
 #Testing plotting inds
 ind = yrealAllRealInds[fourIntInds[0]]#works
 ind = yrealAllRealInds[twoIntSameYInds[0]]#works
@@ -1019,25 +1031,46 @@ start13 = time.time()
 def rerotateExtremaAndIntersectionPoints(minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y,\
     fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2,\
     Phi, Op, yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds):
-    minSepPoints_x, minSepPoints_y = rerotateEllipsePoints(minSepPoints_x, minSepPoints_y,Phi,Op[0],Op[1])
-    maxSepPoints_x, maxSepPoints_y = rerotateEllipsePoints(maxSepPoints_x, maxSepPoints_y,Phi,Op[0],Op[1])
-    lminSepPoints_x, lminSepPoints_y = rerotateEllipsePoints(lminSepPoints_x, lminSepPoints_y,Phi[yrealAllRealInds],Op[0][yrealAllRealInds],Op[1][yrealAllRealInds])
-    lmaxSepPoints_x, lmaxSepPoints_y = rerotateEllipsePoints(lmaxSepPoints_x, lmaxSepPoints_y,Phi[yrealAllRealInds],Op[0][yrealAllRealInds],Op[1][yrealAllRealInds])
-    fourInt_x[:,0], fourInt_y[:,0] = rerotateEllipsePoints(fourInt_x[:,0], fourInt_y[:,0],Phi[yrealAllRealInds[fourIntInds]],Op[0][yrealAllRealInds[fourIntInds]],Op[1][yrealAllRealInds[fourIntInds]])
-    fourInt_x[:,1], fourInt_y[:,1] = rerotateEllipsePoints(fourInt_x[:,1], fourInt_y[:,1],Phi[yrealAllRealInds[fourIntInds]],Op[0][yrealAllRealInds[fourIntInds]],Op[1][yrealAllRealInds[fourIntInds]])
-    fourInt_x[:,2], fourInt_y[:,2] = rerotateEllipsePoints(fourInt_x[:,2], fourInt_y[:,2],Phi[yrealAllRealInds[fourIntInds]],Op[0][yrealAllRealInds[fourIntInds]],Op[1][yrealAllRealInds[fourIntInds]])
-    fourInt_x[:,3], fourInt_y[:,3] = rerotateEllipsePoints(fourInt_x[:,3], fourInt_y[:,3],Phi[yrealAllRealInds[fourIntInds]],Op[0][yrealAllRealInds[fourIntInds]],Op[1][yrealAllRealInds[fourIntInds]])
-    twoIntSameY_x[:,0], twoIntSameY_y[:,0] = rerotateEllipsePoints(twoIntSameY_x[:,0], twoIntSameY_y[:,0],Phi[yrealAllRealInds[twoIntSameYInds]],Op[0][yrealAllRealInds[twoIntSameYInds]],Op[1][yrealAllRealInds[twoIntSameYInds]])
-    twoIntSameY_x[:,1], twoIntSameY_y[:,1] = rerotateEllipsePoints(twoIntSameY_x[:,1], twoIntSameY_y[:,1],Phi[yrealAllRealInds[twoIntSameYInds]],Op[0][yrealAllRealInds[twoIntSameYInds]],Op[1][yrealAllRealInds[twoIntSameYInds]])
-    twoIntOppositeX_x[:,0], twoIntOppositeX_y[:,0] = rerotateEllipsePoints(twoIntOppositeX_x[:,0], twoIntOppositeX_y[:,0],Phi[yrealAllRealInds[twoIntOppositeXInds]],Op[0][yrealAllRealInds[twoIntOppositeXInds]],Op[1][yrealAllRealInds[twoIntOppositeXInds]])
-    twoIntOppositeX_x[:,1], twoIntOppositeX_y[:,1] = rerotateEllipsePoints(twoIntOppositeX_x[:,1], twoIntOppositeX_y[:,1],Phi[yrealAllRealInds[twoIntOppositeXInds]],Op[0][yrealAllRealInds[twoIntOppositeXInds]],Op[1][yrealAllRealInds[twoIntOppositeXInds]])
-    xIntersectionsOnly2[:,0], yIntersectionsOnly2[:,0] = rerotateEllipsePoints(xIntersectionsOnly2[:,0], yIntersectionsOnly2[:,0],Phi[only2RealInds],Op[0][only2RealInds],Op[1][only2RealInds])
-    xIntersectionsOnly2[:,1], yIntersectionsOnly2[:,1] = rerotateEllipsePoints(xIntersectionsOnly2[:,1], yIntersectionsOnly2[:,1],Phi[only2RealInds],Op[0][only2RealInds],Op[1][only2RealInds])
-    return minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y,\
-            fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2
+    """
+    Rotate the intersection points to the original projected ellipse
+    """
+    minSepPoints_x_dr = np.zeros(len(minSepPoints_x))
+    minSepPoints_y_dr = np.zeros(len(minSepPoints_y))
+    maxSepPoints_x_dr = np.zeros(len(maxSepPoints_x))
+    maxSepPoints_y_dr = np.zeros(len(maxSepPoints_y))
+    lminSepPoints_x_dr = np.zeros(len(lminSepPoints_x))
+    lminSepPoints_y_dr = np.zeros(len(lminSepPoints_y))
+    lmaxSepPoints_x_dr = np.zeros(len(lmaxSepPoints_x))
+    lmaxSepPoints_y_dr = np.zeros(len(lmaxSepPoints_y))
+    fourInt_x_dr = np.zeros((len(fourInt_x),4))
+    fourInt_y_dr = np.zeros((len(fourInt_y),4))
+    twoIntSameY_x_dr = np.zeros((len(twoIntSameY_x),2))
+    twoIntSameY_y_dr = np.zeros((len(twoIntSameY_y),2))
+    twoIntOppositeX_x_dr = np.zeros((len(twoIntOppositeX_x),2))
+    twoIntOppositeX_y_dr = np.zeros((len(twoIntOppositeX_y),2))
+    xIntersectionsOnly2_dr = np.zeros((len(xIntersectionsOnly2),2))
+    yIntersectionsOnly2_dr = np.zeros((len(yIntersectionsOnly2),2))
 
-minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y,\
-    fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2 = \
+
+    minSepPoints_x_dr, minSepPoints_y_dr = rerotateEllipsePoints(minSepPoints_x, minSepPoints_y,Phi,Op[0],Op[1])
+    maxSepPoints_x_dr, maxSepPoints_y_dr = rerotateEllipsePoints(maxSepPoints_x, maxSepPoints_y,Phi,Op[0],Op[1])
+    lminSepPoints_x_dr, lminSepPoints_y_dr = rerotateEllipsePoints(lminSepPoints_x, lminSepPoints_y,Phi[yrealAllRealInds],Op[0][yrealAllRealInds],Op[1][yrealAllRealInds])
+    lmaxSepPoints_x_dr, lmaxSepPoints_y_dr = rerotateEllipsePoints(lmaxSepPoints_x, lmaxSepPoints_y,Phi[yrealAllRealInds],Op[0][yrealAllRealInds],Op[1][yrealAllRealInds])
+    fourInt_x_dr[:,0], fourInt_y_dr[:,0] = rerotateEllipsePoints(fourInt_x[:,0], fourInt_y[:,0],Phi[yrealAllRealInds[fourIntInds]],Op[0][yrealAllRealInds[fourIntInds]],Op[1][yrealAllRealInds[fourIntInds]])
+    fourInt_x_dr[:,1], fourInt_y_dr[:,1] = rerotateEllipsePoints(fourInt_x[:,1], fourInt_y[:,1],Phi[yrealAllRealInds[fourIntInds]],Op[0][yrealAllRealInds[fourIntInds]],Op[1][yrealAllRealInds[fourIntInds]])
+    fourInt_x_dr[:,2], fourInt_y_dr[:,2] = rerotateEllipsePoints(fourInt_x[:,2], fourInt_y[:,2],Phi[yrealAllRealInds[fourIntInds]],Op[0][yrealAllRealInds[fourIntInds]],Op[1][yrealAllRealInds[fourIntInds]])
+    fourInt_x_dr[:,3], fourInt_y_dr[:,3] = rerotateEllipsePoints(fourInt_x[:,3], fourInt_y[:,3],Phi[yrealAllRealInds[fourIntInds]],Op[0][yrealAllRealInds[fourIntInds]],Op[1][yrealAllRealInds[fourIntInds]])
+    twoIntSameY_x_dr[:,0], twoIntSameY_y_dr[:,0] = rerotateEllipsePoints(twoIntSameY_x[:,0], twoIntSameY_y[:,0],Phi[yrealAllRealInds[twoIntSameYInds]],Op[0][yrealAllRealInds[twoIntSameYInds]],Op[1][yrealAllRealInds[twoIntSameYInds]])
+    twoIntSameY_x_dr[:,1], twoIntSameY_y_dr[:,1] = rerotateEllipsePoints(twoIntSameY_x[:,1], twoIntSameY_y[:,1],Phi[yrealAllRealInds[twoIntSameYInds]],Op[0][yrealAllRealInds[twoIntSameYInds]],Op[1][yrealAllRealInds[twoIntSameYInds]])
+    twoIntOppositeX_x_dr[:,0], twoIntOppositeX_y_dr[:,0] = rerotateEllipsePoints(twoIntOppositeX_x[:,0], twoIntOppositeX_y[:,0],Phi[yrealAllRealInds[twoIntOppositeXInds]],Op[0][yrealAllRealInds[twoIntOppositeXInds]],Op[1][yrealAllRealInds[twoIntOppositeXInds]])
+    twoIntOppositeX_x_dr[:,1], twoIntOppositeX_y_dr[:,1] = rerotateEllipsePoints(twoIntOppositeX_x[:,1], twoIntOppositeX_y[:,1],Phi[yrealAllRealInds[twoIntOppositeXInds]],Op[0][yrealAllRealInds[twoIntOppositeXInds]],Op[1][yrealAllRealInds[twoIntOppositeXInds]])
+    xIntersectionsOnly2_dr[:,0], yIntersectionsOnly2_dr[:,0] = rerotateEllipsePoints(xIntersectionsOnly2[:,0], yIntersectionsOnly2[:,0],Phi[only2RealInds],Op[0][only2RealInds],Op[1][only2RealInds])
+    xIntersectionsOnly2_dr[:,1], yIntersectionsOnly2_dr[:,1] = rerotateEllipsePoints(xIntersectionsOnly2[:,1], yIntersectionsOnly2[:,1],Phi[only2RealInds],Op[0][only2RealInds],Op[1][only2RealInds])
+    return minSepPoints_x_dr, minSepPoints_y_dr, maxSepPoints_x_dr, maxSepPoints_y_dr, lminSepPoints_x_dr, lminSepPoints_y_dr, lmaxSepPoints_x_dr, lmaxSepPoints_y_dr,\
+            fourInt_x_dr, fourInt_y_dr, twoIntSameY_x_dr, twoIntSameY_y_dr, twoIntOppositeX_x_dr, twoIntOppositeX_y_dr, xIntersectionsOnly2_dr, yIntersectionsOnly2_dr
+
+minSepPoints_x_dr, minSepPoints_y_dr, maxSepPoints_x_dr, maxSepPoints_y_dr, lminSepPoints_x_dr, lminSepPoints_y_dr, lmaxSepPoints_x_dr, lmaxSepPoints_y_dr,\
+    fourInt_x_dr, fourInt_y_dr, twoIntSameY_x_dr, twoIntSameY_y_dr, twoIntOppositeX_x_dr, twoIntOppositeX_y_dr, xIntersectionsOnly2_dr, yIntersectionsOnly2_dr = \
     rerotateExtremaAndIntersectionPoints(minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y,\
     fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2,\
     Phi, Op, yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds)
@@ -1048,32 +1081,32 @@ del start13, stop13
 
 #### Calculate True Anomalies of Points
 start14 = time.time()
-def trueAnomaliesOfPoints(minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y,\
-    fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2,\
+def trueAnomaliesOfPoints(minSepPoints_x_dr, minSepPoints_y_dr, maxSepPoints_x_dr, maxSepPoints_y_dr, lminSepPoints_x_dr, lminSepPoints_y_dr, lmaxSepPoints_x_dr, lmaxSepPoints_y_dr,\
+    fourInt_x_dr, fourInt_y_dr, twoIntSameY_x_dr, twoIntSameY_y_dr, twoIntOppositeX_x_dr, twoIntOppositeX_y_dr, xIntersectionsOnly2_dr, yIntersectionsOnly2_dr,\
     yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds, W, w, inc):
-    nu_minSepPoints = trueAnomalyFromXY(minSepPoints_x, minSepPoints_y,W,w,inc)
-    nu_maxSepPoints = trueAnomalyFromXY(maxSepPoints_x, maxSepPoints_y,W,w,inc)
-    nu_lminSepPoints = trueAnomalyFromXY(lminSepPoints_x, lminSepPoints_y,W[yrealAllRealInds],w[yrealAllRealInds],inc[yrealAllRealInds])
-    nu_lmaxSepPoints = trueAnomalyFromXY(lmaxSepPoints_x, lmaxSepPoints_y,W[yrealAllRealInds],w[yrealAllRealInds],inc[yrealAllRealInds])
-    nu_fourInt = np.zeros(fourInt_x.shape)
-    nu_fourInt[:,0] = trueAnomalyFromXY(fourInt_x[:,0], fourInt_y[:,0],W[yrealAllRealInds[fourIntInds]],w[yrealAllRealInds[fourIntInds]],inc[yrealAllRealInds[fourIntInds]])
-    nu_fourInt[:,1] = trueAnomalyFromXY(fourInt_x[:,1], fourInt_y[:,1],W[yrealAllRealInds[fourIntInds]],w[yrealAllRealInds[fourIntInds]],inc[yrealAllRealInds[fourIntInds]])
-    nu_fourInt[:,2] = trueAnomalyFromXY(fourInt_x[:,2], fourInt_y[:,2],W[yrealAllRealInds[fourIntInds]],w[yrealAllRealInds[fourIntInds]],inc[yrealAllRealInds[fourIntInds]])
-    nu_fourInt[:,3] = trueAnomalyFromXY(fourInt_x[:,3], fourInt_y[:,3],W[yrealAllRealInds[fourIntInds]],w[yrealAllRealInds[fourIntInds]],inc[yrealAllRealInds[fourIntInds]])
-    nu_twoIntSameY = np.zeros(twoIntSameY_x.shape)
-    nu_twoIntSameY[:,0] = trueAnomalyFromXY(twoIntSameY_x[:,0], twoIntSameY_y[:,0],W[yrealAllRealInds[twoIntSameYInds]],w[yrealAllRealInds[twoIntSameYInds]],inc[yrealAllRealInds[twoIntSameYInds]])
-    nu_twoIntSameY[:,1] = trueAnomalyFromXY(twoIntSameY_x[:,1], twoIntSameY_y[:,1],W[yrealAllRealInds[twoIntSameYInds]],w[yrealAllRealInds[twoIntSameYInds]],inc[yrealAllRealInds[twoIntSameYInds]])
-    nu_twoIntOppositeX = np.zeros(twoIntOppositeX_x.shape)
-    nu_twoIntOppositeX[:,0] = trueAnomalyFromXY(twoIntOppositeX_x[:,0], twoIntOppositeX_y[:,0],W[yrealAllRealInds[twoIntOppositeXInds]],w[yrealAllRealInds[twoIntOppositeXInds]],inc[yrealAllRealInds[twoIntOppositeXInds]])
-    nu_twoIntOppositeX[:,1] = trueAnomalyFromXY(twoIntOppositeX_x[:,1], twoIntOppositeX_y[:,1],W[yrealAllRealInds[twoIntOppositeXInds]],w[yrealAllRealInds[twoIntOppositeXInds]],inc[yrealAllRealInds[twoIntOppositeXInds]])
-    nu_IntersectionsOnly2 = np.zeros(xIntersectionsOnly2.shape)
-    nu_IntersectionsOnly2[:,0] = trueAnomalyFromXY(xIntersectionsOnly2[:,0], yIntersectionsOnly2[:,0],W[only2RealInds],w[only2RealInds],inc[only2RealInds])
-    nu_IntersectionsOnly2[:,1] = trueAnomalyFromXY(xIntersectionsOnly2[:,1], yIntersectionsOnly2[:,1],W[only2RealInds],w[only2RealInds],inc[only2RealInds])
+    nu_minSepPoints = trueAnomalyFromXY(minSepPoints_x_dr, minSepPoints_y_dr,W,w,inc)
+    nu_maxSepPoints = trueAnomalyFromXY(maxSepPoints_x_dr, maxSepPoints_y_dr,W,w,inc)
+    nu_lminSepPoints = trueAnomalyFromXY(lminSepPoints_x_dr, lminSepPoints_y_dr,W[yrealAllRealInds],w[yrealAllRealInds],inc[yrealAllRealInds])
+    nu_lmaxSepPoints = trueAnomalyFromXY(lmaxSepPoints_x_dr, lmaxSepPoints_y_dr,W[yrealAllRealInds],w[yrealAllRealInds],inc[yrealAllRealInds])
+    nu_fourInt = np.zeros(fourInt_x_dr.shape)
+    nu_fourInt[:,0] = trueAnomalyFromXY(fourInt_x_dr[:,0], fourInt_y_dr[:,0],W[yrealAllRealInds[fourIntInds]],w[yrealAllRealInds[fourIntInds]],inc[yrealAllRealInds[fourIntInds]])
+    nu_fourInt[:,1] = trueAnomalyFromXY(fourInt_x_dr[:,1], fourInt_y_dr[:,1],W[yrealAllRealInds[fourIntInds]],w[yrealAllRealInds[fourIntInds]],inc[yrealAllRealInds[fourIntInds]])
+    nu_fourInt[:,2] = trueAnomalyFromXY(fourInt_x_dr[:,2], fourInt_y_dr[:,2],W[yrealAllRealInds[fourIntInds]],w[yrealAllRealInds[fourIntInds]],inc[yrealAllRealInds[fourIntInds]])
+    nu_fourInt[:,3] = trueAnomalyFromXY(fourInt_x_dr[:,3], fourInt_y_dr[:,3],W[yrealAllRealInds[fourIntInds]],w[yrealAllRealInds[fourIntInds]],inc[yrealAllRealInds[fourIntInds]])
+    nu_twoIntSameY = np.zeros(twoIntSameY_x_dr.shape)
+    nu_twoIntSameY[:,0] = trueAnomalyFromXY(twoIntSameY_x_dr[:,0], twoIntSameY_y_dr[:,0],W[yrealAllRealInds[twoIntSameYInds]],w[yrealAllRealInds[twoIntSameYInds]],inc[yrealAllRealInds[twoIntSameYInds]])
+    nu_twoIntSameY[:,1] = trueAnomalyFromXY(twoIntSameY_x_dr[:,1], twoIntSameY_y_dr[:,1],W[yrealAllRealInds[twoIntSameYInds]],w[yrealAllRealInds[twoIntSameYInds]],inc[yrealAllRealInds[twoIntSameYInds]])
+    nu_twoIntOppositeX = np.zeros(twoIntOppositeX_x_dr.shape)
+    nu_twoIntOppositeX[:,0] = trueAnomalyFromXY(twoIntOppositeX_x_dr[:,0], twoIntOppositeX_y_dr[:,0],W[yrealAllRealInds[twoIntOppositeXInds]],w[yrealAllRealInds[twoIntOppositeXInds]],inc[yrealAllRealInds[twoIntOppositeXInds]])
+    nu_twoIntOppositeX[:,1] = trueAnomalyFromXY(twoIntOppositeX_x_dr[:,1], twoIntOppositeX_y_dr[:,1],W[yrealAllRealInds[twoIntOppositeXInds]],w[yrealAllRealInds[twoIntOppositeXInds]],inc[yrealAllRealInds[twoIntOppositeXInds]])
+    nu_IntersectionsOnly2 = np.zeros(xIntersectionsOnly2_dr.shape)
+    nu_IntersectionsOnly2[:,0] = trueAnomalyFromXY(xIntersectionsOnly2_dr[:,0], yIntersectionsOnly2_dr[:,0],W[only2RealInds],w[only2RealInds],inc[only2RealInds])
+    nu_IntersectionsOnly2[:,1] = trueAnomalyFromXY(xIntersectionsOnly2_dr[:,1], yIntersectionsOnly2_dr[:,1],W[only2RealInds],w[only2RealInds],inc[only2RealInds])
     return nu_minSepPoints, nu_maxSepPoints, nu_lminSepPoints, nu_lmaxSepPoints, nu_fourInt, nu_twoIntSameY, nu_twoIntOppositeX, nu_IntersectionsOnly2
 
 nu_minSepPoints, nu_maxSepPoints, nu_lminSepPoints, nu_lmaxSepPoints, nu_fourInt, nu_twoIntSameY, nu_twoIntOppositeX, nu_IntersectionsOnly2\
-     = trueAnomaliesOfPoints(minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y,\
-    fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2,\
+     = trueAnomaliesOfPoints(minSepPoints_x_dr, minSepPoints_y_dr, maxSepPoints_x_dr, maxSepPoints_y_dr, lminSepPoints_x_dr, lminSepPoints_y_dr, lmaxSepPoints_x_dr, lmaxSepPoints_y_dr,\
+    fourInt_x_dr, fourInt_y_dr, twoIntSameY_x_dr, twoIntSameY_y_dr, twoIntOppositeX_x_dr, twoIntOppositeX_y_dr, xIntersectionsOnly2_dr, yIntersectionsOnly2_dr,\
     yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds, W, w, inc)
 stop14 = time.time()
 print('stop14: ' + str(stop14-start14))
@@ -1086,7 +1119,7 @@ del start14, stop14
 #### Plot Rerotated Points 
 def plotRerotatedFromNus(ind, sma, e, W, w, inc, Op, yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds,\
     nu_minSepPoints, nu_maxSepPoints, nu_lminSepPoints, nu_lmaxSepPoints, nu_fourInt, nu_twoIntSameY, nu_twoIntOppositeX, nu_IntersectionsOnly2,\
-    twoIntSameY_x, twoIntSameY_y, num):
+    twoIntSameY_x_dr, twoIntSameY_y_dr, num):
     """
     """
     plt.close(num)
@@ -1113,6 +1146,29 @@ def plotRerotatedFromNus(ind, sma, e, W, w, inc, Op, yrealAllRealInds, fourIntIn
         plt.scatter(r_int2[0],r_int2[1],color='green',marker='o')
         r_int3 = xyz_3Dellipse(sma,e,W,w,inc,nu_fourInt[yind,3])
         plt.scatter(r_int3[0],r_int3[1],color='green',marker='o')
+
+
+        # r_int0 = xyz_3Dellipse(sma,e,W,w,inc,nu_twoIntSameY[yind,0]+np.pi)
+        # plt.scatter(r_int0[0],r_int0[1],color='magenta',marker='o')
+        r_int1 = xyz_3Dellipse(sma,e,W,w,inc,nu_fourInt[yind,1]+np.pi)
+        plt.scatter(r_int1[0],r_int1[1],color='magenta',marker='o')
+
+        # r_int0 = xyz_3Dellipse(sma,e,W,w,inc,np.pi - nu_twoIntSameY[yind,0])
+        # plt.scatter(r_int0[0],r_int0[1],color='green',marker='x')
+        r_int1 = xyz_3Dellipse(sma,e,W,w,inc,np.pi - nu_fourInt[yind,1])
+        plt.scatter(r_int1[0],r_int1[1],color='green',marker='x')
+
+        # r_int0 = xyz_3Dellipse(sma,e,W,w,inc,nu_twoIntSameY[yind,0]+np.pi/6)
+        # plt.scatter(r_int0[0],r_int0[1],color='red',marker='x')
+        r_int1 = xyz_3Dellipse(sma,e,W,w,inc,nu_fourInt[yind,1]+np.pi/6)
+        plt.scatter(r_int1[0],r_int1[1],color='red',marker='x')
+
+        # r_int0 = xyz_3Dellipse(sma,e,W,w,inc,-nu_twoIntSameY[yind,0])
+        # plt.scatter(r_int0[0],r_int0[1],color='blue',marker='x')
+        r_int1 = xyz_3Dellipse(sma,e,W,w,inc,-nu_fourInt[yind,1])
+        plt.scatter(r_int1[0],r_int1[1],color='blue',marker='x')
+
+
     if ind in yrealAllRealInds[twoIntSameYInds]:
         yind = np.where(yrealAllRealInds[twoIntSameYInds] == ind)[0]
         r_int0 = xyz_3Dellipse(sma,e,W,w,inc,nu_twoIntSameY[yind,0])
@@ -1120,26 +1176,7 @@ def plotRerotatedFromNus(ind, sma, e, W, w, inc, Op, yrealAllRealInds, fourIntIn
         r_int1 = xyz_3Dellipse(sma,e,W,w,inc,nu_twoIntSameY[yind,1])
         plt.scatter(r_int1[0],r_int1[1],color='green',marker='o')
 
-        #DELETE
-        # r_int0 = xyz_3Dellipse(sma,e,W,w,inc,nu_twoIntSameY[yind,0]+np.pi)
-        # plt.scatter(r_int0[0],r_int0[1],color='magenta',marker='o')
-        # r_int1 = xyz_3Dellipse(sma,e,W,w,inc,nu_twoIntSameY[yind,1]+np.pi)
-        # plt.scatter(r_int1[0],r_int1[1],color='magenta',marker='o')
 
-        # r_int0 = xyz_3Dellipse(sma,e,W,w,inc,np.pi - nu_twoIntSameY[yind,0])
-        # plt.scatter(r_int0[0],r_int0[1],color='green',marker='x')
-        # r_int1 = xyz_3Dellipse(sma,e,W,w,inc,np.pi - nu_twoIntSameY[yind,1])
-        # plt.scatter(r_int1[0],r_int1[1],color='green',marker='x')
-
-        # r_int0 = xyz_3Dellipse(sma,e,W,w,inc,nu_twoIntSameY[yind,0]+np.pi/6)
-        # plt.scatter(r_int0[0],r_int0[1],color='red',marker='x')
-        # r_int1 = xyz_3Dellipse(sma,e,W,w,inc,nu_twoIntSameY[yind,1]+np.pi/6)
-        # plt.scatter(r_int1[0],r_int1[1],color='red',marker='x')
-
-        # r_int0 = xyz_3Dellipse(sma,e,W,w,inc,-nu_twoIntSameY[yind,0])
-        # plt.scatter(r_int0[0],r_int0[1],color='blue',marker='x')
-        # r_int1 = xyz_3Dellipse(sma,e,W,w,inc,-nu_twoIntSameY[yind,1])
-        # plt.scatter(r_int1[0],r_int1[1],color='blue',marker='x')
 
         #plt.scatter(twoIntSameY_x[yind], twoIntSameY_y[yind],color='blue',marker='o')
 
@@ -1293,37 +1330,26 @@ plt.plot(np.arange(len(twoIntOppositeXInds)),np.abs(np.sort(-errors_twoIntOpposi
 #### only2RealInds
 nu_IntersectionsOnly2[:,0], errors_IntersectionsOnly2X0 = nuCorrections(sma,e,W,w,inc,r,nu_IntersectionsOnly2[:,0],np.arange(len(sma)),only2RealInds)
 plt.plot(np.arange(len(only2RealInds)),np.abs(np.sort(-errors_IntersectionsOnly2X0)),label='Only 2 Int 0')
-# r_only2Real0 = xyz_3Dellipse(sma[only2RealInds],e[only2RealInds],W[only2RealInds],w[only2RealInds],inc[only2RealInds],nu_IntersectionsOnly2[:,0])
-# tmp_only2Real0Seps = np.sqrt(r_only2Real0[0,0]**2 + r_only2Real0[1,0]**2)
-# wrong_only2Real0Inds = np.where(np.abs(r[only2RealInds] - tmp_only2Real0Seps) > 1e-6)[0]
-# if len(wrong_only2Real0Inds) > 0:
-#     nu_IntersectionsOnly2[wrong_only2Real0Inds,0] = nu_IntersectionsOnly2[wrong_only2Real0Inds,0] + np.pi
-#     r_only2Real0 = xyz_3Dellipse(sma[only2RealInds],e[only2RealInds],W[only2RealInds],w[only2RealInds],inc[only2RealInds],nu_IntersectionsOnly2[:,0])
-#     tmp_only2Real0Seps = np.sqrt(r_only2Real0[0,0]**2 + r_only2Real0[1,0]**2)
-#     wrong_only2Real0Inds = np.where(np.abs(r[only2RealInds] - tmp_only2Real0Seps) > 1e-6)[0]
-# assert len(wrong_only2Real0Inds) == 0, 'at least 1 wrong nu_IntersectionsOnly2'
 #
-nu_IntersectionsOnly2[:,0], errors_IntersectionsOnly2X0 = nuCorrections(sma,e,W,w,inc,r,nu_IntersectionsOnly2[:,0],np.arange(len(sma)),only2RealInds)
-plt.plot(np.arange(len(only2RealInds)),np.abs(np.sort(-errors_IntersectionsOnly2X0)),label='Only 2 Int 0')
+nu_IntersectionsOnly2[:,1], errors_IntersectionsOnly2X1 = nuCorrections(sma,e,W,w,inc,r,nu_IntersectionsOnly2[:,1],np.arange(len(sma)),only2RealInds)
+plt.plot(np.arange(len(only2RealInds)),np.abs(np.sort(-errors_IntersectionsOnly2X1)),label='Only 2 Int 1')
+####
 plt.legend()
+plt.ylabel('Error')
+plt.xlabel('Number')
 plt.show(block=False)
 
-ind = only2RealInds[np.argsort(-errors_IntersectionsOnly2X0)[0]]
+ind = yrealAllRealInds[fourIntInds[np.argsort(-errors_fourInt1)[0]]]
 plotRerotatedFromNus(ind, sma[ind], e[ind], W[ind], w[ind], inc[ind], Op[:,ind], yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds,\
     nu_minSepPoints, nu_maxSepPoints, nu_lminSepPoints, nu_lmaxSepPoints, nu_fourInt, nu_twoIntSameY, nu_twoIntOppositeX, nu_IntersectionsOnly2,\
     twoIntSameY_x, twoIntSameY_y, num=8001)
 
 
-# r_only2Real1 = xyz_3Dellipse(sma[only2RealInds],e[only2RealInds],W[only2RealInds],w[only2RealInds],inc[only2RealInds],nu_IntersectionsOnly2[:,1])
-# tmp_only2Real1Seps = np.sqrt(r_only2Real1[0,0]**2 + r_only2Real1[1,0]**2)
-# wrong_only2Real1Inds = np.where(np.abs(r[only2RealInds] - tmp_only2Real1Seps) > 1e-6)[0]
-# if len(wrong_only2Real1Inds) > 0:
-#     nu_IntersectionsOnly2[wrong_only2Real1Inds,1] = nu_IntersectionsOnly2[wrong_only2Real1Inds,1] + np.pi
-#     r_only2Real1 = xyz_3Dellipse(sma[only2RealInds],e[only2RealInds],W[only2RealInds],w[only2RealInds],inc[only2RealInds],nu_IntersectionsOnly2[:,1])
-#     tmp_only2Real1Seps = np.sqrt(r_only2Real1[0,0]**2 + r_only2Real1[1,0]**2)
-#     wrong_only2Real1Inds = np.where(np.abs(r[only2RealInds] - tmp_only2Real1Seps) > 1e-6)[0]
-# assert len(wrong_only2Real1Inds) == 0, 'at least 1 wrong nu_IntersectionsOnly2'
-####
+# ind = only2RealInds[np.argsort(-errors_IntersectionsOnly2X0)[0]]
+# plotRerotatedFromNus(ind, sma[ind], e[ind], W[ind], w[ind], inc[ind], Op[:,ind], yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds,\
+#     nu_minSepPoints, nu_maxSepPoints, nu_lminSepPoints, nu_lmaxSepPoints, nu_fourInt, nu_twoIntSameY, nu_twoIntOppositeX, nu_IntersectionsOnly2,\
+#     twoIntSameY_x, twoIntSameY_y, num=8001)
+
 ###### DONE FIXING NU
 
 
@@ -1564,6 +1590,165 @@ plt.xlabel('Time Past Periastron t (years)',weight='bold')
 plt.show(block=False)
 ####
 
+
+
+
+
+
+####  Plot Derotate Ellipse
+#DELETEtind = np.argsort(np.abs(errors_fourInt1))
+tinds = np.argsort(-np.abs(errors_fourInt1))
+ind = yrealAllRealInds[fourIntInds[tinds[1]]]
+num=55670
+plt.close(num)
+fig = plt.figure(num=num)
+ca = plt.gca()
+ca.axis('equal')
+#DELETEplt.scatter([xreal[ind,0],xreal[ind,1],xreal[ind,2],xreal[ind,3]], [yreal[ind,0],yreal[ind,1],yreal[ind,2],yreal[ind,3]], color='purple')
+plt.scatter([0],[0],color='orange')
+## 3D Ellipse
+vs = np.linspace(start=0,stop=2*np.pi,num=300)
+#new plot stuff
+Erange = np.linspace(start=0.,stop=2*np.pi,num=400)
+plt.plot([-a[ind],a[ind]],[0,0],color='purple',linestyle='--') #major
+plt.plot([0,0],[-b[ind],b[ind]],color='purple',linestyle='--') #minor
+xellipsetmp = a[ind]*np.cos(Erange)
+yellipsetmp = b[ind]*np.sin(Erange)
+plt.plot(xellipsetmp,yellipsetmp,color='black')
+plt.scatter(x[ind],y[ind],color='orange',marker='x')
+if ind in only2RealInds[typeInds0]:
+    plt.scatter(x[ind],y[ind],edgecolors='cyan',marker='o',s=64,facecolors='none')
+if ind in only2RealInds[typeInds1]:
+    plt.scatter(x[ind],y[ind],edgecolors='red',marker='o',s=64,facecolors='none')
+if ind in only2RealInds[typeInds2]:
+    plt.scatter(x[ind],y[ind],edgecolors='blue',marker='o',s=64,facecolors='none')
+if ind in only2RealInds[typeInds3]:
+    plt.scatter(x[ind],y[ind],edgecolors='magenta',marker='o',s=64,facecolors='none')
+
+c_ae = a[ind]*np.sqrt(1-b[ind]**2/a[ind]**2)
+plt.scatter([-c_ae,c_ae],[0,0],color='blue')
+
+# #Plot Min Sep Circle
+# x_circ = minSep[ind]*np.cos(vs)
+# y_circ = minSep[ind]*np.sin(vs)
+# plt.plot(x[ind]+x_circ,y[ind]+y_circ,color='cyan')
+# #Plot Max Sep Circle
+# x_circ2 = maxSep[ind]*np.cos(vs)
+# y_circ2 = maxSep[ind]*np.sin(vs)
+# plt.plot(x[ind]+x_circ2,y[ind]+y_circ2,color='red')
+#Plot Min Sep Ellipse Intersection
+plt.scatter(minSepPoints_x[ind],minSepPoints_y[ind],color='cyan',marker='D')
+#Plot Max Sep Ellipse Intersection
+plt.scatter(maxSepPoints_x[ind],maxSepPoints_y[ind],color='red',marker='D')
+
+if ind in yrealAllRealInds:
+    tind = np.where(yrealAllRealInds == ind)[0]
+    # #Plot lminSep Circle
+    # x_circ2 = lminSep[tind]*np.cos(vs)
+    # y_circ2 = lminSep[tind]*np.sin(vs)
+    # plt.plot(x[ind]+x_circ2,y[ind]+y_circ2,color='magenta')
+    # #Plot lmaxSep Circle
+    # x_circ2 = lmaxSep[tind]*np.cos(vs)
+    # y_circ2 = lmaxSep[tind]*np.sin(vs)
+    # plt.plot(x[ind]+x_circ2,y[ind]+y_circ2,color='gold')
+    #### Plot Local Min
+    plt.scatter(lminSepPoints_x[tind], lminSepPoints_y[tind],color='magenta',marker='D')
+    #### Plot Local Max Points
+    plt.scatter(lmaxSepPoints_x[tind], lmaxSepPoints_y[tind],color='gold',marker='D')
+
+#### r Intersection test
+x_circ2 = np.cos(vs)
+y_circ2 = np.sin(vs)
+plt.plot(x[ind]+x_circ2,y[ind]+y_circ2,color='green')
+#### Intersection Points
+if ind in yrealAllRealInds[fourIntInds]:
+    yind = np.where(yrealAllRealInds[fourIntInds] == ind)[0]
+    plt.scatter(fourInt_x[yind],fourInt_y[yind], color='green',marker='o')
+elif ind in yrealAllRealInds[twoIntSameYInds]: #Same Y
+    yind = np.where(yrealAllRealInds[twoIntSameYInds] == ind)[0]
+    plt.scatter(twoIntSameY_x[yind],twoIntSameY_y[yind], color='green',marker='o')
+elif ind in yrealAllRealInds[twoIntOppositeXInds]: #Same X
+    yind = np.where(yrealAllRealInds[twoIntOppositeXInds] == ind)[0]
+    plt.scatter(twoIntOppositeX_x[yind],twoIntOppositeX_y[yind], color='green',marker='o')
+    #### Type0
+elif ind in only2RealInds[type0_0Inds]:
+    gind = np.where(only2RealInds == ind)[0]
+    plt.scatter(xIntersectionsOnly2[gind],yIntersectionsOnly2[gind], color='green',marker='o')
+    print('plotted')
+elif ind in only2RealInds[type0_1Inds]:
+    gind = np.where(only2RealInds == ind)[0]
+    plt.scatter(xIntersectionsOnly2[gind],yIntersectionsOnly2[gind], color='green',marker='o')
+elif ind in only2RealInds[type0_2Inds]:
+    gind = np.where(only2RealInds == ind)[0]
+    plt.scatter(xIntersectionsOnly2[gind],yIntersectionsOnly2[gind], color='green',marker='o')
+elif ind in only2RealInds[type0_3Inds]:
+    gind = np.where(only2RealInds == ind)[0]
+    plt.scatter(xIntersectionsOnly2[gind],yIntersectionsOnly2[gind], color='green',marker='o')
+elif ind in only2RealInds[type0_4Inds]:
+    gind = np.where(only2RealInds == ind)[0]
+    plt.scatter(xIntersectionsOnly2[gind],yIntersectionsOnly2[gind], color='green',marker='o')
+    #### Type1
+elif ind in only2RealInds[type1_0Inds]:
+    gind = np.where(only2RealInds == ind)[0]
+    plt.scatter(xIntersectionsOnly2[gind],yIntersectionsOnly2[gind], color='green',marker='o')
+elif ind in only2RealInds[type1_1Inds]:
+    gind = np.where(only2RealInds == ind)[0]
+    plt.scatter(xIntersectionsOnly2[gind],yIntersectionsOnly2[gind], color='green',marker='o')
+elif ind in only2RealInds[type1_2Inds]:
+    gind = np.where(only2RealInds == ind)[0]
+    plt.scatter(xIntersectionsOnly2[gind],yIntersectionsOnly2[gind], color='green',marker='o')
+elif ind in only2RealInds[type1_3Inds]:
+    gind = np.where(only2RealInds == ind)[0]
+    plt.scatter(xIntersectionsOnly2[gind],yIntersectionsOnly2[gind], color='green',marker='o')
+elif ind in only2RealInds[type1_4Inds]:
+    gind = np.where(only2RealInds == ind)[0]
+    plt.scatter(xIntersectionsOnly2[gind],yIntersectionsOnly2[gind], color='green',marker='o')
+    #### Type2
+elif ind in only2RealInds[type2_0Inds]:
+    gind = np.where(only2RealInds == ind)[0]
+    plt.scatter(xIntersectionsOnly2[gind],yIntersectionsOnly2[gind], color='green',marker='o')
+elif ind in only2RealInds[type2_1Inds]:
+    gind = np.where(only2RealInds == ind)[0]
+    plt.scatter(xIntersectionsOnly2[gind],yIntersectionsOnly2[gind], color='green',marker='o')
+elif ind in only2RealInds[type2_2Inds]:
+    gind = np.where(only2RealInds == ind)[0]
+    plt.scatter(xIntersectionsOnly2[gind],yIntersectionsOnly2[gind], color='green',marker='o')
+elif ind in only2RealInds[type2_3Inds]:
+    gind = np.where(only2RealInds == ind)[0]
+    plt.scatter(xIntersectionsOnly2[gind],yIntersectionsOnly2[gind], color='green',marker='o')
+elif ind in only2RealInds[type2_4Inds]:
+    gind = np.where(only2RealInds == ind)[0]
+    plt.scatter(xIntersectionsOnly2[gind],yIntersectionsOnly2[gind], color='green',marker='o')
+    #### Type3
+elif ind in only2RealInds[type3_0Inds]:
+    gind = np.where(only2RealInds == ind)[0]
+    plt.scatter(xIntersectionsOnly2[gind],yIntersectionsOnly2[gind], color='green',marker='o')
+elif ind in only2RealInds[type3_1Inds]:
+    gind = np.where(only2RealInds == ind)[0]
+    plt.scatter(xIntersectionsOnly2[gind],yIntersectionsOnly2[gind], color='green',marker='o')
+elif ind in only2RealInds[type3_2Inds]:
+    gind = np.where(only2RealInds == ind)[0]
+    plt.scatter(xIntersectionsOnly2[gind],yIntersectionsOnly2[gind], color='green',marker='o')
+elif ind in only2RealInds[type3_3Inds]:
+    gind = np.where(only2RealInds == ind)[0]
+    plt.scatter(xIntersectionsOnly2[gind],yIntersectionsOnly2[gind], color='green',marker='o')
+elif ind in only2RealInds[type3_4Inds]:
+    gind = np.where(only2RealInds == ind)[0]
+    plt.scatter(xIntersectionsOnly2[gind],yIntersectionsOnly2[gind], color='green',marker='o')
+
+# Plot Star Location Type Dividers
+xran = np.linspace(start=(a[ind]*(a[ind]**2*(a[ind] - b[ind])*(a[ind] + b[ind]) - b[ind]**2*np.sqrt(3*a[ind]**4 + 2*a[ind]**2*b[ind]**2 + 3*b[ind]**4))/(2*(a[ind]**4 + b[ind]**4))),\
+    stop=(a[ind]*(a[ind]**2*(a[ind] - b[ind])*(a[ind] + b[ind]) + b[ind]**2*np.sqrt(3*a[ind]**4 + 2*a[ind]**2*b[ind]**2 + 3*b[ind]**4))/(2*(a[ind]**4 + b[ind]**4))), num=3, endpoint=True)
+ylineQ1 = xran*a[ind]/b[ind] - a[ind]**2/(2*b[ind]) + b[ind]/2 #between first quadrant a,b
+ylineQ4 = -xran*a[ind]/b[ind] + a[ind]**2/(2*b[ind]) - b[ind]/2 #between 4th quadrant a,b
+plt.plot(xran, ylineQ1, color='brown', linestyle='-.', )
+plt.plot(-xran, ylineQ4, color='grey', linestyle='-.')
+plt.plot(-xran, ylineQ1, color='orange', linestyle='-.')
+plt.plot(xran, ylineQ4, color='red', linestyle='-.')
+plt.xlim([-1.2*a[ind],1.2*a[ind]])
+plt.ylim([-1.2*b[ind],1.2*b[ind]])
+plt.show(block=False)
+####
 
 
 
