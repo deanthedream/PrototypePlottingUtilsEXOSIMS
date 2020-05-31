@@ -827,6 +827,20 @@ errors_fourInt1 = np.abs(np.sort(-np.abs(np.ones(len(seps_fourInt1)) - seps_four
 indsToFix = np.argsort(-np.abs(np.ones(len(seps_fourInt1)) - seps_fourInt1))[np.where(errors_fourInt1 > 1e-7)[0]]
 del seps_fourInt1, errors_fourInt1, indsToFix
 ####
+#### Correct Ellipse Circle Intersections twoIntSameY1 
+seps_TwoIntSameY1 = np.sqrt((twoIntSameY_x[:,1]-x[yrealAllRealInds[twoIntSameYInds]])**2 + (twoIntSameY_y[:,1]-y[yrealAllRealInds[twoIntSameYInds]])**2) #calculate error for all TwoIntSameY
+errors_TwoIntSameY1 = np.abs(np.sort(-np.abs(np.ones(len(seps_TwoIntSameY1)) - seps_TwoIntSameY1))) #calculate error for all TwoIntSameY
+largeErrorInds = np.where(errors_TwoIntSameY1 > 1e-7)[0] #get inds of large errors
+indsToFix = np.argsort(-np.abs(np.ones(len(seps_TwoIntSameY1)) - seps_TwoIntSameY1))[largeErrorInds] #inds of TwoIndSameY
+seps_TwoIntSameY1_deciding = np.sqrt((twoIntSameY_x[indsToFix,1]-x[yrealAllRealInds[twoIntSameYInds[indsToFix]]])**2 + (-twoIntSameY_y[indsToFix,1]-y[yrealAllRealInds[twoIntSameYInds[indsToFix]]])**2) #calculate error for indsToFix
+errors_TwoIntSameY1_deciding = -np.abs(np.ones(len(seps_TwoIntSameY1_deciding)) - seps_TwoIntSameY1_deciding) #calculate errors for swapping y of the candidated to swap y for
+indsToSwap = np.where(np.abs(errors_TwoIntSameY1_deciding) < np.abs(errors_TwoIntSameY1[indsToFix]))[0] #find where the errors produced by swapping y is lowered
+twoIntSameY_y[indsToFix[indsToSwap],1] = -twoIntSameY_y[indsToFix[indsToSwap],1] #here we fix the y values where they should be fixed by swapping y values
+seps_TwoIntSameY1 = np.sqrt((twoIntSameY_x[:,1]-x[yrealAllRealInds[twoIntSameYInds]])**2 + (twoIntSameY_y[:,1]-y[yrealAllRealInds[twoIntSameYInds]])**2)
+errors_TwoIntSameY1 = np.abs(np.sort(-np.abs(np.ones(len(seps_TwoIntSameY1)) - seps_TwoIntSameY1)))
+indsToFix = np.argsort(-np.abs(np.ones(len(seps_TwoIntSameY1)) - seps_TwoIntSameY1))[np.where(errors_TwoIntSameY1 > 1e-7)[0]]
+#del seps_TwoIntSameY1, errors_TwoIntSameY1, indsToFix
+####
 
 
 #Testing plotting inds
@@ -1339,7 +1353,12 @@ plt.ylabel('Error')
 plt.xlabel('Number')
 plt.show(block=False)
 
-ind = yrealAllRealInds[fourIntInds[np.argsort(-errors_fourInt1)[0]]]
+# ind = yrealAllRealInds[fourIntInds[np.argsort(-errors_fourInt1)[0]]]
+# plotRerotatedFromNus(ind, sma[ind], e[ind], W[ind], w[ind], inc[ind], Op[:,ind], yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds,\
+#     nu_minSepPoints, nu_maxSepPoints, nu_lminSepPoints, nu_lmaxSepPoints, nu_fourInt, nu_twoIntSameY, nu_twoIntOppositeX, nu_IntersectionsOnly2,\
+#     twoIntSameY_x, twoIntSameY_y, num=8001)
+
+ind = yrealAllRealInds[twoIntSameYInds[np.argsort(-errors_twoIntSameY1)[0]]]
 plotRerotatedFromNus(ind, sma[ind], e[ind], W[ind], w[ind], inc[ind], Op[:,ind], yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds,\
     nu_minSepPoints, nu_maxSepPoints, nu_lminSepPoints, nu_lmaxSepPoints, nu_fourInt, nu_twoIntSameY, nu_twoIntOppositeX, nu_IntersectionsOnly2,\
     twoIntSameY_x, twoIntSameY_y, num=8001)
