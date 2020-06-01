@@ -25,12 +25,6 @@ sma, e, p, Rp = PPop.gen_plan_params(n)
 sma = sma.to('AU').value
 ####
 
-#### Numerical Error Adjustments
-
-####
-
-
-
 #### SAVED PLANET FOR Plot 3D Ellipse to 2D Ellipse Projection Diagram
 ind = 23 #22
 sma[ind] = 1.2164387563540457
@@ -487,7 +481,8 @@ start7 = time.time()
 A, B, C, D = quarticCoefficients_smin_smax_lmin_lmax(a.astype('complex128'), b, mx, my)
 xreal, delta, P, D2, R, delta_0 = quarticSolutions_ellipse_to_Quarticipynb(A.astype('complex128'), B, C, D)
 del A, B, C, D #delting for memory efficiency
-assert np.max(np.nanmin(np.abs(np.imag(xreal)),axis=1)) < 1e-15, 'At least one row has min > 1e-15' #this ensures each row has a solution
+assert np.max(np.nanmin(np.abs(np.imag(xreal)),axis=1)) < 1e-5, 'At least one row has min > 1e-5' #this ensures each row has a solution
+#NOTE: originally 1e-15 but there were some with x=1e-7 and w=pi/2, 5e-6 from 
 tind = np.argmax(np.nanmin(np.abs(np.imag(xreal)),axis=1)) #DELETE
 tinds = np.argsort(np.nanmin(np.abs(np.imag(xreal)),axis=1)) #DELETE
 del tind, tinds #DELETE
@@ -691,7 +686,7 @@ def ellipseCircleIntersections(r, a, b, mx, my, minSep, maxSep, lminSep, lmaxSep
     #### Two Intersection Points twoIntOppositeXInds
     twoIntOppositeX_x = np.zeros((len(twoIntOppositeXInds),2))
     twoIntOppositeX_y = np.zeros((len(twoIntOppositeXInds),2))
-    assert np.max(np.imag(xreal2[yrealAllRealInds[twoIntOppositeXInds],0])) < 1e-9, '' #was 1e-12 but caused problems
+    assert np.max(np.imag(xreal2[yrealAllRealInds[twoIntOppositeXInds],0])) < 1e-8, '' #was 1e-12 but caused problems
     twoIntOppositeX_x[:,0] = np.real(xreal2[yrealAllRealInds[twoIntOppositeXInds],0])
     twoIntOppositeX_x[:,1] = np.real(xreal2[yrealAllRealInds[twoIntOppositeXInds],1])
     twoIntOppositeX_y = np.asarray([np.sqrt(b[yrealAllRealInds[twoIntOppositeXInds]]**2*(1-np.abs(twoIntOppositeX_x[:,0])**2/a[yrealAllRealInds[twoIntOppositeXInds]]**2)),\
@@ -839,6 +834,43 @@ twoIntSameY_y[indsToFix[indsToSwap],1] = -twoIntSameY_y[indsToFix[indsToSwap],1]
 seps_TwoIntSameY1 = np.sqrt((twoIntSameY_x[:,1]-x[yrealAllRealInds[twoIntSameYInds]])**2 + (twoIntSameY_y[:,1]-y[yrealAllRealInds[twoIntSameYInds]])**2)
 errors_TwoIntSameY1 = np.abs(np.sort(-np.abs(np.ones(len(seps_TwoIntSameY1)) - seps_TwoIntSameY1)))
 indsToFix = np.argsort(-np.abs(np.ones(len(seps_TwoIntSameY1)) - seps_TwoIntSameY1))[np.where(errors_TwoIntSameY1 > 1e-7)[0]]
+del seps_TwoIntSameY1, errors_TwoIntSameY1, largeErrorInds, indsToFix, seps_TwoIntSameY1_deciding, errors_TwoIntSameY1_deciding, indsToSwap
+####
+#### Correct Ellipse Circle Intersections twoIntOppositeX0
+seps_twoIntOppositeX0 = np.sqrt((twoIntOppositeX_x[:,0]-x[yrealAllRealInds[twoIntOppositeXInds]])**2 + (twoIntOppositeX_y[:,0]-y[yrealAllRealInds[twoIntOppositeXInds]])**2) #calculate error for all twoIntOppositeX
+errors_twoIntOppositeX0 = np.abs(np.sort(-np.abs(np.ones(len(seps_twoIntOppositeX0)) - seps_twoIntOppositeX0))) #calculate error for all twoIntOppositeX
+largeErrorInds = np.where(errors_twoIntOppositeX0 > 1e-7)[0] #get inds of large errors
+indsToFix = np.argsort(-np.abs(np.ones(len(seps_twoIntOppositeX0)) - seps_twoIntOppositeX0))[largeErrorInds] #inds of twoIntOppositeX
+seps_twoIntOppositeX0_deciding = np.sqrt((twoIntOppositeX_x[indsToFix,0]-x[yrealAllRealInds[twoIntOppositeXInds[indsToFix]]])**2 + (-twoIntOppositeX_y[indsToFix,0]-y[yrealAllRealInds[twoIntOppositeXInds[indsToFix]]])**2) #calculate error for indsToFix
+errors_twoIntOppositeX0_deciding = -np.abs(np.ones(len(seps_twoIntOppositeX0_deciding)) - seps_twoIntOppositeX0_deciding) #calculate errors for swapping y of the candidated to swap y for
+indsToSwap = np.where(np.abs(errors_twoIntOppositeX0_deciding) < np.abs(errors_twoIntOppositeX0[indsToFix]))[0] #find where the errors produced by swapping y is lowered
+twoIntOppositeX_y[indsToFix[indsToSwap],0] = -twoIntOppositeX_y[indsToFix[indsToSwap],0] #here we fix the y values where they should be fixed by swapping y values
+seps_twoIntOppositeX0 = np.sqrt((twoIntOppositeX_x[:,0]-x[yrealAllRealInds[twoIntOppositeXInds]])**2 + (twoIntOppositeX_y[:,0]-y[yrealAllRealInds[twoIntOppositeXInds]])**2)
+errors_twoIntOppositeX0 = np.abs(np.sort(-np.abs(np.ones(len(seps_twoIntOppositeX0)) - seps_twoIntOppositeX0)))
+indsToFix = np.argsort(-np.abs(np.ones(len(seps_twoIntOppositeX0)) - seps_twoIntOppositeX0))[np.where(errors_twoIntOppositeX0 > 1e-7)[0]]
+del seps_twoIntOppositeX0, errors_twoIntOppositeX0, largeErrorInds, indsToFix, seps_twoIntOppositeX0_deciding, errors_twoIntOppositeX0_deciding, indsToSwap
+#### Correct Ellipse Circle Intersections twoIntOppositeX1
+seps_twoIntOppositeX1 = np.sqrt((twoIntOppositeX_x[:,1]-x[yrealAllRealInds[twoIntOppositeXInds]])**2 + (twoIntOppositeX_y[:,1]-y[yrealAllRealInds[twoIntOppositeXInds]])**2) #calculate error for all twoIntOppositeX
+errors_twoIntOppositeX1 = np.abs(np.sort(-np.abs(np.ones(len(seps_twoIntOppositeX1)) - seps_twoIntOppositeX1))) #calculate error for all twoIntOppositeX
+largeErrorInds = np.where(errors_twoIntOppositeX1 > 1e-7)[0] #get inds of large errors
+indsToFix = np.argsort(-np.abs(np.ones(len(seps_twoIntOppositeX1)) - seps_twoIntOppositeX1))[largeErrorInds] #inds of twoIntOppositeX
+seps_twoIntOppositeX1_deciding = np.sqrt((twoIntOppositeX_x[indsToFix,1]-x[yrealAllRealInds[twoIntOppositeXInds[indsToFix]]])**2 + (-twoIntOppositeX_y[indsToFix,1]-y[yrealAllRealInds[twoIntOppositeXInds[indsToFix]]])**2) #calculate error for indsToFix
+errors_twoIntOppositeX1_deciding = -np.abs(np.ones(len(seps_twoIntOppositeX1_deciding)) - seps_twoIntOppositeX1_deciding) #calculate errors for swapping y of the candidated to swap y for
+indsToSwap = np.where(np.abs(errors_twoIntOppositeX1_deciding) < np.abs(errors_twoIntOppositeX1[indsToFix]))[0] #find where the errors produced by swapping y is lowered
+twoIntOppositeX_y[indsToFix[indsToSwap],1] = -twoIntOppositeX_y[indsToFix[indsToSwap],1] #here we fix the y values where they should be fixed by swapping y values
+seps_twoIntOppositeX1 = np.sqrt((twoIntOppositeX_x[:,1]-x[yrealAllRealInds[twoIntOppositeXInds]])**2 + (twoIntOppositeX_y[:,1]-y[yrealAllRealInds[twoIntOppositeXInds]])**2)
+errors_twoIntOppositeX1 = np.abs(np.sort(-np.abs(np.ones(len(seps_twoIntOppositeX1)) - seps_twoIntOppositeX1)))
+indsToFix = np.argsort(-np.abs(np.ones(len(seps_twoIntOppositeX1)) - seps_twoIntOppositeX1))[np.where(errors_twoIntOppositeX1 > 1e-7)[0]]
+del seps_twoIntOppositeX1, errors_twoIntOppositeX1, largeErrorInds, indsToFix, seps_twoIntOppositeX1_deciding, errors_twoIntOppositeX1_deciding, indsToSwap
+####
+#NOTE there is a little extra that may be gained by doing additional solution x or y swapping, driving these persisting residuals to 0.
+
+
+
+# ind = yrealAllRealInds[twoIntOppositeXInds[indsToFix[0]]]
+# plotRerotatedFromNus(ind, sma[ind], e[ind], W[ind], w[ind], inc[ind], Op[:,ind], yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds,\
+#     nu_minSepPoints, nu_maxSepPoints, nu_lminSepPoints, nu_lmaxSepPoints, nu_fourInt, nu_twoIntSameY, nu_twoIntOppositeX, nu_IntersectionsOnly2,\
+#     twoIntSameY_x, twoIntSameY_y, num=8001)
 #del seps_TwoIntSameY1, errors_TwoIntSameY1, indsToFix
 ####
 
@@ -1243,6 +1275,10 @@ def plotRerotatedFromNus(ind, sma, e, W, w, inc, Op, yrealAllRealInds, fourIntIn
 #### START ERROR PLOT
 plt.close(822)
 plt.figure(num=822)
+plt.rc('axes',linewidth=2)
+plt.rc('lines',linewidth=2)
+plt.rcParams['axes.linewidth']=2
+plt.rc('font',weight='bold')
 plt.yscale('log')
 plt.xscale('log')
 
@@ -1349,8 +1385,8 @@ nu_IntersectionsOnly2[:,1], errors_IntersectionsOnly2X1 = nuCorrections(sma,e,W,
 plt.plot(np.arange(len(only2RealInds)),np.abs(np.sort(-errors_IntersectionsOnly2X1)),label='Only 2 Int 1')
 ####
 plt.legend()
-plt.ylabel('Error')
-plt.xlabel('Number')
+plt.ylabel('Absolute Separation Error (AU)', weight='bold')
+plt.xlabel('Planet Orbit Index', weight='bold')
 plt.show(block=False)
 
 # ind = yrealAllRealInds[fourIntInds[np.argsort(-errors_fourInt1)[0]]]
@@ -1363,7 +1399,6 @@ plotRerotatedFromNus(ind, sma[ind], e[ind], W[ind], w[ind], inc[ind], Op[:,ind],
     nu_minSepPoints, nu_maxSepPoints, nu_lminSepPoints, nu_lmaxSepPoints, nu_fourInt, nu_twoIntSameY, nu_twoIntOppositeX, nu_IntersectionsOnly2,\
     twoIntSameY_x, twoIntSameY_y, num=8001)
 
-
 # ind = only2RealInds[np.argsort(-errors_IntersectionsOnly2X0)[0]]
 # plotRerotatedFromNus(ind, sma[ind], e[ind], W[ind], w[ind], inc[ind], Op[:,ind], yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds,\
 #     nu_minSepPoints, nu_maxSepPoints, nu_lminSepPoints, nu_lmaxSepPoints, nu_fourInt, nu_twoIntSameY, nu_twoIntOppositeX, nu_IntersectionsOnly2,\
@@ -1371,6 +1406,36 @@ plotRerotatedFromNus(ind, sma[ind], e[ind], W[ind], w[ind], inc[ind], Op[:,ind],
 
 ###### DONE FIXING NU
 
+#### Plot Histogram of Error
+plt.close(823)
+plt.figure(num=823)
+plt.rc('axes',linewidth=2)
+plt.rc('lines',linewidth=2)
+plt.rcParams['axes.linewidth']=2
+plt.rc('font',weight='bold')
+plt.yscale('log')
+plt.xscale('log')
+
+#counts, bins = np.histogram(np.abs(errors_fourInt0)+1e-17,bins=10**np.linspace(1e-17,1e-1,16))
+#plt.hist(bins[:-1], bins, weights=counts)#bins=10**np.linspace(1e-17,1e-1,16),label='Four Int 0')
+plt.hist(np.abs(errors_fourInt0)+1e-17, bins=np.logspace(start=-17.,stop=-1,num=17),label='Four Int 0',alpha=0.2)
+plt.hist(np.abs(errors_fourInt1)+1e-17, bins=np.logspace(start=-17.,stop=-1,num=17),label='Four Int 1',alpha=0.2)
+plt.hist(np.abs(errors_fourInt2)+1e-17, bins=np.logspace(start=-17.,stop=-1,num=17),label='Four Int 2',alpha=0.2)
+plt.hist(np.abs(errors_fourInt3)+1e-17, bins=np.logspace(start=-17.,stop=-1,num=17),label='Four Int 1',alpha=0.2)
+
+plt.hist(np.abs(errors_twoIntSameY0)+1e-17, bins=np.logspace(start=-17.,stop=-1,num=17),label='Two Int Same Y 0',alpha=0.2)
+plt.hist(np.abs(errors_twoIntSameY1)+1e-17, bins=np.logspace(start=-17.,stop=-1,num=17),label='Two Int Same Y 1',alpha=0.2)
+
+plt.hist(np.abs(errors_twoIntOppositeX0)+1e-17, bins=np.logspace(start=-17.,stop=-1,num=17),label='Two Int Opposite X 0',alpha=0.2)
+plt.hist(np.abs(errors_twoIntOppositeX1)+1e-17, bins=np.logspace(start=-17.,stop=-1,num=17),label='Two Int Opposite X 1',alpha=0.2)
+
+plt.hist(np.abs(errors_IntersectionsOnly2X0)+1e-17, bins=np.logspace(start=-17.,stop=-1,num=17),label='Only 2 Int 0',alpha=0.2)
+plt.hist(np.abs(errors_IntersectionsOnly2X1)+1e-17, bins=np.logspace(start=-17.,stop=-1,num=17),label='Only 2 Int 1',alpha=0.2)
+plt.xlabel('Absolute Error (AU)', weight='bold')
+plt.ylabel('Number of Planets', weight='bold') #Switch to fraction
+plt.legend()
+plt.show(block=False)
+####
 
 
 
@@ -1440,9 +1505,9 @@ plt.scatter(r_maxSep[0],r_maxSep[1],color='red',marker='D')
 if ind in yrealAllRealInds:
     print('All Real')
     tind = np.where(yrealAllRealInds == ind)[0]
-    r_lminSep = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],nu_lminSepPoints[yrealAllRealInds[tind]])
+    r_lminSep = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],nu_lminSepPoints[tind])#[yrealAllRealInds[tind]])
     tmp_lminSep = np.sqrt(r_lminSep[0]**2 + r_lminSep[1]**2)
-    r_lmaxSep = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],nu_lmaxSepPoints[yrealAllRealInds[tind]]+np.pi)
+    r_lmaxSep = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],nu_lmaxSepPoints[tind]+np.pi)#[yrealAllRealInds[tind]]+np.pi)
     tmp_lmaxSep = np.sqrt(r_lmaxSep[0]**2 + r_lmaxSep[1]**2)
     plt.scatter(r_lminSep[0],r_lminSep[1],color='magenta',marker='D')
     plt.scatter(r_lmaxSep[0],r_lmaxSep[1],color='gold',marker='D')
@@ -1533,8 +1598,8 @@ plt.scatter(t_minSep,minSep[ind],color='cyan',marker='D')
 plt.scatter(t_maxSep,maxSep[ind],color='red',marker='D')
 if ind in yrealAllRealInds:
     tind = np.where(yrealAllRealInds == ind)[0]
-    t_lminSep = timeFromTrueAnomaly(nu_lminSepPoints[yrealAllRealInds[tind]],periods[ind],e[ind])
-    t_lmaxSep = timeFromTrueAnomaly(nu_lmaxSepPoints[yrealAllRealInds[tind]],periods[ind],e[ind])
+    t_lminSep = timeFromTrueAnomaly(nu_lminSepPoints[tind],periods[ind],e[ind])
+    t_lmaxSep = timeFromTrueAnomaly(nu_lmaxSepPoints[tind],periods[ind],e[ind])
     plt.scatter(t_lminSep,lminSep[tind],color='magenta',marker='D')
     plt.scatter(t_lmaxSep,lmaxSep[tind],color='gold',marker='D')
 
