@@ -417,6 +417,7 @@ plotEllipseMajorAxisFromConjugate(ind, sma, e, W, w, inc, num)
 stop4 = time.time()
 print('stop4: ' + str(stop4-start4))
 del start4, stop4
+plt.close(num)
 ####
 
 
@@ -474,10 +475,12 @@ def plotDerotatedEllipse(ind, sma, e, W, w, inc, theta_OpQ_X, theta_OpQp_X, dmaj
 
     plt.show(block=False)
 
-plotDerotatedEllipse(ind, sma, e, W, w, inc, theta_OpQ_X, theta_OpQp_X, dmajorp, dminorp, Op, a, b, x, y, num=880)
+num=880
+plotDerotatedEllipse(ind, sma, e, W, w, inc, theta_OpQ_X, theta_OpQp_X, dmajorp, dminorp, Op, a, b, x, y, num)
 stop6 = time.time()
 print('stop6: ' + str(stop6-start6))
 del start6, stop6
+plt.close(num)
 
 #### Calculate X,Y Position of Minimum and Maximums with Quartic
 start7 = time.time()
