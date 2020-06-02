@@ -12,6 +12,7 @@ import astropy.units as u
 #### Randomly Generate Orbits
 folder = os.path.normpath(os.path.expandvars('$HOME/Documents/exosims/Scripts'))
 filename = 'HabEx_CKL2_PPKL2.json'
+filename = 'WFIRSTcycle6core.json'
 scriptfile = os.path.join(folder,filename)
 sim = EXOSIMS.MissionSim.MissionSim(scriptfile=scriptfile,nopar=True)
 PPop = sim.PlanetPopulation
@@ -1434,6 +1435,27 @@ plt.hist(np.abs(errors_IntersectionsOnly2X1)+1e-17, bins=np.logspace(start=-17.,
 plt.xlabel('Absolute Error (AU)', weight='bold')
 plt.ylabel('Number of Planets', weight='bold') #Switch to fraction
 plt.legend()
+plt.show(block=False)
+plt.close(823) #thinking the above plot is relativly useless
+####
+
+#### Plot Histogram of Error
+plt.close(824)
+plt.figure(num=824)
+plt.rc('axes',linewidth=2)
+plt.rc('lines',linewidth=2)
+plt.rcParams['axes.linewidth']=2
+plt.rc('font',weight='bold')
+plt.yscale('log')
+plt.xscale('log')
+
+#counts, bins = np.histogram(np.abs(errors_fourInt0)+1e-17,bins=10**np.linspace(1e-17,1e-1,16))
+#plt.hist(bins[:-1], bins, weights=counts)#bins=10**np.linspace(1e-17,1e-1,16),label='Four Int 0')
+plt.hist(np.concatenate((np.abs(errors_fourInt0)+1e-17, np.abs(errors_fourInt1)+1e-17,np.abs(errors_fourInt2)+1e-17,np.abs(errors_fourInt3)+1e-17,\
+        np.abs(errors_twoIntSameY0)+1e-17, np.abs(errors_twoIntSameY1)+1e-17,np.abs(errors_twoIntOppositeX0)+1e-17,\
+        np.abs(errors_twoIntOppositeX1)+1e-17,np.abs(errors_IntersectionsOnly2X0)+1e-17,np.abs(errors_IntersectionsOnly2X1)+1e-17)), bins=np.logspace(start=-17.,stop=-1,num=17),color='purple')
+plt.xlabel('Absolute Error (AU)', weight='bold')
+plt.ylabel('Number of Planets', weight='bold') #Switch to fraction
 plt.show(block=False)
 ####
 
