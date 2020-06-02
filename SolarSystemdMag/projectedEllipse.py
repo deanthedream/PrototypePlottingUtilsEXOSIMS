@@ -1,11 +1,11 @@
 ####
 import numpy as np
-from numba import jit, cuda
+#from numba import jit, cuda
 #pip3 install numba
 #https://developer.nvidia.com/cuda-downloads?target_os=Linux&target_arch=x86_64&target_distro=Ubuntu&target_version=1804&target_type=debnetwork
 #pip3 install jax
 #pip3 install jaxlib
-import jax
+#import jax
 #import jax.numpy as jxnp
 
 def projected_apbpPsipsi(a,e,W,w,inc):
@@ -1344,9 +1344,13 @@ def smin_smax_slmin_slmax(n, xreal, yreal, mx, my, x, y):
     assert len(yrealImagInds) == np.count_nonzero(yrealImagArgsortInds[:,0] == 0), "Not all first indicies have smallest Imag component"
     assert len(yrealImagInds) == np.count_nonzero(yrealImagArgsortInds[:,1] == 1), "Not all first indicies have second smallest Imag component"
     #maxImagFirstCol = np.max(np.imag(yreal[yrealImagInds,0]))
-    assert np.max(np.imag(yreal[yrealImagInds,0])) == 0, 'max y imag component of column 0 is not 0'
+    #DELETEassert np.max(np.imag(yreal[yrealImagInds,0])) == 0, 'max y imag component of column 0 is not 0'
+    if len(yrealImagInds) > 0:
+        assert np.max(np.imag(yreal[yrealImagInds,0])) == 0, 'max y imag component of column 0 is not 0'
     #maxImagSecondCol = np.max(np.imag(yreal[yrealImagInds,1]))
-    assert np.max(np.imag(yreal[yrealImagInds,1])) == 0, 'max y imag component of column 1 is not 0'
+    #DELETEassert np.max(np.imag(yreal[yrealImagInds,1])) == 0, 'max y imag component of column 1 is not 0'
+    if len(yrealImagInds) > 0:
+        assert np.max(np.imag(yreal[yrealImagInds,1])) == 0, 'max y imag component of column 1 is not 0'
     # np.max(np.imag(yreal[yrealImagInds,2])) #this is quite large
     # np.max(np.imag(yreal[yrealImagInds,3])) #this is quite large
 
@@ -1367,83 +1371,84 @@ def smin_smax_slmin_slmax(n, xreal, yreal, mx, my, x, y):
     ###################################################################################
     #### Smin and Smax Two Real Solutions Two Imaginary Solutions #####################
     #Smin and Smax need to be calculated separately for x,y with imaginary solutions vs those without
-    #For yrealImagInds. Smin and Smax must be either first column of second column
-    assert np.all(np.real(xreal[yrealImagInds,0]) > 0), 'not all xreal components are strictly negative'
-    #assert np.all(np.real(xreal[yrealImagInds,0]) < 0), 'not all xreal components are strictly negative'
-    assert np.all(np.real(yreal[yrealImagInds,0]) > 0), 'not all yreal components are strictly positive'
-    assert np.all(np.real(xreal[yrealImagInds,1]) > 0), 'not all xreal components are strictly positive'
-    assert np.all(np.real(yreal[yrealImagInds,1]) > 0), 'not all yreal components are strictly positive'
-    smm0 = np.sqrt((np.real(xreal[yrealImagInds,0])-mx[yrealImagInds])**2 + (np.real(yreal[yrealImagInds,0])-my[yrealImagInds])**2)
-    smp0 = np.sqrt((np.real(xreal[yrealImagInds,0])-mx[yrealImagInds])**2 + (np.real(yreal[yrealImagInds,0])+my[yrealImagInds])**2)
-    spm0 = np.sqrt((np.real(xreal[yrealImagInds,0])+mx[yrealImagInds])**2 + (np.real(yreal[yrealImagInds,0])-my[yrealImagInds])**2)
-    spp0 = np.sqrt((np.real(xreal[yrealImagInds,0])+mx[yrealImagInds])**2 + (np.real(yreal[yrealImagInds,0])+my[yrealImagInds])**2)
-    smm1 = np.sqrt((np.real(xreal[yrealImagInds,1])-mx[yrealImagInds])**2 + (np.real(yreal[yrealImagInds,1])-my[yrealImagInds])**2)
-    smp1 = np.sqrt((np.real(xreal[yrealImagInds,1])-mx[yrealImagInds])**2 + (np.real(yreal[yrealImagInds,1])+my[yrealImagInds])**2)
-    spm1 = np.sqrt((np.real(xreal[yrealImagInds,1])+mx[yrealImagInds])**2 + (np.real(yreal[yrealImagInds,1])-my[yrealImagInds])**2)
-    spp1 = np.sqrt((np.real(xreal[yrealImagInds,1])+mx[yrealImagInds])**2 + (np.real(yreal[yrealImagInds,1])+my[yrealImagInds])**2)
+    if len(yrealImagInds) > 0:
+        #For yrealImagInds. Smin and Smax must be either first column of second column
+        assert np.all(np.real(xreal[yrealImagInds,0]) > 0), 'not all xreal components are strictly negative'
+        #assert np.all(np.real(xreal[yrealImagInds,0]) < 0), 'not all xreal components are strictly negative'
+        assert np.all(np.real(yreal[yrealImagInds,0]) > 0), 'not all yreal components are strictly positive'
+        assert np.all(np.real(xreal[yrealImagInds,1]) > 0), 'not all xreal components are strictly positive'
+        assert np.all(np.real(yreal[yrealImagInds,1]) > 0), 'not all yreal components are strictly positive'
+        smm0 = np.sqrt((np.real(xreal[yrealImagInds,0])-mx[yrealImagInds])**2 + (np.real(yreal[yrealImagInds,0])-my[yrealImagInds])**2)
+        smp0 = np.sqrt((np.real(xreal[yrealImagInds,0])-mx[yrealImagInds])**2 + (np.real(yreal[yrealImagInds,0])+my[yrealImagInds])**2)
+        spm0 = np.sqrt((np.real(xreal[yrealImagInds,0])+mx[yrealImagInds])**2 + (np.real(yreal[yrealImagInds,0])-my[yrealImagInds])**2)
+        spp0 = np.sqrt((np.real(xreal[yrealImagInds,0])+mx[yrealImagInds])**2 + (np.real(yreal[yrealImagInds,0])+my[yrealImagInds])**2)
+        smm1 = np.sqrt((np.real(xreal[yrealImagInds,1])-mx[yrealImagInds])**2 + (np.real(yreal[yrealImagInds,1])-my[yrealImagInds])**2)
+        smp1 = np.sqrt((np.real(xreal[yrealImagInds,1])-mx[yrealImagInds])**2 + (np.real(yreal[yrealImagInds,1])+my[yrealImagInds])**2)
+        spm1 = np.sqrt((np.real(xreal[yrealImagInds,1])+mx[yrealImagInds])**2 + (np.real(yreal[yrealImagInds,1])-my[yrealImagInds])**2)
+        spp1 = np.sqrt((np.real(xreal[yrealImagInds,1])+mx[yrealImagInds])**2 + (np.real(yreal[yrealImagInds,1])+my[yrealImagInds])**2)
 
-    #Search for Smallest
-    smm = np.asarray([smm0,smm1])
-    #DELETEassert np.all(np.argmin(smm,axis=0) == 1), 'mins are not all are smm1'
-    if not np.all(np.argmin(smm,axis=0) == 1):
-        #do some additional checking
-        print('mins are not all are smm1')
-        inds = np.where(np.argmin(smm,axis=0) == 1)[0] #inds to check
-        if np.all(np.abs(smm0[inds] - smm1[inds]) < 1e-8):
-            tmp = smm0[inds]
-            smm0[inds] = smm1[inds]
-            smm1[inds] = tmp
-    smp = np.asarray([smp0,smp1])
-    assert np.all(np.argmin(smp,axis=0) == 0), 'mins are not all are smp0'
-    spm = np.asarray([spm0,spm1])
-    assert np.all(np.argmin(spm,axis=0) == 1), 'mins are not all are spm1'
-    spp = np.asarray([spp0,spp1])
-    assert np.all(np.argmin(spp,axis=0) == 1), 'mins are not all are spp1'
-    #above says smallest must be one of these: smm1, smp0, spm1, spp1
-    #The following are where each of these separations are 0
-    smm1Inds = np.where((smm1 < smp0)*(smm1 < spm1)*(smm1 < spp1))[0]
-    smp0Inds = np.where((smp0 < smm1)*(smp0 < spm1)*(smp0 < spp1))[0]
-    #spp1Inds = np.where((smp0 < smm1)*(smp0 < spm1)*(smp0 < spp1))[0]
-    spm1Inds = np.where((spm1 < smp0)*(spm1 < smm1)*(spm1 < spp1))[0]
-    spp1Inds = np.where((spp1 < smp0)*(spp1 < spm1)*(spp1 < smm1))[0]
-    assert len(yrealImagInds) == len(smm1Inds) + len(smp0Inds) + len(spm1Inds) + len(spp1Inds), 'Have not covered all cases'
-    if len(smm1Inds) > 0:
-        minSep[yrealImagInds[smm1Inds]] = smm1[smm1Inds]
-        minSepPoints_x[yrealImagInds[smm1Inds]] = np.real(xreal[yrealImagInds[smm1Inds],1])
-        minSepPoints_y[yrealImagInds[smm1Inds]] = np.real(yreal[yrealImagInds[smm1Inds],1])
-    if len(smp0Inds) > 0:
-        minSep[yrealImagInds[smp0Inds]] = smp0[smp0Inds]
-        minSepPoints_x[yrealImagInds[smp0Inds]] = np.real(xreal[yrealImagInds[smp0Inds],0])
-        minSepPoints_y[yrealImagInds[smp0Inds]] = np.real(yreal[yrealImagInds[smp0Inds],0])
-    if len(spm1Inds) > 0:
-        minSep[yrealImagInds[spm1Inds]] = smp0[spm1Inds]
-        minSepPoints_x[yrealImagInds[spm1Inds]] = np.real(xreal[yrealImagInds[spm1Inds],1])
-        minSepPoints_y[yrealImagInds[spm1Inds]] = np.real(yreal[yrealImagInds[spm1Inds],1])
-    if len(spp1Inds) > 0:
-        minSep[yrealImagInds[spp1Inds]] = spp1[spp1Inds]
-        minSepPoints_x[yrealImagInds[spp1Inds]] = np.real(xreal[yrealImagInds[spp1Inds],1])
-        minSepPoints_y[yrealImagInds[spp1Inds]] = np.real(yreal[yrealImagInds[spp1Inds],1])
-    #above says largest must be one of these: smm0, smp0, spm1, spp1
-    smm0Inds = np.where((smm0 > smp0)*(smm0 > spm1)*(smm0 > spp0))[0]
-    smp0Inds = np.where((smp0 > smm0)*(smp0 > spm1)*(smp0 > spp0))[0]
-    spm1Inds = np.where((spm1 > smp0)*(spm1 > smm0)*(spm1 > spp0))[0]
-    spp0Inds = np.where((spp0 > smp0)*(spp0 > spm1)*(spp0 > smm0))[0]
-    if len(smm0Inds) > 0:
-        maxSep[yrealImagInds[smm0Inds]] = smm0[smm0Inds]
-        maxSepPoints_x[yrealImagInds[smm0Inds]] = np.real(xreal[yrealImagInds[smm0Inds],0])
-        maxSepPoints_y[yrealImagInds[smm0Inds]] = np.real(yreal[yrealImagInds[smm0Inds],0])
-    if len(smp0Inds) > 0:
-        maxSep[yrealImagInds[smp0Inds]] = smp0[smp0Inds]
-        maxSepPoints_x[yrealImagInds[smp0Inds]] = np.real(xreal[yrealImagInds[smp0Inds],0])
-        maxSepPoints_y[yrealImagInds[smp0Inds]] = np.real(yreal[yrealImagInds[smp0Inds],0])
-    if len(spm1Inds) > 0:
-        maxSep[yrealImagInds[spm1Inds]] = spm1[spm1Inds]
-        maxSepPoints_x[yrealImagInds[spm1Inds]] = np.real(xreal[yrealImagInds[spm1Inds],1])
-        maxSepPoints_y[yrealImagInds[spm1Inds]] = np.real(yreal[yrealImagInds[spm1Inds],1])
-    if len(spp0Inds) > 0:
-        maxSep[yrealImagInds[spp0Inds]] = spp0[spp0Inds]
-        maxSepPoints_x[yrealImagInds[spp0Inds]] = np.real(xreal[yrealImagInds[spp0Inds],0])
-        maxSepPoints_y[yrealImagInds[spp0Inds]] = np.real(yreal[yrealImagInds[spp0Inds],0])
+        #Search for Smallest
+        smm = np.asarray([smm0,smm1])
+        #DELETEassert np.all(np.argmin(smm,axis=0) == 1), 'mins are not all are smm1'
+        if not np.all(np.argmin(smm,axis=0) == 1):
+            #do some additional checking
+            print('mins are not all are smm1')
+            inds = np.where(np.argmin(smm,axis=0) == 1)[0] #inds to check
+            if np.all(np.abs(smm0[inds] - smm1[inds]) < 1e-8):
+                tmp = smm0[inds]
+                smm0[inds] = smm1[inds]
+                smm1[inds] = tmp
+        smp = np.asarray([smp0,smp1])
+        assert np.all(np.argmin(smp,axis=0) == 0), 'mins are not all are smp0'
+        spm = np.asarray([spm0,spm1])
+        assert np.all(np.argmin(spm,axis=0) == 1), 'mins are not all are spm1'
+        spp = np.asarray([spp0,spp1])
+        assert np.all(np.argmin(spp,axis=0) == 1), 'mins are not all are spp1'
+        #above says smallest must be one of these: smm1, smp0, spm1, spp1
+        #The following are where each of these separations are 0
+        smm1Inds = np.where((smm1 < smp0)*(smm1 < spm1)*(smm1 < spp1))[0]
+        smp0Inds = np.where((smp0 < smm1)*(smp0 < spm1)*(smp0 < spp1))[0]
+        #spp1Inds = np.where((smp0 < smm1)*(smp0 < spm1)*(smp0 < spp1))[0]
+        spm1Inds = np.where((spm1 < smp0)*(spm1 < smm1)*(spm1 < spp1))[0]
+        spp1Inds = np.where((spp1 < smp0)*(spp1 < spm1)*(spp1 < smm1))[0]
+        assert len(yrealImagInds) == len(smm1Inds) + len(smp0Inds) + len(spm1Inds) + len(spp1Inds), 'Have not covered all cases'
+        if len(smm1Inds) > 0:
+            minSep[yrealImagInds[smm1Inds]] = smm1[smm1Inds]
+            minSepPoints_x[yrealImagInds[smm1Inds]] = np.real(xreal[yrealImagInds[smm1Inds],1])
+            minSepPoints_y[yrealImagInds[smm1Inds]] = np.real(yreal[yrealImagInds[smm1Inds],1])
+        if len(smp0Inds) > 0:
+            minSep[yrealImagInds[smp0Inds]] = smp0[smp0Inds]
+            minSepPoints_x[yrealImagInds[smp0Inds]] = np.real(xreal[yrealImagInds[smp0Inds],0])
+            minSepPoints_y[yrealImagInds[smp0Inds]] = np.real(yreal[yrealImagInds[smp0Inds],0])
+        if len(spm1Inds) > 0:
+            minSep[yrealImagInds[spm1Inds]] = smp0[spm1Inds]
+            minSepPoints_x[yrealImagInds[spm1Inds]] = np.real(xreal[yrealImagInds[spm1Inds],1])
+            minSepPoints_y[yrealImagInds[spm1Inds]] = np.real(yreal[yrealImagInds[spm1Inds],1])
+        if len(spp1Inds) > 0:
+            minSep[yrealImagInds[spp1Inds]] = spp1[spp1Inds]
+            minSepPoints_x[yrealImagInds[spp1Inds]] = np.real(xreal[yrealImagInds[spp1Inds],1])
+            minSepPoints_y[yrealImagInds[spp1Inds]] = np.real(yreal[yrealImagInds[spp1Inds],1])
+        #above says largest must be one of these: smm0, smp0, spm1, spp1
+        smm0Inds = np.where((smm0 > smp0)*(smm0 > spm1)*(smm0 > spp0))[0]
+        smp0Inds = np.where((smp0 > smm0)*(smp0 > spm1)*(smp0 > spp0))[0]
+        spm1Inds = np.where((spm1 > smp0)*(spm1 > smm0)*(spm1 > spp0))[0]
+        spp0Inds = np.where((spp0 > smp0)*(spp0 > spm1)*(spp0 > smm0))[0]
+        if len(smm0Inds) > 0:
+            maxSep[yrealImagInds[smm0Inds]] = smm0[smm0Inds]
+            maxSepPoints_x[yrealImagInds[smm0Inds]] = np.real(xreal[yrealImagInds[smm0Inds],0])
+            maxSepPoints_y[yrealImagInds[smm0Inds]] = np.real(yreal[yrealImagInds[smm0Inds],0])
+        if len(smp0Inds) > 0:
+            maxSep[yrealImagInds[smp0Inds]] = smp0[smp0Inds]
+            maxSepPoints_x[yrealImagInds[smp0Inds]] = np.real(xreal[yrealImagInds[smp0Inds],0])
+            maxSepPoints_y[yrealImagInds[smp0Inds]] = np.real(yreal[yrealImagInds[smp0Inds],0])
+        if len(spm1Inds) > 0:
+            maxSep[yrealImagInds[spm1Inds]] = spm1[spm1Inds]
+            maxSepPoints_x[yrealImagInds[spm1Inds]] = np.real(xreal[yrealImagInds[spm1Inds],1])
+            maxSepPoints_y[yrealImagInds[spm1Inds]] = np.real(yreal[yrealImagInds[spm1Inds],1])
+        if len(spp0Inds) > 0:
+            maxSep[yrealImagInds[spp0Inds]] = spp0[spp0Inds]
+            maxSepPoints_x[yrealImagInds[spp0Inds]] = np.real(xreal[yrealImagInds[spp0Inds],0])
+            maxSepPoints_y[yrealImagInds[spp0Inds]] = np.real(yreal[yrealImagInds[spp0Inds],0])
 
     #not currentyl assigning x,y values or lmin lmax for 2 solutions with 2 complex
     ########################################################
@@ -1499,7 +1504,8 @@ def smin_smax_slmin_slmax(n, xreal, yreal, mx, my, x, y):
     assert ~np.any(minSep == 0), 'Oops, a minSep was missed'
     assert ~np.any(maxSep == 0), 'Oops, a maxSep was missed'
     assert np.all(minSep[yrealAllRealInds] <= lminSep), 'Not all minSep < lminSep'
-    assert np.all(maxSep[yrealAllRealInds] >= lmaxSep), 'Not all maxSep > lmaxSep'
+    #DELETEassert np.all(maxSep[yrealAllRealInds] >= lmaxSep), 'Not all maxSep > lmaxSep'
+    assert np.all(maxSep[yrealAllRealInds] - lmaxSep > -1e12), 'Not all maxSep > lmaxSep'
     assert np.all(lminSep <= lmaxSep), 'Not all lminSep < lmaxSep'
     ################################################################################################# Done with separations
 
