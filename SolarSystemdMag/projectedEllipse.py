@@ -1384,7 +1384,15 @@ def smin_smax_slmin_slmax(n, xreal, yreal, mx, my, x, y):
 
     #Search for Smallest
     smm = np.asarray([smm0,smm1])
-    assert np.all(np.argmin(smm,axis=0) == 1), 'mins are not all are smm1'
+    #DELETEassert np.all(np.argmin(smm,axis=0) == 1), 'mins are not all are smm1'
+    if not np.all(np.argmin(smm,axis=0) == 1):
+        #do some additional checking
+        print('mins are not all are smm1')
+        inds = np.where(np.argmin(smm,axis=0) == 1)[0] #inds to check
+        if np.all(np.abs(smm0[inds] - smm1[inds]) < 1e-8):
+            tmp = smm0[inds]
+            smm0[inds] = smm1[inds]
+            smm1[inds] = tmp
     smp = np.asarray([smp0,smp1])
     assert np.all(np.argmin(smp,axis=0) == 0), 'mins are not all are smp0'
     spm = np.asarray([spm0,spm1])
@@ -1510,26 +1518,60 @@ def smin_smax_slmin_slmax(n, xreal, yreal, mx, my, x, y):
     maxSepPoints_x = maxSepPoints_x*(-2*bool1+1)
     maxSepPoints_y = maxSepPoints_y*(-2*bool2+1)
     #### Local Min Sep Points
-    lminSepPoints_x = lminSepPoints_x*(2*bool1[yrealAllRealInds]-1)
-    lminSepPoints_y = lminSepPoints_y*(-2*bool2[yrealAllRealInds]+1)
+    lminSepPoints_x = np.real(lminSepPoints_x*(2*bool1[yrealAllRealInds]-1))
+    lminSepPoints_y = np.real(lminSepPoints_y*(-2*bool2[yrealAllRealInds]+1))
     #### Local Max Sep Points
-    lmaxSepPoints_x = lmaxSepPoints_x*(2*bool1[yrealAllRealInds]-1)
-    lmaxSepPoints_y = lmaxSepPoints_y*(-2*bool2[yrealAllRealInds]+1)
+    lmaxSepPoints_x = np.real(lmaxSepPoints_x*(2*bool1[yrealAllRealInds]-1))
+    lmaxSepPoints_y = np.real(lmaxSepPoints_y*(-2*bool2[yrealAllRealInds]+1))
 
     return minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y, minSep, maxSep, lminSep, lmaxSep, yrealAllRealInds, yrealImagInds
 
 def trueAnomalyFromXY(X,Y,W,w,inc):
     """ Calculated true anomaly from X, Y, and KOE
     Args:
-        X (numpy array): x component of body in 3D elliptical orbit
-        Y (numpy array): y component of body in 3D elliptical orbit
-        W (numpy array): Longitude of the ascending node of the body
-        w (numpy array): argument of periapsis of the body
-        inc (numpy array): inclination of the body's orbit
+        X (numpy array): 
+            x component of body in 3D elliptical orbit
+        Y (numpy array): 
+            y component of body in 3D elliptical orbit
+        W (numpy array): 
+            Longitude of the ascending node of the body
+        w (numpy array): 
+            argument of periapsis of the body
+        inc (numpy array): 
+            inclination of the body's orbit
     Returns:
         nu (numpy array):
+            true anomalies
     """
-    nu = np.arctan2( -X/Y*np.sin(W)*np.cos(w) -X/Y*np.cos(W)*np.cos(inc)*np.sin(w) + np.cos(W)*np.cos(w) - np.sin(W)*np.cos(inc)*np.cos(w),\
-                -X/Y*np.sin(W)*np.sin(w) + X/Y*np.cos(W)*np.cos(inc)*np.cos(w) + np.cos(W)*np.sin(w) + np.sin(W)*np.cos(inc)*np.cos(w) )
+    #nu = np.arctan2( -X/Y*np.sin(W)*np.cos(w) -X/Y*np.cos(W)*np.cos(inc)*np.sin(w) + np.cos(W)*np.cos(w) - np.sin(W)*np.cos(inc)*np.cos(w),\
+    #            -X/Y*np.sin(W)*np.sin(w) + X/Y*np.cos(W)*np.cos(inc)*np.cos(w) + np.cos(W)*np.sin(w) + np.sin(W)*np.cos(inc)*np.cos(w) ) #Manual Typing
+
+    #Jupyter Notebook
+    nu = np.arctan2(np.sin(W)*np.cos(w)/Y + np.sin(w)*np.cos(W)*np.cos(inc)/Y + np.sin(W)*np.sin(w)*np.cos(inc)/X - np.cos(W)*np.cos(w)/X,\
+                    np.sin(W)*np.sin(w)/Y - np.cos(W)*np.cos(inc)*np.cos(w)/Y - np.sin(W)*np.cos(inc)*np.cos(w)/X - np.sin(w)*np.cos(W)/X)
+
     return nu
+
+def timeFromTrueAnomaly(nu,T,e):
+    """ Time (since periastron) from true anomaly
+    Args:
+        nu (numpy array):
+        T (numpy array):
+        e (numpy array):
+    Returns:
+
+    """
+    E = np.arccos((e+np.cos(nu))/(1+e*np.cos(nu)))
+    if nu.shape == ():
+        if nu < np.pi:
+            E = 2*np.pi + E
+    else: #nu is a numpy array
+        inds = np.where(nu < 0)[0]
+        E[inds] = 2*np.pi + E[inds]
+    t = (E-e*np.sin(E))*T/(2*np.pi)
+    return t
+
+def printKOE(ind,a,e,W,w,inc):
+    print('a: ' + str(np.round(sma[ind],2)) + ' e: ' + str(np.round(e[ind],2)) + ' W: ' + str(np.round(W[ind],2)) + ' w: ' + str(np.round(w[ind],2)) + ' i: ' + str(np.round(inc[ind],2)))# + ' theta: ' + str(np.round(theta[ind],2)))
+    return None
 
