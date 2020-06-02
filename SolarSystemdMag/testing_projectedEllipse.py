@@ -51,7 +51,9 @@ print('stop1: ' + str(stop1-start1))
 del start1, stop1
 
 # Checks
-assert np.all(dmajorp < sma), "Not all Semi-major axis of the projected ellipse are less than the original 3D ellipse"
+if not np.all(dmajorp < sma):
+    print("Not all Semi-major axis of the projected ellipse are less than the original 3D ellipse, caused by circular orbits required for circular orbits")
+    assert np.all(sma - dmajorp > -1e-12), "Not all Semi-major axis of the projected ellipse are less than the original 3D ellipse" #required for circular orbits
 assert np.all(dminorp < dmajorp), "All projected Semi-minor axes are less than all projected semi-major axes"
 
 #### Plotting Projected Ellipse
@@ -504,6 +506,10 @@ del start8, stop8
 #### Calculate Minimum, Maximum, Local Minimum, Local Maximum Separations
 start9 = time.time()
 minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y, minSep, maxSep, lminSep, lmaxSep, yrealAllRealInds, yrealImagInds = smin_smax_slmin_slmax(n, xreal, yreal, mx, my, x, y)
+lminSepPoints_x = np.real(lminSepPoints_x)
+lminSepPoints_y = np.real(lminSepPoints_y)
+lmaxSepPoints_x = np.real(lmaxSepPoints_x)
+lmaxSepPoints_y = np.real(lmaxSepPoints_y)
 stop9 = time.time()
 print('stop9: ' + str(stop9-start9))
 del start9, stop9
@@ -672,7 +678,9 @@ def ellipseCircleIntersections(r, a, b, mx, my, minSep, maxSep, lminSep, lmaxSep
     #### Two Intersection Points twoIntSameYInds
     twoIntSameY_x = np.zeros((len(twoIntSameYInds),2))
     twoIntSameY_y = np.zeros((len(twoIntSameYInds),2))
-    assert np.max(np.imag(xreal2[yrealAllRealInds[twoIntSameYInds],0])) < 1e-8, 'An Imaginary component was too large' #Was 1e-12, but is now 1e-8
+    #DELETEassert np.max(np.imag(xreal2[yrealAllRealInds[twoIntSameYInds],0])) < 1e-8, 'An Imaginary component was too large' #Was 1e-12, but is now 1e-8
+    if len(twoIntSameYInds) > 0:
+        assert np.max(np.imag(xreal2[yrealAllRealInds[twoIntSameYInds],0])) < 1e-8, 'An Imaginary component was too large' #Was 1e-12, but is now 1e-8
     twoIntSameY_x[:,0] = np.real(xreal2[yrealAllRealInds[twoIntSameYInds],0])
     smallImagInds = np.where(np.abs(np.imag(xreal2[yrealAllRealInds[twoIntSameYInds],1])) < 1e-9)[0]
     largeImagInds = np.where(np.abs(np.imag(xreal2[yrealAllRealInds[twoIntSameYInds],1])) > 1e-9)[0]
@@ -878,7 +886,8 @@ del seps_twoIntOppositeX1, errors_twoIntOppositeX1, largeErrorInds, indsToFix, s
 
 #Testing plotting inds
 ind = yrealAllRealInds[fourIntInds[0]]#works
-ind = yrealAllRealInds[twoIntSameYInds[0]]#works
+if len(twoIntSameYInds) > 0:
+    ind = yrealAllRealInds[twoIntSameYInds[0]]#works
 ind = yrealAllRealInds[twoIntOppositeXInds[1]]#works
 #GOOD KEEP ind = only2RealInds[4]
 ind = only2RealInds[4]
@@ -898,7 +907,8 @@ ind = only2RealInds[4]
 # ind = only2RealInds[type2_4Inds[0]]#works
 #type3
 #ind = only2RealInds[type3_0Inds[0]]#works
-ind = only2RealInds[type3_1Inds[0]]#works
+if len(only2RealInds) > 0:
+    ind = only2RealInds[type3_1Inds[0]]#works
 #ind = only2RealInds[type3_2Inds[0]]#works
 #ind = only2RealInds[type3_3Inds[0]]#works
 #ind = only2RealInds[type3_4Inds[0]]#works
