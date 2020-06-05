@@ -1398,6 +1398,7 @@ def smin_smax_slmin_slmax(n, xreal, yreal, mx, my, x, y):
                 tmp = smm0[inds]
                 smm0[inds] = smm1[inds]
                 smm1[inds] = tmp
+            smm = np.asarray([smm0,smm1])
         smp = np.asarray([smp0,smp1])
         assert np.all(np.argmin(smp,axis=0) == 0), 'mins are not all are smp0'
         spm = np.asarray([spm0,spm1])
@@ -1421,7 +1422,7 @@ def smin_smax_slmin_slmax(n, xreal, yreal, mx, my, x, y):
             minSepPoints_x[yrealImagInds[smp0Inds]] = np.real(xreal[yrealImagInds[smp0Inds],0])
             minSepPoints_y[yrealImagInds[smp0Inds]] = np.real(yreal[yrealImagInds[smp0Inds],0])
         if len(spm1Inds) > 0:
-            minSep[yrealImagInds[spm1Inds]] = smp0[spm1Inds]
+            minSep[yrealImagInds[spm1Inds]] = spm1[spm1Inds]#smp0[spm1Inds] #the commented is the original which appeared to work flawlessly
             minSepPoints_x[yrealImagInds[spm1Inds]] = np.real(xreal[yrealImagInds[spm1Inds],1])
             minSepPoints_y[yrealImagInds[spm1Inds]] = np.real(yreal[yrealImagInds[spm1Inds],1])
         if len(spp1Inds) > 0:
