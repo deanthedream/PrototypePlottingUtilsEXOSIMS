@@ -34,6 +34,14 @@ w[ind] = 3.477496280463054
 W[ind] = 5.333215834002414
 inc[ind] = 1.025093642138022
 ####
+#### SAVED PLANET FOR Plot Projected, derotated, centered ellipse 
+derotatedInd = 33
+sma[ind] = 5.738800898338014
+e[ind] = 0.29306873405223816
+w[ind] = 4.436383063578559
+W[ind] = 4.240810639711751
+inc[ind] = 1.072680736014668
+####
 
 
 #### Calculate Projected Ellipse Angles and Minor Axis
@@ -824,6 +832,43 @@ print('stop11: ' + str(stop11-start11))
 del start11, stop11
 ####
 
+#DELETE This was a test to see if there was any correlation between number of solutions and star location type
+# #### Calculate Star Location Types for 
+# def classifyStarTypeInds(mx,my,a,b):
+#     sepbp = np.sqrt(mx**2+(b+my)**2)
+#     sepbm = np.sqrt(mx**2+(b-my)**2)
+#     sepap = np.sqrt((a+mx)**2+my**2)
+#     sepam = np.sqrt((a-mx)**2+my**2)
+
+#     #Types of Star Locations In Projected Ellipse
+#     typeInds0 = np.where(sepap < sepbp)[0]
+#     typeInds1 = np.where(sepbp < sepam)[0]
+#     typeInds2 = np.where((sepam < sepbp)*(sepbp < sepap)*(sepbm < sepam))[0]
+#     typeInds3 = np.where(sepam < sepbm)[0]
+#     return typeInds0, typeInds1, typeInds2, typeInds3
+# alltypeInds0, alltypeInds1, alltypeInds2, alltypeInds3 = classifyStarTypeInds(mx,my,a,b)
+# print(len(alltypeInds0) + len(alltypeInds1) + len(alltypeInds2) + len(alltypeInds3))
+# print(np.intersect1d(alltypeInds0,only2RealInds))
+# print(np.intersect1d(alltypeInds1,only2RealInds))
+# print(np.intersect1d(alltypeInds2,only2RealInds))
+# print(np.intersect1d(alltypeInds3,only2RealInds))
+
+# print(len(np.intersect1d(alltypeInds0,yrealAllRealInds)))
+# print(len(np.intersect1d(alltypeInds1,yrealAllRealInds)))
+# print(len(np.intersect1d(alltypeInds2,yrealAllRealInds)))
+# print(len(np.intersect1d(alltypeInds3,yrealAllRealInds)))
+
+# print(len(np.intersect1d(alltypeInds0,yrealImagInds)))
+# print(len(np.intersect1d(alltypeInds1,yrealImagInds)))
+# print(len(np.intersect1d(alltypeInds2,yrealImagInds)))
+# print(len(np.intersect1d(alltypeInds3,yrealImagInds)))
+
+# print(len(alltypeInds0))
+# print(len(alltypeInds1))
+# print(len(alltypeInds2))
+# print(len(alltypeInds3))
+# ####
+
 #### Correct Ellipse Circle Intersections fourInt1 
 seps_fourInt1 = np.sqrt((fourInt_x[:,1]-x[yrealAllRealInds[fourIntInds]])**2 + (fourInt_y[:,1]-y[yrealAllRealInds[fourIntInds]])**2)
 errors_fourInt1 = np.abs(np.sort(-np.abs(np.ones(len(seps_fourInt1)) - seps_fourInt1)))
@@ -1083,6 +1128,91 @@ plotDerotatedIntersectionsMinMaxStarLocBounds(ind, a, b, only2RealInds, typeInds
 stop12 = time.time()
 print('stop12: ' + str(stop12-start12))
 del start12, stop12
+####
+
+#### Plot Derotated Ellipse Separation Extrema
+start12_1 = time.time()
+def plotDerotatedExtrema(ind, a, b, only2RealInds, typeInds0, typeInds1, typeInds2, typeInds3, minSepPoints_x,\
+    minSepPoints_y, yrealAllRealInds, lminSepPoints_x, lminSepPoints_y, fourIntInds, fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y,\
+    twoIntOppositeXInds, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2, num):
+    """
+    """
+    plt.close(num)
+    fig = plt.figure(num=num)
+    ca = plt.gca()
+    ca.axis('equal')
+    plt.scatter([0],[0],color='orange',zorder=25)
+    ## 3D Ellipse
+    vs = np.linspace(start=0,stop=2*np.pi,num=300)
+    #new plot stuff
+    Erange = np.linspace(start=0.,stop=2*np.pi,num=400)
+    plt.plot([-a[ind],a[ind]],[0,0],color='purple',linestyle='--') #major
+    plt.plot([0,0],[-b[ind],b[ind]],color='purple',linestyle='--') #minor
+    xellipsetmp = a[ind]*np.cos(Erange)
+    yellipsetmp = b[ind]*np.sin(Erange)
+    plt.plot(xellipsetmp,yellipsetmp,color='black')
+    plt.scatter(x[ind],y[ind],color='orange',marker='x',zorder=30)
+    if ind in only2RealInds[typeInds0]:
+        plt.scatter(x[ind],y[ind],edgecolors='cyan',marker='o',s=64,facecolors='none')
+    if ind in only2RealInds[typeInds1]:
+        plt.scatter(x[ind],y[ind],edgecolors='red',marker='o',s=64,facecolors='none')
+    if ind in only2RealInds[typeInds2]:
+        plt.scatter(x[ind],y[ind],edgecolors='blue',marker='o',s=64,facecolors='none')
+    if ind in only2RealInds[typeInds3]:
+        plt.scatter(x[ind],y[ind],edgecolors='magenta',marker='o',s=64,facecolors='none')
+
+    c_ae = a[ind]*np.sqrt(1-b[ind]**2/a[ind]**2)
+    plt.scatter([-c_ae,c_ae],[0,0],color='blue')
+
+    # #Plot Min Sep Circle
+    # x_circ = minSep[ind]*np.cos(vs)
+    # y_circ = minSep[ind]*np.sin(vs)
+    # plt.plot(x[ind]+x_circ,y[ind]+y_circ,color='cyan')
+    # #Plot Max Sep Circle
+    # x_circ2 = maxSep[ind]*np.cos(vs)
+    # y_circ2 = maxSep[ind]*np.sin(vs)
+    # plt.plot(x[ind]+x_circ2,y[ind]+y_circ2,color='red')
+    #Plot Min Sep Ellipse Intersection
+    plt.scatter(minSepPoints_x[ind],minSepPoints_y[ind],color='cyan',marker='D',zorder=25)
+    #Plot Max Sep Ellipse Intersection
+    plt.scatter(maxSepPoints_x[ind],maxSepPoints_y[ind],color='red',marker='D',zorder=25)
+    #### Plot star to min line
+    plt.plot([x[ind],minSepPoints_x[ind]], [y[ind],minSepPoints_y[ind]],color='cyan',zorder=25)
+    #### Plot star to max line
+    plt.plot([x[ind],maxSepPoints_x[ind]], [y[ind],maxSepPoints_y[ind]],color='red',zorder=25)
+
+    if ind in yrealAllRealInds:
+        tind = np.where(yrealAllRealInds == ind)[0]
+        # #Plot lminSep Circle
+        # x_circ2 = lminSep[tind]*np.cos(vs)
+        # y_circ2 = lminSep[tind]*np.sin(vs)
+        # plt.plot(x[ind]+x_circ2,y[ind]+y_circ2,color='magenta')
+        # #Plot lmaxSep Circle
+        # x_circ2 = lmaxSep[tind]*np.cos(vs)
+        # y_circ2 = lmaxSep[tind]*np.sin(vs)
+        # plt.plot(x[ind]+x_circ2,y[ind]+y_circ2,color='gold')
+        #### Plot Local Min
+        plt.scatter(lminSepPoints_x[tind], lminSepPoints_y[tind],color='magenta',marker='D',zorder=25)
+        #### Plot Local Max Points
+        plt.scatter(lmaxSepPoints_x[tind], lmaxSepPoints_y[tind],color='gold',marker='D',zorder=25)
+        #### Plot star to local min line
+        plt.plot([x[ind],lminSepPoints_x[tind]], [y[ind],lminSepPoints_y[tind]],color='magenta',zorder=25)
+        #### Plot star to local max line
+        plt.plot([x[ind],lmaxSepPoints_x[tind]], [y[ind],lmaxSepPoints_y[tind]],color='gold',zorder=25)
+
+    plt.xlim([-1.2*a[ind],1.2*a[ind]])
+    plt.ylim([-1.2*b[ind],1.2*b[ind]])
+    plt.xlabel('X Position In Image Plane (AU)', weight='bold')
+    plt.ylabel('Y Position In Image Plane (AU)', weight='bold')
+    plt.show(block=False)
+
+num = 961
+plotDerotatedExtrema(derotatedInd, a, b, only2RealInds, typeInds0, typeInds1, typeInds2, typeInds3, minSepPoints_x,\
+        minSepPoints_y, yrealAllRealInds, lminSepPoints_x, lminSepPoints_y, fourIntInds, fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y,\
+        twoIntOppositeXInds, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2, num)
+stop12_1 = time.time()
+print('stop12_1: ' + str(stop12_1-start12_1))
+del start12_1, stop12_1
 ####
 
 
