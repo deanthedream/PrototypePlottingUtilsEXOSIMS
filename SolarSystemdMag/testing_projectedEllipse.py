@@ -107,6 +107,7 @@ plotProjectedEllipse(ind, sma, e, W, w, inc, theta_OpQ_X, theta_OpQp_X, dmajorp,
 stop2 = time.time()
 print('stop2: ' + str(stop2-start2))
 del start2, stop2
+plt.close(877)
 ####
 
 
@@ -303,6 +304,7 @@ plot3DEllipseto2DEllipseProjectionDiagram(ind, sma, e, W, w, inc, num=num)
 stop3 = time.time()
 print('stop3: ' + str(stop3-start3))
 del start3, stop3
+plt.close(num)
 ####
 
 
@@ -573,11 +575,12 @@ def plotReorientationMethod(ind, sma, e, W, w, inc, Op, theta_OpQ_X, theta_OpQp_
 
     plt.show(block=False)
 
-num=880
+num=883
 plotReorientationMethod(ind, sma, e, W, w, inc, Op, theta_OpQ_X, theta_OpQp_X, dmajorp, dminorp, num)
 stop10 = time.time()
 print('stop10: ' + str(stop10-start10))
 del start10, stop10
+plt.close(num)
 ####
 
 
@@ -1128,6 +1131,7 @@ plotDerotatedIntersectionsMinMaxStarLocBounds(ind, a, b, only2RealInds, typeInds
 stop12 = time.time()
 print('stop12: ' + str(stop12-start12))
 del start12, stop12
+plt.close(num)
 ####
 
 #### Plot Derotated Ellipse Separation Extrema
@@ -1997,6 +2001,7 @@ plt.plot(xran, ylineQ4, color='red', linestyle='-.')
 plt.xlim([-1.2*a[ind],1.2*a[ind]])
 plt.ylim([-1.2*b[ind],1.2*b[ind]])
 plt.show(block=False)
+plt.close(num)
 ####
 
 
