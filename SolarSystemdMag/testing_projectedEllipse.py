@@ -498,6 +498,8 @@ A, B, C, D = quarticCoefficients_smin_smax_lmin_lmax(a.astype('complex128'), b, 
 xreal, delta, P, D2, R, delta_0 = quarticSolutions_ellipse_to_Quarticipynb(A.astype('complex128'), B, C, D)
 del A, B, C, D #delting for memory efficiency
 assert np.max(np.nanmin(np.abs(np.imag(xreal)),axis=1)) < 1e-5, 'At least one row has min > 1e-5' #this ensures each row has a solution
+#print(w[np.argmax(np.nanmin(np.abs(np.imag(xreal)),axis=1))]) #prints the argument of perigee (assert above fails on 1.57 or 3pi/4)
+#Failure of the above occured where w=4.712 which is approx 1.5pi
 #NOTE: originally 1e-15 but there were some with x=1e-7 and w=pi/2, 5e-6 from 
 tind = np.argmax(np.nanmin(np.abs(np.imag(xreal)),axis=1)) #DELETE
 tinds = np.argsort(np.nanmin(np.abs(np.imag(xreal)),axis=1)) #DELETE
@@ -872,58 +874,70 @@ del start11, stop11
 # print(len(alltypeInds3))
 # ####
 
+#### Generalized Correct Ellipse Circle Intersection Fixer
+def intersectionFixer_pm(x, y, sep_xlocs, sep_ylocs, afflictedIndsxy, rs):
+    """
+    """
+    # seps = np.sqrt((sep_xlocs-x[afflictedIndsxy])**2 + (sep_ylocs-y[afflictedIndsxy])**2) #calculate error for all TwoIntSameY
+    # error = np.abs(np.sort(-np.abs(np.ones(len(seps)) - seps))) #calculate error for all TwoIntSameY
+    # largeErrorInds = np.where(error > 1e-7)[0] #get inds of large errors
+    # indsToFix = np.argsort(-np.abs(np.ones(len(seps)) - seps))[largeErrorInds] #inds of TwoIndSameY
+    # seps_deciding = np.sqrt((sep_xlocs[indsToFix]-x[afflictedIndsxy[indsToFix]])**2 + (-sep_ylocs[indsToFix]-y[afflictedIndsxy[indsToFix]])**2) #calculate error for indsToFix
+    # error_deciding = -np.abs(np.ones(len(seps_deciding)) - seps_deciding) #calculate errors for swapping y of the candidated to swap y for
+    # indsToSwap = np.where(np.abs(error_deciding) < np.abs(error[indsToFix]))[0] #find where the errors produced by swapping y is lowered
+    # sep_ylocs[indsToFix[indsToSwap]] = -sep_ylocs[indsToFix[indsToSwap]] #here we fix the y values where they should be fixed by swapping y values
+    # seps = np.sqrt((sep_xlocs-x[afflictedIndsxy])**2 + (sep_ylocs-y[afflictedIndsxy])**2)
+    # error = np.abs(np.sort(-np.abs(np.ones(len(seps)) - seps)))
+    # indsToFix = np.argsort(-np.abs(np.ones(len(seps)) - seps))[np.where(error > 1e-7)[0]]
+
+    seps = np.sqrt((sep_xlocs-x[afflictedIndsxy])**2 + (sep_ylocs-y[afflictedIndsxy])**2) #calculate error for all TwoIntSameY
+    error = np.abs(rs - seps) #calculate error for all TwoIntSameY
+    indsToFix = np.where(error > 1e-7)[0] #get inds of large errors
+    #DELETEerror = np.abs(np.sort(-np.abs(rs[afflictedIndsxy] - seps))) #calculate error for all TwoIntSameY
+    #DELETElargeErrorInds = np.where(error > 1e-7)[0] #get inds of large errors
+    #DELETEindsToFix = np.argsort(-np.abs(rs[afflictedIndsxy] - seps))[largeErrorInds] #inds of TwoIndSameY
+    if len(indsToFix) == 0: #There are no inds to fix
+        return sep_xlocs, sep_ylocs
+
+    seps_decidingpm = np.sqrt((sep_xlocs[indsToFix]-x[afflictedIndsxy[indsToFix]])**2 + (-sep_ylocs[indsToFix]-y[afflictedIndsxy[indsToFix]])**2) #calculate error for indsToFix
+    seps_decidingmp = np.sqrt((-sep_xlocs[indsToFix]-x[afflictedIndsxy[indsToFix]])**2 + (sep_ylocs[indsToFix]-y[afflictedIndsxy[indsToFix]])**2) #calculate error for indsToFix
+    seps_decidingmm = np.sqrt((-sep_xlocs[indsToFix]-x[afflictedIndsxy[indsToFix]])**2 + (-sep_ylocs[indsToFix]-y[afflictedIndsxy[indsToFix]])**2) #calculate error for indsToFix
+
+    #error_decidingpm = -np.abs(np.ones(len(seps_decidingpm)) - seps_decidingpm) #calculate errors for swapping y of the candidated to swap y for
+    #error_decidingmp = -np.abs(np.ones(len(seps_decidingmp)) - seps_decidingmp) #calculate errors for swapping y of the candidated to swap y for
+    #error_decidingmm = -np.abs(np.ones(len(seps_decidingmm)) - seps_decidingmm) #calculate errors for swapping y of the candidated to swap y for
+    #DELETEerror_deciding = np.array([error,-np.abs(np.ones(len(seps_decidingpm)) - seps_decidingpm),-np.abs(np.ones(len(seps_decidingmp)) - seps_decidingmp),-np.abs(np.ones(len(seps_decidingmm)) - seps_decidingmm)])
+    error_deciding = np.stack((error[indsToFix],np.abs(rs[indsToFix] - seps_decidingpm),np.abs(rs[indsToFix] - seps_decidingmp),np.abs(rs[indsToFix] - seps_decidingmm)),axis=1)
+
+
+    minErrorInds = np.argmin(error_deciding,axis=1)
+
+    tmpxlocs = np.asarray([sep_xlocs,sep_xlocs,-sep_xlocs,-sep_xlocs]).T
+    sep_xlocs[indsToFix] = tmpxlocs[indsToFix,minErrorInds]
+    tmpylocs = np.asarray([sep_ylocs,-sep_ylocs,sep_ylocs,-sep_ylocs]).T
+    sep_ylocs[indsToFix] = tmpylocs[indsToFix,minErrorInds]
+
+    #indsToSwap = np.where(np.abs(error_deciding) < np.abs(error[indsToFix]))[0] #find where the errors produced by swapping y is lowered
+    #sep_ylocs[indsToFix[indsToSwap]] = -sep_ylocs[indsToFix[indsToSwap]] #here we fix the y values where they should be fixed by swapping y values
+    #seps = np.sqrt((sep_xlocs-x[afflictedIndsxy])**2 + (sep_ylocs-y[afflictedIndsxy])**2)
+    #error = np.abs(np.sort(-np.abs(np.ones(len(seps)) - seps)))
+    #indsToFix = np.argsort(-np.abs(np.ones(len(seps)) - seps))[np.where(error > 1e-7)[0]]
+
+    return sep_xlocs, sep_ylocs
+
+
 #### Correct Ellipse Circle Intersections fourInt1 
-seps_fourInt1 = np.sqrt((fourInt_x[:,1]-x[yrealAllRealInds[fourIntInds]])**2 + (fourInt_y[:,1]-y[yrealAllRealInds[fourIntInds]])**2)
-errors_fourInt1 = np.abs(np.sort(-np.abs(np.ones(len(seps_fourInt1)) - seps_fourInt1)))
-indsToFix = np.argsort(-np.abs(np.ones(len(seps_fourInt1)) - seps_fourInt1))[np.where(errors_fourInt1 > 1e-7)[0]]
-fourInt_y[indsToFix,1] = -fourInt_y[indsToFix,1]
-seps_fourInt1 = np.sqrt((fourInt_x[:,1]-x[yrealAllRealInds[fourIntInds]])**2 + (fourInt_y[:,1]-y[yrealAllRealInds[fourIntInds]])**2)
-errors_fourInt1 = np.abs(np.sort(-np.abs(np.ones(len(seps_fourInt1)) - seps_fourInt1)))
-indsToFix = np.argsort(-np.abs(np.ones(len(seps_fourInt1)) - seps_fourInt1))[np.where(errors_fourInt1 > 1e-7)[0]]
-del seps_fourInt1, errors_fourInt1, indsToFix
-####
+fourInt_x[:,0], fourInt_y[:,0] = intersectionFixer_pm(x, y, fourInt_x[:,0], fourInt_y[:,0], yrealAllRealInds[fourIntInds], np.ones(len(fourIntInds)))
+fourInt_x[:,1], fourInt_y[:,1] = intersectionFixer_pm(x, y, fourInt_x[:,1], fourInt_y[:,1], yrealAllRealInds[fourIntInds], np.ones(len(fourIntInds)))
+#### Correct Ellipse Circle Intersections twoIntSameY0
+twoIntSameY_x[:,0], twoIntSameY_y[:,0] = intersectionFixer_pm(x, y, twoIntSameY_x[:,0], twoIntSameY_y[:,0], yrealAllRealInds[twoIntSameYInds], np.ones(len(twoIntSameYInds)))
 #### Correct Ellipse Circle Intersections twoIntSameY1 
-seps_TwoIntSameY1 = np.sqrt((twoIntSameY_x[:,1]-x[yrealAllRealInds[twoIntSameYInds]])**2 + (twoIntSameY_y[:,1]-y[yrealAllRealInds[twoIntSameYInds]])**2) #calculate error for all TwoIntSameY
-errors_TwoIntSameY1 = np.abs(np.sort(-np.abs(np.ones(len(seps_TwoIntSameY1)) - seps_TwoIntSameY1))) #calculate error for all TwoIntSameY
-largeErrorInds = np.where(errors_TwoIntSameY1 > 1e-7)[0] #get inds of large errors
-indsToFix = np.argsort(-np.abs(np.ones(len(seps_TwoIntSameY1)) - seps_TwoIntSameY1))[largeErrorInds] #inds of TwoIndSameY
-seps_TwoIntSameY1_deciding = np.sqrt((twoIntSameY_x[indsToFix,1]-x[yrealAllRealInds[twoIntSameYInds[indsToFix]]])**2 + (-twoIntSameY_y[indsToFix,1]-y[yrealAllRealInds[twoIntSameYInds[indsToFix]]])**2) #calculate error for indsToFix
-errors_TwoIntSameY1_deciding = -np.abs(np.ones(len(seps_TwoIntSameY1_deciding)) - seps_TwoIntSameY1_deciding) #calculate errors for swapping y of the candidated to swap y for
-indsToSwap = np.where(np.abs(errors_TwoIntSameY1_deciding) < np.abs(errors_TwoIntSameY1[indsToFix]))[0] #find where the errors produced by swapping y is lowered
-twoIntSameY_y[indsToFix[indsToSwap],1] = -twoIntSameY_y[indsToFix[indsToSwap],1] #here we fix the y values where they should be fixed by swapping y values
-seps_TwoIntSameY1 = np.sqrt((twoIntSameY_x[:,1]-x[yrealAllRealInds[twoIntSameYInds]])**2 + (twoIntSameY_y[:,1]-y[yrealAllRealInds[twoIntSameYInds]])**2)
-errors_TwoIntSameY1 = np.abs(np.sort(-np.abs(np.ones(len(seps_TwoIntSameY1)) - seps_TwoIntSameY1)))
-indsToFix = np.argsort(-np.abs(np.ones(len(seps_TwoIntSameY1)) - seps_TwoIntSameY1))[np.where(errors_TwoIntSameY1 > 1e-7)[0]]
-del seps_TwoIntSameY1, errors_TwoIntSameY1, largeErrorInds, indsToFix, seps_TwoIntSameY1_deciding, errors_TwoIntSameY1_deciding, indsToSwap
-####
+twoIntSameY_x[:,1], twoIntSameY_y[:,1] = intersectionFixer_pm(x, y, twoIntSameY_x[:,1], twoIntSameY_y[:,1], yrealAllRealInds[twoIntSameYInds], np.ones(len(twoIntSameYInds)))
 #### Correct Ellipse Circle Intersections twoIntOppositeX0
-seps_twoIntOppositeX0 = np.sqrt((twoIntOppositeX_x[:,0]-x[yrealAllRealInds[twoIntOppositeXInds]])**2 + (twoIntOppositeX_y[:,0]-y[yrealAllRealInds[twoIntOppositeXInds]])**2) #calculate error for all twoIntOppositeX
-errors_twoIntOppositeX0 = np.abs(np.sort(-np.abs(np.ones(len(seps_twoIntOppositeX0)) - seps_twoIntOppositeX0))) #calculate error for all twoIntOppositeX
-largeErrorInds = np.where(errors_twoIntOppositeX0 > 1e-7)[0] #get inds of large errors
-indsToFix = np.argsort(-np.abs(np.ones(len(seps_twoIntOppositeX0)) - seps_twoIntOppositeX0))[largeErrorInds] #inds of twoIntOppositeX
-seps_twoIntOppositeX0_deciding = np.sqrt((twoIntOppositeX_x[indsToFix,0]-x[yrealAllRealInds[twoIntOppositeXInds[indsToFix]]])**2 + (-twoIntOppositeX_y[indsToFix,0]-y[yrealAllRealInds[twoIntOppositeXInds[indsToFix]]])**2) #calculate error for indsToFix
-errors_twoIntOppositeX0_deciding = -np.abs(np.ones(len(seps_twoIntOppositeX0_deciding)) - seps_twoIntOppositeX0_deciding) #calculate errors for swapping y of the candidated to swap y for
-indsToSwap = np.where(np.abs(errors_twoIntOppositeX0_deciding) < np.abs(errors_twoIntOppositeX0[indsToFix]))[0] #find where the errors produced by swapping y is lowered
-twoIntOppositeX_y[indsToFix[indsToSwap],0] = -twoIntOppositeX_y[indsToFix[indsToSwap],0] #here we fix the y values where they should be fixed by swapping y values
-seps_twoIntOppositeX0 = np.sqrt((twoIntOppositeX_x[:,0]-x[yrealAllRealInds[twoIntOppositeXInds]])**2 + (twoIntOppositeX_y[:,0]-y[yrealAllRealInds[twoIntOppositeXInds]])**2)
-errors_twoIntOppositeX0 = np.abs(np.sort(-np.abs(np.ones(len(seps_twoIntOppositeX0)) - seps_twoIntOppositeX0)))
-indsToFix = np.argsort(-np.abs(np.ones(len(seps_twoIntOppositeX0)) - seps_twoIntOppositeX0))[np.where(errors_twoIntOppositeX0 > 1e-7)[0]]
-del seps_twoIntOppositeX0, errors_twoIntOppositeX0, largeErrorInds, indsToFix, seps_twoIntOppositeX0_deciding, errors_twoIntOppositeX0_deciding, indsToSwap
-#### Correct Ellipse Circle Intersections twoIntOppositeX1
-seps_twoIntOppositeX1 = np.sqrt((twoIntOppositeX_x[:,1]-x[yrealAllRealInds[twoIntOppositeXInds]])**2 + (twoIntOppositeX_y[:,1]-y[yrealAllRealInds[twoIntOppositeXInds]])**2) #calculate error for all twoIntOppositeX
-errors_twoIntOppositeX1 = np.abs(np.sort(-np.abs(np.ones(len(seps_twoIntOppositeX1)) - seps_twoIntOppositeX1))) #calculate error for all twoIntOppositeX
-largeErrorInds = np.where(errors_twoIntOppositeX1 > 1e-7)[0] #get inds of large errors
-indsToFix = np.argsort(-np.abs(np.ones(len(seps_twoIntOppositeX1)) - seps_twoIntOppositeX1))[largeErrorInds] #inds of twoIntOppositeX
-seps_twoIntOppositeX1_deciding = np.sqrt((twoIntOppositeX_x[indsToFix,1]-x[yrealAllRealInds[twoIntOppositeXInds[indsToFix]]])**2 + (-twoIntOppositeX_y[indsToFix,1]-y[yrealAllRealInds[twoIntOppositeXInds[indsToFix]]])**2) #calculate error for indsToFix
-errors_twoIntOppositeX1_deciding = -np.abs(np.ones(len(seps_twoIntOppositeX1_deciding)) - seps_twoIntOppositeX1_deciding) #calculate errors for swapping y of the candidated to swap y for
-indsToSwap = np.where(np.abs(errors_twoIntOppositeX1_deciding) < np.abs(errors_twoIntOppositeX1[indsToFix]))[0] #find where the errors produced by swapping y is lowered
-twoIntOppositeX_y[indsToFix[indsToSwap],1] = -twoIntOppositeX_y[indsToFix[indsToSwap],1] #here we fix the y values where they should be fixed by swapping y values
-seps_twoIntOppositeX1 = np.sqrt((twoIntOppositeX_x[:,1]-x[yrealAllRealInds[twoIntOppositeXInds]])**2 + (twoIntOppositeX_y[:,1]-y[yrealAllRealInds[twoIntOppositeXInds]])**2)
-errors_twoIntOppositeX1 = np.abs(np.sort(-np.abs(np.ones(len(seps_twoIntOppositeX1)) - seps_twoIntOppositeX1)))
-indsToFix = np.argsort(-np.abs(np.ones(len(seps_twoIntOppositeX1)) - seps_twoIntOppositeX1))[np.where(errors_twoIntOppositeX1 > 1e-7)[0]]
-del seps_twoIntOppositeX1, errors_twoIntOppositeX1, largeErrorInds, indsToFix, seps_twoIntOppositeX1_deciding, errors_twoIntOppositeX1_deciding, indsToSwap
-####
-#NOTE there is a little extra that may be gained by doing additional solution x or y swapping, driving these persisting residuals to 0.
+twoIntOppositeX_x[:,0], twoIntOppositeX_y[:,0] = intersectionFixer_pm(x, y, twoIntOppositeX_x[:,0], twoIntOppositeX_y[:,0], yrealAllRealInds[twoIntOppositeXInds], np.ones(len(twoIntOppositeXInds)))
+#### Correct Ellipse Circle Intersections twoIntOppositeX1 
+twoIntOppositeX_x[:,1], twoIntOppositeX_y[:,1] = intersectionFixer_pm(x, y, twoIntOppositeX_x[:,1], twoIntOppositeX_y[:,1], yrealAllRealInds[twoIntOppositeXInds], np.ones(len(twoIntOppositeXInds)))
+#### COULD RUN ON OTHER CASES
 
 
 
