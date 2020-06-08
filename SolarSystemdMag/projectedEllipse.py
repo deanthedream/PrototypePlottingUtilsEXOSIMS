@@ -1404,7 +1404,16 @@ def smin_smax_slmin_slmax(n, xreal, yreal, mx, my, x, y):
         spm = np.asarray([spm0,spm1])
         assert np.all(np.argmin(spm,axis=0) == 1), 'mins are not all are spm1'
         spp = np.asarray([spp0,spp1])
-        assert np.all(np.argmin(spp,axis=0) == 1), 'mins are not all are spp1'
+        #DELETEassert np.all(np.argmin(spp,axis=0) == 1), 'mins are not all are spp1'
+        if not np.all(np.argmin(spp,axis=0) == 1):
+            #do some additional checking
+            print('mins are not all are spp1')
+            inds = np.where(np.argmin(spp,axis=0) == 1)[0] #inds to check
+            if np.all(np.abs(spp0[inds] - spp1[inds]) < 1e-8):
+                tmp = spp0[inds]
+                spp0[inds] = spp1[inds]
+                spp1[inds] = tmp
+            spp = np.asarray([spp0,spp1])
         #above says smallest must be one of these: smm1, smp0, spm1, spp1
         #The following are where each of these separations are 0
         smm1Inds = np.where((smm1 < smp0)*(smm1 < spm1)*(smm1 < spp1))[0]
