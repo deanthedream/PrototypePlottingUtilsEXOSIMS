@@ -1577,9 +1577,10 @@ def timeFromTrueAnomaly(nu,T,e):
     Returns:
 
     """
-    E = np.arccos((e+np.cos(nu))/(1+e*np.cos(nu)))
+    #E = np.arccos((e+np.cos(nu))/(1+e*np.cos(nu)))
+    E = np.arctan2(np.sqrt(1-e**2)*np.sin(nu),e+np.cos(nu))
     if nu.shape == ():
-        if nu < np.pi:
+        if nu < np.pi: #replace with np.mod instead?
             E = 2*np.pi + E
     else: #nu is a numpy array
         inds = np.where(nu < 0)[0]
