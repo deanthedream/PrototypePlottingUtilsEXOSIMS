@@ -27,20 +27,36 @@ sma = sma.to('AU').value
 ####
 
 #### SAVED PLANET FOR Plot 3D Ellipse to 2D Ellipse Projection Diagram
-ind = 23 #22
-sma[ind] = 1.2164387563540457
-e[ind] = 0.531071885292766
-w[ind] = 3.477496280463054
-W[ind] = 5.333215834002414
-inc[ind] = 1.025093642138022
+ellipseProjection3Dto2DInd = 23 #22
+sma[ellipseProjection3Dto2DInd] = 1.2164387563540457
+e[ellipseProjection3Dto2DInd] = 0.531071885292766
+w[ellipseProjection3Dto2DInd] = 3.477496280463054
+W[ellipseProjection3Dto2DInd] = 5.333215834002414
+inc[ellipseProjection3Dto2DInd] = 1.025093642138022
 ####
 #### SAVED PLANET FOR Plot Projected, derotated, centered ellipse 
 derotatedInd = 33
-sma[ind] = 5.738800898338014
-e[ind] = 0.29306873405223816
-w[ind] = 4.436383063578559
-W[ind] = 4.240810639711751
-inc[ind] = 1.072680736014668
+sma[derotatedInd] = 5.738800898338014
+e[derotatedInd] = 0.29306873405223816
+w[derotatedInd] = 4.436383063578559
+W[derotatedInd] = 4.240810639711751
+inc[derotatedInd] = 1.072680736014668
+####
+#### SAVED PLANET FOR Plot Sep vs nu
+sepvsnuInd = 24
+sma[sepvsnuInd] = 1.817006521549392
+e[sepvsnuInd] = 0.08651509983996385
+W[sepvsnuInd] = 3.3708439025758006
+w[sepvsnuInd] = 4.862116908343989
+inc[sepvsnuInd] = 1.2491324942585256
+####
+#### SAVED PLANET FOR Plot Sep vs t
+sepvstInd = 25
+sma[sepvstInd] = 2.204556035394906
+e[sepvstInd] = 0.2898368164549611
+W[sepvstInd] = 4.787284415551434
+w[sepvstInd] = 2.71176523941224
+inc[sepvstInd] = 1.447634036719772
 ####
 
 
@@ -49,8 +65,6 @@ start0 = time.time()
 dmajorp, dminorp, Psi, psi, theta_OpQ_X, theta_OpQp_X, dmajorp_v2, dminorp_v2, Psi_v2, psi_v2 = projected_apbpPsipsi(sma,e,W,w,inc)
 stop0 = time.time()
 print('stop0: ' + str(stop0-start0))
-#DELETEO = projected_Op(sma,e,W,w,inc)
-#DELETEc_3D_projected = projected_projectedLinearEccentricity(sma,e,W,w,inc)
 #3D Ellipse Center
 start1 = time.time()
 Op = projected_Op(sma,e,W,w,inc)
@@ -231,8 +245,6 @@ def plot3DEllipseto2DEllipseProjectionDiagram(ind, sma, e, W, w, inc, num):
     ax.plot([xscaletmp*(rbp[0][0] - (rper[0][0] + rapo[0][0])/2) + (rper[0][0] + rapo[0][0])/2,xscaletmp*(rbp[0][0] - (rper[0][0] + rapo[0][0])/2) + (rper[0][0] + rapo[0][0])/2],\
             [xscaletmp*(rbp[1][0] - (rper[1][0] + rapo[1][0])/2) + (rper[1][0] + rapo[1][0])/2,xscaletmp*(rbp[1][0] - (rper[1][0] + rapo[1][0])/2) + (rper[1][0] + rapo[1][0])/2],\
             [xscaletmp*(rbp[2][0] - (rper[2][0] + rapo[2][0])/2) + (rper[2][0] + rapo[2][0])/2,1.3*min_z],color='black',linestyle=':') #KK'
-
-
 
     ## Plot Conjugate Diameters
     ax.plot([rbp[0][0],rbm[0][0]],[rbp[1][0],rbm[1][0]],[1.3*min_z,1.3*min_z],color='blue',linestyle='-',linewidth=2) #2D ellipse minor+ projection
@@ -430,7 +442,6 @@ del start4, stop4
 plt.close(num)
 ####
 
-
 #### Derotate Ellipse
 start5 = time.time()
 x, y, Phi = derotatedEllipse(theta_OpQ_X, theta_OpQp_X, Op)
@@ -517,7 +528,6 @@ stop8 = time.time()
 print('stop8: ' + str(stop8-start8))
 del start8, stop8
 
-
 #### Calculate Minimum, Maximum, Local Minimum, Local Maximum Separations
 start9 = time.time()
 minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y, minSep, maxSep, lminSep, lmaxSep, yrealAllRealInds, yrealImagInds = smin_smax_slmin_slmax(n, xreal, yreal, mx, my, x, y)
@@ -584,34 +594,6 @@ print('stop10: ' + str(stop10-start10))
 del start10, stop10
 plt.close(num)
 ####
-
-
-# #Note: the solving method breaks down when the inclination is nearly zero and the star 
-# #Correction for 0 inclination planets where star is nearly centers in x and y
-# zeroIncCentralStarPlanets = np.where((np.abs(inc-np.pi/2) < 1e-3)*(mx < 5*1e-2)*(my < 1e-5))[0]
-# minSep2[zeroIncCentralStarPlanets] = s_mplminSeps2[zeroIncCentralStarPlanets]
-# minSepPoints2_x[zeroIncCentralStarPlanets] = lminSepPoints2_x[zeroIncCentralStarPlanets]
-# minSepPoints2_y[zeroIncCentralStarPlanets] = -lminSepPoints2_y[zeroIncCentralStarPlanets]
-
-#### Old Method
-# start5 = time.time()
-# yreal = ellipseYFromX(xreal, a, b)
-# stop5 = time.time()
-# print('stop5: ' + str(stop5-start5))
-
-#### Calculate Separations
-# start6 = time.time()
-# s_mp, s_pm, minSep, maxSep = calculateSeparations(xreal, yreal, mx, my)
-# stop6 = time.time()
-# print('stop6: ' + str(stop6-start6))
-
-#### Calculate Min Max Separation Points
-# start7 = time.time()
-# minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y, minSep, maxSep, s_mplminSeps, s_mplmaxSeps = sepsMinMaxLminLmax(minSep, maxSep, s_mp, xreal, yreal, x, y)
-# stop7 = time.time()
-# print('stop7: ' + str(stop7-start7))
-####
-
 
 #### Memory Usage
 memories = [getsizeof(inc),getsizeof(W),getsizeof(w),getsizeof(sma),getsizeof(e),getsizeof(p),getsizeof(Rp),getsizeof(dmajorp),getsizeof(dminorp),getsizeof(Psi),getsizeof(psi),getsizeof(theta_OpQ_X),\
@@ -836,43 +818,6 @@ stop11 = time.time()
 print('stop11: ' + str(stop11-start11))
 del start11, stop11
 ####
-
-#DELETE This was a test to see if there was any correlation between number of solutions and star location type
-# #### Calculate Star Location Types for 
-# def classifyStarTypeInds(mx,my,a,b):
-#     sepbp = np.sqrt(mx**2+(b+my)**2)
-#     sepbm = np.sqrt(mx**2+(b-my)**2)
-#     sepap = np.sqrt((a+mx)**2+my**2)
-#     sepam = np.sqrt((a-mx)**2+my**2)
-
-#     #Types of Star Locations In Projected Ellipse
-#     typeInds0 = np.where(sepap < sepbp)[0]
-#     typeInds1 = np.where(sepbp < sepam)[0]
-#     typeInds2 = np.where((sepam < sepbp)*(sepbp < sepap)*(sepbm < sepam))[0]
-#     typeInds3 = np.where(sepam < sepbm)[0]
-#     return typeInds0, typeInds1, typeInds2, typeInds3
-# alltypeInds0, alltypeInds1, alltypeInds2, alltypeInds3 = classifyStarTypeInds(mx,my,a,b)
-# print(len(alltypeInds0) + len(alltypeInds1) + len(alltypeInds2) + len(alltypeInds3))
-# print(np.intersect1d(alltypeInds0,only2RealInds))
-# print(np.intersect1d(alltypeInds1,only2RealInds))
-# print(np.intersect1d(alltypeInds2,only2RealInds))
-# print(np.intersect1d(alltypeInds3,only2RealInds))
-
-# print(len(np.intersect1d(alltypeInds0,yrealAllRealInds)))
-# print(len(np.intersect1d(alltypeInds1,yrealAllRealInds)))
-# print(len(np.intersect1d(alltypeInds2,yrealAllRealInds)))
-# print(len(np.intersect1d(alltypeInds3,yrealAllRealInds)))
-
-# print(len(np.intersect1d(alltypeInds0,yrealImagInds)))
-# print(len(np.intersect1d(alltypeInds1,yrealImagInds)))
-# print(len(np.intersect1d(alltypeInds2,yrealImagInds)))
-# print(len(np.intersect1d(alltypeInds3,yrealImagInds)))
-
-# print(len(alltypeInds0))
-# print(len(alltypeInds1))
-# print(len(alltypeInds2))
-# print(len(alltypeInds3))
-# ####
 
 #### Generalized Correct Ellipse Circle Intersection Fixer
 def intersectionFixer_pm(x, y, sep_xlocs, sep_ylocs, afflictedIndsxy, rs):
@@ -1618,45 +1563,6 @@ plt.close(num)
 ####
 
 
-
-#DELETE code for finding correct nu values in stuff above
-# ind = yrealAllRealInds[twoIntSameYInds[np.argsort(-errors_twoIntSameY0)[0]]]
-# #ind = yrealAllRealInds[twoIntSameYInds[0]]
-# plotRerotatedFromNus(ind, sma[ind], e[ind], W[ind], w[ind], inc[ind], Op[:,ind], yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds,\
-#     nu_minSepPoints, nu_maxSepPoints, nu_lminSepPoints, nu_lmaxSepPoints, nu_fourInt, nu_twoIntSameY, nu_twoIntOppositeX, nu_IntersectionsOnly2,\
-#     twoIntSameY_x, twoIntSameY_y, num=8000)
-
-# from scipy.optimize import fsolve
-# def errorFunc(x,sma,e,W,w,inc):
-#     """
-#     """
-#     r_0 = xyz_3Dellipse(sma,e,W,w,inc,x)
-#     error = np.abs(1-np.sqrt(r_0[0,0]**2 + r_0[1,0]**2))
-#     return error
-# yind = np.where(ind == yrealAllRealInds[twoIntSameYInds])[0]
-# out0 = fsolve(errorFunc,nu_twoIntSameY[yind,0],args=(sma[ind],e[ind],W[ind],w[ind],inc[ind]))
-# out1 = fsolve(errorFunc,nu_twoIntSameY[yind,1],args=(sma[ind],e[ind],W[ind],w[ind],inc[ind]))
-# print('Goal0: ' + str(out0))
-# print('Goal0: ' + str(out0 - 2*np.pi))
-# print('Goal0: ' + str(out0 + np.pi))
-# print('Goal1: ' + str(out1))
-# print('Goal1: ' + str(out1 - 2*np.pi))
-# print('Goal1: ' + str(out1 + np.pi))
-# print('Goal1: ' + str(np.pi - out1))
-# print(nu_twoIntSameY[yind,0])
-# print(2*np.pi - nu_twoIntSameY[yind,0])
-# print(np.pi - nu_twoIntSameY[yind,0])
-# print(nu_twoIntSameY[yind,1])
-# print(2*np.pi - nu_twoIntSameY[yind,1])
-# print(np.pi - nu_twoIntSameY[yind,1])
-# rout = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],0.372)
-# sepout = np.sqrt(rout[0]**2 + rout[1]**2)
-# print(sepout)
-
-
-
-
-
 #### Redo Significant Point plot Using these Nu
 num=3690
 plt.close(num)
@@ -1741,10 +1647,6 @@ ca.axis('equal')
 plt.show(block=False)
 ####
 
-
-
-
-
 #### Plot separation vs nu
 def plotSeparationvsnu(ind, sma, e, W, w, inc, minSep, maxSep, lminSep, lmaxSep, \
         nu_minSepPoints, nu_maxSepPoints, nu_lminSepPoints, nu_lmaxSepPoints,\
@@ -1779,10 +1681,6 @@ def plotSeparationvsnu(ind, sma, e, W, w, inc, minSep, maxSep, lminSep, lmaxSep,
 
     if ind in yrealAllRealInds[fourIntInds]:
         yind = np.where(yrealAllRealInds[fourIntInds] == ind)[0]
-        # t_fourInt0 = timeFromTrueAnomaly(nu_fourInt[yind,0],periods[ind],e[ind])
-        # t_fourInt1 = timeFromTrueAnomaly(nu_fourInt[yind,1],periods[ind],e[ind])
-        # t_fourInt2 = timeFromTrueAnomaly(nu_fourInt[yind,2],periods[ind],e[ind])
-        # t_fourInt3 = timeFromTrueAnomaly(nu_fourInt[yind,3],periods[ind],e[ind])
         r_fourInt0 = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],nu_fourInt[yind,0])
         r_fourInt1 = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],nu_fourInt[yind,1])
         r_fourInt2 = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],nu_fourInt[yind,2])
@@ -1793,34 +1691,25 @@ def plotSeparationvsnu(ind, sma, e, W, w, inc, minSep, maxSep, lminSep, lmaxSep,
         plt.scatter(nu_fourInt[yind,3],np.sqrt(r_fourInt3[0]**2 + r_fourInt3[1]**2),color='green',marker='o')
     elif ind in yrealAllRealInds[twoIntSameYInds]: #Same Y
         yind = np.where(yrealAllRealInds[twoIntSameYInds] == ind)[0]
-        #t_twoIntSameY0 = timeFromTrueAnomaly(nu_twoIntSameY[yind,0],periods[ind],e[ind])
-        #t_twoIntSameY1 = timeFromTrueAnomaly(nu_twoIntSameY[yind,1],periods[ind],e[ind])
         r_twoIntSameY0 = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],nu_twoIntSameY[yind,0])
         r_twoIntSameY1 = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],nu_twoIntSameY[yind,1])
         plt.scatter(nu_twoIntSameY[yind,0],np.sqrt(r_twoIntSameY0[0]**2 + r_twoIntSameY0[1]**2),color='green',marker='o')
         plt.scatter(nu_twoIntSameY[yind,1],np.sqrt(r_twoIntSameY1[0]**2 + r_twoIntSameY1[1]**2),color='green',marker='o')
     elif ind in yrealAllRealInds[twoIntOppositeXInds]: #Same X
         yind = np.where(yrealAllRealInds[twoIntOppositeXInds] == ind)[0]
-        #t_twoIntOppositeX0 = timeFromTrueAnomaly(nu_twoIntOppositeX[yind,0],periods[ind],e[ind])
-        #t_twoIntOppositeX1 = timeFromTrueAnomaly(nu_twoIntOppositeX[yind,1],periods[ind],e[ind])
         r_twoIntOppositeX0 = xyz_3Dellipse(a[ind],e[ind],W[ind],w[ind],inc[ind],nu_twoIntOppositeX[yind,0])
         r_twoIntOppositeX1 = xyz_3Dellipse(a[ind],e[ind],W[ind],w[ind],inc[ind],nu_twoIntOppositeX[yind,1])
         plt.scatter(nu_twoIntOppositeX[yind,0],np.sqrt(r_twoIntOppositeX0[0]**2 + r_twoIntOppositeX0[1]**2),color='green',marker='o')
         plt.scatter(nu_twoIntOppositeX[yind,1],np.sqrt(r_twoIntOppositeX1[0]**2 + r_twoIntOppositeX1[1]**2),color='green',marker='o')
     elif ind in only2RealInds:
         yind = np.where(only2RealInds == ind)[0]
-        #t_IntersectionOnly20 = timeFromTrueAnomaly(nu_IntersectionsOnly2[yind,0],periods[ind],e[ind])
-        #t_IntersectionOnly21 = timeFromTrueAnomaly(nu_IntersectionsOnly2[yind,1],periods[ind],e[ind])
         r_IntersectionOnly20 = xyz_3Dellipse(a[ind],e[ind],W[ind],w[ind],inc[ind],nu_IntersectionsOnly2[yind,0])
         r_IntersectionOnly21 = xyz_3Dellipse(a[ind],e[ind],W[ind],w[ind],inc[ind],nu_IntersectionsOnly2[yind,1])
         plt.scatter(nu_IntersectionsOnly2[yind,0],np.sqrt(r_IntersectionOnly20[0]**2 + r_IntersectionOnly20[1]**2),color='green',marker='o')
         plt.scatter(nu_IntersectionsOnly2[yind,1],np.sqrt(r_IntersectionOnly21[0]**2 + r_IntersectionOnly21[1]**2),color='green',marker='o')
 
-
     plt.xlim([0,2.*np.pi])
-    #plt.xlim([0,periods[ind]])
     plt.ylabel('Projected Separation, s, in AU',weight='bold')
-    #plt.xlabel('Projected Ellipse E (rad)',weight='bold')
     plt.xlabel(r'$True Anomaly, \nu, (rad)$',weight='bold')
     plt.show(block=False)
 
@@ -2090,195 +1979,4 @@ plt.ylim([-1.2*b[ind],1.2*b[ind]])
 plt.show(block=False)
 plt.close(num)
 ####
-
-
-
-
-
-# #IS ANY OF THE FOLLOWING NECESSARY. MAY BE DELETABLE
-
-# # xreal2[np.abs(np.imag(xreal2)) > 1e-4] = np.nan #There is evidence from below that the residual resulting from entiring solutions with 3e-5j results in 0+1e-20j therefore we will nan above 1e-4
-# # xreal2 = np.real(xreal2)
-# yreal2 = ellipseYFromX(xreal2, a, b)
-# seps2_0 = np.sqrt((xreal2[:,0]-x)**2 + (yreal2[:,0]-y)**2)
-# seps2_1 = np.sqrt((xreal2[:,1]-x)**2 + (yreal2[:,1]-y)**2)
-# seps2_2 = np.sqrt((xreal2[:,2]-x)**2 + (yreal2[:,2]-y)**2)
-# seps2_3 = np.sqrt((xreal2[:,3]-x)**2 + (yreal2[:,3]-y)**2)
-
-# # seps2_0 = np.sqrt((xreal2[:,0]-mx)**2 + (yreal2[:,0]-my)**2)
-# # seps2_1 = np.sqrt((xreal2[:,1]-mx)**2 + (yreal2[:,1]-my)**2)
-# # seps2_2 = np.sqrt((xreal2[:,2]-mx)**2 + (yreal2[:,2]-my)**2)
-# # seps2_3 = np.sqrt((xreal2[:,3]-mx)**2 + (yreal2[:,3]-my)**2)
-# seps2 = np.asarray([seps2_0,seps2_1,seps2_2,seps2_3]).T
-
-# #we are currently omitting all of these potential calculations so-long-as the following assert is never true
-# #assert ~np.any(p2+p3**2/12 == 0), 'Oops, looks like the sympy piecewise was true once!'
-
-# #### Root Types For Each Planet #######################################################
-# #ORDER HAS BEEN CHANGED
-# # If delta > 0 and P < 0 and D < 0 four roots all real or none
-# #allRealDistinctInds = np.where((delta > 0)*(P < 0)*(D2 < 0))[0] #METHOD 1, out of 10000, this found 1638, missing ~54
-# allRealDistinctInds = np.where(np.all(np.abs(np.imag(xreal2)) < 2.5*1e-5, axis=1))[0]#1e-9, axis=1))[0] #This found 1692
-# residual_allreal, isAll_allreal, maxRealResidual_allreal, maxImagResidual_allreal = checkResiduals(A,B,C,D,xreal2,allRealDistinctInds,4)
-# del A, B, C, D #delting for memory efficiency
-# assert maxRealResidual_allreal < 1e-9, 'At least one all real residual is too large'
-# # If delta < 0, two distinct real roots, two complex
-# #DELETEtwoRealDistinctInds = np.where(delta < 0)[0]
-# #DELETE UNNECESSARYxrealsImag = np.abs(np.imag(xreal2))
-# xrealsImagInds = np.argsort(np.abs(np.imag(xreal2)),axis=1)
-# xrealsImagInds2 = np.asarray([xrealsImagInds[:,0],xrealsImagInds[:,1]])
-# xrealOfSmallest2Imags = np.real(xreal2[np.arange(len(a)),xrealsImagInds2]).T
-# ximagOfSmallest2Imags = np.imag(xreal2[np.arange(len(a)),xrealsImagInds2]).T
-# #~np.all(np.abs(np.imag(xreal2)) < 1e-9, axis=1) removes solutions with 4 distinct real roots
-# #The other two are thresholds that happend to work well once
-# indsOf2RealSols = np.where((np.abs(ximagOfSmallest2Imags[:,0]) < 2.5*1e-5)*(np.abs(ximagOfSmallest2Imags[:,1]) < 2.5*1e-5)*~np.all(np.abs(np.imag(xreal2)) < 2.5*1e-5, axis=1))[0]
-# #DELETElen(indsOf2RealSols) - len(allRealDistinctInds)
-# xrealsTwoRealSols = np.real(np.asarray([xreal2[indsOf2RealSols,xrealsImagInds2[0,indsOf2RealSols]],xreal2[indsOf2RealSols,xrealsImagInds2[1,indsOf2RealSols]]]).T)
-# residual_TwoRealSols, isAll_TwoRealSols, maxRealResidual_TwoRealSols, maxImagResidual_TwoRealSols = checkResiduals(A[indsOf2RealSols],B[indsOf2RealSols],C[indsOf2RealSols],D[indsOf2RealSols],xrealsTwoRealSols,np.arange(len(xrealsTwoRealSols)),2)
-# assert len(np.intersect1d(allRealDistinctInds,indsOf2RealSols)) == 0, 'There is intersection between Two Real Distinct and the 4 real solution inds, investigate'
-
-# #DELETE cruft
-# # twoRealDistinctInds2 = np.where(np.all(np.abs(np.imag(xreal2)) < 1e-9, axis=1))[0] #This found 1692
-# # twoRealSorting = np.argsort(np.abs(np.imag(xreal2[twoRealDistinctInds,:])),axis=1)
-# # tmpxReals = np.asarray([xreal2[np.arange(len(twoRealDistinctInds)),twoRealSorting[:,0]], xreal2[np.arange(len(twoRealDistinctInds)),twoRealSorting[:,1]]]).T
-
-# # If delta > 0 and (P < 0 or D < 0)
-# #allImagInds = np.where((delta > 0)*((P > 0)|(D2 > 0)))[0]
-# #allImagInds = np.where(np.all(np.abs(np.imag(xreal2)) >= 1e-9, axis=1))[0]
-# allImagInds = np.where(np.all(np.abs(np.imag(xreal2)) >= 2.5*1e-5, axis=1))[0]
-# assert len(np.intersect1d(allRealDistinctInds,allImagInds)) == 0, 'There is intersection between All Imag and the 4 real solution inds, investigate'
-# assert len(np.intersect1d(indsOf2RealSols,allImagInds)) == 0, 'There is intersection between All Imag and the Two Real Distinct solution inds, investigate'
-
-# # If delta == 0, multiple root
-# realDoubleRootTwoRealRootsInds = np.where((delta == 0)*(P < 0)*(D2 < 0)*(delta_0 != 0))[0] #delta=0 and P<0 and D2<0
-# realDoubleRootTwoComplexInds = np.where((delta == 0)*((D2 > 0)|((P > 0)*((D2 != 0)|(R != 0)))))[0] #delta=0 and (D>0 or (P>0 and (D!=0 or R!=0)))
-# tripleRootSimpleRootInds = np.where((delta == 0)*(delta_0 == 0)*(D2 !=0))[0]
-# twoRealDoubleRootsInds = np.where((delta == 0)*(D2 == 0)*(P < 0))[0]
-# twoComplexDoubleRootsInds = np.where((delta == 0)*(D2 == 0)*(P > 0)*(R == 0))[0]
-# fourIdenticalRealRootsInds = np.where((delta == 0)*(D2 == 0)*(delta_0 == 0))[0]
-
-# #DELETE cruft?
-# # #### Double checking root classification
-# # #twoRealDistinctInds #check that 2 of the 4 imags are below thresh
-# # numUnderThresh = np.sum(np.abs(np.imag(xreal2[twoRealDistinctInds])) > 1e-11, axis=1)
-# # indsUnderThresh = np.where(numUnderThresh != 2)[0]
-# # indsThatDontBelongIntwoRealDistinctInds = twoRealDistinctInds[indsUnderThresh]
-# # twoRealDistinctInds = np.delete(twoRealDistinctInds,indsThatDontBelongIntwoRealDistinctInds) #deletes the desired inds from aray
-# # #np.count_nonzero(numUnderThresh < 2)
-
-# #DELETE IN FUTURE
-# #The 1e-5 here gave me the number as the Imag count
-# #allRealDistinctInds2 = np.where(np.all(np.abs(np.imag(xreal2)) > 1e-5, axis=1))[0]
-# #allRealDistinctInds2 = np.where(np.all(np.abs(np.imag(xreal2)) > 1e-9, axis=1))[0]
-
-
-# #Number of Solutions of Each Type
-# numRootInds = [indsOf2RealSols,allRealDistinctInds,allImagInds,realDoubleRootTwoRealRootsInds,realDoubleRootTwoComplexInds,\
-#     tripleRootSimpleRootInds,twoRealDoubleRootsInds,twoComplexDoubleRootsInds,fourIdenticalRealRootsInds]
-
-# #Number of Roots of Each Type
-# lenNumRootsInds = [len(numRootInds[i]) for i in np.arange(len(numRootInds))]
-# assert len(indsOf2RealSols)+len(allRealDistinctInds)+len(allImagInds)-len(realDoubleRootTwoRealRootsInds), 'Number of roots does not add up, investigate'
-# ########################################################################
-
-
-# # Calculate Residuals
-# # residual_0 = xreal2[:,0]**4 + A*xreal2[:,0]**3 + B*xreal2[:,0]**2 + C*xreal2[:,0] + D
-# # residual_1 = xreal2[:,1]**4 + A*xreal2[:,1]**3 + B*xreal2[:,1]**2 + C*xreal2[:,1] + D
-# # residual_2 = xreal2[:,2]**4 + A*xreal2[:,2]**3 + B*xreal2[:,2]**2 + C*xreal2[:,2] + D
-# # residual_3 = xreal2[:,3]**4 + A*xreal2[:,3]**3 + B*xreal2[:,3]**2 + C*xreal2[:,3] + D
-# # residual = np.asarray([residual_0, residual_1, residual_2, residual_3]).T
-# # #assert np.all((np.real(residual) < 1e-7)*(np.imag(residual) < 1e-7)), 'All residual are not less than 1e-7'
-# # del residual_0, residual_1, residual_2, residual_3
-# residual_all, isAll_all, maxRealResidual_all, maxImagResidual_all = checkResiduals(A,B,C,D,xreal2,np.arange(len(A)),4)
-
-
-
-# xfinal = np.zeros(xreal2.shape) + np.nan
-# # case 1 Two Real Distinct Inds
-# #find 2 xsols with smallest imag part
-# #xreal2[indsOf2RealSols[0]]
-# #ximags2 = np.imag(xreal2[indsOf2RealSols])
-# #ximags2smallImagInds = np.argsort(np.abs(ximags2),axis=1)[:,0:2] #sorts from smallest magnitude to largest magnitude
-# #xrealsTwoRealDistinct = np.asarray([xreal2[indsOf2RealSols,ximags2smallImagInds[:,0]], xreal2[indsOf2RealSols,ximags2smallImagInds[:,1]]]).T
-# xfinal[indsOf2RealSols,0:2] = xrealOfSmallest2Imags[indsOf2RealSols]#np.real(xrealsTwoRealDistinct)
-# #Check residuals
-# residual_case1, isAll_case1, maxRealResidual_case1, maxImagResidual_case1 = checkResiduals(A,B,C,D,xfinal,indsOf2RealSols,2)
-# #The following does not work
-# # residual_0 = np.real(xrealsTwoRealDistinct[:,0])**4 + A[twoRealDistinctInds]*np.real(xrealsTwoRealDistinct[:,0])**3 + B[twoRealDistinctInds]*np.real(xrealsTwoRealDistinct[:,0])**2 + C[twoRealDistinctInds]*np.real(xrealsTwoRealDistinct[:,0]) + D[twoRealDistinctInds]
-# # residual_1 = np.real(xrealsTwoRealDistinct[:,1])**4 + A[twoRealDistinctInds]*np.real(xrealsTwoRealDistinct[:,1])**3 + B[twoRealDistinctInds]*np.real(xrealsTwoRealDistinct[:,1])**2 + C[twoRealDistinctInds]*np.real(xrealsTwoRealDistinct[:,1]) + D[twoRealDistinctInds]
-# # residual = np.asarray([residual_0, residual_1]).T
-# # assert np.all((np.real(residual) < 1e-8)*(np.imag(residual) < 1e-8)), 'All residual are not less than 1e-8'
-# # del residual_0, residual_1
-# indsOfRebellious_0 = np.where(np.real(residual_case1[:,0]) > 1e-1)[0]
-# indsOfRebellious_1 = np.where(np.real(residual_case1[:,1]) > 1e-1)[0]
-# indsOfRebellious = np.unique(np.concatenate((indsOfRebellious_0,indsOfRebellious_1)))
-# xrealIndsOfRebellious = indsOf2RealSols[indsOfRebellious]
-
-# #residual = tmpxreal2[twoRealDistinctInds[0]]**4 + A[twoRealDistinctInds[0]]*tmpxreal2[twoRealDistinctInds[0]]**3 + B[twoRealDistinctInds[0]]*tmpxreal2[twoRealDistinctInds[0]]**2 + C[twoRealDistinctInds[0]]*tmpxreal2[twoRealDistinctInds[0]] + D[twoRealDistinctInds[0]]
-# #residual2 = xreal2[twoRealDistinctInds[0]]**4 + A[twoRealDistinctInds[0]]*xreal2[twoRealDistinctInds[0]]**3 + B[twoRealDistinctInds[0]]*xreal2[twoRealDistinctInds[0]]**2 + C[twoRealDistinctInds[0]]*xreal2[twoRealDistinctInds[0]] + D[twoRealDistinctInds[0]]
-# #residual3 = np.real(xreal2[twoRealDistinctInds[0]])**4 + A[twoRealDistinctInds[0]]*np.real(xreal2[twoRealDistinctInds[0]])**3 + B[twoRealDistinctInds[0]]*np.real(xreal2[twoRealDistinctInds[0]])**2 + C[twoRealDistinctInds[0]]*np.real(xreal2[twoRealDistinctInds[0]]) + D[twoRealDistinctInds[0]]
-
-# #currently getting intersection points that are not physically possible
-
-# # case 2 All Real Distinct Inds
-# xfinal[allRealDistinctInds] = np.real(xreal2[allRealDistinctInds])
-# # residual_0 = xfinal[allRealDistinctInds,0]**4 + A[allRealDistinctInds]*xfinal[allRealDistinctInds,0]**3 + B[allRealDistinctInds]*xfinal[allRealDistinctInds,0]**2 + C[allRealDistinctInds]*xfinal[allRealDistinctInds,0] + D[allRealDistinctInds]
-# # residual_1 = xfinal[allRealDistinctInds,1]**4 + A[allRealDistinctInds]*xfinal[allRealDistinctInds,1]**3 + B[allRealDistinctInds]*xfinal[allRealDistinctInds,1]**2 + C[allRealDistinctInds]*xfinal[allRealDistinctInds,1] + D[allRealDistinctInds]
-# # residual_2 = xfinal[allRealDistinctInds,2]**4 + A[allRealDistinctInds]*xfinal[allRealDistinctInds,2]**3 + B[allRealDistinctInds]*xfinal[allRealDistinctInds,2]**2 + C[allRealDistinctInds]*xfinal[allRealDistinctInds,2] + D[allRealDistinctInds]
-# # residual_3 = xfinal[allRealDistinctInds,3]**4 + A[allRealDistinctInds]*xfinal[allRealDistinctInds,3]**3 + B[allRealDistinctInds]*xfinal[allRealDistinctInds,3]**2 + C[allRealDistinctInds]*xfinal[allRealDistinctInds,3] + D[allRealDistinctInds]
-# # residual = np.asarray([residual_0, residual_1, residual_2, residual_3]).T
-# # assert np.all((np.real(residual) < 1e-7)*(np.imag(residual) < 1e-7)), 'All residual, All Real Distinct, are not less than 1e-7'
-# # del residual_0, residual_1, residual_2, residual_3
-# residual_case2, isAll_case2, maxRealResidual_case2, maxImagResidual_case2 = checkResiduals(A,B,C,D,xfinal,allRealDistinctInds,4)
-
-# # case 3 All Imag Inds
-# #NO REAL ROOTS
-# #xreal2[allImagInds[0]]
-
-# # # case 4 a real double root and 2 real solutions (2 real solutions which are identical and 2 other real solutions)
-# # #xreal2[realDoubleRootTwoRealRootsInds[0]]
-# # ximags2 = np.imag(xreal2[realDoubleRootTwoRealRootsInds])
-# # ximags2smallImagInds = np.argsort(np.abs(ximags2),axis=1)[:,0:2] #sorts from smallest magnitude to largest magnitude
-# # xrealDoubleRootTwoRealRoots = np.asarray([xreal2[realDoubleRootTwoRealRootsInds,ximags2smallImagInds[:,0]], xreal2[realDoubleRootTwoRealRootsInds,ximags2smallImagInds[:,1]]]).T
-# # xfinal[realDoubleRootTwoRealRootsInds,0:2] = np.real(xrealDoubleRootTwoRealRoots)
-
-
-
-# # # case 5 a real double root
-# # #xreal2[realDoubleRootTwoComplexInds[0]]
-# # ximags2 = np.imag(xreal2[realDoubleRootTwoComplexInds])
-# # ximags2smallImagInds = np.argsort(np.abs(ximags2),axis=1)[:,0:2] #sorts from smallest magnitude to largest magnitude
-# # xrealDoubleRootTwoComplex = np.asarray([xreal2[realDoubleRootTwoComplexInds,ximags2smallImagInds[:,0]], xreal2[realDoubleRootTwoComplexInds,ximags2smallImagInds[:,1]]]).T
-# # xfinal[realDoubleRootTwoComplexInds,0:2] = np.real(xrealDoubleRootTwoComplex)
-
-# yfinal = ellipseYFromX(xfinal, a, b)
-# s_mpr, s_pmr, minSepr, maxSepr = calculateSeparations(xfinal, yfinal, mx, my)
-# #TODO need to do what I did for the sepsMinMaxLminLmax function for x, y coordinate determination
-
-# # #s_pm = np.asarray([np.sqrt((xreal[:,0]+mx)**2 + (yreal[:,0]-my)**2), np.sqrt((xreal[:,1]+mx)**2 + (yreal[:,1]-my)**2), np.sqrt((xreal[:,2]+mx)**2 + (yreal[:,2]-my)**2), np.sqrt((xreal[:,3]+mx)**2 + (yreal[:,3]-my)**2)]).T
-# # s_pmr = np.asarray([np.sqrt((xfinal[:,0]+mx)**2 + (yfinal[:,0]-my)**2), np.sqrt((xfinal[:,1]+mx)**2 + (yfinal[:,1]-my)**2), np.sqrt((xfinal[:,2]+mx)**2 + (yfinal[:,2]-my)**2), np.sqrt((xfinal[:,3]+mx)**2 + (yfinal[:,3]-my)**2)]).T
-
-
-# print('nanmin')
-# print(np.nanmin(s_mpr[allRealDistinctInds]))
-# print(np.nanmin(s_pmr[allRealDistinctInds]))
-# print(np.nanmin(minSepr[allRealDistinctInds]))
-# print(np.nanmin(maxSepr[allRealDistinctInds]))
-# print(np.nanmin(s_mpr[indsOf2RealSols]))
-# print(np.nanmin(s_pmr[indsOf2RealSols]))
-# print(np.nanmin(minSepr[indsOf2RealSols]))
-# print(np.nanmin(maxSepr[indsOf2RealSols]))
-# print('nanmax')
-# print(np.nanmax(s_mpr[allRealDistinctInds]))
-# print(np.nanmax(s_pmr[allRealDistinctInds]))
-# print(np.nanmax(minSepr[allRealDistinctInds]))
-# print(np.nanmax(maxSepr[allRealDistinctInds]))
-# print(np.nanmax(s_mpr[indsOf2RealSols]))
-# print(np.nanmax(s_pmr[indsOf2RealSols]))
-# print(np.nanmax(minSepr[indsOf2RealSols]))
-# print(np.nanmax(maxSepr[indsOf2RealSols]))
-
-
-
 
