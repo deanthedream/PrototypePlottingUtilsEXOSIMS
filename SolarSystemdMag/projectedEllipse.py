@@ -1579,13 +1579,14 @@ def timeFromTrueAnomaly(nu,T,e):
     """
     #E = np.arccos((e+np.cos(nu))/(1+e*np.cos(nu)))
     E = np.arctan2(np.sqrt(1-e**2)*np.sin(nu),e+np.cos(nu))
-    if nu.shape == ():
-        if nu < np.pi: #replace with np.mod instead?
-            E = 2*np.pi + E
-    else: #nu is a numpy array
-        inds = np.where(nu < 0)[0]
-        E[inds] = 2*np.pi + E[inds]
-    t = (E-e*np.sin(E))*T/(2*np.pi)
+    E = np.mod(E,2*np.pi)
+    # if nu.shape == ():
+    #     if nu < np.pi: #replace with np.mod instead?
+    #         E = 2*np.pi + E
+    # else: #nu is a numpy array
+    #     inds = np.where(nu < 0)[0]
+    #     E[inds] = 2*np.pi + E[inds]
+    t = (E-e*np.sin(E))/(2*np.pi/T)
     return t
 
 def printKOE(ind,a,e,W,w,inc):
