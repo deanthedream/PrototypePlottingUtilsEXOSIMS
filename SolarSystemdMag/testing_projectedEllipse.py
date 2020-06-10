@@ -1435,16 +1435,6 @@ def plotRerotatedFromNus(ind, sma, e, W, w, inc, Op, yrealAllRealInds, fourIntIn
 
 
 #### START ERROR PLOT
-plt.close(822)
-plt.figure(num=822)
-plt.rc('axes',linewidth=2)
-plt.rc('lines',linewidth=2)
-plt.rcParams['axes.linewidth']=2
-plt.rc('font',weight='bold')
-plt.yscale('log')
-plt.xscale('log')
-
-
 def nuCorrections_extrema(sma,e,W,w,inc,nus,mainInds,seps):
     r_extrema = xyz_3Dellipse(sma[mainInds],e[mainInds],W[mainInds],w[mainInds],inc[mainInds],nus)
     s_extrema = np.sqrt(r_extrema[0,0]**2 + r_extrema[1,0]**2)
@@ -1460,51 +1450,20 @@ def nuCorrections_extrema(sma,e,W,w,inc,nus,mainInds,seps):
     tmpnus = np.asarray([nus,nus_extrema_ppi]).T
     nus = tmpnus[np.arange(len(nus)),minErrorInds]
     error = error_deciding[np.arange(len(nus)),minErrorInds]
+    nus = np.mod(nus,2.*np.pi)
     return nus, error
 
 #### Fix minSep True Anomalies
 nu_minSepPoints, error_numinSep = nuCorrections_extrema(sma,e,W,w,inc,nu_minSepPoints,np.arange(len(sma)),minSep)
-# r_minSeps = xyz_3Dellipse(sma,e,W,w,inc,nu_minSepPoints)
-# tmp_minSeps = np.sqrt(r_minSeps[0,0]**2 + r_minSeps[1,0]**2)
-# wrong_minSepInds = np.where(np.abs(minSep - tmp_minSeps) > 1e-6)[0]
-# nu_minSepPoints[wrong_minSepInds] = nu_minSepPoints[wrong_minSepInds] + np.pi
-# r_minSeps = xyz_3Dellipse(sma,e,W,w,inc,nu_minSepPoints)
-# tmp_minSeps = np.sqrt(r_minSeps[0,0]**2 + r_minSeps[1,0]**2)
-# wrong_minSepInds = np.where(np.abs(minSep - tmp_minSeps) > 1e-6)[0]
-# assert len(wrong_minSepInds) == 0, 'at least 1 wrong minSepInds'
 ####
 #### Fix maxSep True Anomalies
 nu_maxSepPoints, error_numaxSep = nuCorrections_extrema(sma,e,W,w,inc,nu_maxSepPoints,np.arange(len(sma)),maxSep)
-# r_maxSeps = xyz_3Dellipse(sma,e,W,w,inc,nu_maxSepPoints)
-# tmp_maxSeps = np.sqrt(r_maxSeps[0,0]**2 + r_maxSeps[1,0]**2)
-# wrong_maxSepInds = np.where(np.abs(maxSep - tmp_maxSeps) > 1e-6)[0]
-# nu_maxSepPoints[wrong_maxSepInds] = nu_maxSepPoints[wrong_maxSepInds] + np.pi
-# r_maxSeps = xyz_3Dellipse(sma,e,W,w,inc,nu_maxSepPoints)
-# tmp_maxSeps = np.sqrt(r_maxSeps[0,0]**2 + r_maxSeps[1,0]**2)
-# wrong_maxSepInds = np.where(np.abs(maxSep - tmp_maxSeps) > 1e-6)[0]
-# assert len(wrong_maxSepInds) == 0, 'at least 1 wrong maxSepInds'
 ####
 #### Fix lminSep True Anomalies
 nu_lminSepPoints, error_nulminSep = nuCorrections_extrema(sma,e,W,w,inc,nu_lminSepPoints,yrealAllRealInds,lminSep)
-# r_lminSeps = xyz_3Dellipse(sma[yrealAllRealInds],e[yrealAllRealInds],W[yrealAllRealInds],w[yrealAllRealInds],inc[yrealAllRealInds],nu_lminSepPoints)
-# tmp_lminSeps = np.sqrt(r_lminSeps[0,0]**2 + r_lminSeps[1,0]**2)
-# wrong_lminSepInds = np.where(np.abs(lminSep - tmp_lminSeps) > 1e-6)[0]
-# nu_lminSepPoints[wrong_lminSepInds] = nu_lminSepPoints[wrong_lminSepInds] + np.pi
-# r_lminSeps = xyz_3Dellipse(sma[yrealAllRealInds],e[yrealAllRealInds],W[yrealAllRealInds],w[yrealAllRealInds],inc[yrealAllRealInds],nu_lminSepPoints)
-# tmp_lminSeps = np.sqrt(r_lminSeps[0,0]**2 + r_lminSeps[1,0]**2)
-# wrong_lminSepInds = np.where(np.abs(lminSep - tmp_lminSeps) > 1e-6)[0]
-# assert len(wrong_lminSepInds) == 0, 'at least 1 wrong lminSepInds'
 ####
 #### Fix lmaxSep True Anomalies
 nu_lmaxSepPoints, error_nulmaxSep = nuCorrections_extrema(sma,e,W,w,inc,nu_lmaxSepPoints,yrealAllRealInds,lmaxSep)
-# r_lmaxSeps = xyz_3Dellipse(sma[yrealAllRealInds],e[yrealAllRealInds],W[yrealAllRealInds],w[yrealAllRealInds],inc[yrealAllRealInds],nu_lmaxSepPoints)
-# tmp_lmaxSeps = np.sqrt(r_lmaxSeps[0,0]**2 + r_lmaxSeps[1,0]**2)
-# wrong_lmaxSepInds = np.where(np.abs(lmaxSep - tmp_lmaxSeps) > 1e-6)[0]
-# nu_lmaxSepPoints[wrong_lmaxSepInds] = nu_lmaxSepPoints[wrong_lmaxSepInds] + np.pi
-# r_lmaxSeps = xyz_3Dellipse(sma[yrealAllRealInds],e[yrealAllRealInds],W[yrealAllRealInds],w[yrealAllRealInds],inc[yrealAllRealInds],nu_lmaxSepPoints)
-# tmp_lmaxSeps = np.sqrt(r_lmaxSeps[0,0]**2 + r_lmaxSeps[1,0]**2)
-# wrong_lmaxSepInds = np.where(np.abs(lmaxSep - tmp_lmaxSeps) > 1e-6)[0]
-# assert len(wrong_lmaxSepInds) == 0, 'at least 1 wrong lmaxSepInds'
 ####
 
 #### Correcting nu for ellipse-circle intersections
@@ -1532,46 +1491,57 @@ def nuCorrections_int(sma,e,W,w,inc,r,nus,mainInds,subInds):
     errors = np.abs(r[mainInds[subInds]] - tmp_fourInt0Seps)
     maxError_fourInt0 = np.max(errors)
     print(maxError_fourInt0)
+    nus = np.mod(nus,2.*np.pi)
     return nus, errors
+
 #### yrealAllRealInds[fourIntInds]
 nu_fourInt[:,0], errors_fourInt0 = nuCorrections_int(sma,e,W,w,inc,r,nu_fourInt[:,0],yrealAllRealInds,fourIntInds)
-plt.plot(np.arange(len(fourIntInds)),np.abs(np.sort(-errors_fourInt0)[np.arange(len(fourIntInds))]),label='Four Int 0')
-#
 nu_fourInt[:,1], errors_fourInt1 = nuCorrections_int(sma,e,W,w,inc,r,nu_fourInt[:,1],yrealAllRealInds,fourIntInds)
-plt.plot(np.arange(len(fourIntInds)),np.abs(np.sort(-errors_fourInt1)[np.arange(len(fourIntInds))]),label='Four Int 1')
-#
 nu_fourInt[:,2], errors_fourInt2 = nuCorrections_int(sma,e,W,w,inc,r,nu_fourInt[:,2],yrealAllRealInds,fourIntInds)
-plt.plot(np.arange(len(fourIntInds)),np.abs(np.sort(-errors_fourInt2)[np.arange(len(fourIntInds))]),label='Four Int 2')
-#
 nu_fourInt[:,3], errors_fourInt3 = nuCorrections_int(sma,e,W,w,inc,r,nu_fourInt[:,3],yrealAllRealInds,fourIntInds)
-plt.plot(np.arange(len(fourIntInds)),np.abs(np.sort(-errors_fourInt3)[np.arange(len(fourIntInds))]),label='Four Int 3')
 ####
 #### yrealAllRealInds[twoIntSameYInds]
 nu_twoIntSameY[:,0], errors_twoIntSameY0 = nuCorrections_int(sma,e,W,w,inc,r,nu_twoIntSameY[:,0],yrealAllRealInds,twoIntSameYInds)
-plt.plot(np.arange(len(twoIntSameYInds)),np.abs(np.sort(-errors_twoIntSameY0)),label='Two Int Same Y 0')
-#
 nu_twoIntSameY[:,1], errors_twoIntSameY1 = nuCorrections_int(sma,e,W,w,inc,r,nu_twoIntSameY[:,1],yrealAllRealInds,twoIntSameYInds)
-plt.plot(np.arange(len(twoIntSameYInds)),np.abs(np.sort(-errors_twoIntSameY1)),label='Two Int Same Y 1')
-
 ####
 #### yrealAllRealInds[twoIntOppositeXInds]
 nu_twoIntOppositeX[:,0], errors_twoIntOppositeX0 = nuCorrections_int(sma,e,W,w,inc,r,nu_twoIntOppositeX[:,0],yrealAllRealInds,twoIntOppositeXInds)
-plt.plot(np.arange(len(twoIntOppositeXInds)),np.abs(np.sort(-errors_twoIntOppositeX0)),label='Two Int Opposite X 0')
-#
 nu_twoIntOppositeX[:,1], errors_twoIntOppositeX1 = nuCorrections_int(sma,e,W,w,inc,r,nu_twoIntOppositeX[:,1],yrealAllRealInds,twoIntOppositeXInds)
-plt.plot(np.arange(len(twoIntOppositeXInds)),np.abs(np.sort(-errors_twoIntOppositeX1)),label='Two Int Opposite X 1')
 ####
 #### only2RealInds
 nu_IntersectionsOnly2[:,0], errors_IntersectionsOnly2X0 = nuCorrections_int(sma,e,W,w,inc,r,nu_IntersectionsOnly2[:,0],np.arange(len(sma)),only2RealInds)
-plt.plot(np.arange(len(only2RealInds)),np.abs(np.sort(-errors_IntersectionsOnly2X0)),label='Only 2 Int 0')
-#
 nu_IntersectionsOnly2[:,1], errors_IntersectionsOnly2X1 = nuCorrections_int(sma,e,W,w,inc,r,nu_IntersectionsOnly2[:,1],np.arange(len(sma)),only2RealInds)
-plt.plot(np.arange(len(only2RealInds)),np.abs(np.sort(-errors_IntersectionsOnly2X1)),label='Only 2 Int 1')
 ####
+
+#### Error Plot ####
+plt.close(822)
+plt.figure(num=822)
+plt.rc('axes',linewidth=2)
+plt.rc('lines',linewidth=2)
+plt.rcParams['axes.linewidth']=2
+plt.rc('font',weight='bold')
+plt.yscale('log')
+plt.xscale('log')
+# yrealAllRealInds[fourIntInds]
+plt.plot(np.arange(len(fourIntInds)),np.abs(np.sort(-errors_fourInt0)[np.arange(len(fourIntInds))]),label='Four Int 0')
+plt.plot(np.arange(len(fourIntInds)),np.abs(np.sort(-errors_fourInt1)[np.arange(len(fourIntInds))]),label='Four Int 1')
+plt.plot(np.arange(len(fourIntInds)),np.abs(np.sort(-errors_fourInt2)[np.arange(len(fourIntInds))]),label='Four Int 2')
+plt.plot(np.arange(len(fourIntInds)),np.abs(np.sort(-errors_fourInt3)[np.arange(len(fourIntInds))]),label='Four Int 3')
+# yrealAllRealInds[twoIntSameYInds]
+plt.plot(np.arange(len(twoIntSameYInds)),np.abs(np.sort(-errors_twoIntSameY0)),label='Two Int Same Y 0')
+plt.plot(np.arange(len(twoIntSameYInds)),np.abs(np.sort(-errors_twoIntSameY1)),label='Two Int Same Y 1')
+# yrealAllRealInds[twoIntOppositeXInds]
+plt.plot(np.arange(len(twoIntOppositeXInds)),np.abs(np.sort(-errors_twoIntOppositeX0)),label='Two Int Opposite X 0')
+plt.plot(np.arange(len(twoIntOppositeXInds)),np.abs(np.sort(-errors_twoIntOppositeX1)),label='Two Int Opposite X 1')
+# only2RealInds
+plt.plot(np.arange(len(only2RealInds)),np.abs(np.sort(-errors_IntersectionsOnly2X0)),label='Only 2 Int 0')
+plt.plot(np.arange(len(only2RealInds)),np.abs(np.sort(-errors_IntersectionsOnly2X1)),label='Only 2 Int 1')
+
 plt.legend()
 plt.ylabel('Absolute Separation Error (AU)', weight='bold')
 plt.xlabel('Planet Orbit Index', weight='bold')
 plt.show(block=False)
+######################
 
 # ind = yrealAllRealInds[fourIntInds[np.argsort(-errors_fourInt1)[0]]]
 # plotRerotatedFromNus(ind, sma[ind], e[ind], W[ind], w[ind], inc[ind], Op[:,ind], yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds,\
@@ -1623,8 +1593,9 @@ plt.close(823) #thinking the above plot is relativly useless
 ####
 
 #### Plot Histogram of Error
-plt.close(824)
-plt.figure(num=824)
+num=824
+plt.close(num)
+plt.figure(num=num)
 plt.rc('axes',linewidth=2)
 plt.rc('lines',linewidth=2)
 plt.rcParams['axes.linewidth']=2
@@ -1640,6 +1611,8 @@ plt.hist(np.concatenate((np.abs(errors_fourInt0)+1e-17, np.abs(errors_fourInt1)+
 plt.xlabel('Absolute Error (AU)', weight='bold')
 plt.ylabel('Number of Planets', weight='bold') #Switch to fraction
 plt.show(block=False)
+
+plt.close(num)
 ####
 
 
@@ -1764,6 +1737,96 @@ plt.plot(x_circ2,y_circ2,color='green')
 ca = plt.gca()
 ca.axis('equal')
 plt.show(block=False)
+####
+
+
+
+
+
+#### Plot separation vs nu
+def plotSeparationvsnu(ind, sma, e, W, w, inc, minSep, maxSep, lminSep, lmaxSep, \
+        nu_minSepPoints, nu_maxSepPoints, nu_lminSepPoints, nu_lmaxSepPoints,\
+        nu_fourInt, nu_twoIntSameY, nu_twoIntOppositeX, nu_IntersectionsOnly2,\
+        yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds, num):
+    plt.close(num)
+    fig = plt.figure(num=num)
+    plt.rc('axes',linewidth=2)
+    plt.rc('lines',linewidth=2)
+    plt.rcParams['axes.linewidth']=2
+    plt.rc('font',weight='bold')
+    nurange = np.linspace(start=0.,stop=2.*np.pi,num=100)
+    prs = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],nurange)
+    pseps = np.sqrt(prs[0,0]**2+prs[1,0]**2)
+    plt.plot(nurange,pseps,color='black')
+    plt.plot([0,2.*np.pi],[0,0],color='black',linestyle='--') #0 sep line
+    plt.plot([0,2*np.pi],[minSep[ind],minSep[ind]],color='cyan')
+    plt.plot([0,2*np.pi],[maxSep[ind],maxSep[ind]],color='red')
+    if ind in yrealAllRealInds:
+        tind = np.where(yrealAllRealInds == ind)[0]
+        plt.plot([0,2*np.pi],[lminSep[tind],lminSep[tind]],color='magenta')
+        plt.plot([0,2*np.pi],[lmaxSep[tind],lmaxSep[tind]],color='gold')
+    plt.plot([0,2*np.pi],[1,1],color='green') #the plot intersection line
+
+    #Plot Separation Limits
+    plt.scatter(nu_minSepPoints[ind],minSep[ind],color='cyan',marker='D')
+    plt.scatter(nu_maxSepPoints[ind],maxSep[ind],color='red',marker='D')
+    if ind in yrealAllRealInds:
+        tind = np.where(yrealAllRealInds == ind)[0]
+        plt.scatter(nu_lminSepPoints[tind],lminSep[tind],color='magenta',marker='D')
+        plt.scatter(nu_lmaxSepPoints[tind],lmaxSep[tind],color='gold',marker='D')
+
+    if ind in yrealAllRealInds[fourIntInds]:
+        yind = np.where(yrealAllRealInds[fourIntInds] == ind)[0]
+        # t_fourInt0 = timeFromTrueAnomaly(nu_fourInt[yind,0],periods[ind],e[ind])
+        # t_fourInt1 = timeFromTrueAnomaly(nu_fourInt[yind,1],periods[ind],e[ind])
+        # t_fourInt2 = timeFromTrueAnomaly(nu_fourInt[yind,2],periods[ind],e[ind])
+        # t_fourInt3 = timeFromTrueAnomaly(nu_fourInt[yind,3],periods[ind],e[ind])
+        r_fourInt0 = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],nu_fourInt[yind,0])
+        r_fourInt1 = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],nu_fourInt[yind,1])
+        r_fourInt2 = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],nu_fourInt[yind,2])
+        r_fourInt3 = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],nu_fourInt[yind,3])
+        plt.scatter(nu_fourInt[yind,0],np.sqrt(r_fourInt0[0]**2 + r_fourInt0[1]**2),color='green',marker='o')
+        plt.scatter(nu_fourInt[yind,1],np.sqrt(r_fourInt1[0]**2 + r_fourInt1[1]**2),color='green',marker='o')
+        plt.scatter(nu_fourInt[yind,2],np.sqrt(r_fourInt2[0]**2 + r_fourInt2[1]**2),color='green',marker='o')
+        plt.scatter(nu_fourInt[yind,3],np.sqrt(r_fourInt3[0]**2 + r_fourInt3[1]**2),color='green',marker='o')
+    elif ind in yrealAllRealInds[twoIntSameYInds]: #Same Y
+        yind = np.where(yrealAllRealInds[twoIntSameYInds] == ind)[0]
+        #t_twoIntSameY0 = timeFromTrueAnomaly(nu_twoIntSameY[yind,0],periods[ind],e[ind])
+        #t_twoIntSameY1 = timeFromTrueAnomaly(nu_twoIntSameY[yind,1],periods[ind],e[ind])
+        r_twoIntSameY0 = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],nu_twoIntSameY[yind,0])
+        r_twoIntSameY1 = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],nu_twoIntSameY[yind,1])
+        plt.scatter(nu_twoIntSameY[yind,0],np.sqrt(r_twoIntSameY0[0]**2 + r_twoIntSameY0[1]**2),color='green',marker='o')
+        plt.scatter(nu_twoIntSameY[yind,1],np.sqrt(r_twoIntSameY1[0]**2 + r_twoIntSameY1[1]**2),color='green',marker='o')
+    elif ind in yrealAllRealInds[twoIntOppositeXInds]: #Same X
+        yind = np.where(yrealAllRealInds[twoIntOppositeXInds] == ind)[0]
+        #t_twoIntOppositeX0 = timeFromTrueAnomaly(nu_twoIntOppositeX[yind,0],periods[ind],e[ind])
+        #t_twoIntOppositeX1 = timeFromTrueAnomaly(nu_twoIntOppositeX[yind,1],periods[ind],e[ind])
+        r_twoIntOppositeX0 = xyz_3Dellipse(a[ind],e[ind],W[ind],w[ind],inc[ind],nu_twoIntOppositeX[yind,0])
+        r_twoIntOppositeX1 = xyz_3Dellipse(a[ind],e[ind],W[ind],w[ind],inc[ind],nu_twoIntOppositeX[yind,1])
+        plt.scatter(nu_twoIntOppositeX[yind,0],np.sqrt(r_twoIntOppositeX0[0]**2 + r_twoIntOppositeX0[1]**2),color='green',marker='o')
+        plt.scatter(nu_twoIntOppositeX[yind,1],np.sqrt(r_twoIntOppositeX1[0]**2 + r_twoIntOppositeX1[1]**2),color='green',marker='o')
+    elif ind in only2RealInds:
+        yind = np.where(only2RealInds == ind)[0]
+        #t_IntersectionOnly20 = timeFromTrueAnomaly(nu_IntersectionsOnly2[yind,0],periods[ind],e[ind])
+        #t_IntersectionOnly21 = timeFromTrueAnomaly(nu_IntersectionsOnly2[yind,1],periods[ind],e[ind])
+        r_IntersectionOnly20 = xyz_3Dellipse(a[ind],e[ind],W[ind],w[ind],inc[ind],nu_IntersectionsOnly2[yind,0])
+        r_IntersectionOnly21 = xyz_3Dellipse(a[ind],e[ind],W[ind],w[ind],inc[ind],nu_IntersectionsOnly2[yind,1])
+        plt.scatter(nu_IntersectionsOnly2[yind,0],np.sqrt(r_IntersectionOnly20[0]**2 + r_IntersectionOnly20[1]**2),color='green',marker='o')
+        plt.scatter(nu_IntersectionsOnly2[yind,1],np.sqrt(r_IntersectionOnly21[0]**2 + r_IntersectionOnly21[1]**2),color='green',marker='o')
+
+
+    plt.xlim([0,2.*np.pi])
+    #plt.xlim([0,periods[ind]])
+    plt.ylabel('Projected Separation, s, in AU',weight='bold')
+    #plt.xlabel('Projected Ellipse E (rad)',weight='bold')
+    plt.xlabel(r'$True Anomaly, \nu, (rad)$',weight='bold')
+    plt.show(block=False)
+
+num=962
+plotSeparationvsnu(ind, sma, e, W, w, inc, minSep, maxSep, lminSep, lmaxSep, \
+    nu_minSepPoints, nu_maxSepPoints, nu_lminSepPoints, nu_lmaxSepPoints,\
+    nu_fourInt, nu_twoIntSameY, nu_twoIntOppositeX, nu_IntersectionsOnly2,\
+    yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds, num)
 ####
 
 
