@@ -78,6 +78,270 @@ if not np.all(dmajorp < sma):
     assert np.all(sma - dmajorp > -1e-12), "Not all Semi-major axis of the projected ellipse are less than the original 3D ellipse" #required for circular orbits
 assert np.all(dminorp < dmajorp), "All projected Semi-minor axes are less than all projected semi-major axes"
 
+#### Derotate Ellipse Calculations
+start5 = time.time()
+x, y, Phi = derotatedEllipse(theta_OpQ_X, theta_OpQp_X, Op)
+stop5 = time.time()
+print('stop5: ' + str(stop5-start5))
+del start5, stop5
+a = dmajorp
+b = dminorp
+####
+
+#### Calculate X,Y Position of Minimum and Maximums with Quartic
+start7 = time.time()
+A, B, C, D = quarticCoefficients_smin_smax_lmin_lmax(a.astype('complex128'), b, np.abs(x), np.abs(y))
+xreal, delta, P, D2, R, delta_0 = quarticSolutions_ellipse_to_Quarticipynb(A.astype('complex128'), B, C, D)
+del A, B, C, D #delting for memory efficiency
+assert np.max(np.nanmin(np.abs(np.imag(xreal)),axis=1)) < 1e-5, 'At least one row has min > 1e-5' #this ensures each row has a solution
+#print(w[np.argmax(np.nanmin(np.abs(np.imag(xreal)),axis=1))]) #prints the argument of perigee (assert above fails on 1.57 or 1.5*pi)
+#Failure of the above occured where w=4.712 which is approx 1.5pi
+#NOTE: originally 1e-15 but there were some with x=1e-7 and w=pi/2, 5e-6 from 
+tind = np.argmax(np.nanmin(np.abs(np.imag(xreal)),axis=1)) #DELETE
+tinds = np.argsort(np.nanmin(np.abs(np.imag(xreal)),axis=1)) #DELETE
+del tind, tinds #DELETE
+xreal.real = np.abs(xreal)
+stop7 = time.time()
+print('stop7: ' + str(stop7-start7))
+del stop7, start7
+#DELETEprintKOE(ind,a,e,W,w,inc)
+
+#### Technically, each row must have at least 2 solutions, but whatever
+start8 = time.time()
+yreal = ellipseYFromX(xreal.astype('complex128'), a, b)
+stop8 = time.time()
+print('stop8: ' + str(stop8-start8))
+del start8, stop8
+####
+
+#### Calculate Minimum, Maximum, Local Minimum, Local Maximum Separations
+start9 = time.time()
+minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y, minSep, maxSep, lminSep, lmaxSep, yrealAllRealInds, yrealImagInds = smin_smax_slmin_slmax(n, xreal, yreal, np.abs(x), np.abs(y), x, y)
+lminSepPoints_x = np.real(lminSepPoints_x)
+lminSepPoints_y = np.real(lminSepPoints_y)
+lmaxSepPoints_x = np.real(lmaxSepPoints_x)
+lmaxSepPoints_y = np.real(lmaxSepPoints_y)
+stop9 = time.time()
+print('stop9: ' + str(stop9-start9))
+del start9, stop9
+####
+
+#### Ellipse Circle Intersection #######################################################################
+start11 = time.time()
+r = np.ones(len(a))
+
+a, b, only2RealInds, typeInds0, typeInds1, typeInds2, typeInds3,\
+        yrealAllRealInds, fourIntInds, fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y,\
+        twoIntOppositeXInds, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2, twoIntSameYInds,\
+        type0_0Inds,type0_1Inds,type0_2Inds,type0_3Inds,type0_4Inds,type1_0Inds,type1_1Inds,type1_2Inds,type1_3Inds,type1_4Inds,\
+        type2_0Inds,type2_1Inds,type2_2Inds,type2_3Inds,type2_4Inds,type3_0Inds,type3_1Inds,type3_2Inds,type3_3Inds,type3_4Inds,\
+        allIndsUsed = ellipseCircleIntersections(None, a, b, np.abs(x), np.abs(y), x, y, minSep, maxSep, lminSep, lmaxSep, yrealAllRealInds, yrealImagInds)
+stop11 = time.time()
+print('stop11: ' + str(stop11-start11))
+del start11, stop11
+####
+
+
+#### Correct Ellipse Circle Intersections fourInt1 ####################################
+fourInt_x[:,0], fourInt_y[:,0] = intersectionFixer_pm(x, y, fourInt_x[:,0], fourInt_y[:,0], yrealAllRealInds[fourIntInds], np.ones(len(fourIntInds)))
+fourInt_x[:,1], fourInt_y[:,1] = intersectionFixer_pm(x, y, fourInt_x[:,1], fourInt_y[:,1], yrealAllRealInds[fourIntInds], np.ones(len(fourIntInds)))
+#### Correct Ellipse Circle Intersections twoIntSameY0
+twoIntSameY_x[:,0], twoIntSameY_y[:,0] = intersectionFixer_pm(x, y, twoIntSameY_x[:,0], twoIntSameY_y[:,0], yrealAllRealInds[twoIntSameYInds], np.ones(len(twoIntSameYInds)))
+#### Correct Ellipse Circle Intersections twoIntSameY1 
+twoIntSameY_x[:,1], twoIntSameY_y[:,1] = intersectionFixer_pm(x, y, twoIntSameY_x[:,1], twoIntSameY_y[:,1], yrealAllRealInds[twoIntSameYInds], np.ones(len(twoIntSameYInds)))
+#### Correct Ellipse Circle Intersections twoIntOppositeX0
+twoIntOppositeX_x[:,0], twoIntOppositeX_y[:,0] = intersectionFixer_pm(x, y, twoIntOppositeX_x[:,0], twoIntOppositeX_y[:,0], yrealAllRealInds[twoIntOppositeXInds], np.ones(len(twoIntOppositeXInds)))
+#### Correct Ellipse Circle Intersections twoIntOppositeX1 
+twoIntOppositeX_x[:,1], twoIntOppositeX_y[:,1] = intersectionFixer_pm(x, y, twoIntOppositeX_x[:,1], twoIntOppositeX_y[:,1], yrealAllRealInds[twoIntOppositeXInds], np.ones(len(twoIntOppositeXInds)))
+#### COULD RUN ON OTHER CASES #########################################################
+
+#### Rerotate Extrema and Intersection Points
+start13 = time.time()
+
+minSepPoints_x_dr, minSepPoints_y_dr, maxSepPoints_x_dr, maxSepPoints_y_dr, lminSepPoints_x_dr, lminSepPoints_y_dr, lmaxSepPoints_x_dr, lmaxSepPoints_y_dr,\
+    fourInt_x_dr, fourInt_y_dr, twoIntSameY_x_dr, twoIntSameY_y_dr, twoIntOppositeX_x_dr, twoIntOppositeX_y_dr, xIntersectionsOnly2_dr, yIntersectionsOnly2_dr = \
+    rerotateExtremaAndIntersectionPoints(minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y,\
+    fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2,\
+    Phi, Op, yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds)
+# del minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y
+# del fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2
+stop13 = time.time()
+print('stop13: ' + str(stop13-start13))
+del start13, stop13
+####
+
+#### Calculate True Anomalies of Points
+start14 = time.time()
+
+nu_minSepPoints, nu_maxSepPoints, nu_lminSepPoints, nu_lmaxSepPoints, nu_fourInt, nu_twoIntSameY, nu_twoIntOppositeX, nu_IntersectionsOnly2\
+     = trueAnomaliesOfPoints(minSepPoints_x_dr, minSepPoints_y_dr, maxSepPoints_x_dr, maxSepPoints_y_dr, lminSepPoints_x_dr, lminSepPoints_y_dr, lmaxSepPoints_x_dr, lmaxSepPoints_y_dr,\
+    fourInt_x_dr, fourInt_y_dr, twoIntSameY_x_dr, twoIntSameY_y_dr, twoIntOppositeX_x_dr, twoIntOppositeX_y_dr, xIntersectionsOnly2_dr, yIntersectionsOnly2_dr,\
+    yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds, W, w, inc)
+del minSepPoints_x_dr, minSepPoints_y_dr, maxSepPoints_x_dr, maxSepPoints_y_dr, lminSepPoints_x_dr, lminSepPoints_y_dr, lmaxSepPoints_x_dr, lmaxSepPoints_y_dr
+del fourInt_x_dr, fourInt_y_dr, twoIntSameY_x_dr, twoIntSameY_y_dr, twoIntOppositeX_x_dr, twoIntOppositeX_y_dr, xIntersectionsOnly2_dr, yIntersectionsOnly2_dr
+stop14 = time.time()
+print('stop14: ' + str(stop14-start14))
+del start14, stop14
+#Now can I delete the x,y points?
+#del minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y, fourInt_x, fourInt_y
+#del twoIntSameY_x, twoIntSameY_y, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2
+####
+
+#### Fix minSep True Anomalies
+nu_minSepPoints, error_numinSep = nuCorrections_extrema(sma,e,W,w,inc,nu_minSepPoints,np.arange(len(sma)),minSep)
+####
+#### Fix maxSep True Anomalies
+nu_maxSepPoints, error_numaxSep = nuCorrections_extrema(sma,e,W,w,inc,nu_maxSepPoints,np.arange(len(sma)),maxSep)
+####
+#### Fix lminSep True Anomalies
+nu_lminSepPoints, error_nulminSep = nuCorrections_extrema(sma,e,W,w,inc,nu_lminSepPoints,yrealAllRealInds,lminSep)
+####
+#### Fix lmaxSep True Anomalies
+nu_lmaxSepPoints, error_nulmaxSep = nuCorrections_extrema(sma,e,W,w,inc,nu_lmaxSepPoints,yrealAllRealInds,lmaxSep)
+####
+
+#### Correcting nu for ellipse-circle intersections
+#### yrealAllRealInds[fourIntInds]
+nu_fourInt[:,0], errors_fourInt0 = nuCorrections_int(sma,e,W,w,inc,r,nu_fourInt[:,0],yrealAllRealInds,fourIntInds)
+nu_fourInt[:,1], errors_fourInt1 = nuCorrections_int(sma,e,W,w,inc,r,nu_fourInt[:,1],yrealAllRealInds,fourIntInds)
+nu_fourInt[:,2], errors_fourInt2 = nuCorrections_int(sma,e,W,w,inc,r,nu_fourInt[:,2],yrealAllRealInds,fourIntInds)
+nu_fourInt[:,3], errors_fourInt3 = nuCorrections_int(sma,e,W,w,inc,r,nu_fourInt[:,3],yrealAllRealInds,fourIntInds)
+####
+#### yrealAllRealInds[twoIntSameYInds]
+nu_twoIntSameY[:,0], errors_twoIntSameY0 = nuCorrections_int(sma,e,W,w,inc,r,nu_twoIntSameY[:,0],yrealAllRealInds,twoIntSameYInds)
+nu_twoIntSameY[:,1], errors_twoIntSameY1 = nuCorrections_int(sma,e,W,w,inc,r,nu_twoIntSameY[:,1],yrealAllRealInds,twoIntSameYInds)
+####
+#### yrealAllRealInds[twoIntOppositeXInds]
+nu_twoIntOppositeX[:,0], errors_twoIntOppositeX0 = nuCorrections_int(sma,e,W,w,inc,r,nu_twoIntOppositeX[:,0],yrealAllRealInds,twoIntOppositeXInds)
+nu_twoIntOppositeX[:,1], errors_twoIntOppositeX1 = nuCorrections_int(sma,e,W,w,inc,r,nu_twoIntOppositeX[:,1],yrealAllRealInds,twoIntOppositeXInds)
+####
+#### only2RealInds
+nu_IntersectionsOnly2[:,0], errors_IntersectionsOnly2X0 = nuCorrections_int(sma,e,W,w,inc,r,nu_IntersectionsOnly2[:,0],np.arange(len(sma)),only2RealInds)
+nu_IntersectionsOnly2[:,1], errors_IntersectionsOnly2X1 = nuCorrections_int(sma,e,W,w,inc,r,nu_IntersectionsOnly2[:,1],np.arange(len(sma)),only2RealInds)
+####
+
+#Necessary Variables
+memory_necessary = [getsizeof(inc),
+getsizeof(w),
+getsizeof(W),
+getsizeof(sma),
+getsizeof(e),
+getsizeof(p),
+getsizeof(Rp),
+getsizeof(dmajorp),
+getsizeof(dminorp),
+getsizeof(theta_OpQ_X),
+getsizeof(theta_OpQp_X),
+getsizeof(Op),
+getsizeof(x),
+getsizeof(y),
+getsizeof(Phi),
+getsizeof(a),
+getsizeof(b),
+getsizeof(xreal),
+getsizeof(only2RealInds),
+getsizeof(yrealAllRealInds),
+getsizeof(fourIntInds),
+getsizeof(twoIntOppositeXInds),
+getsizeof(twoIntSameYInds),
+getsizeof(nu_minSepPoints),
+getsizeof(nu_maxSepPoints),
+getsizeof(nu_lminSepPoints),
+getsizeof(nu_lmaxSepPoints),
+getsizeof(nu_fourInt),
+getsizeof(nu_twoIntSameY),
+getsizeof(nu_twoIntOppositeX),
+getsizeof(nu_IntersectionsOnly2)]
+print('memory_necessary Used: ' + str(np.sum(memory_necessary)/10**9) + ' GB')
+
+
+#Things currently calculated, used, and later deleted
+#A, B, C, D
+#minSepPoints_x_dr, minSepPoints_y_dr, maxSepPoints_x_dr, maxSepPoints_y_dr, lminSepPoints_x_dr, lminSepPoints_y_dr, lmaxSepPoints_x_dr, lmaxSepPoints_y_dr
+#fourInt_x_dr, fourInt_y_dr, twoIntSameY_x_dr, twoIntSameY_y_dr, twoIntOppositeX_x_dr, twoIntOppositeX_y_dr, xIntersectionsOnly2_dr, yIntersectionsOnly2_dr
+
+# Vestigal Variables
+#TODO a and b are duplicates of dmajorp and dminorp
+memory_vestigal = [getsizeof(error_numinSep),
+getsizeof(error_numaxSep),
+getsizeof(error_nulminSep),
+getsizeof(error_nulmaxSep),
+getsizeof(dmajorp_v2),
+getsizeof(dminorp_v2),
+getsizeof(Psi_v2),
+getsizeof(psi_v2),
+getsizeof(Psi),
+getsizeof(psi),
+getsizeof(delta),
+getsizeof(delta_0),
+getsizeof(P), #not 100% sure
+getsizeof(D2),
+getsizeof(R),
+getsizeof(allIndsUsed)]
+print('memory_vestigal Used: ' + str(np.sum(memory_vestigal)/10**9) + ' GB')
+
+# Variables Only For Plotting
+#TODO make if statements depending on whether I am plotting things or not
+memory_plotting = [getsizeof(errors_fourInt0),
+getsizeof(errors_fourInt1),
+getsizeof(errors_fourInt2),
+getsizeof(errors_fourInt3),
+getsizeof(errors_twoIntSameY0),
+getsizeof(errors_twoIntSameY1),
+getsizeof(errors_twoIntOppositeX0),
+getsizeof(errors_twoIntOppositeX1),
+getsizeof(errors_IntersectionsOnly2X0),
+getsizeof(errors_IntersectionsOnly2X1),
+getsizeof(type0_0Inds),
+getsizeof(type0_1Inds),
+getsizeof(type0_2Inds),
+getsizeof(type0_3Inds),
+getsizeof(type0_4Inds),
+getsizeof(type1_0Inds),
+getsizeof(type1_1Inds),
+getsizeof(type1_2Inds),
+getsizeof(type1_3Inds),
+getsizeof(type1_4Inds),
+getsizeof(type2_0Inds),
+getsizeof(type2_1Inds),
+getsizeof(type2_2Inds),
+getsizeof(type2_3Inds),
+getsizeof(type2_4Inds),
+getsizeof(type3_0Inds),
+getsizeof(type3_1Inds),
+getsizeof(type3_2Inds),
+getsizeof(type3_3Inds),
+getsizeof(type3_4Inds),
+getsizeof(fourInt_x),
+getsizeof(fourInt_y),
+getsizeof(twoIntSameY_x),
+getsizeof(twoIntSameY_y),
+getsizeof(twoIntOppositeX_x),
+getsizeof(twoIntOppositeX_y),
+getsizeof(xIntersectionsOnly2),
+getsizeof(yIntersectionsOnly2),
+getsizeof(typeInds0),
+getsizeof(typeInds1),
+getsizeof(typeInds2),
+getsizeof(typeInds3)]
+print('memory_plotting Used: ' + str(np.sum(memory_plotting)/10**9) + ' GB')
+
+
+#### Memory Usage
+# memories = [getsizeof(inc),getsizeof(W),getsizeof(w),getsizeof(sma),getsizeof(e),getsizeof(p),getsizeof(Rp),getsizeof(dmajorp),getsizeof(dminorp),getsizeof(Psi),getsizeof(psi),getsizeof(theta_OpQ_X),\
+# getsizeof(theta_OpQp_X),getsizeof(dmajorp_v2),getsizeof(dminorp_v2),getsizeof(Psi_v2),getsizeof(psi_v2),getsizeof(Op),getsizeof(x),getsizeof(y),getsizeof(Phi),getsizeof(a),getsizeof(b),\
+# getsizeof(xreal),getsizeof(yreal),getsizeof(minSepPoints_x),getsizeof(minSepPoints_y),\
+# getsizeof(maxSepPoints_x),getsizeof(maxSepPoints_y),getsizeof(lminSepPoints_x),getsizeof(lminSepPoints_y),getsizeof(lmaxSepPoints_x),getsizeof(lmaxSepPoints_y),getsizeof(minSep),\
+# getsizeof(maxSep)]#,getsizeof(s_mplminSeps),getsizeof(s_mplmaxSeps)]
+# totalMemoryUsage = np.sum(memories)
+# print('Total Data Used: ' + str(totalMemoryUsage/10**9) + ' GB')
+####
+
+
+#### START ANALYSIS AND PLOTTING ######################################
+#######################################################################
+
+
 #### Plotting Projected Ellipse
 start2 = time.time()
 def plotProjectedEllipse(ind, sma, e, W, w, inc, theta_OpQ_X, theta_OpQp_X, dmajorp, dminorp, Op, num):
@@ -256,8 +520,8 @@ def plot3DEllipseto2DEllipseProjectionDiagram(ind, sma, e, W, w, inc, num):
     ax.scatter(Op[0][ind],Op[1][ind], 1.3*min_z, color='grey', marker='o',s=25) #2D Ellipse Center
     ax.text(1.2*(rper[0][0] + rapo[0][0])/2,1.2*(rper[1][0] + rapo[1][0])/2,1.4*min_z, 'O\'', None)
     ax.plot([(rper[0][0] + rapo[0][0])/2,Op[0][ind]],[(rper[1][0] + rapo[1][0])/2,Op[1][ind]],[(rper[2][0] + rapo[2][0])/2,1.3*min_z],color='grey',linestyle='--',linewidth=2) #Plot ) to )''
-    print('a: ' + str(np.round(sma[ind],2)) + ' e: ' + str(np.round(e[ind],2)) + ' W: ' + str(np.round(W[ind],2)) + ' w: ' + str(np.round(w[ind],2)) + ' i: ' + str(np.round(inc[ind],2)) +\
-         ' Psi: ' + str(np.round(Psi[ind],2)) + ' psi: ' + str(np.round(psi[ind],2)))# + ' theta: ' + str(np.round(theta[ind],2)))
+    #DELETE print('a: ' + str(np.round(sma[ind],2)) + ' e: ' + str(np.round(e[ind],2)) + ' W: ' + str(np.round(W[ind],2)) + ' w: ' + str(np.round(w[ind],2)) + ' i: ' + str(np.round(inc[ind],2)) +\
+    #      ' Psi: ' + str(np.round(Psi[ind],2)) + ' psi: ' + str(np.round(psi[ind],2)))# + ' theta: ' + str(np.round(theta[ind],2)))
 
 
     ang2 = (theta_OpQ_X[ind]+theta_OpQp_X[ind])/2
@@ -385,8 +649,8 @@ def plotEllipseMajorAxisFromConjugate(ind, sma, e, W, w, inc, num):
     ## Plot Ellipse Center
     ax.scatter(Op[0][ind],Op[1][ind], color='grey', marker='o',s=25,zorder=30) #2D Ellipse Center
     ax.text(1.2*(rper[0][0] + rapo[0][0])/2,1.2*(rper[1][0] + rapo[1][0])/2+0.05, 'O\'', None)
-    print('a: ' + str(np.round(sma[ind],2)) + ' e: ' + str(np.round(e[ind],2)) + ' W: ' + str(np.round(W[ind],2)) + ' w: ' + str(np.round(w[ind],2)) + ' i: ' + str(np.round(inc[ind],2)) +\
-         ' Psi: ' + str(np.round(Psi[ind],2)) + ' psi: ' + str(np.round(psi[ind],2)))# + ' theta: ' + str(np.round(theta[ind],2)))
+    #DELETE print('a: ' + str(np.round(sma[ind],2)) + ' e: ' + str(np.round(e[ind],2)) + ' W: ' + str(np.round(W[ind],2)) + ' w: ' + str(np.round(w[ind],2)) + ' i: ' + str(np.round(inc[ind],2)) +\
+    #      ' Psi: ' + str(np.round(Psi[ind],2)) + ' psi: ' + str(np.round(psi[ind],2)))# + ' theta: ' + str(np.round(theta[ind],2)))
 
     ang2 = (theta_OpQ_X[ind]+theta_OpQp_X[ind])/2
     dmajorpx1 = Op[0][ind] + dmajorp[ind]*np.cos(ang2)
@@ -442,156 +706,7 @@ del start4, stop4
 plt.close(num)
 ####
 
-#### Derotate Ellipse Calculations
-start5 = time.time()
-x, y, Phi = derotatedEllipse(theta_OpQ_X, theta_OpQp_X, Op)
-stop5 = time.time()
-print('stop5: ' + str(stop5-start5))
-del start5, stop5
-a = dmajorp
-b = dminorp
-mx = np.abs(x) #x converted to a strictly positive value
-my = np.abs(y) #y converted to a strictly positive value
-####
 
-#### Calculate X,Y Position of Minimum and Maximums with Quartic
-start7 = time.time()
-A, B, C, D = quarticCoefficients_smin_smax_lmin_lmax(a.astype('complex128'), b, mx, my)
-xreal, delta, P, D2, R, delta_0 = quarticSolutions_ellipse_to_Quarticipynb(A.astype('complex128'), B, C, D)
-del A, B, C, D #delting for memory efficiency
-assert np.max(np.nanmin(np.abs(np.imag(xreal)),axis=1)) < 1e-5, 'At least one row has min > 1e-5' #this ensures each row has a solution
-#print(w[np.argmax(np.nanmin(np.abs(np.imag(xreal)),axis=1))]) #prints the argument of perigee (assert above fails on 1.57 or 1.5*pi)
-#Failure of the above occured where w=4.712 which is approx 1.5pi
-#NOTE: originally 1e-15 but there were some with x=1e-7 and w=pi/2, 5e-6 from 
-tind = np.argmax(np.nanmin(np.abs(np.imag(xreal)),axis=1)) #DELETE
-tinds = np.argsort(np.nanmin(np.abs(np.imag(xreal)),axis=1)) #DELETE
-del tind, tinds #DELETE
-xreal.real = np.abs(xreal)
-stop7 = time.time()
-print('stop7: ' + str(stop7-start7))
-del stop7, start7
-#DELETEprintKOE(ind,a,e,W,w,inc)
-
-#### Technically, each row must have at least 2 solutions, but whatever
-start8 = time.time()
-yreal = ellipseYFromX(xreal.astype('complex128'), a, b)
-stop8 = time.time()
-print('stop8: ' + str(stop8-start8))
-del start8, stop8
-####
-
-#### Calculate Minimum, Maximum, Local Minimum, Local Maximum Separations
-start9 = time.time()
-minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y, minSep, maxSep, lminSep, lmaxSep, yrealAllRealInds, yrealImagInds = smin_smax_slmin_slmax(n, xreal, yreal, mx, my, x, y)
-lminSepPoints_x = np.real(lminSepPoints_x)
-lminSepPoints_y = np.real(lminSepPoints_y)
-lmaxSepPoints_x = np.real(lmaxSepPoints_x)
-lmaxSepPoints_y = np.real(lmaxSepPoints_y)
-stop9 = time.time()
-print('stop9: ' + str(stop9-start9))
-del start9, stop9
-####
-
-#### Ellipse Circle Intersection #######################################################################
-start11 = time.time()
-r = np.ones(len(a))
-
-a, b, only2RealInds, typeInds0, typeInds1, typeInds2, typeInds3,\
-        yrealAllRealInds, fourIntInds, fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y,\
-        twoIntOppositeXInds, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2, twoIntSameYInds,\
-        type0_0Inds,type0_1Inds,type0_2Inds,type0_3Inds,type0_4Inds,type1_0Inds,type1_1Inds,type1_2Inds,type1_3Inds,type1_4Inds,\
-        type2_0Inds,type2_1Inds,type2_2Inds,type2_3Inds,type2_4Inds,type3_0Inds,type3_1Inds,type3_2Inds,type3_3Inds,type3_4Inds,\
-        allIndsUsed = ellipseCircleIntersections(None, a, b, mx, my, x, y, minSep, maxSep, lminSep, lmaxSep, yrealAllRealInds, yrealImagInds)
-stop11 = time.time()
-print('stop11: ' + str(stop11-start11))
-del start11, stop11
-####
-
-
-#### Correct Ellipse Circle Intersections fourInt1 ####################################
-fourInt_x[:,0], fourInt_y[:,0] = intersectionFixer_pm(x, y, fourInt_x[:,0], fourInt_y[:,0], yrealAllRealInds[fourIntInds], np.ones(len(fourIntInds)))
-fourInt_x[:,1], fourInt_y[:,1] = intersectionFixer_pm(x, y, fourInt_x[:,1], fourInt_y[:,1], yrealAllRealInds[fourIntInds], np.ones(len(fourIntInds)))
-#### Correct Ellipse Circle Intersections twoIntSameY0
-twoIntSameY_x[:,0], twoIntSameY_y[:,0] = intersectionFixer_pm(x, y, twoIntSameY_x[:,0], twoIntSameY_y[:,0], yrealAllRealInds[twoIntSameYInds], np.ones(len(twoIntSameYInds)))
-#### Correct Ellipse Circle Intersections twoIntSameY1 
-twoIntSameY_x[:,1], twoIntSameY_y[:,1] = intersectionFixer_pm(x, y, twoIntSameY_x[:,1], twoIntSameY_y[:,1], yrealAllRealInds[twoIntSameYInds], np.ones(len(twoIntSameYInds)))
-#### Correct Ellipse Circle Intersections twoIntOppositeX0
-twoIntOppositeX_x[:,0], twoIntOppositeX_y[:,0] = intersectionFixer_pm(x, y, twoIntOppositeX_x[:,0], twoIntOppositeX_y[:,0], yrealAllRealInds[twoIntOppositeXInds], np.ones(len(twoIntOppositeXInds)))
-#### Correct Ellipse Circle Intersections twoIntOppositeX1 
-twoIntOppositeX_x[:,1], twoIntOppositeX_y[:,1] = intersectionFixer_pm(x, y, twoIntOppositeX_x[:,1], twoIntOppositeX_y[:,1], yrealAllRealInds[twoIntOppositeXInds], np.ones(len(twoIntOppositeXInds)))
-#### COULD RUN ON OTHER CASES #########################################################
-
-#### Rerotate Extrema and Intersection Points
-start13 = time.time()
-
-minSepPoints_x_dr, minSepPoints_y_dr, maxSepPoints_x_dr, maxSepPoints_y_dr, lminSepPoints_x_dr, lminSepPoints_y_dr, lmaxSepPoints_x_dr, lmaxSepPoints_y_dr,\
-    fourInt_x_dr, fourInt_y_dr, twoIntSameY_x_dr, twoIntSameY_y_dr, twoIntOppositeX_x_dr, twoIntOppositeX_y_dr, xIntersectionsOnly2_dr, yIntersectionsOnly2_dr = \
-    rerotateExtremaAndIntersectionPoints(minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y,\
-    fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2,\
-    Phi, Op, yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds)
-stop13 = time.time()
-print('stop13: ' + str(stop13-start13))
-del start13, stop13
-####
-
-#### Calculate True Anomalies of Points
-start14 = time.time()
-
-nu_minSepPoints, nu_maxSepPoints, nu_lminSepPoints, nu_lmaxSepPoints, nu_fourInt, nu_twoIntSameY, nu_twoIntOppositeX, nu_IntersectionsOnly2\
-     = trueAnomaliesOfPoints(minSepPoints_x_dr, minSepPoints_y_dr, maxSepPoints_x_dr, maxSepPoints_y_dr, lminSepPoints_x_dr, lminSepPoints_y_dr, lmaxSepPoints_x_dr, lmaxSepPoints_y_dr,\
-    fourInt_x_dr, fourInt_y_dr, twoIntSameY_x_dr, twoIntSameY_y_dr, twoIntOppositeX_x_dr, twoIntOppositeX_y_dr, xIntersectionsOnly2_dr, yIntersectionsOnly2_dr,\
-    yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds, W, w, inc)
-stop14 = time.time()
-print('stop14: ' + str(stop14-start14))
-del start14, stop14
-#Now can I delete the x,y points?
-#del minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y, fourInt_x, fourInt_y
-#del twoIntSameY_x, twoIntSameY_y, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2
-####
-
-#### Fix minSep True Anomalies
-nu_minSepPoints, error_numinSep = nuCorrections_extrema(sma,e,W,w,inc,nu_minSepPoints,np.arange(len(sma)),minSep)
-####
-#### Fix maxSep True Anomalies
-nu_maxSepPoints, error_numaxSep = nuCorrections_extrema(sma,e,W,w,inc,nu_maxSepPoints,np.arange(len(sma)),maxSep)
-####
-#### Fix lminSep True Anomalies
-nu_lminSepPoints, error_nulminSep = nuCorrections_extrema(sma,e,W,w,inc,nu_lminSepPoints,yrealAllRealInds,lminSep)
-####
-#### Fix lmaxSep True Anomalies
-nu_lmaxSepPoints, error_nulmaxSep = nuCorrections_extrema(sma,e,W,w,inc,nu_lmaxSepPoints,yrealAllRealInds,lmaxSep)
-####
-
-#### Correcting nu for ellipse-circle intersections
-#### yrealAllRealInds[fourIntInds]
-nu_fourInt[:,0], errors_fourInt0 = nuCorrections_int(sma,e,W,w,inc,r,nu_fourInt[:,0],yrealAllRealInds,fourIntInds)
-nu_fourInt[:,1], errors_fourInt1 = nuCorrections_int(sma,e,W,w,inc,r,nu_fourInt[:,1],yrealAllRealInds,fourIntInds)
-nu_fourInt[:,2], errors_fourInt2 = nuCorrections_int(sma,e,W,w,inc,r,nu_fourInt[:,2],yrealAllRealInds,fourIntInds)
-nu_fourInt[:,3], errors_fourInt3 = nuCorrections_int(sma,e,W,w,inc,r,nu_fourInt[:,3],yrealAllRealInds,fourIntInds)
-####
-#### yrealAllRealInds[twoIntSameYInds]
-nu_twoIntSameY[:,0], errors_twoIntSameY0 = nuCorrections_int(sma,e,W,w,inc,r,nu_twoIntSameY[:,0],yrealAllRealInds,twoIntSameYInds)
-nu_twoIntSameY[:,1], errors_twoIntSameY1 = nuCorrections_int(sma,e,W,w,inc,r,nu_twoIntSameY[:,1],yrealAllRealInds,twoIntSameYInds)
-####
-#### yrealAllRealInds[twoIntOppositeXInds]
-nu_twoIntOppositeX[:,0], errors_twoIntOppositeX0 = nuCorrections_int(sma,e,W,w,inc,r,nu_twoIntOppositeX[:,0],yrealAllRealInds,twoIntOppositeXInds)
-nu_twoIntOppositeX[:,1], errors_twoIntOppositeX1 = nuCorrections_int(sma,e,W,w,inc,r,nu_twoIntOppositeX[:,1],yrealAllRealInds,twoIntOppositeXInds)
-####
-#### only2RealInds
-nu_IntersectionsOnly2[:,0], errors_IntersectionsOnly2X0 = nuCorrections_int(sma,e,W,w,inc,r,nu_IntersectionsOnly2[:,0],np.arange(len(sma)),only2RealInds)
-nu_IntersectionsOnly2[:,1], errors_IntersectionsOnly2X1 = nuCorrections_int(sma,e,W,w,inc,r,nu_IntersectionsOnly2[:,1],np.arange(len(sma)),only2RealInds)
-####
-
-
-#### Memory Usage
-memories = [getsizeof(inc),getsizeof(W),getsizeof(w),getsizeof(sma),getsizeof(e),getsizeof(p),getsizeof(Rp),getsizeof(dmajorp),getsizeof(dminorp),getsizeof(Psi),getsizeof(psi),getsizeof(theta_OpQ_X),\
-getsizeof(theta_OpQp_X),getsizeof(dmajorp_v2),getsizeof(dminorp_v2),getsizeof(Psi_v2),getsizeof(psi_v2),getsizeof(Op),getsizeof(x),getsizeof(y),getsizeof(Phi),getsizeof(a),getsizeof(b),\
-getsizeof(mx),getsizeof(my),getsizeof(xreal),getsizeof(yreal),getsizeof(minSepPoints_x),getsizeof(minSepPoints_y),\
-getsizeof(maxSepPoints_x),getsizeof(maxSepPoints_y),getsizeof(lminSepPoints_x),getsizeof(lminSepPoints_y),getsizeof(lmaxSepPoints_x),getsizeof(lmaxSepPoints_y),getsizeof(minSep),\
-getsizeof(maxSep)]#,getsizeof(s_mplminSeps),getsizeof(s_mplmaxSeps)]
-totalMemoryUsage = np.sum(memories)
-print('Total Data Used: ' + str(totalMemoryUsage/10**9) + ' GB')
-####
 
 
 #### Plot Derotated Ellipse
@@ -711,35 +826,21 @@ plt.close(num)
 #del seps_TwoIntSameY1, errors_TwoIntSameY1, indsToFix
 ####
 
-
-#Testing plotting inds
-ind = yrealAllRealInds[fourIntInds[0]]#works
-if len(twoIntSameYInds) > 0:
-    ind = yrealAllRealInds[twoIntSameYInds[0]]#works
-ind = yrealAllRealInds[twoIntOppositeXInds[1]]#works
-#GOOD KEEP ind = only2RealInds[4]
-ind = only2RealInds[4]
-
-#type0_0 #OK
-# ind = only2RealInds[type0_0Inds[0]]#works
-# ind = only2RealInds[type0_1Inds[0]]#works
-# ind = only2RealInds[type0_2Inds[0]]#works
-# ind = only2RealInds[type0_3Inds[0]]#works
-# ind = only2RealInds[type0_4Inds[0]]#works
-#type1 skipping since empty
-#type2 #OK
-# ind = only2RealInds[type2_0Inds[0]]#works
-# ind = only2RealInds[type2_1Inds[0]]#works
-# ind = only2RealInds[type2_2Inds[0]]#works
-# ind = only2RealInds[type2_3Inds[0]]#works
-# ind = only2RealInds[type2_4Inds[0]]#works
-#type3
-#ind = only2RealInds[type3_0Inds[0]]#works
-if len(only2RealInds) > 0:
-    ind = only2RealInds[type3_1Inds[0]]#works
-#ind = only2RealInds[type3_2Inds[0]]#works
-#ind = only2RealInds[type3_3Inds[0]]#works
-#ind = only2RealInds[type3_4Inds[0]]#works
+#DELETE
+# #Testing plotting inds
+# ind = yrealAllRealInds[fourIntInds[0]]#works
+# if len(twoIntSameYInds) > 0:
+#     ind = yrealAllRealInds[twoIntSameYInds[0]]#works
+# ind = yrealAllRealInds[twoIntOppositeXInds[1]]#works
+# #GOOD KEEP ind = only2RealInds[4]
+# ind = only2RealInds[4]
+# #type3
+# #ind = only2RealInds[type3_0Inds[0]]#works
+# if len(only2RealInds) > 0:
+#     ind = only2RealInds[type3_1Inds[0]]#works
+# #ind = only2RealInds[type3_2Inds[0]]#works
+# #ind = only2RealInds[type3_3Inds[0]]#works
+# #ind = only2RealInds[type3_4Inds[0]]#works
 
 #### Plot Derotated Intersections, Min/Max, and Star Location Type Bounds
 start12 = time.time()
@@ -1166,8 +1267,6 @@ plt.rc('font',weight='bold')
 plt.yscale('log')
 plt.xscale('log')
 
-#counts, bins = np.histogram(np.abs(errors_fourInt0)+1e-17,bins=10**np.linspace(1e-17,1e-1,16))
-#plt.hist(bins[:-1], bins, weights=counts)#bins=10**np.linspace(1e-17,1e-1,16),label='Four Int 0')
 plt.hist(np.abs(errors_fourInt0)+1e-17, bins=np.logspace(start=-17.,stop=-1,num=17),label='Four Int 0',alpha=0.2)
 plt.hist(np.abs(errors_fourInt1)+1e-17, bins=np.logspace(start=-17.,stop=-1,num=17),label='Four Int 1',alpha=0.2)
 plt.hist(np.abs(errors_fourInt2)+1e-17, bins=np.logspace(start=-17.,stop=-1,num=17),label='Four Int 2',alpha=0.2)
@@ -1199,8 +1298,6 @@ plt.rc('font',weight='bold')
 plt.yscale('log')
 plt.xscale('log')
 
-#counts, bins = np.histogram(np.abs(errors_fourInt0)+1e-17,bins=10**np.linspace(1e-17,1e-1,16))
-#plt.hist(bins[:-1], bins, weights=counts)#bins=10**np.linspace(1e-17,1e-1,16),label='Four Int 0')
 plt.hist(np.concatenate((np.abs(errors_fourInt0)+1e-17, np.abs(errors_fourInt1)+1e-17,np.abs(errors_fourInt2)+1e-17,np.abs(errors_fourInt3)+1e-17,\
         np.abs(errors_twoIntSameY0)+1e-17, np.abs(errors_twoIntSameY1)+1e-17,np.abs(errors_twoIntOppositeX0)+1e-17,\
         np.abs(errors_twoIntOppositeX1)+1e-17,np.abs(errors_IntersectionsOnly2X0)+1e-17,np.abs(errors_IntersectionsOnly2X1)+1e-17)), bins=np.logspace(start=-17.,stop=-1,num=17),color='purple')
@@ -1370,9 +1467,6 @@ plotSeparationvsnu(ind, sma, e, W, w, inc, minSep, maxSep, lminSep, lmaxSep, \
 ####
 
 
-
-
-
 #### Plot separation vs time
 def plotSeparationVsTime(ind, sma, e, W, w, inc, minSep, maxSep, lminSep, lmaxSep, \
     nu_minSepPoints, nu_maxSepPoints, nu_lminSepPoints, nu_lmaxSepPoints,\
@@ -1468,10 +1562,6 @@ plotSeparationVsTime(ind, sma, e, W, w, inc, minSep, maxSep, lminSep, lmaxSep, \
         nu_fourInt, nu_twoIntSameY, nu_twoIntOppositeX, nu_IntersectionsOnly2,\
         yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds, num)
 ####
-
-
-
-
 
 
 ####  Plot Derotate Ellipse
