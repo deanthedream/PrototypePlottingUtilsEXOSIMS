@@ -221,6 +221,7 @@ nu_IntersectionsOnly2[:,1], errors_IntersectionsOnly2X1 = nuCorrections_int(sma,
 ####
 
 #Necessary Variables
+#Okay issue. if a variable has units (like rad) it references the size of the hash to the astropy object when using getsizeof. var.nbytes reveals true size
 memory_necessary = [getsizeof(inc),
 getsizeof(w),
 getsizeof(W),
