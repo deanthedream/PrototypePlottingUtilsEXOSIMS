@@ -97,7 +97,8 @@ b = dminorp
 #### Calculate X,Y Position of Minimum and Maximums with Quartic
 start7 = time.time()
 A, B, C, D = quarticCoefficients_smin_smax_lmin_lmax(a.astype('complex128'), b, np.abs(x), np.abs(y))
-xreal, delta, P, D2, R, delta_0 = quarticSolutions_ellipse_to_Quarticipynb(A.astype('complex128'), B, C, D)
+#xreal, delta, P, D2, R, delta_0 = quarticSolutions_ellipse_to_Quarticipynb(A.astype('complex128'), B, C, D)
+xreal, _, _, _, _, _ = quarticSolutions_ellipse_to_Quarticipynb(A.astype('complex128'), B, C, D)
 del A, B, C, D #delting for memory efficiency
 assert np.max(np.nanmin(np.abs(np.imag(xreal)),axis=1)) < 1e-5, 'At least one row has min > 1e-5' #this ensures each row has a solution
 #print(w[np.argmax(np.nanmin(np.abs(np.imag(xreal)),axis=1))]) #prints the argument of perigee (assert above fails on 1.57 or 1.5*pi)
@@ -141,7 +142,7 @@ a, b, only2RealInds, typeInds0, typeInds1, typeInds2, typeInds3,\
         twoIntOppositeXInds, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2, twoIntSameYInds,\
         type0_0Inds,type0_1Inds,type0_2Inds,type0_3Inds,type0_4Inds,type1_0Inds,type1_1Inds,type1_2Inds,type1_3Inds,type1_4Inds,\
         type2_0Inds,type2_1Inds,type2_2Inds,type2_3Inds,type2_4Inds,type3_0Inds,type3_1Inds,type3_2Inds,type3_3Inds,type3_4Inds,\
-        allIndsUsed = ellipseCircleIntersections(None, a, b, np.abs(x), np.abs(y), x, y, minSep, maxSep, lminSep, lmaxSep, yrealAllRealInds, yrealImagInds)
+        _ = ellipseCircleIntersections(None, a, b, np.abs(x), np.abs(y), x, y, minSep, maxSep, lminSep, lmaxSep, yrealAllRealInds, yrealImagInds)
 stop11 = time.time()
 print('stop11: ' + str(stop11-start11))
 del start11, stop11
@@ -269,14 +270,11 @@ print('memory_necessary Used: ' + str(np.sum(memory_necessary)/10**9) + ' GB')
 
 # Vestigal Variables
 #TODO a and b are duplicates of dmajorp and dminorp
-memory_vestigal = [delta.nbytes,
-delta_0.nbytes,
-P.nbytes, #not 100% sure
-D2.nbytes,
-R.nbytes,
-allIndsUsed.nbytes]
+memory_vestigal = [0]
 #error_numinSep.nbytes,error_numaxSep.nbytes,error_nulminSep.nbytes,error_nulmaxSep.nbytes,
 #dmajorp_v2.nbytes,dminorp_v2.nbytes,Psi_v2.nbytes,psi_v2.nbytes,Psi.nbytes,psi.nbytes,
+#delta.nbytes,delta_0.nbytes,P.nbytes, #not 100% sureD2.nbytes,R.nbytes,
+#allIndsUsed.nbytes
 print('memory_vestigal Used: ' + str(np.sum(memory_vestigal)/10**9) + ' GB')
 
 # Variables Only For Plotting
