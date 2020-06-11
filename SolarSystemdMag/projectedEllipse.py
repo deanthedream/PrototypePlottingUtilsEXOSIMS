@@ -1577,19 +1577,336 @@ def timeFromTrueAnomaly(nu,T,e):
     Returns:
 
     """
-    #E = np.arccos((e+np.cos(nu))/(1+e*np.cos(nu)))
+
     E = np.arctan2(np.sqrt(1-e**2)*np.sin(nu),e+np.cos(nu))
     E = np.mod(E,2*np.pi)
-    # if nu.shape == ():
-    #     if nu < np.pi: #replace with np.mod instead?
-    #         E = 2*np.pi + E
-    # else: #nu is a numpy array
-    #     inds = np.where(nu < 0)[0]
-    #     E[inds] = 2*np.pi + E[inds]
     t = (E-e*np.sin(E))/(2*np.pi/T)
     return t
 
 def printKOE(ind,a,e,W,w,inc):
     print('a: ' + str(np.round(sma[ind],2)) + ' e: ' + str(np.round(e[ind],2)) + ' W: ' + str(np.round(W[ind],2)) + ' w: ' + str(np.round(w[ind],2)) + ' i: ' + str(np.round(inc[ind],2)))# + ' theta: ' + str(np.round(theta[ind],2)))
     return None
+
+#### Ellipse Circle Intersection
+def ellipseCircleIntersections(r, a, b, mx, my, x, y, minSep, maxSep, lminSep, lmaxSep, yrealAllRealInds, yrealImagInds):
+    #### Testing ellipse_to_Quartic solution
+    if r == None:
+        r = np.ones(len(a),dtype='complex128')
+    #ARE THESE NECESSARY?
+    a.astype('complex128')
+    b.astype('complex128')
+    mx.astype('complex128')
+    my.astype('complex128')
+    r.astype('complex128')
+    A, B, C, D = quarticCoefficients_ellipse_to_Quarticipynb(a, b, mx, my, r)
+    xreal2, delta, P, D2, R, delta_0 = quarticSolutions_ellipse_to_Quarticipynb(A, B, C, D)
+    yreal2 = ellipseYFromX(xreal2.astype('complex128'), a, b)
+
+    #### All Real Inds
+    #Where r is...
+    gtMinSepBool = (minSep[yrealAllRealInds] < r[yrealAllRealInds])
+    ltMaxSepBool = (maxSep[yrealAllRealInds] >= r[yrealAllRealInds])
+    gtLMaxSepBool = (lmaxSep < r[yrealAllRealInds])
+    ltLMaxSepBool = (lmaxSep > r[yrealAllRealInds])
+    gtLMinSepBool = (lminSep <= r[yrealAllRealInds])
+    ltLMinSepBool = (lminSep > r[yrealAllRealInds])
+
+    #Two intersections on same y-side of projected ellipse
+    twoIntSameYInds = np.where(gtMinSepBool*ltLMinSepBool)[0]
+    #Four intersections total
+    fourIntInds = np.where(gtLMinSepBool*ltLMaxSepBool)[0]
+    #Two intersections opposite x-side
+    twoIntOppositeXInds = np.where(ltMaxSepBool*gtLMaxSepBool)[0]
+    del gtMinSepBool, ltMaxSepBool, gtLMaxSepBool, ltLMaxSepBool, gtLMinSepBool, ltLMinSepBool #for memory efficiency
+
+    #Solution Checks
+    assert np.max(np.imag(xreal2[yrealAllRealInds[fourIntInds]])) < 1e-5, 'an Imag component of the all reals is too high!' #uses to be 1e-7 but would occasionally get errors so relaxing
+
+    #### Four Intersection Points
+    fourInt_dx = (np.real(xreal2[yrealAllRealInds[fourIntInds]]).T - mx[yrealAllRealInds[fourIntInds]]).T
+    fourIntSortInds = np.argsort(fourInt_dx, axis=1)
+    sameYOppositeXInds = fourIntSortInds[:,0]
+    assert np.all(sameYOppositeXInds==0), 'not all 0'
+    sameYXInds = fourIntSortInds[:,3]
+    assert np.all(sameYXInds==3), 'not all 3'
+    oppositeYOppositeXInds = fourIntSortInds[:,1]
+    assert np.all(oppositeYOppositeXInds==1), 'not all 1'
+    oppositeYSameXInds = fourIntSortInds[:,2]
+    assert np.all(oppositeYSameXInds==2), 'not all 2'
+    fourInt_y = np.zeros((len(fourIntInds),4))
+    fourInt_x = np.zeros((len(fourIntInds),4))
+    fourInt_x[:,0] = xreal2[yrealAllRealInds[fourIntInds],sameYOppositeXInds]
+    fourInt_x[:,1] = xreal2[yrealAllRealInds[fourIntInds],sameYXInds]
+    fourInt_x[:,2] = xreal2[yrealAllRealInds[fourIntInds],oppositeYOppositeXInds]
+    fourInt_x[:,3] = xreal2[yrealAllRealInds[fourIntInds],oppositeYSameXInds]
+    fourInt_y = ellipseYFromX(np.abs(fourInt_x), a[yrealAllRealInds[fourIntInds]], b[yrealAllRealInds[fourIntInds]])
+    fourInt_y[:,2] = -fourInt_y[:,2]
+    fourInt_y[:,3] = -fourInt_y[:,3]
+    #Quadrant Star Belongs to
+    bool1 = x > 0
+    bool2 = y > 0
+    #Quadrant 1 if T,T
+    #Quadrant 2 if F,T
+    #Quadrant 3 if F,F
+    #Quadrant 4 if T,F
+    #### Four Intercept Points
+    fourInt_x = (fourInt_x.T*(2*bool1[yrealAllRealInds[fourIntInds]]-1)).T
+    fourInt_y = (fourInt_y.T*(2*bool2[yrealAllRealInds[fourIntInds]]-1)).T
+    ####
+    #### Two Intersection Points twoIntSameYInds
+    twoIntSameY_x = np.zeros((len(twoIntSameYInds),2))
+    twoIntSameY_y = np.zeros((len(twoIntSameYInds),2))
+    #DELETEassert np.max(np.imag(xreal2[yrealAllRealInds[twoIntSameYInds],0])) < 1e-8, 'An Imaginary component was too large' #Was 1e-12, but is now 1e-8
+    if len(twoIntSameYInds) > 0:
+        assert np.max(np.imag(xreal2[yrealAllRealInds[twoIntSameYInds],0])) < 1e-8, 'An Imaginary component was too large' #Was 1e-12, but is now 1e-8
+    twoIntSameY_x[:,0] = np.real(xreal2[yrealAllRealInds[twoIntSameYInds],0])
+    smallImagInds = np.where(np.abs(np.imag(xreal2[yrealAllRealInds[twoIntSameYInds],1])) < 1e-9)[0]
+    largeImagInds = np.where(np.abs(np.imag(xreal2[yrealAllRealInds[twoIntSameYInds],1])) > 1e-9)[0]
+    twoIntSameY_x[smallImagInds,1] = np.real(xreal2[yrealAllRealInds[twoIntSameYInds[smallImagInds]],1])
+    twoIntSameY_x[largeImagInds,1] = np.real(xreal2[yrealAllRealInds[twoIntSameYInds[largeImagInds]],3])
+    twoIntSameY_y = np.asarray([np.sqrt(b[yrealAllRealInds[twoIntSameYInds]]**2*(1-twoIntSameY_x[:,0]**2/a[yrealAllRealInds[twoIntSameYInds]]**2)),\
+            np.sqrt(b[yrealAllRealInds[twoIntSameYInds]]**2*(1-twoIntSameY_x[:,1]**2/a[yrealAllRealInds[twoIntSameYInds]]**2))]).T
+    #Adjust for Quadrant Star Belongs to
+    twoIntSameY_x = (twoIntSameY_x.T*(2*bool1[yrealAllRealInds[twoIntSameYInds]]-1)).T
+    twoIntSameY_y = (twoIntSameY_y.T*(2*bool2[yrealAllRealInds[twoIntSameYInds]]-1)).T
+    ####
+    #### Two Intersection Points twoIntOppositeXInds
+    twoIntOppositeX_x = np.zeros((len(twoIntOppositeXInds),2))
+    twoIntOppositeX_y = np.zeros((len(twoIntOppositeXInds),2))
+    assert np.max(np.imag(xreal2[yrealAllRealInds[twoIntOppositeXInds],0])) < 1e-8, '' #was 1e-12 but caused problems
+    twoIntOppositeX_x[:,0] = np.real(xreal2[yrealAllRealInds[twoIntOppositeXInds],0])
+    twoIntOppositeX_x[:,1] = np.real(xreal2[yrealAllRealInds[twoIntOppositeXInds],1])
+    twoIntOppositeX_y = np.asarray([np.sqrt(b[yrealAllRealInds[twoIntOppositeXInds]]**2*(1-np.abs(twoIntOppositeX_x[:,0])**2/a[yrealAllRealInds[twoIntOppositeXInds]]**2)),\
+            np.sqrt(b[yrealAllRealInds[twoIntOppositeXInds]]**2*(1-np.abs(twoIntOppositeX_x[:,1])**2/a[yrealAllRealInds[twoIntOppositeXInds]]**2))]).T
+    #twoIntOppositeX_x = (twoIntOppositeX_x.T*(-2*bool1[yrealAllRealInds[twoIntOppositeXInds]]+1)).T
+    twoIntOppositeX_y[:,1] = -twoIntOppositeX_y[:,1]
+    #Adjust for Quadrant Star Belongs to
+    twoIntOppositeX_x = (twoIntOppositeX_x.T*(2*bool1[yrealAllRealInds[twoIntOppositeXInds]]-1)).T
+    twoIntOppositeX_y = (twoIntOppositeX_y.T*(2*bool2[yrealAllRealInds[twoIntOppositeXInds]]-1)).T
+    ####
+
+    #### ONLY 2 Real Inds (No Local Min/Max)
+    sepsInsideInds = np.where((maxSep[yrealImagInds] >= r[yrealImagInds]) & (r[yrealImagInds] >= minSep[yrealImagInds]))[0] #inds where r is within the minimum and maximum separations
+    only2RealInds = yrealImagInds[sepsInsideInds] #indicies of planets with only 2 real interesections
+    #lets try usnig separation bounds
+    #We will calculate separation at [0,+/-b] and [+/-a,0]
+    sepbp = np.sqrt(mx[only2RealInds]**2+(b[only2RealInds]+my[only2RealInds])**2)
+    sepbm = np.sqrt(mx[only2RealInds]**2+(b[only2RealInds]-my[only2RealInds])**2)
+    sepap = np.sqrt((a[only2RealInds]+mx[only2RealInds])**2+my[only2RealInds]**2)
+    sepam = np.sqrt((a[only2RealInds]-mx[only2RealInds])**2+my[only2RealInds]**2)
+
+    #Types of Star Locations In Projected Ellipse
+    typeInds0 = np.where(sepap < sepbp)[0]
+    typeInds1 = np.where(sepbp < sepam)[0]
+    typeInds2 = np.where((sepam < sepbp)*(sepbp < sepap)*(sepbm < sepam))[0]
+    typeInds3 = np.where(sepam < sepbm)[0]
+    print(len(typeInds0))
+    print(len(typeInds1))
+    print(len(typeInds2))
+    print(len(typeInds3))
+
+    xIntersectionsOnly2 = np.zeros((len(only2RealInds),2))
+    yIntersectionsOnly2 = np.zeros((len(only2RealInds),2))
+    #Separation Order For Each Location Type with Inds
+    #Type0
+    type0_0Inds = np.where((sepap < sepbp)*(r[only2RealInds] < sepbm))[0]
+    xIntersectionsOnly2[type0_0Inds] = np.real(xreal2[only2RealInds[type0_0Inds],0:2])
+    yIntersectionsOnly2[type0_0Inds] = np.real(yreal2[only2RealInds[type0_0Inds],0:2])
+    type0_1Inds = np.where((sepap < sepbp)*(sepbm < r[only2RealInds])*(r[only2RealInds] < sepam))[0]
+    xIntersectionsOnly2[type0_1Inds] = np.real(np.asarray([xreal2[only2RealInds[type0_1Inds],0],xreal2[only2RealInds[type0_1Inds],1]]).T) #-x is already in solution
+    yIntersectionsOnly2[type0_1Inds] = np.real(yreal2[only2RealInds[type0_1Inds],0:2])
+    type0_2Inds = np.where((sepap < sepbp)*(sepam < r[only2RealInds])*(r[only2RealInds] < sepap))[0]
+    xIntersectionsOnly2[type0_2Inds] = np.real(np.asarray([xreal2[only2RealInds[type0_2Inds],0],xreal2[only2RealInds[type0_2Inds],1]]).T) #-x is already in solution
+    yIntersectionsOnly2[type0_2Inds] = np.real(np.asarray([yreal2[only2RealInds[type0_2Inds],0],-yreal2[only2RealInds[type0_2Inds],1]]).T)
+    type0_3Inds = np.where((sepap < sepbp)*(sepap < r[only2RealInds])*(r[only2RealInds] < sepbp))[0]
+    xIntersectionsOnly2[type0_3Inds] = np.real(np.asarray([xreal2[only2RealInds[type0_3Inds],0],xreal2[only2RealInds[type0_3Inds],1]]).T) #-x is already in solution
+    yIntersectionsOnly2[type0_3Inds] = np.real(np.asarray([-yreal2[only2RealInds[type0_3Inds],0],-yreal2[only2RealInds[type0_3Inds],1]]).T)
+    type0_4Inds = np.where((sepap < sepbp)*(sepbp < r[only2RealInds]))[0]
+    xIntersectionsOnly2[type0_4Inds] = np.real(np.asarray([xreal2[only2RealInds[type0_4Inds],0],xreal2[only2RealInds[type0_4Inds],1]]).T) #-x is already in solution
+    yIntersectionsOnly2[type0_4Inds] = np.real(np.asarray([-yreal2[only2RealInds[type0_4Inds],0],-yreal2[only2RealInds[type0_4Inds],1]]).T)
+    #TODO FIX ALL THE STUFF HERE. FIRST FIND WHEN TYPE 1 Situations Occur (Should they have 4 real solutions always?)
+    type1_0Inds = np.where((sepbp < sepam)*(r[only2RealInds] < sepbm))[0]
+    xIntersectionsOnly2[type1_0Inds] = np.real(xreal2[only2RealInds[type1_0Inds],0:2])
+    yIntersectionsOnly2[type1_0Inds] = np.real(yreal2[only2RealInds[type1_0Inds],0:2])
+    type1_1Inds = np.where((sepbp < sepam)*(sepbm < r[only2RealInds])*(r[only2RealInds] < sepbp))[0]
+    xIntersectionsOnly2[type1_1Inds] = np.real(np.asarray([-xreal2[only2RealInds[type1_1Inds],0],xreal2[only2RealInds[type1_1Inds],1]]).T)
+    yIntersectionsOnly2[type1_1Inds] = np.real(np.asarray([yreal2[only2RealInds[type1_1Inds],0],yreal2[only2RealInds[type1_1Inds],1]]).T)
+    type1_2Inds = np.where((sepbp < sepam)*(sepbp < r[only2RealInds])*(r[only2RealInds] < sepam))[0]
+    xIntersectionsOnly2[type1_2Inds] = np.real(np.asarray([-xreal2[only2RealInds[type1_2Inds],0],xreal2[only2RealInds[type1_2Inds],1]]).T)
+    yIntersectionsOnly2[type1_2Inds] = np.real(np.asarray([yreal2[only2RealInds[type1_2Inds],0],yreal2[only2RealInds[type1_2Inds],1]]).T)
+    type1_3Inds = np.where((sepbp < sepam)*(sepam < r[only2RealInds])*(r[only2RealInds] < sepap))[0]
+    xIntersectionsOnly2[type1_3Inds] = np.real(np.asarray([-xreal2[only2RealInds[type1_3Inds],0],-xreal2[only2RealInds[type1_3Inds],1]]).T)
+    yIntersectionsOnly2[type1_3Inds] = np.real(np.asarray([yreal2[only2RealInds[type1_3Inds],0],-yreal2[only2RealInds[type1_3Inds],1]]).T)
+    type1_4Inds = np.where((sepbp < sepam)*(sepap < r[only2RealInds]))[0]
+    xIntersectionsOnly2[type1_4Inds] = np.real(np.asarray([-xreal2[only2RealInds[type1_4Inds],0],-xreal2[only2RealInds[type1_4Inds],1]]).T)
+    yIntersectionsOnly2[type1_4Inds] = np.real(np.asarray([-yreal2[only2RealInds[type1_4Inds],0],-yreal2[only2RealInds[type1_4Inds],1]]).T)
+    #Type1 sepbm, sepbp, sepam, sepap #NOTE: Type1 should not be yrealImagInds
+    #Type2 sepbm, sepam, sepbp, sepap
+    type2_0Inds = np.where((sepam < sepbp)*(sepbp < sepap)*(sepbm < sepam)*(r[only2RealInds] < sepbm))[0]
+    xIntersectionsOnly2[type2_0Inds] = np.real(np.asarray([xreal2[only2RealInds[type2_0Inds],0],xreal2[only2RealInds[type2_0Inds],1]]).T)
+    yIntersectionsOnly2[type2_0Inds] = np.real(np.asarray([yreal2[only2RealInds[type2_0Inds],0],yreal2[only2RealInds[type2_0Inds],1]]).T)
+    type2_1Inds = np.where((sepam < sepbp)*(sepbp < sepap)*(sepbm < sepam)*(sepbm < r[only2RealInds])*(r[only2RealInds] < sepam))[0]
+    xIntersectionsOnly2[type2_1Inds] = np.real(np.asarray([xreal2[only2RealInds[type2_1Inds],0],xreal2[only2RealInds[type2_1Inds],1]]).T)#-x is already in solution
+    yIntersectionsOnly2[type2_1Inds] = np.real(np.asarray([yreal2[only2RealInds[type2_1Inds],0],yreal2[only2RealInds[type2_1Inds],1]]).T)
+    type2_2Inds = np.where((sepam < sepbp)*(sepbp < sepap)*(sepbm < sepam)*(sepam < r[only2RealInds])*(r[only2RealInds] < sepbp))[0]
+    xIntersectionsOnly2[type2_2Inds] = np.real(np.asarray([xreal2[only2RealInds[type2_2Inds],0],xreal2[only2RealInds[type2_2Inds],1]]).T)#-x is already in solution
+    yIntersectionsOnly2[type2_2Inds] = np.real(np.asarray([yreal2[only2RealInds[type2_2Inds],0],-yreal2[only2RealInds[type2_2Inds],1]]).T)
+    type2_3Inds = np.where((sepam < sepbp)*(sepbp < sepap)*(sepbm < sepam)*(sepbp < r[only2RealInds])*(r[only2RealInds] < sepap))[0]
+    xIntersectionsOnly2[type2_3Inds] = np.real(np.asarray([xreal2[only2RealInds[type2_3Inds],0],xreal2[only2RealInds[type2_3Inds],1]]).T)#-x is already in solution
+    yIntersectionsOnly2[type2_3Inds] = np.real(np.asarray([yreal2[only2RealInds[type2_3Inds],0],-yreal2[only2RealInds[type2_3Inds],1]]).T)
+    type2_4Inds = np.where((sepam < sepbp)*(sepbp < sepap)*(sepbm < sepam)*(sepap < r[only2RealInds]))[0]
+    xIntersectionsOnly2[type2_4Inds] = np.real(np.asarray([xreal2[only2RealInds[type2_4Inds],0],xreal2[only2RealInds[type2_4Inds],1]]).T)#-x is already in solution
+    yIntersectionsOnly2[type2_4Inds] = np.real(np.asarray([-yreal2[only2RealInds[type2_4Inds],0],-yreal2[only2RealInds[type2_4Inds],1]]).T)
+    #Type3 sepam, sepbm, sepbp, sepap
+    type3_0Inds = np.where((sepam < sepbm)*(r[only2RealInds] < sepam))[0]
+    xIntersectionsOnly2[type3_0Inds] = np.real(np.asarray([xreal2[only2RealInds[type3_0Inds],0],xreal2[only2RealInds[type3_0Inds],1]]).T)
+    yIntersectionsOnly2[type3_0Inds] = np.real(np.asarray([yreal2[only2RealInds[type3_0Inds],0],yreal2[only2RealInds[type3_0Inds],1]]).T)
+    type3_1Inds = np.where((sepam < sepbm)*(sepam < r[only2RealInds])*(r[only2RealInds] < sepbm))[0]
+    xIntersectionsOnly2[type3_1Inds] = np.real(np.asarray([xreal2[only2RealInds[type3_1Inds],0],xreal2[only2RealInds[type3_1Inds],1]]).T)
+    yIntersectionsOnly2[type3_1Inds] = np.real(np.asarray([yreal2[only2RealInds[type3_1Inds],0],-yreal2[only2RealInds[type3_1Inds],1]]).T)
+    type3_2Inds = np.where((sepam < sepbm)*(sepbm < r[only2RealInds])*(r[only2RealInds] < sepbp))[0]
+    xIntersectionsOnly2[type3_2Inds] = np.real(np.asarray([xreal2[only2RealInds[type3_2Inds],0],xreal2[only2RealInds[type3_2Inds],1]]).T)#-x is already in solution
+    yIntersectionsOnly2[type3_2Inds] = np.real(np.asarray([yreal2[only2RealInds[type3_2Inds],0],-yreal2[only2RealInds[type3_2Inds],1]]).T)
+    type3_3Inds = np.where((sepam < sepbm)*(sepbp < r[only2RealInds])*(r[only2RealInds] < sepap))[0]
+    xIntersectionsOnly2[type3_3Inds] = np.real(np.asarray([xreal2[only2RealInds[type3_3Inds],0],xreal2[only2RealInds[type3_3Inds],1]]).T)#-x is already in solution
+    yIntersectionsOnly2[type3_3Inds] = np.real(np.asarray([yreal2[only2RealInds[type3_3Inds],0],-yreal2[only2RealInds[type3_3Inds],1]]).T)
+    type3_4Inds = np.where((sepam < sepbm)*(sepap < r[only2RealInds]))[0]
+    xIntersectionsOnly2[type3_4Inds] = np.real(np.asarray([xreal2[only2RealInds[type3_4Inds],0],xreal2[only2RealInds[type3_4Inds],1]]).T)#-x is already in solution
+    yIntersectionsOnly2[type3_4Inds] = np.real(np.asarray([-yreal2[only2RealInds[type3_4Inds],0],-yreal2[only2RealInds[type3_4Inds],1]]).T)
+    #Adjust for Quadrant Star Belongs to
+    xIntersectionsOnly2 = (xIntersectionsOnly2.T*(2*bool1[only2RealInds]-1)).T
+    yIntersectionsOnly2 = (yIntersectionsOnly2.T*(2*bool2[only2RealInds]-1)).T
+    ################################################
+    allIndsUsed = np.concatenate((type0_0Inds,type0_1Inds,type0_2Inds,type0_3Inds,type0_4Inds,type1_0Inds,type1_1Inds,type1_2Inds,type1_3Inds,type1_4Inds,
+            type2_0Inds,type2_1Inds,type2_2Inds,type2_3Inds,type2_4Inds,type3_0Inds,type3_1Inds,type3_2Inds,type3_3Inds,type3_4Inds))
+
+
+    return a, b, only2RealInds, typeInds0, typeInds1, typeInds2, typeInds3,\
+        yrealAllRealInds, fourIntInds, fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y,\
+        twoIntOppositeXInds, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2, twoIntSameYInds,\
+        type0_0Inds,type0_1Inds,type0_2Inds,type0_3Inds,type0_4Inds,type1_0Inds,type1_1Inds,type1_2Inds,type1_3Inds,type1_4Inds,\
+        type2_0Inds,type2_1Inds,type2_2Inds,type2_3Inds,type2_4Inds,type3_0Inds,type3_1Inds,type3_2Inds,type3_3Inds,type3_4Inds,\
+        allIndsUsed
+
+#### Generalized Correct Ellipse Circle Intersection Fixer
+def intersectionFixer_pm(x, y, sep_xlocs, sep_ylocs, afflictedIndsxy, rs):
+    """
+    """
+    # seps = np.sqrt((sep_xlocs-x[afflictedIndsxy])**2 + (sep_ylocs-y[afflictedIndsxy])**2) #calculate error for all TwoIntSameY
+    # error = np.abs(np.sort(-np.abs(np.ones(len(seps)) - seps))) #calculate error for all TwoIntSameY
+    # largeErrorInds = np.where(error > 1e-7)[0] #get inds of large errors
+    # indsToFix = np.argsort(-np.abs(np.ones(len(seps)) - seps))[largeErrorInds] #inds of TwoIndSameY
+    # seps_deciding = np.sqrt((sep_xlocs[indsToFix]-x[afflictedIndsxy[indsToFix]])**2 + (-sep_ylocs[indsToFix]-y[afflictedIndsxy[indsToFix]])**2) #calculate error for indsToFix
+    # error_deciding = -np.abs(np.ones(len(seps_deciding)) - seps_deciding) #calculate errors for swapping y of the candidated to swap y for
+    # indsToSwap = np.where(np.abs(error_deciding) < np.abs(error[indsToFix]))[0] #find where the errors produced by swapping y is lowered
+    # sep_ylocs[indsToFix[indsToSwap]] = -sep_ylocs[indsToFix[indsToSwap]] #here we fix the y values where they should be fixed by swapping y values
+    # seps = np.sqrt((sep_xlocs-x[afflictedIndsxy])**2 + (sep_ylocs-y[afflictedIndsxy])**2)
+    # error = np.abs(np.sort(-np.abs(np.ones(len(seps)) - seps)))
+    # indsToFix = np.argsort(-np.abs(np.ones(len(seps)) - seps))[np.where(error > 1e-7)[0]]
+
+    seps = np.sqrt((sep_xlocs-x[afflictedIndsxy])**2 + (sep_ylocs-y[afflictedIndsxy])**2) #calculate error for all TwoIntSameY
+    error = np.abs(rs - seps) #calculate error for all TwoIntSameY
+    indsToFix = np.where(error > 1e-7)[0] #get inds of large errors
+    #DELETEerror = np.abs(np.sort(-np.abs(rs[afflictedIndsxy] - seps))) #calculate error for all TwoIntSameY
+    #DELETElargeErrorInds = np.where(error > 1e-7)[0] #get inds of large errors
+    #DELETEindsToFix = np.argsort(-np.abs(rs[afflictedIndsxy] - seps))[largeErrorInds] #inds of TwoIndSameY
+    if len(indsToFix) == 0: #There are no inds to fix
+        return sep_xlocs, sep_ylocs
+
+    seps_decidingpm = np.sqrt((sep_xlocs[indsToFix]-x[afflictedIndsxy[indsToFix]])**2 + (-sep_ylocs[indsToFix]-y[afflictedIndsxy[indsToFix]])**2) #calculate error for indsToFix
+    seps_decidingmp = np.sqrt((-sep_xlocs[indsToFix]-x[afflictedIndsxy[indsToFix]])**2 + (sep_ylocs[indsToFix]-y[afflictedIndsxy[indsToFix]])**2) #calculate error for indsToFix
+    seps_decidingmm = np.sqrt((-sep_xlocs[indsToFix]-x[afflictedIndsxy[indsToFix]])**2 + (-sep_ylocs[indsToFix]-y[afflictedIndsxy[indsToFix]])**2) #calculate error for indsToFix
+
+    #error_decidingpm = -np.abs(np.ones(len(seps_decidingpm)) - seps_decidingpm) #calculate errors for swapping y of the candidated to swap y for
+    #error_decidingmp = -np.abs(np.ones(len(seps_decidingmp)) - seps_decidingmp) #calculate errors for swapping y of the candidated to swap y for
+    #error_decidingmm = -np.abs(np.ones(len(seps_decidingmm)) - seps_decidingmm) #calculate errors for swapping y of the candidated to swap y for
+    #DELETEerror_deciding = np.array([error,-np.abs(np.ones(len(seps_decidingpm)) - seps_decidingpm),-np.abs(np.ones(len(seps_decidingmp)) - seps_decidingmp),-np.abs(np.ones(len(seps_decidingmm)) - seps_decidingmm)])
+    error_deciding = np.stack((error[indsToFix],np.abs(rs[indsToFix] - seps_decidingpm),np.abs(rs[indsToFix] - seps_decidingmp),np.abs(rs[indsToFix] - seps_decidingmm)),axis=1)
+
+
+    minErrorInds = np.argmin(error_deciding,axis=1)
+
+    tmpxlocs = np.asarray([sep_xlocs,sep_xlocs,-sep_xlocs,-sep_xlocs]).T
+    sep_xlocs[indsToFix] = tmpxlocs[indsToFix,minErrorInds]
+    tmpylocs = np.asarray([sep_ylocs,-sep_ylocs,sep_ylocs,-sep_ylocs]).T
+    sep_ylocs[indsToFix] = tmpylocs[indsToFix,minErrorInds]
+
+    #indsToSwap = np.where(np.abs(error_deciding) < np.abs(error[indsToFix]))[0] #find where the errors produced by swapping y is lowered
+    #sep_ylocs[indsToFix[indsToSwap]] = -sep_ylocs[indsToFix[indsToSwap]] #here we fix the y values where they should be fixed by swapping y values
+    #seps = np.sqrt((sep_xlocs-x[afflictedIndsxy])**2 + (sep_ylocs-y[afflictedIndsxy])**2)
+    #error = np.abs(np.sort(-np.abs(np.ones(len(seps)) - seps)))
+    #indsToFix = np.argsort(-np.abs(np.ones(len(seps)) - seps))[np.where(error > 1e-7)[0]]
+
+    return sep_xlocs, sep_ylocs
+
+#### Calculate True Anomalies of Points
+def trueAnomaliesOfPoints(minSepPoints_x_dr, minSepPoints_y_dr, maxSepPoints_x_dr, maxSepPoints_y_dr, lminSepPoints_x_dr, lminSepPoints_y_dr, lmaxSepPoints_x_dr, lmaxSepPoints_y_dr,\
+    fourInt_x_dr, fourInt_y_dr, twoIntSameY_x_dr, twoIntSameY_y_dr, twoIntOppositeX_x_dr, twoIntOppositeX_y_dr, xIntersectionsOnly2_dr, yIntersectionsOnly2_dr,\
+    yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds, W, w, inc):
+    nu_minSepPoints = trueAnomalyFromXY(minSepPoints_x_dr, minSepPoints_y_dr,W,w,inc)
+    nu_maxSepPoints = trueAnomalyFromXY(maxSepPoints_x_dr, maxSepPoints_y_dr,W,w,inc)
+    nu_lminSepPoints = trueAnomalyFromXY(lminSepPoints_x_dr, lminSepPoints_y_dr,W[yrealAllRealInds],w[yrealAllRealInds],inc[yrealAllRealInds])
+    nu_lmaxSepPoints = trueAnomalyFromXY(lmaxSepPoints_x_dr, lmaxSepPoints_y_dr,W[yrealAllRealInds],w[yrealAllRealInds],inc[yrealAllRealInds])
+    nu_fourInt = np.zeros(fourInt_x_dr.shape)
+    nu_fourInt[:,0] = trueAnomalyFromXY(fourInt_x_dr[:,0], fourInt_y_dr[:,0],W[yrealAllRealInds[fourIntInds]],w[yrealAllRealInds[fourIntInds]],inc[yrealAllRealInds[fourIntInds]])
+    nu_fourInt[:,1] = trueAnomalyFromXY(fourInt_x_dr[:,1], fourInt_y_dr[:,1],W[yrealAllRealInds[fourIntInds]],w[yrealAllRealInds[fourIntInds]],inc[yrealAllRealInds[fourIntInds]])
+    nu_fourInt[:,2] = trueAnomalyFromXY(fourInt_x_dr[:,2], fourInt_y_dr[:,2],W[yrealAllRealInds[fourIntInds]],w[yrealAllRealInds[fourIntInds]],inc[yrealAllRealInds[fourIntInds]])
+    nu_fourInt[:,3] = trueAnomalyFromXY(fourInt_x_dr[:,3], fourInt_y_dr[:,3],W[yrealAllRealInds[fourIntInds]],w[yrealAllRealInds[fourIntInds]],inc[yrealAllRealInds[fourIntInds]])
+    nu_twoIntSameY = np.zeros(twoIntSameY_x_dr.shape)
+    nu_twoIntSameY[:,0] = trueAnomalyFromXY(twoIntSameY_x_dr[:,0], twoIntSameY_y_dr[:,0],W[yrealAllRealInds[twoIntSameYInds]],w[yrealAllRealInds[twoIntSameYInds]],inc[yrealAllRealInds[twoIntSameYInds]])
+    nu_twoIntSameY[:,1] = trueAnomalyFromXY(twoIntSameY_x_dr[:,1], twoIntSameY_y_dr[:,1],W[yrealAllRealInds[twoIntSameYInds]],w[yrealAllRealInds[twoIntSameYInds]],inc[yrealAllRealInds[twoIntSameYInds]])
+    nu_twoIntOppositeX = np.zeros(twoIntOppositeX_x_dr.shape)
+    nu_twoIntOppositeX[:,0] = trueAnomalyFromXY(twoIntOppositeX_x_dr[:,0], twoIntOppositeX_y_dr[:,0],W[yrealAllRealInds[twoIntOppositeXInds]],w[yrealAllRealInds[twoIntOppositeXInds]],inc[yrealAllRealInds[twoIntOppositeXInds]])
+    nu_twoIntOppositeX[:,1] = trueAnomalyFromXY(twoIntOppositeX_x_dr[:,1], twoIntOppositeX_y_dr[:,1],W[yrealAllRealInds[twoIntOppositeXInds]],w[yrealAllRealInds[twoIntOppositeXInds]],inc[yrealAllRealInds[twoIntOppositeXInds]])
+    nu_IntersectionsOnly2 = np.zeros(xIntersectionsOnly2_dr.shape)
+    nu_IntersectionsOnly2[:,0] = trueAnomalyFromXY(xIntersectionsOnly2_dr[:,0], yIntersectionsOnly2_dr[:,0],W[only2RealInds],w[only2RealInds],inc[only2RealInds])
+    nu_IntersectionsOnly2[:,1] = trueAnomalyFromXY(xIntersectionsOnly2_dr[:,1], yIntersectionsOnly2_dr[:,1],W[only2RealInds],w[only2RealInds],inc[only2RealInds])
+    return nu_minSepPoints, nu_maxSepPoints, nu_lminSepPoints, nu_lmaxSepPoints, nu_fourInt, nu_twoIntSameY, nu_twoIntOppositeX, nu_IntersectionsOnly2
+
+#### Nu corections for extrema
+def nuCorrections_extrema(sma,e,W,w,inc,nus,mainInds,seps):
+    r_extrema = xyz_3Dellipse(sma[mainInds],e[mainInds],W[mainInds],w[mainInds],inc[mainInds],nus)
+    s_extrema = np.sqrt(r_extrema[0,0]**2 + r_extrema[1,0]**2)
+    error0 = np.abs(seps - s_extrema)
+    nus_extrema_ppi = nus + np.pi
+    r_extrema_ppi = xyz_3Dellipse(sma[mainInds],e[mainInds],W[mainInds],w[mainInds],inc[mainInds],nus_extrema_ppi)
+    s_extrema_ppi = np.sqrt(r_extrema_ppi[0,0]**2 + r_extrema_ppi[1,0]**2)
+    error1 = np.abs(seps - s_extrema_ppi)
+
+    error_deciding = np.stack((error0,error1),axis=1)
+    minErrorInds = np.argmin(error_deciding,axis=1)
+
+    tmpnus = np.asarray([nus,nus_extrema_ppi]).T
+    nus = tmpnus[np.arange(len(nus)),minErrorInds]
+    error = error_deciding[np.arange(len(nus)),minErrorInds]
+    nus = np.mod(nus,2.*np.pi)
+    return nus, error
+
+#### Correcting nu for ellipse-circle intersections
+def nuCorrections_int(sma,e,W,w,inc,r,nus,mainInds,subInds):
+    r_fourInt0 = xyz_3Dellipse(sma[mainInds[subInds]],e[mainInds[subInds]],W[mainInds[subInds]],w[mainInds[subInds]],inc[mainInds[subInds]],nus)
+    tmp_fourInt0Seps = np.sqrt(r_fourInt0[0,0]**2 + r_fourInt0[1,0]**2)
+    wrong_fourInt0Inds = np.where(np.abs(r[mainInds[subInds]] - tmp_fourInt0Seps) > 1e-6)[0]#1e-6)[0]
+    if len(wrong_fourInt0Inds) > 0:
+        nus[wrong_fourInt0Inds] = nus[wrong_fourInt0Inds] + np.pi
+        r_fourInt0 = xyz_3Dellipse(sma[mainInds[subInds]],e[mainInds[subInds]],W[mainInds[subInds]],w[mainInds[subInds]],inc[mainInds[subInds]],nus)
+        tmp_fourInt0Seps = np.sqrt(r_fourInt0[0,0]**2 + r_fourInt0[1,0]**2)
+        wrong_fourInt0Inds = np.where(np.abs(r[mainInds[subInds]] - tmp_fourInt0Seps) > 1e-6)[0]
+    print(len(wrong_fourInt0Inds))
+    print(wrong_fourInt0Inds)
+    if len(wrong_fourInt0Inds) > 0: #now choose the smaller error of the two
+        r_fourInt0_2 = xyz_3Dellipse(sma[mainInds[subInds[wrong_fourInt0Inds]]],e[mainInds[subInds[wrong_fourInt0Inds]]],W[mainInds[subInds[wrong_fourInt0Inds]]],w[mainInds[subInds[wrong_fourInt0Inds]]],inc[mainInds[subInds[wrong_fourInt0Inds]]],nus[wrong_fourInt0Inds])
+        tmp_fourInt0Seps_2 = np.sqrt(r_fourInt0_2[0,0]**2 + r_fourInt0_2[1,0]**2)
+        r_fourInt0_3 = xyz_3Dellipse(sma[mainInds[subInds[wrong_fourInt0Inds]]],e[mainInds[subInds[wrong_fourInt0Inds]]],W[mainInds[subInds[wrong_fourInt0Inds]]],w[mainInds[subInds[wrong_fourInt0Inds]]],inc[mainInds[subInds[wrong_fourInt0Inds]]],nus[wrong_fourInt0Inds]+np.pi)
+        tmp_fourInt0Seps_3 = np.sqrt(r_fourInt0_3[0,0]**2 + r_fourInt0_3[1,0]**2)
+        indsToSwap = np.where(np.abs(r[mainInds[subInds[wrong_fourInt0Inds]]] - tmp_fourInt0Seps_2) > np.abs(r[mainInds[subInds[wrong_fourInt0Inds]]] - tmp_fourInt0Seps_3))[0]
+        if len(indsToSwap) > 0:
+            nus[wrong_fourInt0Inds[indsToSwap]] = nus[wrong_fourInt0Inds[indsToSwap]] + np.pi
+    r_fourInt0 = xyz_3Dellipse(sma[mainInds[subInds]],e[mainInds[subInds]],W[mainInds[subInds]],w[mainInds[subInds]],inc[mainInds[subInds]],nus)
+    tmp_fourInt0Seps = np.sqrt(r_fourInt0[0,0]**2 + r_fourInt0[1,0]**2)
+    errors = np.abs(r[mainInds[subInds]] - tmp_fourInt0Seps)
+    maxError_fourInt0 = np.max(errors)
+    print(maxError_fourInt0)
+    nus = np.mod(nus,2.*np.pi)
+    return nus, errors
 
