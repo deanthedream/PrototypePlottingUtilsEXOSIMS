@@ -18,10 +18,16 @@ sim = EXOSIMS.MissionSim.MissionSim(scriptfile=scriptfile,nopar=True)
 PPop = sim.PlanetPopulation
 n = 10**5 #Dean's nice computer can go up to 10**8 what can atuin go up to?
 inc, W, w = PPop.gen_angles(n,None)
-inc = inc.to('rad').value
-inc[np.where(inc>np.pi/2)[0]] = np.pi - inc[np.where(inc>np.pi/2)[0]]
 W = W.to('rad').value
 w = w.to('rad').value
+#w correction
+wReplacementInds = np.where(np.abs(w-1.5*np.pi)<1e-4)[0]
+w[wReplacementInds] = w[wReplacementInds] - 0.001
+wReplacementInds = np.where(np.abs(w-0.5*np.pi)<1e-4)[0]
+w[wReplacementInds] = w[wReplacementInds] - 0.001
+del wReplacementInds
+inc = inc.to('rad').value
+inc[np.where(inc>np.pi/2)[0]] = np.pi - inc[np.where(inc>np.pi/2)[0]]
 sma, e, p, Rp = PPop.gen_plan_params(n)
 sma = sma.to('AU').value
 ####
@@ -62,7 +68,7 @@ inc[sepvstInd] = 1.447634036719772
 
 #### Calculate Projected Ellipse Angles and Minor Axis
 start0 = time.time()
-dmajorp, dminorp, Psi, psi, theta_OpQ_X, theta_OpQp_X, dmajorp_v2, dminorp_v2, Psi_v2, psi_v2 = projected_apbpPsipsi(sma,e,W,w,inc)
+dmajorp, dminorp, theta_OpQ_X, theta_OpQp_X = projected_apbpPsipsi(sma,e,W,w,inc)#dmajorp_v2, dminorp_v2, Psi_v2, psi_v2, Psi, psi,
 stop0 = time.time()
 print('stop0: ' + str(stop0-start0))
 #3D Ellipse Center
@@ -188,16 +194,16 @@ del start14, stop14
 ####
 
 #### Fix minSep True Anomalies
-nu_minSepPoints, error_numinSep = nuCorrections_extrema(sma,e,W,w,inc,nu_minSepPoints,np.arange(len(sma)),minSep)
+nu_minSepPoints = nuCorrections_extrema(sma,e,W,w,inc,nu_minSepPoints,np.arange(len(sma)),minSep)
 ####
 #### Fix maxSep True Anomalies
-nu_maxSepPoints, error_numaxSep = nuCorrections_extrema(sma,e,W,w,inc,nu_maxSepPoints,np.arange(len(sma)),maxSep)
+nu_maxSepPoints = nuCorrections_extrema(sma,e,W,w,inc,nu_maxSepPoints,np.arange(len(sma)),maxSep)
 ####
 #### Fix lminSep True Anomalies
-nu_lminSepPoints, error_nulminSep = nuCorrections_extrema(sma,e,W,w,inc,nu_lminSepPoints,yrealAllRealInds,lminSep)
+nu_lminSepPoints = nuCorrections_extrema(sma,e,W,w,inc,nu_lminSepPoints,yrealAllRealInds,lminSep)
 ####
 #### Fix lmaxSep True Anomalies
-nu_lmaxSepPoints, error_nulmaxSep = nuCorrections_extrema(sma,e,W,w,inc,nu_lmaxSepPoints,yrealAllRealInds,lmaxSep)
+nu_lmaxSepPoints = nuCorrections_extrema(sma,e,W,w,inc,nu_lmaxSepPoints,yrealAllRealInds,lmaxSep)
 ####
 
 #### Correcting nu for ellipse-circle intersections
@@ -220,39 +226,39 @@ nu_IntersectionsOnly2[:,0], errors_IntersectionsOnly2X0 = nuCorrections_int(sma,
 nu_IntersectionsOnly2[:,1], errors_IntersectionsOnly2X1 = nuCorrections_int(sma,e,W,w,inc,r,nu_IntersectionsOnly2[:,1],np.arange(len(sma)),only2RealInds)
 ####
 
+#### Memory Calculations
 #Necessary Variables
-#Okay issue. if a variable has units (like rad) it references the size of the hash to the astropy object when using getsizeof. var.nbytes reveals true size
-memory_necessary = [getsizeof(inc),
-getsizeof(w),
-getsizeof(W),
-getsizeof(sma),
-getsizeof(e),
-getsizeof(p),
-getsizeof(Rp),
-getsizeof(dmajorp),
-getsizeof(dminorp),
-getsizeof(theta_OpQ_X),
-getsizeof(theta_OpQp_X),
-getsizeof(Op),
-getsizeof(x),
-getsizeof(y),
-getsizeof(Phi),
-getsizeof(a),
-getsizeof(b),
-getsizeof(xreal),
-getsizeof(only2RealInds),
-getsizeof(yrealAllRealInds),
-getsizeof(fourIntInds),
-getsizeof(twoIntOppositeXInds),
-getsizeof(twoIntSameYInds),
-getsizeof(nu_minSepPoints),
-getsizeof(nu_maxSepPoints),
-getsizeof(nu_lminSepPoints),
-getsizeof(nu_lmaxSepPoints),
-getsizeof(nu_fourInt),
-getsizeof(nu_twoIntSameY),
-getsizeof(nu_twoIntOppositeX),
-getsizeof(nu_IntersectionsOnly2)]
+memory_necessary = [inc.nbytes,
+w.nbytes,
+W.nbytes,
+sma.nbytes,
+e.nbytes,
+p.nbytes,
+Rp.nbytes,
+dmajorp.nbytes,
+dminorp.nbytes,
+theta_OpQ_X.nbytes,
+theta_OpQp_X.nbytes,
+Op.nbytes,
+x.nbytes,
+y.nbytes,
+Phi.nbytes,
+a.nbytes,
+b.nbytes,
+xreal.nbytes,
+only2RealInds.nbytes,
+yrealAllRealInds.nbytes,
+fourIntInds.nbytes,
+twoIntOppositeXInds.nbytes,
+twoIntSameYInds.nbytes,
+nu_minSepPoints.nbytes,
+nu_maxSepPoints.nbytes,
+nu_lminSepPoints.nbytes,
+nu_lmaxSepPoints.nbytes,
+nu_fourInt.nbytes,
+nu_twoIntSameY.nbytes,
+nu_twoIntOppositeX.nbytes,
+nu_IntersectionsOnly2.nbytes]
 print('memory_necessary Used: ' + str(np.sum(memory_necessary)/10**9) + ' GB')
 
 
@@ -263,68 +269,60 @@ print('memory_necessary Used: ' + str(np.sum(memory_necessary)/10**9) + ' GB')
 
 # Vestigal Variables
 #TODO a and b are duplicates of dmajorp and dminorp
-memory_vestigal = [getsizeof(error_numinSep),
-getsizeof(error_numaxSep),
-getsizeof(error_nulminSep),
-getsizeof(error_nulmaxSep),
-getsizeof(dmajorp_v2),
-getsizeof(dminorp_v2),
-getsizeof(Psi_v2),
-getsizeof(psi_v2),
-getsizeof(Psi),
-getsizeof(psi),
-getsizeof(delta),
-getsizeof(delta_0),
-getsizeof(P), #not 100% sure
-getsizeof(D2),
-getsizeof(R),
-getsizeof(allIndsUsed)]
+memory_vestigal = [delta.nbytes,
+delta_0.nbytes,
+P.nbytes, #not 100% sure
+D2.nbytes,
+R.nbytes,
+allIndsUsed.nbytes]
+#error_numinSep.nbytes,error_numaxSep.nbytes,error_nulminSep.nbytes,error_nulmaxSep.nbytes,
+#dmajorp_v2.nbytes,dminorp_v2.nbytes,Psi_v2.nbytes,psi_v2.nbytes,Psi.nbytes,psi.nbytes,
 print('memory_vestigal Used: ' + str(np.sum(memory_vestigal)/10**9) + ' GB')
 
 # Variables Only For Plotting
 #TODO make if statements depending on whether I am plotting things or not
-memory_plotting = [getsizeof(errors_fourInt0),
-getsizeof(errors_fourInt1),
-getsizeof(errors_fourInt2),
-getsizeof(errors_fourInt3),
-getsizeof(errors_twoIntSameY0),
-getsizeof(errors_twoIntSameY1),
-getsizeof(errors_twoIntOppositeX0),
-getsizeof(errors_twoIntOppositeX1),
-getsizeof(errors_IntersectionsOnly2X0),
-getsizeof(errors_IntersectionsOnly2X1),
-getsizeof(type0_0Inds),
-getsizeof(type0_1Inds),
-getsizeof(type0_2Inds),
-getsizeof(type0_3Inds),
-getsizeof(type0_4Inds),
-getsizeof(type1_0Inds),
-getsizeof(type1_1Inds),
-getsizeof(type1_2Inds),
-getsizeof(type1_3Inds),
-getsizeof(type1_4Inds),
-getsizeof(type2_0Inds),
-getsizeof(type2_1Inds),
-getsizeof(type2_2Inds),
-getsizeof(type2_3Inds),
-getsizeof(type2_4Inds),
-getsizeof(type3_0Inds),
-getsizeof(type3_1Inds),
-getsizeof(type3_2Inds),
-getsizeof(type3_3Inds),
-getsizeof(type3_4Inds),
-getsizeof(fourInt_x),
-getsizeof(fourInt_y),
-getsizeof(twoIntSameY_x),
-getsizeof(twoIntSameY_y),
-getsizeof(twoIntOppositeX_x),
-getsizeof(twoIntOppositeX_y),
-getsizeof(xIntersectionsOnly2),
-getsizeof(yIntersectionsOnly2),
-getsizeof(typeInds0),
-getsizeof(typeInds1),
-getsizeof(typeInds2),
-getsizeof(typeInds3)]
+memory_plotting = [errors_fourInt0.nbytes,
+errors_fourInt1.nbytes,
+errors_fourInt2.nbytes,
+errors_fourInt3.nbytes,
+errors_twoIntSameY0.nbytes,
+errors_twoIntSameY1.nbytes,
+errors_twoIntOppositeX0.nbytes,
+errors_twoIntOppositeX1.nbytes,
+errors_IntersectionsOnly2X0.nbytes,
+errors_IntersectionsOnly2X1.nbytes,
+type0_0Inds.nbytes,
+type0_1Inds.nbytes,
+type0_2Inds.nbytes,
+type0_3Inds.nbytes,
+type0_4Inds.nbytes,
+type1_0Inds.nbytes,
+type1_1Inds.nbytes,
+type1_2Inds.nbytes,
+type1_3Inds.nbytes,
+type1_4Inds.nbytes,
+type2_0Inds.nbytes,
+type2_1Inds.nbytes,
+type2_2Inds.nbytes,
+type2_3Inds.nbytes,
+type2_4Inds.nbytes,
+type3_0Inds.nbytes,
+type3_1Inds.nbytes,
+type3_2Inds.nbytes,
+type3_3Inds.nbytes,
+type3_4Inds.nbytes,
+fourInt_x.nbytes,
+fourInt_y.nbytes,
+twoIntSameY_x.nbytes,
+twoIntSameY_y.nbytes,
+twoIntOppositeX_x.nbytes,
+twoIntOppositeX_y.nbytes,
+xIntersectionsOnly2.nbytes,
+yIntersectionsOnly2.nbytes,
+typeInds0.nbytes,
+typeInds1.nbytes,
+typeInds2.nbytes,
+typeInds3.nbytes]
 print('memory_plotting Used: ' + str(np.sum(memory_plotting)/10**9) + ' GB')
 
 
@@ -361,9 +359,6 @@ def plotProjectedEllipse(ind, sma, e, W, w, inc, theta_OpQ_X, theta_OpQp_X, dmaj
 
     #plot 3D Ellipse Center
     plt.scatter(Op[0][ind],Op[1][ind],color='black')
-    print('a: ' + str(np.round(sma[ind],2)) + ' e: ' + str(np.round(e[ind],2)) + ' W: ' + str(np.round(W[ind],2)) + ' w: ' + str(np.round(w[ind],2)) + ' i: ' + str(np.round(inc[ind],2)) +\
-         ' Psi: ' + str(np.round(Psi[ind],2)) + ' psi: ' + str(np.round(psi[ind],2)))# + ' theta: ' + str(np.round(theta[ind],2)))
-    #print(dmajorp[ind]*np.cos(theta[ind]))#print(dmajorp[ind]*np.cos(theta[ind]))#print(dminorp[ind]*np.cos(theta[ind]+np.pi/2))#print(dminorp[ind]*np.sin(theta[ind]+np.pi/2))
 
     ang2 = (theta_OpQ_X[ind]+theta_OpQp_X[ind])/2
     dmajorpx1 = Op[0][ind] + dmajorp[ind]*np.cos(ang2)
@@ -521,8 +516,6 @@ def plot3DEllipseto2DEllipseProjectionDiagram(ind, sma, e, W, w, inc, num):
     ax.scatter(Op[0][ind],Op[1][ind], 1.3*min_z, color='grey', marker='o',s=25) #2D Ellipse Center
     ax.text(1.2*(rper[0][0] + rapo[0][0])/2,1.2*(rper[1][0] + rapo[1][0])/2,1.4*min_z, 'O\'', None)
     ax.plot([(rper[0][0] + rapo[0][0])/2,Op[0][ind]],[(rper[1][0] + rapo[1][0])/2,Op[1][ind]],[(rper[2][0] + rapo[2][0])/2,1.3*min_z],color='grey',linestyle='--',linewidth=2) #Plot ) to )''
-    #DELETE print('a: ' + str(np.round(sma[ind],2)) + ' e: ' + str(np.round(e[ind],2)) + ' W: ' + str(np.round(W[ind],2)) + ' w: ' + str(np.round(w[ind],2)) + ' i: ' + str(np.round(inc[ind],2)) +\
-    #      ' Psi: ' + str(np.round(Psi[ind],2)) + ' psi: ' + str(np.round(psi[ind],2)))# + ' theta: ' + str(np.round(theta[ind],2)))
 
 
     ang2 = (theta_OpQ_X[ind]+theta_OpQp_X[ind])/2
@@ -650,8 +643,6 @@ def plotEllipseMajorAxisFromConjugate(ind, sma, e, W, w, inc, num):
     ## Plot Ellipse Center
     ax.scatter(Op[0][ind],Op[1][ind], color='grey', marker='o',s=25,zorder=30) #2D Ellipse Center
     ax.text(1.2*(rper[0][0] + rapo[0][0])/2,1.2*(rper[1][0] + rapo[1][0])/2+0.05, 'O\'', None)
-    #DELETE print('a: ' + str(np.round(sma[ind],2)) + ' e: ' + str(np.round(e[ind],2)) + ' W: ' + str(np.round(W[ind],2)) + ' w: ' + str(np.round(w[ind],2)) + ' i: ' + str(np.round(inc[ind],2)) +\
-    #      ' Psi: ' + str(np.round(Psi[ind],2)) + ' psi: ' + str(np.round(psi[ind],2)))# + ' theta: ' + str(np.round(theta[ind],2)))
 
     ang2 = (theta_OpQ_X[ind]+theta_OpQp_X[ind])/2
     dmajorpx1 = Op[0][ind] + dmajorp[ind]*np.cos(ang2)
