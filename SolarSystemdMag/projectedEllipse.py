@@ -1697,10 +1697,10 @@ def ellipseCircleIntersections(r, a, b, mx, my, x, y, minSep, maxSep, lminSep, l
     typeInds1 = np.where(sepbp < sepam)[0]
     typeInds2 = np.where((sepam < sepbp)*(sepbp < sepap)*(sepbm < sepam))[0]
     typeInds3 = np.where(sepam < sepbm)[0]
-    print(len(typeInds0))
-    print(len(typeInds1))
-    print(len(typeInds2))
-    print(len(typeInds3))
+    #DELETE print(len(typeInds0))
+    # print(len(typeInds1))
+    # print(len(typeInds2))
+    # print(len(typeInds3))
 
     xIntersectionsOnly2 = np.zeros((len(only2RealInds),2))
     yIntersectionsOnly2 = np.zeros((len(only2RealInds),2))
@@ -1889,8 +1889,8 @@ def nuCorrections_int(sma,e,W,w,inc,r,nus,mainInds,subInds):
         r_fourInt0 = xyz_3Dellipse(sma[mainInds[subInds]],e[mainInds[subInds]],W[mainInds[subInds]],w[mainInds[subInds]],inc[mainInds[subInds]],nus)
         tmp_fourInt0Seps = np.sqrt(r_fourInt0[0,0]**2 + r_fourInt0[1,0]**2)
         wrong_fourInt0Inds = np.where(np.abs(r[mainInds[subInds]] - tmp_fourInt0Seps) > 1e-6)[0]
-    print(len(wrong_fourInt0Inds))
-    print(wrong_fourInt0Inds)
+    #DELETEprint(len(wrong_fourInt0Inds))
+    #print(wrong_fourInt0Inds)
     if len(wrong_fourInt0Inds) > 0: #now choose the smaller error of the two
         r_fourInt0_2 = xyz_3Dellipse(sma[mainInds[subInds[wrong_fourInt0Inds]]],e[mainInds[subInds[wrong_fourInt0Inds]]],W[mainInds[subInds[wrong_fourInt0Inds]]],w[mainInds[subInds[wrong_fourInt0Inds]]],inc[mainInds[subInds[wrong_fourInt0Inds]]],nus[wrong_fourInt0Inds])
         tmp_fourInt0Seps_2 = np.sqrt(r_fourInt0_2[0,0]**2 + r_fourInt0_2[1,0]**2)
@@ -1903,7 +1903,7 @@ def nuCorrections_int(sma,e,W,w,inc,r,nus,mainInds,subInds):
     tmp_fourInt0Seps = np.sqrt(r_fourInt0[0,0]**2 + r_fourInt0[1,0]**2)
     errors = np.abs(r[mainInds[subInds]] - tmp_fourInt0Seps)
     maxError_fourInt0 = np.max(errors)
-    print(maxError_fourInt0)
+    #print(maxError_fourInt0)
     nus = np.mod(nus,2.*np.pi)
     return nus, errors
 

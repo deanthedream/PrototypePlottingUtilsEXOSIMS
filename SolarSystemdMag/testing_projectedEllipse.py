@@ -364,7 +364,6 @@ del start3, stop3
 plt.close(num)
 ####
 
-
 #### Create Projected Ellipse Conjugate Diameters and QQ' construction diagram
 start4 = time.time()
 num = 3335555888
@@ -397,31 +396,6 @@ print('stop10: ' + str(stop10-start10))
 del start10, stop10
 plt.close(num)
 ####
-
-
-
-# ind = yrealAllRealInds[twoIntOppositeXInds[indsToFix[0]]]
-# plotRerotatedFromNus(ind, sma[ind], e[ind], W[ind], w[ind], inc[ind], Op[:,ind], yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds,\
-#     nu_minSepPoints, nu_maxSepPoints, nu_lminSepPoints, nu_lmaxSepPoints, nu_fourInt, nu_twoIntSameY, nu_twoIntOppositeX, nu_IntersectionsOnly2,\
-#     twoIntSameY_x, twoIntSameY_y, num=8001)
-#del seps_TwoIntSameY1, errors_TwoIntSameY1, indsToFix
-####
-
-#DELETE
-# #Testing plotting inds
-# ind = yrealAllRealInds[fourIntInds[0]]#works
-# if len(twoIntSameYInds) > 0:
-#     ind = yrealAllRealInds[twoIntSameYInds[0]]#works
-# ind = yrealAllRealInds[twoIntOppositeXInds[1]]#works
-# #GOOD KEEP ind = only2RealInds[4]
-# ind = only2RealInds[4]
-# #type3
-# #ind = only2RealInds[type3_0Inds[0]]#works
-# if len(only2RealInds) > 0:
-#     ind = only2RealInds[type3_1Inds[0]]#works
-# #ind = only2RealInds[type3_2Inds[0]]#works
-# #ind = only2RealInds[type3_3Inds[0]]#works
-# #ind = only2RealInds[type3_4Inds[0]]#works
 
 #### Plot Derotated Intersections, Min/Max, and Star Location Type Bounds
 start12 = time.time()
