@@ -1586,28 +1586,28 @@ def printKOE(ind,a,e,W,w,inc):
     return None
 
 #### Ellipse Circle Intersection
-def ellipseCircleIntersections(r, a, b, mx, my, x, y, minSep, maxSep, lminSep, lmaxSep, yrealAllRealInds, yrealImagInds):
+def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lminSep, lmaxSep, yrealAllRealInds, yrealImagInds):
     #### Testing ellipse_to_Quartic solution
     #DELETEif r == None:
     #DELETEr = np.ones(len(a),dtype='complex128')
     #ARE THESE NECESSARY?
-    a.astype('complex128')
-    b.astype('complex128')
-    mx.astype('complex128')
-    my.astype('complex128')
-    r.astype('complex128')
-    A, B, C, D = quarticCoefficients_ellipse_to_Quarticipynb(a, b, mx, my, r)
+    #DELETEa.astype('complex128')
+    #DELETEab.astype('complex128')
+    #DELETEamx.astype('complex128')
+    #DELETEamy.astype('complex128')
+    #DELETEas_circle.astype('complex128')
+    A, B, C, D = quarticCoefficients_ellipse_to_Quarticipynb(a, b, mx, my, s_circle)
     xreal2, delta, P, D2, R, delta_0 = quarticSolutions_ellipse_to_Quarticipynb(A, B, C, D)
     yreal2 = ellipseYFromX(xreal2.astype('complex128'), a, b)
 
     #### All Real Inds
     #Where r is...
-    gtMinSepBool = (minSep[yrealAllRealInds] < r[yrealAllRealInds])
-    ltMaxSepBool = (maxSep[yrealAllRealInds] >= r[yrealAllRealInds])
-    gtLMaxSepBool = (lmaxSep < r[yrealAllRealInds])
-    ltLMaxSepBool = (lmaxSep > r[yrealAllRealInds])
-    gtLMinSepBool = (lminSep <= r[yrealAllRealInds])
-    ltLMinSepBool = (lminSep > r[yrealAllRealInds])
+    gtMinSepBool = (minSep[yrealAllRealInds] < s_circle[yrealAllRealInds])
+    ltMaxSepBool = (maxSep[yrealAllRealInds] >= s_circle[yrealAllRealInds])
+    gtLMaxSepBool = (lmaxSep < s_circle[yrealAllRealInds])
+    ltLMaxSepBool = (lmaxSep > s_circle[yrealAllRealInds])
+    gtLMinSepBool = (lminSep <= s_circle[yrealAllRealInds])
+    ltLMinSepBool = (lminSep > s_circle[yrealAllRealInds])
 
     #Two intersections on same y-side of projected ellipse
     twoIntSameYInds = np.where(gtMinSepBool*ltLMinSepBool)[0]
@@ -1684,7 +1684,7 @@ def ellipseCircleIntersections(r, a, b, mx, my, x, y, minSep, maxSep, lminSep, l
     ####
 
     #### ONLY 2 Real Inds (No Local Min/Max)
-    sepsInsideInds = np.where((maxSep[yrealImagInds] >= r[yrealImagInds]) & (r[yrealImagInds] >= minSep[yrealImagInds]))[0] #inds where r is within the minimum and maximum separations
+    sepsInsideInds = np.where((maxSep[yrealImagInds] >= s_circle[yrealImagInds]) & (s_circle[yrealImagInds] >= minSep[yrealImagInds]))[0] #inds where r is within the minimum and maximum separations
     only2RealInds = yrealImagInds[sepsInsideInds] #indicies of planets with only 2 real interesections
     #lets try usnig separation bounds
     #We will calculate separation at [0,+/-b] and [+/-a,0]
@@ -1707,68 +1707,68 @@ def ellipseCircleIntersections(r, a, b, mx, my, x, y, minSep, maxSep, lminSep, l
     yIntersectionsOnly2 = np.zeros((len(only2RealInds),2))
     #Separation Order For Each Location Type with Inds
     #Type0
-    type0_0Inds = np.where((sepap < sepbp)*(r[only2RealInds] < sepbm))[0]
+    type0_0Inds = np.where((sepap < sepbp)*(s_circle[only2RealInds] < sepbm))[0]
     xIntersectionsOnly2[type0_0Inds] = np.real(xreal2[only2RealInds[type0_0Inds],0:2])
     yIntersectionsOnly2[type0_0Inds] = np.real(yreal2[only2RealInds[type0_0Inds],0:2])
-    type0_1Inds = np.where((sepap < sepbp)*(sepbm < r[only2RealInds])*(r[only2RealInds] < sepam))[0]
+    type0_1Inds = np.where((sepap < sepbp)*(sepbm < s_circle[only2RealInds])*(s_circle[only2RealInds] < sepam))[0]
     xIntersectionsOnly2[type0_1Inds] = np.real(np.asarray([xreal2[only2RealInds[type0_1Inds],0],xreal2[only2RealInds[type0_1Inds],1]]).T) #-x is already in solution
     yIntersectionsOnly2[type0_1Inds] = np.real(yreal2[only2RealInds[type0_1Inds],0:2])
-    type0_2Inds = np.where((sepap < sepbp)*(sepam < r[only2RealInds])*(r[only2RealInds] < sepap))[0]
+    type0_2Inds = np.where((sepap < sepbp)*(sepam < s_circle[only2RealInds])*(s_circle[only2RealInds] < sepap))[0]
     xIntersectionsOnly2[type0_2Inds] = np.real(np.asarray([xreal2[only2RealInds[type0_2Inds],0],xreal2[only2RealInds[type0_2Inds],1]]).T) #-x is already in solution
     yIntersectionsOnly2[type0_2Inds] = np.real(np.asarray([yreal2[only2RealInds[type0_2Inds],0],-yreal2[only2RealInds[type0_2Inds],1]]).T)
-    type0_3Inds = np.where((sepap < sepbp)*(sepap < r[only2RealInds])*(r[only2RealInds] < sepbp))[0]
+    type0_3Inds = np.where((sepap < sepbp)*(sepap < s_circle[only2RealInds])*(s_circle[only2RealInds] < sepbp))[0]
     xIntersectionsOnly2[type0_3Inds] = np.real(np.asarray([xreal2[only2RealInds[type0_3Inds],0],xreal2[only2RealInds[type0_3Inds],1]]).T) #-x is already in solution
     yIntersectionsOnly2[type0_3Inds] = np.real(np.asarray([-yreal2[only2RealInds[type0_3Inds],0],-yreal2[only2RealInds[type0_3Inds],1]]).T)
-    type0_4Inds = np.where((sepap < sepbp)*(sepbp < r[only2RealInds]))[0]
+    type0_4Inds = np.where((sepap < sepbp)*(sepbp < s_circle[only2RealInds]))[0]
     xIntersectionsOnly2[type0_4Inds] = np.real(np.asarray([xreal2[only2RealInds[type0_4Inds],0],xreal2[only2RealInds[type0_4Inds],1]]).T) #-x is already in solution
     yIntersectionsOnly2[type0_4Inds] = np.real(np.asarray([-yreal2[only2RealInds[type0_4Inds],0],-yreal2[only2RealInds[type0_4Inds],1]]).T)
     #TODO FIX ALL THE STUFF HERE. FIRST FIND WHEN TYPE 1 Situations Occur (Should they have 4 real solutions always?)
-    type1_0Inds = np.where((sepbp < sepam)*(r[only2RealInds] < sepbm))[0]
+    type1_0Inds = np.where((sepbp < sepam)*(s_circle[only2RealInds] < sepbm))[0]
     xIntersectionsOnly2[type1_0Inds] = np.real(xreal2[only2RealInds[type1_0Inds],0:2])
     yIntersectionsOnly2[type1_0Inds] = np.real(yreal2[only2RealInds[type1_0Inds],0:2])
-    type1_1Inds = np.where((sepbp < sepam)*(sepbm < r[only2RealInds])*(r[only2RealInds] < sepbp))[0]
+    type1_1Inds = np.where((sepbp < sepam)*(sepbm < s_circle[only2RealInds])*(s_circle[only2RealInds] < sepbp))[0]
     xIntersectionsOnly2[type1_1Inds] = np.real(np.asarray([-xreal2[only2RealInds[type1_1Inds],0],xreal2[only2RealInds[type1_1Inds],1]]).T)
     yIntersectionsOnly2[type1_1Inds] = np.real(np.asarray([yreal2[only2RealInds[type1_1Inds],0],yreal2[only2RealInds[type1_1Inds],1]]).T)
-    type1_2Inds = np.where((sepbp < sepam)*(sepbp < r[only2RealInds])*(r[only2RealInds] < sepam))[0]
+    type1_2Inds = np.where((sepbp < sepam)*(sepbp < s_circle[only2RealInds])*(s_circle[only2RealInds] < sepam))[0]
     xIntersectionsOnly2[type1_2Inds] = np.real(np.asarray([-xreal2[only2RealInds[type1_2Inds],0],xreal2[only2RealInds[type1_2Inds],1]]).T)
     yIntersectionsOnly2[type1_2Inds] = np.real(np.asarray([yreal2[only2RealInds[type1_2Inds],0],yreal2[only2RealInds[type1_2Inds],1]]).T)
-    type1_3Inds = np.where((sepbp < sepam)*(sepam < r[only2RealInds])*(r[only2RealInds] < sepap))[0]
+    type1_3Inds = np.where((sepbp < sepam)*(sepam < s_circle[only2RealInds])*(s_circle[only2RealInds] < sepap))[0]
     xIntersectionsOnly2[type1_3Inds] = np.real(np.asarray([-xreal2[only2RealInds[type1_3Inds],0],-xreal2[only2RealInds[type1_3Inds],1]]).T)
     yIntersectionsOnly2[type1_3Inds] = np.real(np.asarray([yreal2[only2RealInds[type1_3Inds],0],-yreal2[only2RealInds[type1_3Inds],1]]).T)
-    type1_4Inds = np.where((sepbp < sepam)*(sepap < r[only2RealInds]))[0]
+    type1_4Inds = np.where((sepbp < sepam)*(sepap < s_circle[only2RealInds]))[0]
     xIntersectionsOnly2[type1_4Inds] = np.real(np.asarray([-xreal2[only2RealInds[type1_4Inds],0],-xreal2[only2RealInds[type1_4Inds],1]]).T)
     yIntersectionsOnly2[type1_4Inds] = np.real(np.asarray([-yreal2[only2RealInds[type1_4Inds],0],-yreal2[only2RealInds[type1_4Inds],1]]).T)
     #Type1 sepbm, sepbp, sepam, sepap #NOTE: Type1 should not be yrealImagInds
     #Type2 sepbm, sepam, sepbp, sepap
-    type2_0Inds = np.where((sepam < sepbp)*(sepbp < sepap)*(sepbm < sepam)*(r[only2RealInds] < sepbm))[0]
+    type2_0Inds = np.where((sepam < sepbp)*(sepbp < sepap)*(sepbm < sepam)*(s_circle[only2RealInds] < sepbm))[0]
     xIntersectionsOnly2[type2_0Inds] = np.real(np.asarray([xreal2[only2RealInds[type2_0Inds],0],xreal2[only2RealInds[type2_0Inds],1]]).T)
     yIntersectionsOnly2[type2_0Inds] = np.real(np.asarray([yreal2[only2RealInds[type2_0Inds],0],yreal2[only2RealInds[type2_0Inds],1]]).T)
-    type2_1Inds = np.where((sepam < sepbp)*(sepbp < sepap)*(sepbm < sepam)*(sepbm < r[only2RealInds])*(r[only2RealInds] < sepam))[0]
+    type2_1Inds = np.where((sepam < sepbp)*(sepbp < sepap)*(sepbm < sepam)*(sepbm < s_circle[only2RealInds])*(s_circle[only2RealInds] < sepam))[0]
     xIntersectionsOnly2[type2_1Inds] = np.real(np.asarray([xreal2[only2RealInds[type2_1Inds],0],xreal2[only2RealInds[type2_1Inds],1]]).T)#-x is already in solution
     yIntersectionsOnly2[type2_1Inds] = np.real(np.asarray([yreal2[only2RealInds[type2_1Inds],0],yreal2[only2RealInds[type2_1Inds],1]]).T)
-    type2_2Inds = np.where((sepam < sepbp)*(sepbp < sepap)*(sepbm < sepam)*(sepam < r[only2RealInds])*(r[only2RealInds] < sepbp))[0]
+    type2_2Inds = np.where((sepam < sepbp)*(sepbp < sepap)*(sepbm < sepam)*(sepam < s_circle[only2RealInds])*(s_circle[only2RealInds] < sepbp))[0]
     xIntersectionsOnly2[type2_2Inds] = np.real(np.asarray([xreal2[only2RealInds[type2_2Inds],0],xreal2[only2RealInds[type2_2Inds],1]]).T)#-x is already in solution
     yIntersectionsOnly2[type2_2Inds] = np.real(np.asarray([yreal2[only2RealInds[type2_2Inds],0],-yreal2[only2RealInds[type2_2Inds],1]]).T)
-    type2_3Inds = np.where((sepam < sepbp)*(sepbp < sepap)*(sepbm < sepam)*(sepbp < r[only2RealInds])*(r[only2RealInds] < sepap))[0]
+    type2_3Inds = np.where((sepam < sepbp)*(sepbp < sepap)*(sepbm < sepam)*(sepbp < s_circle[only2RealInds])*(s_circle[only2RealInds] < sepap))[0]
     xIntersectionsOnly2[type2_3Inds] = np.real(np.asarray([xreal2[only2RealInds[type2_3Inds],0],xreal2[only2RealInds[type2_3Inds],1]]).T)#-x is already in solution
     yIntersectionsOnly2[type2_3Inds] = np.real(np.asarray([yreal2[only2RealInds[type2_3Inds],0],-yreal2[only2RealInds[type2_3Inds],1]]).T)
-    type2_4Inds = np.where((sepam < sepbp)*(sepbp < sepap)*(sepbm < sepam)*(sepap < r[only2RealInds]))[0]
+    type2_4Inds = np.where((sepam < sepbp)*(sepbp < sepap)*(sepbm < sepam)*(sepap < s_circle[only2RealInds]))[0]
     xIntersectionsOnly2[type2_4Inds] = np.real(np.asarray([xreal2[only2RealInds[type2_4Inds],0],xreal2[only2RealInds[type2_4Inds],1]]).T)#-x is already in solution
     yIntersectionsOnly2[type2_4Inds] = np.real(np.asarray([-yreal2[only2RealInds[type2_4Inds],0],-yreal2[only2RealInds[type2_4Inds],1]]).T)
     #Type3 sepam, sepbm, sepbp, sepap
-    type3_0Inds = np.where((sepam < sepbm)*(r[only2RealInds] < sepam))[0]
+    type3_0Inds = np.where((sepam < sepbm)*(s_circle[only2RealInds] < sepam))[0]
     xIntersectionsOnly2[type3_0Inds] = np.real(np.asarray([xreal2[only2RealInds[type3_0Inds],0],xreal2[only2RealInds[type3_0Inds],1]]).T)
     yIntersectionsOnly2[type3_0Inds] = np.real(np.asarray([yreal2[only2RealInds[type3_0Inds],0],yreal2[only2RealInds[type3_0Inds],1]]).T)
-    type3_1Inds = np.where((sepam < sepbm)*(sepam < r[only2RealInds])*(r[only2RealInds] < sepbm))[0]
+    type3_1Inds = np.where((sepam < sepbm)*(sepam < s_circle[only2RealInds])*(s_circle[only2RealInds] < sepbm))[0]
     xIntersectionsOnly2[type3_1Inds] = np.real(np.asarray([xreal2[only2RealInds[type3_1Inds],0],xreal2[only2RealInds[type3_1Inds],1]]).T)
     yIntersectionsOnly2[type3_1Inds] = np.real(np.asarray([yreal2[only2RealInds[type3_1Inds],0],-yreal2[only2RealInds[type3_1Inds],1]]).T)
-    type3_2Inds = np.where((sepam < sepbm)*(sepbm < r[only2RealInds])*(r[only2RealInds] < sepbp))[0]
+    type3_2Inds = np.where((sepam < sepbm)*(sepbm < s_circle[only2RealInds])*(s_circle[only2RealInds] < sepbp))[0]
     xIntersectionsOnly2[type3_2Inds] = np.real(np.asarray([xreal2[only2RealInds[type3_2Inds],0],xreal2[only2RealInds[type3_2Inds],1]]).T)#-x is already in solution
     yIntersectionsOnly2[type3_2Inds] = np.real(np.asarray([yreal2[only2RealInds[type3_2Inds],0],-yreal2[only2RealInds[type3_2Inds],1]]).T)
-    type3_3Inds = np.where((sepam < sepbm)*(sepbp < r[only2RealInds])*(r[only2RealInds] < sepap))[0]
+    type3_3Inds = np.where((sepam < sepbm)*(sepbp < s_circle[only2RealInds])*(s_circle[only2RealInds] < sepap))[0]
     xIntersectionsOnly2[type3_3Inds] = np.real(np.asarray([xreal2[only2RealInds[type3_3Inds],0],xreal2[only2RealInds[type3_3Inds],1]]).T)#-x is already in solution
     yIntersectionsOnly2[type3_3Inds] = np.real(np.asarray([yreal2[only2RealInds[type3_3Inds],0],-yreal2[only2RealInds[type3_3Inds],1]]).T)
-    type3_4Inds = np.where((sepam < sepbm)*(sepap < r[only2RealInds]))[0]
+    type3_4Inds = np.where((sepam < sepbm)*(sepap < s_circle[only2RealInds]))[0]
     xIntersectionsOnly2[type3_4Inds] = np.real(np.asarray([xreal2[only2RealInds[type3_4Inds],0],xreal2[only2RealInds[type3_4Inds],1]]).T)#-x is already in solution
     yIntersectionsOnly2[type3_4Inds] = np.real(np.asarray([-yreal2[only2RealInds[type3_4Inds],0],-yreal2[only2RealInds[type3_4Inds],1]]).T)
     #Adjust for Quadrant Star Belongs to
@@ -2130,7 +2130,8 @@ def calcMasterIntersections(sma,e,W,w,inc,s_circle,plotBool):
     memory_necessary = [inc.nbytes,w.nbytes,W.nbytes,sma.nbytes,e.nbytes,dmajorp.nbytes,dminorp.nbytes,theta_OpQ_X.nbytes,theta_OpQp_X.nbytes,\
         Op.nbytes,x.nbytes,y.nbytes,Phi.nbytes,xreal.nbytes,only2RealInds.nbytes,yrealAllRealInds.nbytes,fourIntInds.nbytes,twoIntOppositeXInds.nbytes,twoIntSameYInds.nbytes,\
         nu_minSepPoints.nbytes,nu_maxSepPoints.nbytes,nu_lminSepPoints.nbytes,nu_lmaxSepPoints.nbytes,nu_fourInt.nbytes,nu_twoIntSameY.nbytes,nu_twoIntOppositeX.nbytes,nu_IntersectionsOnly2.nbytes,\
-        minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y, minSep, maxSep, lminSep, lmaxSep, yrealImagInds]
+        minSepPoints_x.nbytes, minSepPoints_y.nbytes, maxSepPoints_x.nbytes, maxSepPoints_y.nbytes, lminSepPoints_x.nbytes, lminSepPoints_y.nbytes, lmaxSepPoints_x.nbytes,\
+        lmaxSepPoints_y.nbytes, minSep.nbytes, maxSep.nbytes, lminSep.nbytes, lmaxSep.nbytes, yrealImagInds.nbytes]
     print('memory_necessary Used: ' + str(np.sum(memory_necessary)/10**9) + ' GB')
 
 
