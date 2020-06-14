@@ -7,7 +7,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 from projectedEllipse import xyz_3Dellipse
 from projectedEllipse import timeFromTrueAnomaly
-from astropy import constants as const
+#DELETEfrom astropy import constants as const
 import astropy.units as u
 
 
@@ -1027,10 +1027,12 @@ def plotSeparationvsnu(ind, sma, e, W, w, inc, minSep, maxSep, lminSep, lmaxSep,
     plt.xlabel(r'$True Anomaly, \nu, (rad)$',weight='bold')
     plt.show(block=False)
 
-def plotSeparationVsTime(ind, sma, e, W, w, inc, minSep, maxSep, lminSep, lmaxSep, \
-    nu_minSepPoints, nu_maxSepPoints, nu_lminSepPoints, nu_lmaxSepPoints,\
+def plotSeparationVsTime(ind, sma, e, W, w, inc, minSep, maxSep, lminSep, lmaxSep,\
+    t_minSep,t_maxSep,t_lminSep,t_lmaxSep,t_fourInt0,t_fourInt1,t_fourInt2,t_fourInt3,\
+    t_twoIntSameY0,t_twoIntSameY1,t_twoIntOppositeX0,t_twoIntOppositeX1,t_IntersectionOnly20,t_IntersectionOnly21,\
     nu_fourInt, nu_twoIntSameY, nu_twoIntOppositeX, nu_IntersectionsOnly2,\
-    yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds, num):
+    yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds, periods, num):
+
     plt.close(num)
     fig = plt.figure(num=num)
     plt.rc('axes',linewidth=2)
@@ -1039,7 +1041,7 @@ def plotSeparationVsTime(ind, sma, e, W, w, inc, minSep, maxSep, lminSep, lmaxSe
     plt.rc('font',weight='bold')
     # Erange = np.linspace(start=0.,stop=2*np.pi,num=400)
     # Mrange = Erange - e[ind]*np.sin(Erange)
-    periods = (2*np.pi*np.sqrt((sma*u.AU)**3/(const.G.to('AU3 / (kg s2)')*const.M_sun))).to('year').value
+    #periods = (2*np.pi*np.sqrt((sma*u.AU)**3/(const.G.to('AU3 / (kg s2)')*const.M_sun))).to('year').value
     # xellipsetmp = a[ind]*np.cos(Erange)
     # yellipsetmp = b[ind]*np.sin(Erange)
     # septmp = np.sqrt((xellipsetmp - x[ind])**2 + (yellipsetmp - y[ind])**2)
@@ -1060,55 +1062,55 @@ def plotSeparationVsTime(ind, sma, e, W, w, inc, minSep, maxSep, lminSep, lmaxSe
     plt.plot([0,periods[ind]],[1,1],color='green') #the plot intersection line
 
     #Plot Separation Limits
-    t_minSep = timeFromTrueAnomaly(nu_minSepPoints[ind],periods[ind],e[ind])
-    t_maxSep = timeFromTrueAnomaly(nu_maxSepPoints[ind],periods[ind],e[ind])
-    plt.scatter(t_minSep,minSep[ind],color='cyan',marker='D')
-    plt.scatter(t_maxSep,maxSep[ind],color='red',marker='D')
+    #DELETEt_minSep = timeFromTrueAnomaly(nu_minSepPoints[ind],periods[ind],e[ind])
+    #DELETEt_maxSep = timeFromTrueAnomaly(nu_maxSepPoints[ind],periods[ind],e[ind])
+    plt.scatter(t_minSep[ind],minSep[ind],color='cyan',marker='D')
+    plt.scatter(t_maxSep[ind],maxSep[ind],color='red',marker='D')
     if ind in yrealAllRealInds:
         tind = np.where(yrealAllRealInds == ind)[0]
-        t_lminSep = timeFromTrueAnomaly(nu_lminSepPoints[tind],periods[ind],e[ind])
-        t_lmaxSep = timeFromTrueAnomaly(nu_lmaxSepPoints[tind],periods[ind],e[ind])
-        plt.scatter(t_lminSep,lminSep[tind],color='magenta',marker='D')
-        plt.scatter(t_lmaxSep,lmaxSep[tind],color='gold',marker='D')
+        #DELETEt_lminSep = timeFromTrueAnomaly(nu_lminSepPoints[tind],periods[ind],e[ind])
+        #DELETEt_lmaxSep = timeFromTrueAnomaly(nu_lmaxSepPoints[tind],periods[ind],e[ind])
+        plt.scatter(t_lminSep[tind],lminSep[tind],color='magenta',marker='D')
+        plt.scatter(t_lmaxSep[tind],lmaxSep[tind],color='gold',marker='D')
 
     if ind in yrealAllRealInds[fourIntInds]:
         yind = np.where(yrealAllRealInds[fourIntInds] == ind)[0]
-        t_fourInt0 = timeFromTrueAnomaly(nu_fourInt[yind,0],periods[ind],e[ind])
-        t_fourInt1 = timeFromTrueAnomaly(nu_fourInt[yind,1],periods[ind],e[ind])
-        t_fourInt2 = timeFromTrueAnomaly(nu_fourInt[yind,2],periods[ind],e[ind])
-        t_fourInt3 = timeFromTrueAnomaly(nu_fourInt[yind,3],periods[ind],e[ind])
+        #DELETEt_fourInt0 = timeFromTrueAnomaly(nu_fourInt[yind,0],periods[ind],e[ind])
+        #DELETEt_fourInt1 = timeFromTrueAnomaly(nu_fourInt[yind,1],periods[ind],e[ind])
+        #DELETEt_fourInt2 = timeFromTrueAnomaly(nu_fourInt[yind,2],periods[ind],e[ind])
+        #DELETEt_fourInt3 = timeFromTrueAnomaly(nu_fourInt[yind,3],periods[ind],e[ind])
         r_fourInt0 = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],nu_fourInt[yind,0])
         r_fourInt1 = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],nu_fourInt[yind,1])
         r_fourInt2 = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],nu_fourInt[yind,2])
         r_fourInt3 = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],nu_fourInt[yind,3])
-        plt.scatter(t_fourInt0,np.sqrt(r_fourInt0[0]**2 + r_fourInt0[1]**2),color='green',marker='o')
-        plt.scatter(t_fourInt1,np.sqrt(r_fourInt1[0]**2 + r_fourInt1[1]**2),color='green',marker='o')
-        plt.scatter(t_fourInt2,np.sqrt(r_fourInt2[0]**2 + r_fourInt2[1]**2),color='green',marker='o')
-        plt.scatter(t_fourInt3,np.sqrt(r_fourInt3[0]**2 + r_fourInt3[1]**2),color='green',marker='o')
+        plt.scatter(t_fourInt0[yind],np.sqrt(r_fourInt0[0]**2 + r_fourInt0[1]**2),color='green',marker='o')
+        plt.scatter(t_fourInt1[yind],np.sqrt(r_fourInt1[0]**2 + r_fourInt1[1]**2),color='green',marker='o')
+        plt.scatter(t_fourInt2[yind],np.sqrt(r_fourInt2[0]**2 + r_fourInt2[1]**2),color='green',marker='o')
+        plt.scatter(t_fourInt3[yind],np.sqrt(r_fourInt3[0]**2 + r_fourInt3[1]**2),color='green',marker='o')
     elif ind in yrealAllRealInds[twoIntSameYInds]: #Same Y
         yind = np.where(yrealAllRealInds[twoIntSameYInds] == ind)[0]
-        t_twoIntSameY0 = timeFromTrueAnomaly(nu_twoIntSameY[yind,0],periods[ind],e[ind])
-        t_twoIntSameY1 = timeFromTrueAnomaly(nu_twoIntSameY[yind,1],periods[ind],e[ind])
+        #DELETEt_twoIntSameY0 = timeFromTrueAnomaly(nu_twoIntSameY[yind,0],periods[ind],e[ind])
+        #DELETEt_twoIntSameY1 = timeFromTrueAnomaly(nu_twoIntSameY[yind,1],periods[ind],e[ind])
         r_twoIntSameY0 = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],nu_twoIntSameY[yind,0])
         r_twoIntSameY1 = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],nu_twoIntSameY[yind,1])
-        plt.scatter(t_twoIntSameY0,np.sqrt(r_twoIntSameY0[0]**2 + r_twoIntSameY0[1]**2),color='green',marker='o')
-        plt.scatter(t_twoIntSameY1,np.sqrt(r_twoIntSameY1[0]**2 + r_twoIntSameY1[1]**2),color='green',marker='o')
+        plt.scatter(t_twoIntSameY0[yind],np.sqrt(r_twoIntSameY0[0]**2 + r_twoIntSameY0[1]**2),color='green',marker='o')
+        plt.scatter(t_twoIntSameY1[yind],np.sqrt(r_twoIntSameY1[0]**2 + r_twoIntSameY1[1]**2),color='green',marker='o')
     elif ind in yrealAllRealInds[twoIntOppositeXInds]: #Same X
         yind = np.where(yrealAllRealInds[twoIntOppositeXInds] == ind)[0]
-        t_twoIntOppositeX0 = timeFromTrueAnomaly(nu_twoIntOppositeX[yind,0],periods[ind],e[ind])
-        t_twoIntOppositeX1 = timeFromTrueAnomaly(nu_twoIntOppositeX[yind,1],periods[ind],e[ind])
+        #DELETEt_twoIntOppositeX0 = timeFromTrueAnomaly(nu_twoIntOppositeX[yind,0],periods[ind],e[ind])
+        #DELETEt_twoIntOppositeX1 = timeFromTrueAnomaly(nu_twoIntOppositeX[yind,1],periods[ind],e[ind])
         r_twoIntOppositeX0 = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],nu_twoIntOppositeX[yind,0])
         r_twoIntOppositeX1 = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],nu_twoIntOppositeX[yind,1])
-        plt.scatter(t_twoIntOppositeX0,np.sqrt(r_twoIntOppositeX0[0]**2 + r_twoIntOppositeX0[1]**2),color='green',marker='o')
-        plt.scatter(t_twoIntOppositeX1,np.sqrt(r_twoIntOppositeX1[0]**2 + r_twoIntOppositeX1[1]**2),color='green',marker='o')
+        plt.scatter(t_twoIntOppositeX0[yind],np.sqrt(r_twoIntOppositeX0[0]**2 + r_twoIntOppositeX0[1]**2),color='green',marker='o')
+        plt.scatter(t_twoIntOppositeX1[yind],np.sqrt(r_twoIntOppositeX1[0]**2 + r_twoIntOppositeX1[1]**2),color='green',marker='o')
     elif ind in only2RealInds:
         yind = np.where(only2RealInds == ind)[0]
-        t_IntersectionOnly20 = timeFromTrueAnomaly(nu_IntersectionsOnly2[yind,0],periods[ind],e[ind])
-        t_IntersectionOnly21 = timeFromTrueAnomaly(nu_IntersectionsOnly2[yind,1],periods[ind],e[ind])
+        #DELETEt_IntersectionOnly20 = timeFromTrueAnomaly(nu_IntersectionsOnly2[yind,0],periods[ind],e[ind])
+        #DELETEt_IntersectionOnly21 = timeFromTrueAnomaly(nu_IntersectionsOnly2[yind,1],periods[ind],e[ind])
         r_IntersectionOnly20 = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],nu_IntersectionsOnly2[yind,0])
         r_IntersectionOnly21 = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],nu_IntersectionsOnly2[yind,1])
-        plt.scatter(t_IntersectionOnly20,np.sqrt(r_IntersectionOnly20[0]**2 + r_IntersectionOnly20[1]**2),color='green',marker='o')
-        plt.scatter(t_IntersectionOnly21,np.sqrt(r_IntersectionOnly21[0]**2 + r_IntersectionOnly21[1]**2),color='green',marker='o')
+        plt.scatter(t_IntersectionOnly20[yind],np.sqrt(r_IntersectionOnly20[0]**2 + r_IntersectionOnly20[1]**2),color='green',marker='o')
+        plt.scatter(t_IntersectionOnly21[yind],np.sqrt(r_IntersectionOnly21[0]**2 + r_IntersectionOnly21[1]**2),color='green',marker='o')
 
     plt.xlim([0,periods[ind]])
     plt.ylabel('Projected Separation, s, in AU',weight='bold')
@@ -1270,3 +1272,45 @@ def plotDerotatedEllipseStarLocDividers(ind, x, y, dmajorp, dminorp, only2RealIn
     plt.xlim([-1.2*dmajorp[ind],1.2*dmajorp[ind]])
     plt.ylim([-1.2*dminorp[ind],1.2*dminorp[ind]])
     plt.show(block=False)
+
+
+def plotSepsHistogram(minSep,maxSep,lminSep,lmaxSep,sma,yrealAllRealInds,num):
+    
+    plt.close(num)
+    fig2 = plt.figure(constrained_layout=True, num=num, figsize=(6,10))
+    gs = fig2.add_gridspec(4, 1)
+    bins = np.linspace(start=0.,stop=1.5,num=16)
+    plt.rc('axes',linewidth=2)
+    plt.rc('lines',linewidth=2)
+    plt.rcParams['axes.linewidth']=2
+    plt.rc('font',weight='bold')
+    ax0 = fig2.add_subplot(gs[0, :])
+    ax0.set_yscale('log')
+    ax1 = fig2.add_subplot(gs[1, :])
+    ax1.set_yscale('log')
+    ax2 = fig2.add_subplot(gs[2, :])
+    ax2.set_yscale('log')
+    ax3 = fig2.add_subplot(gs[3, :])
+    ax3.set_yscale('log')
+
+    ax0.hist(minSep[yrealAllRealInds]/sma[yrealAllRealInds],bins=bins)
+    ax0.set_xlabel('Minimum Separation Normalized by Semi-major Axis', weight='bold')
+    ax0.set_xlim([0,np.max(maxSep/sma)])
+    ax0.set_ylim([10**0,10**5])
+    ax1.hist(lminSep/sma[yrealAllRealInds],bins=bins)
+    ax1.set_xlabel('Local Minimum Separation Normalized by Semi-major Axis', weight='bold')
+    ax1.set_xlim([0,np.max(maxSep/sma)])
+    ax1.set_ylim([10**0,10**5])
+    ax2.hist(lmaxSep/sma[yrealAllRealInds],bins=bins)
+    ax2.set_xlabel('Local Maximum Separation Normalized by Semi-major Axis', weight='bold')
+    ax2.set_xlim([0,np.max(maxSep/sma)])
+    ax2.set_ylim([10**0,10**5])
+    ax3.hist(maxSep[yrealAllRealInds]/sma[yrealAllRealInds],bins=bins)
+    ax3.set_xlabel('Maximum Separation Normalized by Semi-major Axis', weight='bold')
+    ax3.set_xlim([0,np.max(maxSep/sma)])
+    ax3.set_ylim([10**0,10**5])
+    plt.show(block=False)
+
+  
+
+

@@ -39,6 +39,9 @@ sma = sma.to('AU').value
 #Separations
 s_circle = np.ones(len(sma))
 
+#starMass
+starMass = const.M_sun
+
 #### SAVED PLANET FOR Plot 3D Ellipse to 2D Ellipse Projection Diagram
 ellipseProjection3Dto2DInd = 23 #22
 sma[ellipseProjection3Dto2DInd] = 1.2164387563540457
@@ -76,173 +79,180 @@ inc[sepvstInd] = 1.447634036719772
 dmajorp,dminorp,theta_OpQ_X,theta_OpQp_X,Op,x,y,Phi,xreal,only2RealInds,yrealAllRealInds,\
     fourIntInds,twoIntOppositeXInds,twoIntSameYInds,nu_minSepPoints,nu_maxSepPoints,nu_lminSepPoints,nu_lmaxSepPoints,nu_fourInt,\
     nu_twoIntSameY,nu_twoIntOppositeX,nu_IntersectionsOnly2, yrealImagInds,\
+    t_minSep,t_maxSep,t_lminSep,t_lmaxSep,t_fourInt0,t_fourInt1,t_fourInt2,t_fourInt3,t_twoIntSameY0,\
+    t_twoIntSameY1,t_twoIntOppositeX0,t_twoIntOppositeX1,t_IntersectionOnly20,t_IntersectionOnly21,\
     minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y, minSep, maxSep, lminSep, lmaxSep,\
     errors_fourInt0,errors_fourInt1,errors_fourInt2,errors_fourInt3,errors_twoIntSameY0,\
     errors_twoIntSameY1,errors_twoIntOppositeX0,errors_twoIntOppositeX1,errors_IntersectionsOnly2X0,errors_IntersectionsOnly2X1,type0_0Inds,\
     type0_1Inds,type0_2Inds,type0_3Inds,type0_4Inds,type1_0Inds,type1_1Inds,type1_2Inds,type1_3Inds,type1_4Inds,type2_0Inds,type2_1Inds,type2_2Inds,\
     type2_3Inds,type2_4Inds,type3_0Inds,type3_1Inds,type3_2Inds,type3_3Inds,type3_4Inds,fourInt_x,fourInt_y,twoIntSameY_x,twoIntSameY_y,twoIntOppositeX_x,\
-    twoIntOppositeX_y,xIntersectionsOnly2,yIntersectionsOnly2,typeInds0,typeInds1,typeInds2,typeInds3 = calcMasterIntersections(sma,e,W,w,inc,s_circle,plotBool)
+    twoIntOppositeX_y,xIntersectionsOnly2,yIntersectionsOnly2,typeInds0,typeInds1,typeInds2,typeInds3, periods = calcMasterIntersections(sma,e,W,w,inc,s_circle,starMass,plotBool)
+
+
 
 #### START ANALYSIS AND PLOTTING ######################################
 #######################################################################
+if plotBool == True:
+    #### Plotting Projected Ellipse
+    start2 = time.time()
+    ind = random.randint(low=0,high=n)
+    plotProjectedEllipse(ind, sma, e, W, w, inc, theta_OpQ_X, theta_OpQp_X, dmajorp, dminorp, Op, num=877)
+    stop2 = time.time()
+    print('stop2: ' + str(stop2-start2))
+    del start2, stop2
+    #plt.close(877)
+    ####
 
-#### Plotting Projected Ellipse
-start2 = time.time()
-ind = random.randint(low=0,high=n)
-plotProjectedEllipse(ind, sma, e, W, w, inc, theta_OpQ_X, theta_OpQp_X, dmajorp, dminorp, Op, num=877)
-stop2 = time.time()
-print('stop2: ' + str(stop2-start2))
-del start2, stop2
-plt.close(877)
-####
+    #### Plot 3D Ellipse to 2D Ellipse Projection Diagram
+    start3 = time.time()
+    num = 666999888777
+    plot3DEllipseto2DEllipseProjectionDiagram(ind, sma, e, W, w, inc, Op, theta_OpQ_X, theta_OpQp_X,\
+        dmajorp, dminorp, num=num)
+    stop3 = time.time()
+    print('stop3: ' + str(stop3-start3))
+    del start3, stop3
+    #plt.close(num)
+    ####
 
-#### Plot 3D Ellipse to 2D Ellipse Projection Diagram
-start3 = time.time()
-num = 666999888777
-plot3DEllipseto2DEllipseProjectionDiagram(ind, sma, e, W, w, inc, Op, theta_OpQ_X, theta_OpQp_X,\
-    dmajorp, dminorp, num=num)
-stop3 = time.time()
-print('stop3: ' + str(stop3-start3))
-del start3, stop3
-plt.close(num)
-####
+    #### Create Projected Ellipse Conjugate Diameters and QQ' construction diagram
+    start4 = time.time()
+    num = 3335555888
+    plotEllipseMajorAxisFromConjugate(ind, sma, e, W, w, inc, Op, theta_OpQ_X, theta_OpQp_X,\
+        dmajorp, dminorp, num)
+    stop4 = time.time()
+    print('stop4: ' + str(stop4-start4))
+    del start4, stop4
+    #plt.close(num)
+    ####
 
-#### Create Projected Ellipse Conjugate Diameters and QQ' construction diagram
-start4 = time.time()
-num = 3335555888
-plotEllipseMajorAxisFromConjugate(ind, sma, e, W, w, inc, Op, theta_OpQ_X, theta_OpQp_X,\
-    dmajorp, dminorp, num)
-stop4 = time.time()
-print('stop4: ' + str(stop4-start4))
-del start4, stop4
-plt.close(num)
-####
+    #### Plot Derotated Ellipse
+    start6 = time.time()
+    num=880
+    plotDerotatedEllipse(ind, sma, e, W, w, inc, theta_OpQ_X, theta_OpQp_X, dmajorp, dminorp, Op, x, y, num)
+    stop6 = time.time()
+    print('stop6: ' + str(stop6-start6))
+    del start6, stop6
+    #plt.close(num)
+    ####
 
-#### Plot Derotated Ellipse
-start6 = time.time()
-num=880
-plotDerotatedEllipse(ind, sma, e, W, w, inc, theta_OpQ_X, theta_OpQp_X, dmajorp, dminorp, Op, x, y, num)
-stop6 = time.time()
-print('stop6: ' + str(stop6-start6))
-del start6, stop6
-plt.close(num)
-####
+    ##### Plot Proving Rerotation method works
+    start10 = time.time()
+    num=883
+    plotReorientationMethod(ind, sma, e, W, w, inc, x, y, Phi, Op, theta_OpQ_X, theta_OpQp_X, dmajorp, dminorp,\
+        minSepPoints_x, minSepPoints_y, num)
+    stop10 = time.time()
+    print('stop10: ' + str(stop10-start10))
+    del start10, stop10
+    #plt.close(num)
+    ####
 
-##### Plot Proving Rerotation method works
-start10 = time.time()
+    #### Plot Derotated Intersections, Min/Max, and Star Location Type Bounds
+    start12 = time.time()
+    num = 960
+    plotDerotatedIntersectionsMinMaxStarLocBounds(ind, x, y, dmajorp, dminorp, only2RealInds, typeInds0, typeInds1, typeInds2, typeInds3, minSepPoints_x,\
+        minSepPoints_y, yrealAllRealInds, lminSepPoints_x, lminSepPoints_y, fourIntInds, fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y,\
+        lmaxSepPoints_x, lmaxSepPoints_y, twoIntSameYInds,\
+        maxSepPoints_x, maxSepPoints_y, twoIntOppositeXInds, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2,\
+        type0_0Inds, type0_1Inds, type0_2Inds, type0_3Inds, type0_4Inds, type1_0Inds, type1_1Inds, type1_2Inds, type1_3Inds, type1_4Inds,\
+        type2_0Inds, type2_1Inds, type2_2Inds, type2_3Inds, type2_4Inds, type3_0Inds, type3_1Inds, type3_2Inds, type3_3Inds, type3_4Inds, num)
+    stop12 = time.time()
+    print('stop12: ' + str(stop12-start12))
+    del start12, stop12
+    #plt.close(num)
+    ####
 
-num=883
-plotReorientationMethod(ind, sma, e, W, w, inc, x, y, Phi, Op, theta_OpQ_X, theta_OpQp_X, dmajorp, dminorp,\
-    minSepPoints_x, minSepPoints_y, num)
-stop10 = time.time()
-print('stop10: ' + str(stop10-start10))
-del start10, stop10
-plt.close(num)
-####
+    #### Plot Derotated Ellipse Separation Extrema
+    start12_1 = time.time()
+    num = 961
+    plotDerotatedExtrema(derotatedInd, x, y, dmajorp, dminorp, only2RealInds, typeInds0, typeInds1, typeInds2, typeInds3, minSepPoints_x,\
+        maxSepPoints_x, maxSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y,\
+        minSepPoints_y, yrealAllRealInds, lminSepPoints_x, lminSepPoints_y, fourIntInds, fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y,\
+        twoIntOppositeXInds, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2, num)
+    stop12_1 = time.time()
+    print('stop12_1: ' + str(stop12_1-start12_1))
+    del start12_1, stop12_1
+    ####
 
-#### Plot Derotated Intersections, Min/Max, and Star Location Type Bounds
-start12 = time.time()
-num = 960
-plotDerotatedIntersectionsMinMaxStarLocBounds(ind, x, y, dmajorp, dminorp, only2RealInds, typeInds0, typeInds1, typeInds2, typeInds3, minSepPoints_x,\
-    minSepPoints_y, yrealAllRealInds, lminSepPoints_x, lminSepPoints_y, fourIntInds, fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y,\
-    lmaxSepPoints_x, lmaxSepPoints_y, twoIntSameYInds,\
-    maxSepPoints_x, maxSepPoints_y, twoIntOppositeXInds, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2,\
-    type0_0Inds, type0_1Inds, type0_2Inds, type0_3Inds, type0_4Inds, type1_0Inds, type1_1Inds, type1_2Inds, type1_3Inds, type1_4Inds,\
-    type2_0Inds, type2_1Inds, type2_2Inds, type2_3Inds, type2_4Inds, type3_0Inds, type3_1Inds, type3_2Inds, type3_3Inds, type3_4Inds, num)
-stop12 = time.time()
-print('stop12: ' + str(stop12-start12))
-del start12, stop12
-plt.close(num)
-####
+    #### Plot Rerotated Points 
+    #### Error Plot ####
+    num=822
+    errorLinePlot(fourIntInds,errors_fourInt0,errors_fourInt1,errors_fourInt2,errors_fourInt3,\
+        twoIntSameYInds,errors_twoIntSameY0,errors_twoIntSameY1,twoIntOppositeXInds,errors_twoIntOppositeX0,errors_twoIntOppositeX1,\
+        only2RealInds,errors_IntersectionsOnly2X0,errors_IntersectionsOnly2X1,num)
+    #plt.close(num)
+    ######################
 
-#### Plot Derotated Ellipse Separation Extrema
-start12_1 = time.time()
-num = 961
-plotDerotatedExtrema(derotatedInd, x, y, dmajorp, dminorp, only2RealInds, typeInds0, typeInds1, typeInds2, typeInds3, minSepPoints_x,\
-    maxSepPoints_x, maxSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y,\
-    minSepPoints_y, yrealAllRealInds, lminSepPoints_x, lminSepPoints_y, fourIntInds, fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y,\
-    twoIntOppositeXInds, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2, num)
-stop12_1 = time.time()
-print('stop12_1: ' + str(stop12_1-start12_1))
-del start12_1, stop12_1
-####
+    # ind = yrealAllRealInds[fourIntInds[np.argsort(-errors_fourInt1)[0]]]
+    # plotRerotatedFromNus(ind, sma[ind], e[ind], W[ind], w[ind], inc[ind], Op[:,ind], yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds,\
+    #     nu_minSepPoints, nu_maxSepPoints, nu_lminSepPoints, nu_lmaxSepPoints, nu_fourInt, nu_twoIntSameY, nu_twoIntOppositeX, nu_IntersectionsOnly2,\
+    #     twoIntSameY_x, twoIntSameY_y, num=8001)
 
+    ind = yrealAllRealInds[twoIntSameYInds[np.argsort(-errors_twoIntSameY1)[0]]]
+    plotRerotatedFromNus(ind, sma[ind], e[ind], W[ind], w[ind], inc[ind], Op[:,ind], yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds,\
+        nu_minSepPoints, nu_maxSepPoints, nu_lminSepPoints, nu_lmaxSepPoints, nu_fourInt, nu_twoIntSameY, nu_twoIntOppositeX, nu_IntersectionsOnly2,\
+        twoIntSameY_x, twoIntSameY_y, num=8001)
 
-#### Plot Rerotated Points 
-#### Error Plot ####
-num=822
-errorLinePlot(fourIntInds,errors_fourInt0,errors_fourInt1,errors_fourInt2,errors_fourInt3,\
-    twoIntSameYInds,errors_twoIntSameY0,errors_twoIntSameY1,twoIntOppositeXInds,errors_twoIntOppositeX0,errors_twoIntOppositeX1,\
-    only2RealInds,errors_IntersectionsOnly2X0,errors_IntersectionsOnly2X1,num)
-plt.close(num)
-######################
+    # ind = only2RealInds[np.argsort(-errors_IntersectionsOnly2X0)[0]]
+    # plotRerotatedFromNus(ind, sma[ind], e[ind], W[ind], w[ind], inc[ind], Op[:,ind], yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds,\
+    #     nu_minSepPoints, nu_maxSepPoints, nu_lminSepPoints, nu_lmaxSepPoints, nu_fourInt, nu_twoIntSameY, nu_twoIntOppositeX, nu_IntersectionsOnly2,\
+    #     twoIntSameY_x, twoIntSameY_y, num=8001)
 
-# ind = yrealAllRealInds[fourIntInds[np.argsort(-errors_fourInt1)[0]]]
-# plotRerotatedFromNus(ind, sma[ind], e[ind], W[ind], w[ind], inc[ind], Op[:,ind], yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds,\
-#     nu_minSepPoints, nu_maxSepPoints, nu_lminSepPoints, nu_lmaxSepPoints, nu_fourInt, nu_twoIntSameY, nu_twoIntOppositeX, nu_IntersectionsOnly2,\
-#     twoIntSameY_x, twoIntSameY_y, num=8001)
+    ###### DONE FIXING NU
 
-ind = yrealAllRealInds[twoIntSameYInds[np.argsort(-errors_twoIntSameY1)[0]]]
-plotRerotatedFromNus(ind, sma[ind], e[ind], W[ind], w[ind], inc[ind], Op[:,ind], yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds,\
-    nu_minSepPoints, nu_maxSepPoints, nu_lminSepPoints, nu_lmaxSepPoints, nu_fourInt, nu_twoIntSameY, nu_twoIntOppositeX, nu_IntersectionsOnly2,\
-    twoIntSameY_x, twoIntSameY_y, num=8001)
+    #### Plot Histogram of Error
+    num= 823
+    plotErrorHistogramAlpha(errors_fourInt0,errors_fourInt1,errors_fourInt2,errors_fourInt3,errors_twoIntSameY0,errors_twoIntSameY1,\
+        errors_twoIntOppositeX0,errors_twoIntOppositeX1,errors_IntersectionsOnly2X0,errors_IntersectionsOnly2X1,num)
+    #plt.close(num) #thinking the above plot is relativly useless
+    ####
 
-# ind = only2RealInds[np.argsort(-errors_IntersectionsOnly2X0)[0]]
-# plotRerotatedFromNus(ind, sma[ind], e[ind], W[ind], w[ind], inc[ind], Op[:,ind], yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds,\
-#     nu_minSepPoints, nu_maxSepPoints, nu_lminSepPoints, nu_lmaxSepPoints, nu_fourInt, nu_twoIntSameY, nu_twoIntOppositeX, nu_IntersectionsOnly2,\
-#     twoIntSameY_x, twoIntSameY_y, num=8001)
+    #### Plot Histogram of Error
+    num=824
+    plotErrorHistogram(errors_fourInt0,errors_fourInt1,errors_fourInt2,errors_fourInt3,\
+        errors_twoIntSameY0,errors_twoIntSameY1,errors_twoIntOppositeX0,errors_twoIntOppositeX1,\
+        errors_IntersectionsOnly2X0,errors_IntersectionsOnly2X1,num)
+    #plt.close(num)
+    ####
 
-###### DONE FIXING NU
+    #### Redo Significant Point plot Using these Nu
+    num=3690
+    plotProjectedEllipseWithNu(ind,sma,e,W,w,inc,nu_minSepPoints,nu_maxSepPoints, yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds,\
+        only2RealInds, nu_lminSepPoints, nu_lmaxSepPoints, nu_fourInt, nu_twoIntSameY, nu_twoIntOppositeX, nu_IntersectionsOnly2, num)
+    ####
 
-#### Plot Histogram of Error
-num= 823
-plotErrorHistogramAlpha(errors_fourInt0,errors_fourInt1,errors_fourInt2,errors_fourInt3,errors_twoIntSameY0,errors_twoIntSameY1,\
-    errors_twoIntOppositeX0,errors_twoIntOppositeX1,errors_IntersectionsOnly2X0,errors_IntersectionsOnly2X1,num)
-plt.close(num) #thinking the above plot is relativly useless
-####
-
-#### Plot Histogram of Error
-num=824
-plotErrorHistogram(errors_fourInt0,errors_fourInt1,errors_fourInt2,errors_fourInt3,\
-    errors_twoIntSameY0,errors_twoIntSameY1,errors_twoIntOppositeX0,errors_twoIntOppositeX1,\
-    errors_IntersectionsOnly2X0,errors_IntersectionsOnly2X1,num)
-plt.close(num)
-####
-
-#### Redo Significant Point plot Using these Nu
-num=3690
-plotProjectedEllipseWithNu(ind,sma,e,W,w,inc,nu_minSepPoints,nu_maxSepPoints, yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds,\
-    only2RealInds, nu_lminSepPoints, nu_lmaxSepPoints, nu_fourInt, nu_twoIntSameY, nu_twoIntOppositeX, nu_IntersectionsOnly2, num)
-####
-
-#### Plot separation vs nu
-num=962
-plotSeparationvsnu(ind, sma, e, W, w, inc, minSep, maxSep, lminSep, lmaxSep, \
-    nu_minSepPoints, nu_maxSepPoints, nu_lminSepPoints, nu_lmaxSepPoints,\
-    nu_fourInt, nu_twoIntSameY, nu_twoIntOppositeX, nu_IntersectionsOnly2,\
-    yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds, num)
-####
-
-
-#### Plot separation vs time
-num=963
-plotSeparationVsTime(ind, sma, e, W, w, inc, minSep, maxSep, lminSep, lmaxSep, \
+    #### Plot separation vs nu
+    num=962
+    plotSeparationvsnu(ind, sma, e, W, w, inc, minSep, maxSep, lminSep, lmaxSep, \
         nu_minSepPoints, nu_maxSepPoints, nu_lminSepPoints, nu_lmaxSepPoints,\
         nu_fourInt, nu_twoIntSameY, nu_twoIntOppositeX, nu_IntersectionsOnly2,\
         yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds, num)
-####
+    ####
+
+    #### Plot separation vs time
+    num=963
+    plotSeparationVsTime(ind, sma, e, W, w, inc, minSep, maxSep, lminSep, lmaxSep,\
+        t_minSep,t_maxSep,t_lminSep,t_lmaxSep,t_fourInt0,t_fourInt1,t_fourInt2,t_fourInt3,\
+        t_twoIntSameY0,t_twoIntSameY1,t_twoIntOppositeX0,t_twoIntOppositeX1,t_IntersectionOnly20,t_IntersectionOnly21,\
+        nu_fourInt, nu_twoIntSameY, nu_twoIntOppositeX, nu_IntersectionsOnly2,\
+        yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds, periods, num)
+    ####
+
+    ####  Plot Derotate Ellipse
+    tinds = np.argsort(-np.abs(errors_fourInt1))
+    ind = yrealAllRealInds[fourIntInds[tinds[1]]]
+    num=55670
+    plotDerotatedEllipseStarLocDividers(ind, x, y, dmajorp, dminorp, only2RealInds, typeInds0, typeInds1, typeInds2, typeInds3, minSepPoints_x,\
+        minSepPoints_y, yrealAllRealInds, lminSepPoints_x, lminSepPoints_y, fourIntInds, fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y,\
+        lmaxSepPoints_x, lmaxSepPoints_y, twoIntSameYInds,\
+        maxSepPoints_x, maxSepPoints_y, twoIntOppositeXInds, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2,\
+        type0_0Inds, type0_1Inds, type0_2Inds, type0_3Inds, type0_4Inds, type1_0Inds, type1_1Inds, type1_2Inds, type1_3Inds, type1_4Inds,\
+        type2_0Inds, type2_1Inds, type2_2Inds, type2_3Inds, type2_4Inds, type3_0Inds, type3_1Inds, type3_2Inds, type3_3Inds, type3_4Inds, num)
+    #plt.close(num)
+    ####
+
+    #### Min Seps Histogram
+    num=9701
+    plotSepsHistogram(minSep,maxSep,lminSep,lmaxSep,sma,yrealAllRealInds,num)
 
 
-####  Plot Derotate Ellipse
-tinds = np.argsort(-np.abs(errors_fourInt1))
-ind = yrealAllRealInds[fourIntInds[tinds[1]]]
-num=55670
-plotDerotatedEllipseStarLocDividers(ind, x, y, dmajorp, dminorp, only2RealInds, typeInds0, typeInds1, typeInds2, typeInds3, minSepPoints_x,\
-    minSepPoints_y, yrealAllRealInds, lminSepPoints_x, lminSepPoints_y, fourIntInds, fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y,\
-    lmaxSepPoints_x, lmaxSepPoints_y, twoIntSameYInds,\
-    maxSepPoints_x, maxSepPoints_y, twoIntOppositeXInds, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2,\
-    type0_0Inds, type0_1Inds, type0_2Inds, type0_3Inds, type0_4Inds, type1_0Inds, type1_1Inds, type1_2Inds, type1_3Inds, type1_4Inds,\
-    type2_0Inds, type2_1Inds, type2_2Inds, type2_3Inds, type2_4Inds, type3_0Inds, type3_1Inds, type3_2Inds, type3_3Inds, type3_4Inds, num)
-#plt.close(num)
-####
 
