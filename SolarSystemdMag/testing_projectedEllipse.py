@@ -96,7 +96,7 @@ if plotBool == True:
     #### Plotting Projected Ellipse
     start2 = time.time()
     ind = random.randint(low=0,high=n)
-    plotProjectedEllipse(ind, sma, e, W, w, inc, theta_OpQ_X, theta_OpQp_X, dmajorp, dminorp, Op, num=877)
+    plotProjectedEllipse(ind, sma, e, W, w, inc, Phi, dmajorp, dminorp, Op, num=877)
     stop2 = time.time()
     print('stop2: ' + str(stop2-start2))
     del start2, stop2
@@ -106,7 +106,7 @@ if plotBool == True:
     #### Plot 3D Ellipse to 2D Ellipse Projection Diagram
     start3 = time.time()
     num = 666999888777
-    plot3DEllipseto2DEllipseProjectionDiagram(ind, sma, e, W, w, inc, Op, theta_OpQ_X, theta_OpQp_X,\
+    plot3DEllipseto2DEllipseProjectionDiagram(ind, sma, e, W, w, inc, Op, Phi,\
         dmajorp, dminorp, num=num)
     stop3 = time.time()
     print('stop3: ' + str(stop3-start3))
@@ -117,7 +117,7 @@ if plotBool == True:
     #### Create Projected Ellipse Conjugate Diameters and QQ' construction diagram
     start4 = time.time()
     num = 3335555888
-    plotEllipseMajorAxisFromConjugate(ind, sma, e, W, w, inc, Op, theta_OpQ_X, theta_OpQp_X,\
+    plotEllipseMajorAxisFromConjugate(ind, sma, e, W, w, inc, Op, Phi,\
         dmajorp, dminorp, num)
     stop4 = time.time()
     print('stop4: ' + str(stop4-start4))
@@ -128,7 +128,7 @@ if plotBool == True:
     #### Plot Derotated Ellipse
     start6 = time.time()
     num=880
-    plotDerotatedEllipse(ind, sma, e, W, w, inc, theta_OpQ_X, theta_OpQp_X, dmajorp, dminorp, Op, x, y, num)
+    plotDerotatedEllipse(ind, sma, e, W, w, inc, Phi, dmajorp, dminorp, Op, x, y, num)
     stop6 = time.time()
     print('stop6: ' + str(stop6-start6))
     del start6, stop6
@@ -138,7 +138,7 @@ if plotBool == True:
     ##### Plot Proving Rerotation method works
     start10 = time.time()
     num=883
-    plotReorientationMethod(ind, sma, e, W, w, inc, x, y, Phi, Op, theta_OpQ_X, theta_OpQp_X, dmajorp, dminorp,\
+    plotReorientationMethod(ind, sma, e, W, w, inc, x, y, Phi, Op, dmajorp, dminorp,\
         minSepPoints_x, minSepPoints_y, num)
     stop10 = time.time()
     print('stop10: ' + str(stop10-start10))

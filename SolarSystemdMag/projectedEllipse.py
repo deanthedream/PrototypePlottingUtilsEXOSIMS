@@ -130,7 +130,7 @@ def xyz_3Dellipse(a,e,W,w,inc,v):
     return np.asarray([[eqnX],[eqnY],[eqnZ]])
 
 def projected_Op(a,e,W,w,inc):
-    """
+    """ Calculates the location of the geometric center of the projected ellipse
     Args:
         a (numpy array):
             semi-major axis in AU
@@ -211,7 +211,7 @@ def projected_projectedLinearEccentricity(a,e,W,w,inc):
     return c_3D_projected[0]
 
 def derotate_arbitraryPoint(x,y,phi):
-    """
+    """ Derotates an arbitrary point by angle Phi
     Args:
         x (numpy array):
             distance from focus (star) to Op along X-axis
@@ -1957,9 +1957,113 @@ def rerotateExtremaAndIntersectionPoints(minSepPoints_x, minSepPoints_y, maxSepP
 
 
 def calcMasterIntersections(sma,e,W,w,inc,s_circle,starMass,plotBool):
-    """ A method for calculating the nu, times of orbit and circle intersections
+    """ A method for calculating the nu and times of orbit and circle intersections as well as extrema
+    In the memory efficient method, there are approximately 349 Bytes per planet
+    When plotting, extra variables are saved resulting in approximately 373 Bytes per planet
     Args:
+        sma (numpy array):
+            semi-major axis
+        e (numpy array):
+            eccentricity
+        W (numpy array):
+            Longitude of the ascending nodes
+        w (numpy array):
+            Argument of periapsis
+        inc (numpy array):
+            inclination
+        s_circle (numpy array):
+            circle radius to calculate intersections for
+        starMass (astropy quantity):
+            mass of the star
+        plotBool (boolean):
+            a boolean used to determine whether some outputs are deleted
+            for memory efficiency or kept for plotting
+    Returns:
+        dmajorp (numpy array): 
+            the semi-major axis of the projected ellipse
+        dminorp (numpy array):
+            the semi-minor axis of the projected ellipse
+        theta_OpQ_X (numpy array):
+            the angle formed between point Q, the geometric center of
+            the projected ellipse, and the X-axis
+        theta_OpQp_X (numpy array):
+            the angle formed between point Q, the geometric center of
+            the projected ellipse, and the X-axis
+        Op (numpy array):
+            the geometric center of the projected ellipse
+        x (numpy array):
+            the x component of the projected star location
+        y (numpy array):
+            the y component of the projected star location
+        Phi (numpy array):
 
+        xreal (numpy array):
+        only2RealInds (numpy array):
+        yrealAllRealInds (numpy array):
+        fourIntInds (numpy array):
+        twoIntOppositeXInds (numpy array):
+        twoIntSameYInds (numpy array):
+        nu_minSepPoints (numpy array):
+        nu_maxSepPoints (numpy array):
+        nu_lminSepPoints (numpy array):
+        nu_lmaxSepPoints (numpy array):
+        nu_fourInt (numpy array):
+        nu_twoIntSameY (numpy array):
+        nu_twoIntOppositeX (numpy array):
+        nu_IntersectionsOnly2 (numpy array):
+        yrealImagInds (numpy array):
+        t_minSep (numpy array):
+        t_maxSep (numpy array):
+        t_lminSep (numpy array):
+        t_lmaxSep (numpy array):
+        t_fourInt0 (numpy array):
+        t_fourInt1 (numpy array):
+        t_fourInt2 (numpy array):
+        t_fourInt3 (numpy array):
+        t_twoIntSameY0 (numpy array):
+        t_twoIntSameY1 (numpy array):
+        t_twoIntOppositeX0 (numpy array):
+        t_twoIntOppositeX1 (numpy array):
+        t_IntersectionOnly20 (numpy array):
+        t_IntersectionOnly21 (numpy array):
+        minSepPoints_x (numpy array):
+        minSepPoints_y (numpy array):
+        maxSepPoints_x (numpy array):
+        maxSepPoints_y (numpy array):
+        lminSepPoints_x (numpy array):
+        lminSepPoints_y (numpy array):
+        lmaxSepPoints_x (numpy array):
+        lmaxSepPoints_y (numpy array):
+        minSep (numpy array):
+        maxSep (numpy array):
+        lminSep (numpy array):
+        lmaxSep (numpy array):
+        errors_fourInt0 (numpy array):
+        errors_fourInt1 (numpy array):
+        errors_fourInt2 (numpy array):
+        errors_fourInt3 (numpy array):
+        errors_twoIntSameY0 (numpy array):
+        errors_twoIntSameY1 (numpy array):
+        errors_twoIntOppositeX0 (numpy array):
+        errors_twoIntOppositeX1 (numpy array):
+        errors_IntersectionsOnly2X0 (numpy array):
+        errors_IntersectionsOnly2X1 (numpy array):
+        type0_0Inds (numpy array):\
+        type0_1Inds,type0_2Inds,type0_3Inds,type0_4Inds,type1_0Inds,type1_1Inds,type1_2Inds,type1_3Inds,type1_4Inds,type2_0Inds,type2_1Inds,type2_2Inds,\
+        type2_3Inds,type2_4Inds,type3_0Inds,type3_1Inds,type3_2Inds,type3_3Inds,type3_4Inds
+        fourInt_x (numpy array):
+        fourInt_y (numpy array):
+        twoIntSameY_x (numpy array):
+        twoIntSameY_y (numpy array):
+        twoIntOppositeX_x (numpy array):
+        twoIntOppositeX_y (numpy array):
+        xIntersectionsOnly2 (numpy array):
+        yIntersectionsOnly2 (numpy array):
+        typeInds0 (numpy array):
+        typeInds1 (numpy array):
+        typeInds2 (numpy array):
+        typeInds3 (numpy array):
+        periods (numpy array):
     """
     #### Calculate Projected Ellipse Angles and Minor Axis
     start0 = time.time()
@@ -1982,6 +2086,8 @@ def calcMasterIntersections(sma,e,W,w,inc,s_circle,starMass,plotBool):
     #### Derotate Ellipse Calculations
     start5 = time.time()
     x, y, Phi = derotatedEllipse(theta_OpQ_X, theta_OpQp_X, Op)
+    if plotBool == False:
+        del theta_OpQ_X, theta_OpQp_X
     stop5 = time.time()
     print('stop5: ' + str(stop5-start5))
     del start5, stop5
@@ -2149,7 +2255,7 @@ def calcMasterIntersections(sma,e,W,w,inc,s_circle,starMass,plotBool):
 
     #### Memory Calculations
     #Necessary Variables
-    memory_necessary = [inc.nbytes,w.nbytes,W.nbytes,sma.nbytes,e.nbytes,dmajorp.nbytes,dminorp.nbytes,theta_OpQ_X.nbytes,theta_OpQp_X.nbytes,\
+    memory_necessary = [inc.nbytes,w.nbytes,W.nbytes,sma.nbytes,e.nbytes,dmajorp.nbytes,dminorp.nbytes,\
         Op.nbytes,x.nbytes,y.nbytes,Phi.nbytes,xreal.nbytes,only2RealInds.nbytes,yrealAllRealInds.nbytes,fourIntInds.nbytes,twoIntOppositeXInds.nbytes,twoIntSameYInds.nbytes,\
         nu_minSepPoints.nbytes,nu_maxSepPoints.nbytes,nu_lminSepPoints.nbytes,nu_lmaxSepPoints.nbytes,nu_fourInt.nbytes,nu_twoIntSameY.nbytes,nu_twoIntOppositeX.nbytes,nu_IntersectionsOnly2.nbytes,\
         minSepPoints_x.nbytes, minSepPoints_y.nbytes, maxSepPoints_x.nbytes, maxSepPoints_y.nbytes, lminSepPoints_x.nbytes, lminSepPoints_y.nbytes, lmaxSepPoints_x.nbytes,\
@@ -2167,6 +2273,7 @@ def calcMasterIntersections(sma,e,W,w,inc,s_circle,starMass,plotBool):
     # Vestigal Variables
     #TODO a and b are duplicates of dmajorp and dminorp
     memory_vestigal = [0]
+    #theta_OpQ_X.nbytes,theta_OpQp_X.nbytes
     #a.nbytes,b.nbytes,
     #error_numinSep.nbytes,error_numaxSep.nbytes,error_nulminSep.nbytes,error_nulmaxSep.nbytes,
     #dmajorp_v2.nbytes,dminorp_v2.nbytes,Psi_v2.nbytes,psi_v2.nbytes,Psi.nbytes,psi.nbytes,
@@ -2221,7 +2328,7 @@ def calcMasterIntersections(sma,e,W,w,inc,s_circle,starMass,plotBool):
         print('memory_plotting Used: ' + str(np.sum(memory_plotting)/10**9) + ' GB')
 
     if plotBool == False:
-        return dmajorp,dminorp,theta_OpQ_X,theta_OpQp_X,Op,x,y,Phi,xreal,only2RealInds,\
+        return dmajorp,dminorp,_,_,Op,x,y,Phi,xreal,only2RealInds,\
             yrealAllRealInds,fourIntInds,twoIntOppositeXInds,twoIntSameYInds,nu_minSepPoints,nu_maxSepPoints,\
             nu_lminSepPoints,nu_lmaxSepPoints,nu_fourInt,nu_twoIntSameY,nu_twoIntOppositeX,nu_IntersectionsOnly2, yrealImagInds,\
             t_minSep,t_maxSep,t_lminSep,t_lmaxSep,t_fourInt0,t_fourInt1,t_fourInt2,t_fourInt3,t_twoIntSameY0,\

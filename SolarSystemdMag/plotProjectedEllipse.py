@@ -12,7 +12,7 @@ import astropy.units as u
 
 
 ##########################################################################################################
-def plotProjectedEllipse(ind, sma, e, W, w, inc, theta_OpQ_X, theta_OpQp_X, dmajorp, dminorp, Op, num):
+def plotProjectedEllipse(ind, sma, e, W, w, inc, Phi, dmajorp, dminorp, Op, num):
     plt.close(num)
     fig = plt.figure(num=num)
     plt.rc('axes',linewidth=2)
@@ -33,7 +33,8 @@ def plotProjectedEllipse(ind, sma, e, W, w, inc, theta_OpQ_X, theta_OpQp_X, dmaj
     #plot 3D Ellipse Center
     plt.scatter(Op[0][ind],Op[1][ind],color='black')
 
-    ang2 = (theta_OpQ_X[ind]+theta_OpQp_X[ind])/2
+    #ang2 = (theta_OpQ_X[ind]+theta_OpQp_X[ind])/2
+    ang2 = Phi[ind]
     dmajorpx1 = Op[0][ind] + dmajorp[ind]*np.cos(ang2)
     dmajorpy1 = Op[1][ind] + dmajorp[ind]*np.sin(ang2)
     dmajorpx2 = Op[0][ind] + dmajorp[ind]*np.cos(ang2+np.pi)
@@ -49,7 +50,7 @@ def plotProjectedEllipse(ind, sma, e, W, w, inc, theta_OpQ_X, theta_OpQp_X, dmaj
     plt.show(block=False)
     ####
 
-def plot3DEllipseto2DEllipseProjectionDiagram(ind, sma, e, W, w, inc, Op, theta_OpQ_X, theta_OpQp_X,\
+def plot3DEllipseto2DEllipseProjectionDiagram(ind, sma, e, W, w, inc, Op, Phi,\
     dmajorp, dminorp, num):
     """
     """
@@ -185,7 +186,8 @@ def plot3DEllipseto2DEllipseProjectionDiagram(ind, sma, e, W, w, inc, Op, theta_
     ax.plot([(rper[0][0] + rapo[0][0])/2,Op[0][ind]],[(rper[1][0] + rapo[1][0])/2,Op[1][ind]],[(rper[2][0] + rapo[2][0])/2,1.3*min_z],color='grey',linestyle='--',linewidth=2) #Plot ) to )''
 
 
-    ang2 = (theta_OpQ_X[ind]+theta_OpQp_X[ind])/2
+    #ang2 = (theta_OpQ_X[ind]+theta_OpQp_X[ind])/2
+    ang2 = Phi[ind]
     dmajorpx1 = Op[0][ind] + dmajorp[ind]*np.cos(ang2)
     dmajorpy1 = Op[1][ind] + dmajorp[ind]*np.sin(ang2)
     dmajorpx2 = Op[0][ind] + dmajorp[ind]*np.cos(ang2+np.pi)
@@ -236,7 +238,7 @@ def plot3DEllipseto2DEllipseProjectionDiagram(ind, sma, e, W, w, inc, Op, theta_
     plt.show(block=False)
     ####
 
-def plotEllipseMajorAxisFromConjugate(ind, sma, e, W, w, inc, Op, theta_OpQ_X, theta_OpQp_X,\
+def plotEllipseMajorAxisFromConjugate(ind, sma, e, W, w, inc, Op, Phi,\
     dmajorp, dminorp, num):
     """ Plots the Q and Q' points as well as teh line 
     """
@@ -305,7 +307,8 @@ def plotEllipseMajorAxisFromConjugate(ind, sma, e, W, w, inc, Op, theta_OpQ_X, t
     ax.scatter(Op[0][ind],Op[1][ind], color='grey', marker='o',s=25,zorder=30) #2D Ellipse Center
     ax.text(1.2*(rper[0][0] + rapo[0][0])/2,1.2*(rper[1][0] + rapo[1][0])/2+0.05, 'O\'', None)
 
-    ang2 = (theta_OpQ_X[ind]+theta_OpQp_X[ind])/2
+    #ang2 = (theta_OpQ_X[ind]+theta_OpQp_X[ind])/2
+    ang2 = Phi[ind]
     dmajorpx1 = Op[0][ind] + dmajorp[ind]*np.cos(ang2)
     dmajorpy1 = Op[1][ind] + dmajorp[ind]*np.sin(ang2)
     dmajorpx2 = Op[0][ind] + dmajorp[ind]*np.cos(ang2+np.pi)
@@ -351,7 +354,7 @@ def plotEllipseMajorAxisFromConjugate(ind, sma, e, W, w, inc, Op, theta_OpQ_X, t
     ax.axis('equal')
     plt.show(block=False)
 
-def plotDerotatedEllipse(ind, sma, e, W, w, inc, theta_OpQ_X, theta_OpQp_X, dmajorp, dminorp, Op, x, y, num=879):
+def plotDerotatedEllipse(ind, sma, e, W, w, inc, Phi, dmajorp, dminorp, Op, x, y, num=879):
     plt.close(num)
     fig = plt.figure(num=num)
     plt.rc('axes',linewidth=2)
@@ -370,7 +373,8 @@ def plotDerotatedEllipse(ind, sma, e, W, w, inc, theta_OpQ_X, theta_OpQp_X, dmaj
     ## Plot 3D Ellipse Center
     plt.scatter(Op[0][ind],Op[1][ind],color='black')
     ## Plot Rotated Ellipse
-    ang2 = (theta_OpQ_X[ind]+theta_OpQp_X[ind])/2
+    #ang2 = (theta_OpQ_X[ind]+theta_OpQp_X[ind])/2
+    ang2 = Phi[ind]
     dmajorpx1 = Op[0][ind] + dmajorp[ind]*np.cos(ang2)
     dmajorpy1 = Op[1][ind] + dmajorp[ind]*np.sin(ang2)
     dmajorpx2 = Op[0][ind] + dmajorp[ind]*np.cos(ang2+np.pi)
@@ -397,7 +401,7 @@ def plotDerotatedEllipse(ind, sma, e, W, w, inc, theta_OpQ_X, theta_OpQp_X, dmaj
 
     plt.show(block=False)
 
-def plotReorientationMethod(ind, sma, e, W, w, inc, x, y, Phi, Op, theta_OpQ_X, theta_OpQp_X, dmajorp, dminorp,\
+def plotReorientationMethod(ind, sma, e, W, w, inc, x, y, Phi, Op, dmajorp, dminorp,\
     minSepPoints_x, minSepPoints_y, num):
     plt.close(num)
     fig = plt.figure(num=num)
@@ -417,7 +421,8 @@ def plotReorientationMethod(ind, sma, e, W, w, inc, x, y, Phi, Op, theta_OpQ_X, 
     ## Plot 3D Ellipse Center
     plt.scatter(Op[0][ind],Op[1][ind],color='black')
     ## Plot Rotated Ellipse
-    ang2 = (theta_OpQ_X[ind]+theta_OpQp_X[ind])/2
+    #ang2 = (theta_OpQ_X[ind]+theta_OpQp_X[ind])/2
+    ang2 = Phi[ind]
     dmajorpx1 = Op[0][ind] + dmajorp[ind]*np.cos(ang2)
     dmajorpy1 = Op[1][ind] + dmajorp[ind]*np.sin(ang2)
     dmajorpx2 = Op[0][ind] + dmajorp[ind]*np.cos(ang2+np.pi)
