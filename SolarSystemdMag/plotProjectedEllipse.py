@@ -1270,7 +1270,3 @@ def plotDerotatedEllipseStarLocDividers(ind, x, y, dmajorp, dminorp, only2RealIn
     plt.xlim([-1.2*dmajorp[ind],1.2*dmajorp[ind]])
     plt.ylim([-1.2*dminorp[ind],1.2*dminorp[ind]])
     plt.show(block=False)
-
-
-
-
