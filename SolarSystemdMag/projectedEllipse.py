@@ -2218,10 +2218,11 @@ def calcMasterIntersections(sma,e,W,w,inc,s_circle,starMass,plotBool):
         del errors_fourInt0, errors_fourInt1, errors_fourInt2, errors_fourInt3
     ####
     #### yrealAllRealInds[twoIntSameYInds]
-    nu_twoIntSameY[:,0], errors_twoIntSameY0 = nuCorrections_int(sma,e,W,w,inc,s_circle,nu_twoIntSameY[:,0],yrealAllRealInds,twoIntSameYInds)
-    nu_twoIntSameY[:,1], errors_twoIntSameY1 = nuCorrections_int(sma,e,W,w,inc,s_circle,nu_twoIntSameY[:,1],yrealAllRealInds,twoIntSameYInds)
-    if plotBool == False:
-        del errors_twoIntSameY0, errors_twoIntSameY1
+    if len(twoIntSameYInds) != 0:
+        nu_twoIntSameY[:,0], errors_twoIntSameY0 = nuCorrections_int(sma,e,W,w,inc,s_circle,nu_twoIntSameY[:,0],yrealAllRealInds,twoIntSameYInds)
+        nu_twoIntSameY[:,1], errors_twoIntSameY1 = nuCorrections_int(sma,e,W,w,inc,s_circle,nu_twoIntSameY[:,1],yrealAllRealInds,twoIntSameYInds)
+        if plotBool == False:
+            del errors_twoIntSameY0, errors_twoIntSameY1
     ####
     #### yrealAllRealInds[twoIntOppositeXInds]
     nu_twoIntOppositeX[:,0], errors_twoIntOppositeX0 = nuCorrections_int(sma,e,W,w,inc,s_circle,nu_twoIntOppositeX[:,0],yrealAllRealInds,twoIntOppositeXInds)
@@ -2246,8 +2247,9 @@ def calcMasterIntersections(sma,e,W,w,inc,s_circle,starMass,plotBool):
     t_fourInt1 = timeFromTrueAnomaly(nu_fourInt[:,1],periods[yrealAllRealInds[fourIntInds]],e[yrealAllRealInds[fourIntInds]])
     t_fourInt2 = timeFromTrueAnomaly(nu_fourInt[:,2],periods[yrealAllRealInds[fourIntInds]],e[yrealAllRealInds[fourIntInds]])
     t_fourInt3 = timeFromTrueAnomaly(nu_fourInt[:,3],periods[yrealAllRealInds[fourIntInds]],e[yrealAllRealInds[fourIntInds]])
-    t_twoIntSameY0 = timeFromTrueAnomaly(nu_twoIntSameY[:,0],periods[yrealAllRealInds[twoIntSameYInds]],e[yrealAllRealInds[twoIntSameYInds]])
-    t_twoIntSameY1 = timeFromTrueAnomaly(nu_twoIntSameY[:,1],periods[yrealAllRealInds[twoIntSameYInds]],e[yrealAllRealInds[twoIntSameYInds]])
+    if len(twoIntSameYInds) != 0:
+        t_twoIntSameY0 = timeFromTrueAnomaly(nu_twoIntSameY[:,0],periods[yrealAllRealInds[twoIntSameYInds]],e[yrealAllRealInds[twoIntSameYInds]])
+        t_twoIntSameY1 = timeFromTrueAnomaly(nu_twoIntSameY[:,1],periods[yrealAllRealInds[twoIntSameYInds]],e[yrealAllRealInds[twoIntSameYInds]])
     t_twoIntOppositeX0 = timeFromTrueAnomaly(nu_twoIntOppositeX[:,0],periods[yrealAllRealInds[twoIntOppositeXInds]],e[yrealAllRealInds[twoIntOppositeXInds]])
     t_twoIntOppositeX1 = timeFromTrueAnomaly(nu_twoIntOppositeX[:,1],periods[yrealAllRealInds[twoIntOppositeXInds]],e[yrealAllRealInds[twoIntOppositeXInds]])
     t_IntersectionOnly20 = timeFromTrueAnomaly(nu_IntersectionsOnly2[:,0],periods[only2RealInds],e[only2RealInds])
