@@ -17,6 +17,7 @@ if plotBool == True:
 folder = os.path.normpath(os.path.expandvars('$HOME/Documents/exosims/Scripts'))
 filename = 'HabEx_CKL2_PPKL2.json'
 filename = 'WFIRSTcycle6core.json'
+filename = 'HabEx_CSAG13_PPSAG13_compSubtype.json'
 scriptfile = os.path.join(folder,filename)
 sim = EXOSIMS.MissionSim.MissionSim(scriptfile=scriptfile,nopar=True)
 PPop = sim.PlanetPopulation
@@ -254,5 +255,7 @@ if plotBool == True:
     num=9701
     plotSepsHistogram(minSep,maxSep,lminSep,lmaxSep,sma,yrealAllRealInds,num)
 
+#### Dynamic Completeness Calculations ################################
 
+#######################################################################
 
