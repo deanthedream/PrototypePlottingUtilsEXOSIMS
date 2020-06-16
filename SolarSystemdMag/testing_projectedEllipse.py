@@ -21,6 +21,8 @@ filename = 'HabEx_CSAG13_PPSAG13_compSubtype.json'
 scriptfile = os.path.join(folder,filename)
 sim = EXOSIMS.MissionSim.MissionSim(scriptfile=scriptfile,nopar=True)
 PPop = sim.PlanetPopulation
+comp = sim.Completeness
+TL = sim.TargetList
 n = 10**5 #Dean's nice computer can go up to 10**8 what can atuin go up to?
 inc, W, w = PPop.gen_angles(n,None)
 W = W.to('rad').value
@@ -35,6 +37,9 @@ inc = inc.to('rad').value
 inc[np.where(inc>np.pi/2)[0]] = np.pi - inc[np.where(inc>np.pi/2)[0]]
 sma, e, p, Rp = PPop.gen_plan_params(n)
 sma = sma.to('AU').value
+
+#### Classify Planets
+bini, binj, earthLike = comp.classifyPlanets(Rp, TL, np.arange(len(sma)), sma, e)
 ####
 
 #Separations
@@ -254,6 +259,24 @@ if plotBool == True:
     #### Min Seps Histogram
     num=9701
     plotSepsHistogram(minSep,maxSep,lminSep,lmaxSep,sma,yrealAllRealInds,num)
+
+
+
+#### Time from dMagLim ################################################
+
+#1 define dmaglim
+#2 calculate dmagMax and dmagMin for all planets
+#3 where dmagMin < dmaglim < dmagMax, calculate Phase angle (beta) producing this
+#use beta(x,y,z) or beta(s,r_z) to solve for nu producing the intersection
+
+#Equations from "Solar System Phase Angles" Section in paper
+tmp1 = np.arcsin(np.cos(beta)/np.sin(inc))
+tmp2 = np.pi*np.ones(len(tmp1)) - tmp1
+nu1 = tmp1 - w
+nu2 = tmp2 - w
+
+#######################################################################
+
 
 #### Dynamic Completeness Calculations ################################
 
