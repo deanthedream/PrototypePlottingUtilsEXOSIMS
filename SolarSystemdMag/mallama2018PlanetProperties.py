@@ -9,6 +9,7 @@ import astropy.units as u
 import datetime
 import re
 from scipy.misc import derivative
+from scipy.optimize import minimize
 import sys, os.path
 from matplotlib import cm
 
@@ -75,8 +76,8 @@ planProp['mercury']['num_Vmag_models'] = 1
 planProp['mercury']['earth_Vmag_model'] = 0
 planProp['mercury']['Vmag'] = [V_magMercury]
 planProp['mercury']['phaseFunc'] = [phase_Mercury]
-planProp['mercury']['alphas_min'] = [0.]
-planProp['mercury']['alphas_max'] = [180.]
+planProp['mercury']['betas_min'] = [0.]
+planProp['mercury']['betas_max'] = [180.]
 planProp['mercury']['phaseFuncMelded'] = phase_Mercury
 
 #Venus
@@ -126,8 +127,8 @@ planProp['venus']['num_Vmag_models'] = 2
 planProp['venus']['earth_Vmag_model'] = 0
 planProp['venus']['Vmag'] = [V_magVenus_1,V_magVenus_2]
 planProp['venus']['phaseFunc'] = [phase_Venus_1,phase_Venus_2]
-planProp['venus']['alphas_min'] = [0.,163.7]
-planProp['venus']['alphas_max'] = [163.7,179.]
+planProp['venus']['betas_min'] = [0.,163.7]
+planProp['venus']['betas_max'] = [163.7,179.]
 planProp['venus']['phaseFuncMelded'] = phase_Venus_melded
 
 #Earth
@@ -147,8 +148,8 @@ planProp['earth']['num_Vmag_models'] = 1
 planProp['earth']['earth_Vmag_model'] = 0
 planProp['earth']['Vmag'] = [V_magEarth]
 planProp['earth']['phaseFunc'] = [phase_Earth]
-planProp['earth']['alphas_min'] = [0.]
-planProp['earth']['alphas_max'] = [180.]
+planProp['earth']['betas_min'] = [0.]
+planProp['earth']['betas_max'] = [180.]
 planProp['earth']['phaseFuncMelded'] = phase_Earth
 
 #Mars
@@ -187,8 +188,8 @@ planProp['mars']['num_Vmag_models'] = 2
 planProp['mars']['earth_Vmag_model'] = 0
 planProp['mars']['Vmag'] = [V_magMars_1,V_magMars_2]
 planProp['mars']['phaseFunc'] = [phase_Mars_1,phase_Mars_2]
-planProp['mars']['alphas_min'] = [0.,50.]
-planProp['mars']['alphas_max'] = [50.,180.]
+planProp['mars']['betas_min'] = [0.,50.]
+planProp['mars']['betas_max'] = [50.,180.]
 planProp['mars']['phaseFuncMelded'] = phase_Mars_melded
 
 #Jupiter
@@ -235,8 +236,8 @@ planProp['jupiter']['num_Vmag_models'] = 2
 planProp['jupiter']['earth_Vmag_model'] = 0
 planProp['jupiter']['Vmag'] = [V_magJupiter_1,V_magJupiter_2]
 planProp['jupiter']['phaseFunc'] = [phase_Jupiter_1,phase_Jupiter_2]
-planProp['jupiter']['alphas_min'] = [0.,12.]
-planProp['jupiter']['alphas_max'] = [12.,130.]
+planProp['jupiter']['betas_min'] = [0.,12.]
+planProp['jupiter']['betas_max'] = [12.,130.]
 planProp['jupiter']['phaseFuncMelded'] = phase_Jupiter_melded
 
 #Saturn
@@ -298,8 +299,8 @@ planProp['saturn']['num_Vmag_models'] = 3
 planProp['saturn']['earth_Vmag_model'] = 1
 planProp['saturn']['Vmag'] = [V_magSaturn_1,V_magSaturn_2,V_magSaturn_3]
 planProp['saturn']['phaseFunc'] = [phase_Saturn_1,phase_Saturn_2,phase_Saturn_3]
-planProp['saturn']['alphas_min'] = [0.,0.,6.5]
-planProp['saturn']['alphas_max'] = [6.5,6.5,150.]
+planProp['saturn']['betas_min'] = [0.,0.,6.5]
+planProp['saturn']['betas_max'] = [6.5,6.5,150.]
 planProp['saturn']['phaseFuncMelded'] = phase_Saturn_melded
 
 #Uranus
@@ -336,8 +337,8 @@ planProp['uranus']['num_Vmag_models'] = 1
 planProp['uranus']['earth_Vmag_model'] = 0
 planProp['uranus']['Vmag'] = [V_magUranus]
 planProp['uranus']['phaseFunc'] = [phase_Uranus]
-planProp['uranus']['alphas_min'] = [0.]
-planProp['uranus']['alphas_max'] = [154.]
+planProp['uranus']['betas_min'] = [0.]
+planProp['uranus']['betas_max'] = [154.]
 planProp['uranus']['phaseFuncMelded'] = phase_Uranus_melded
 
 
@@ -360,8 +361,8 @@ planProp['neptune']['num_Vmag_models'] = 1
 planProp['neptune']['earth_Vmag_model'] = 0
 planProp['neptune']['Vmag'] = [V_magNeptune]
 planProp['neptune']['phaseFunc'] = [phase_Neptune]
-planProp['neptune']['alphas_min'] = [0.]
-planProp['neptune']['alphas_max'] = [133.14]
+planProp['neptune']['betas_min'] = [0.]
+planProp['neptune']['betas_max'] = [133.14]
 planProp['neptune']['phaseFuncMelded'] = phase_Neptune_melded
 ##########################################################################################
 
@@ -489,7 +490,7 @@ pColors = [colors.to_rgba('grey'),colors.to_rgba('gold'),colors.to_rgba('blue'),
 for i in np.arange(len(planets)):
     #### From Earth
     planProp[planets[i]]['alpha_max_fromearth'] = alpha_crit_fromEarth(planProp[planets[i]]['a']*u.m.to('AU')) #in rad
-    earthViewAlpha = np.min([planProp[planets[i]]['alphas_max'][planProp[planets[i]]['earth_Vmag_model']], planProp[planets[i]]['alpha_max_fromearth']*180./np.pi ])
+    earthViewAlpha = np.min([planProp[planets[i]]['betas_max'][planProp[planets[i]]['earth_Vmag_model']], planProp[planets[i]]['alpha_max_fromearth']*180./np.pi ])
     #print(earthViewAlpha)
     planProp[planets[i]]['alphas_max_fromearth'] = np.linspace(start=0.,stop=earthViewAlpha,num=100,endpoint=True) #in deg
     d1, d2 = d_planet_earth_alpha(planProp[planets[i]]['alphas_max_fromearth'],planProp[planets[i]]['a']*u.m.to('AU'))
@@ -504,13 +505,53 @@ for i in np.arange(len(planets)):
     planProp[planets[i]]['phaseFuncValues'] = planProp[planets[i]]['phaseFunc'][planProp[planets[i]]['earth_Vmag_model']](planProp[planets[i]]['alphas_max_fromearth'])
 
     #### All alphas
-    planProp[planets[i]]['alphas'] = [np.linspace(start=planProp[planets[i]]['alphas_min'][j], stop=planProp[planets[i]]['alphas_max'][j],num=100) for j in np.arange(len(planProp[planets[i]]['alphas_max']))]
+    planProp[planets[i]]['betas'] = [np.linspace(start=planProp[planets[i]]['betas_min'][j], stop=planProp[planets[i]]['betas_max'][j],num=100) for j in np.arange(len(planProp[planets[i]]['betas_max']))]
 
     planProp[planets[i]]['planet_name'] = planets[i]
     planProp[planets[i]]['planet_labelcolors'] = pColors[i]
     planProp[planets[i]]['pFluxs_FromEarth'] = [planetFlux_fromFluxRatio(fluxRatio_fromVmag(planProp[planets[i]]['Vmags_fromearth'][0])),\
                                                 planetFlux_fromFluxRatio(fluxRatio_fromVmag(planProp[planets[i]]['Vmags_fromearth'][1]))]
 ####################################################################################
+
+#### Calculate Optimal Hyperbolic Phase Function ###########################
+def hyperbolicTangentPhaseFunc(beta,A=0.78415,B=1.86891455,C=0.5295894,D=1.07587213):
+    """
+    Optimal Parameters for Earth Phase Function basedon mallama2018 comparison using mallama2018PlanetProperties:
+    A=1.85908529,  B=0.89598952,  C=1.04850586, D=-0.08084817
+    Optimal Parameters for All Solar System Phase Function basedon mallama2018 comparison using mallama2018PlanetProperties:
+    A=0.78415 , B=1.86890455, C=0.5295894 , D=1.07587213
+    """
+    beta = beta.to('rad').value
+    Phi = -np.tanh((beta-D)/A)/B+C
+    return Phi
+
+def errorConstraint0(xs):
+    yHyper = hyperbolicTangentPhaseFunc(0.*u.deg,xs[0],xs[1],xs[2],xs[3])
+    error = yHyper - 1
+    return error
+def errorConstraint180(xs):
+    yHyper = hyperbolicTangentPhaseFunc(180.*u.deg,xs[0],xs[1],xs[2],xs[3])
+    error = yHyper
+    return error
+
+def optimalHyperError(xs):
+    errorHyper = np.zeros((len(planets),len(planProp[planets[0]]['betas'][0])))
+    for i in np.arange(len(planets)):
+        for jj in np.arange(len(planProp[planets[i]]['betas'])):
+            ysHyper = hyperbolicTangentPhaseFunc(planProp[planets[i]]['betas'][jj]*u.deg,A=xs[0],B=xs[1],C=xs[2],D=xs[3])
+            errorHyper[i,jj] = np.sum((ysHyper - planProp[planets[i]]['phaseFunc'][jj](planProp[planets[i]]['betas'][jj]))**2)
+    return np.sum(errorHyper)
+outOptAll = minimize(optimalHyperError,np.asarray([0.5,2.0,0.5,np.pi/2.]), constraints=[{'type':'eq','fun':errorConstraint0},{'type':'eq','fun':errorConstraint180}])
+
+def optimalHyperErrorEarth(xs):
+    errorHyper = np.zeros(len(planProp[planets[0]]['betas'][0]))
+    i=2
+    for jj in np.arange(len(planProp[planets[i]]['betas'])):
+        ysHyper = hyperbolicTangentPhaseFunc(planProp[planets[i]]['betas'][jj]*u.deg,A=xs[0],B=xs[1],C=xs[2],D=xs[3])
+        errorHyper[jj] = np.sum((ysHyper - planProp[planets[i]]['phaseFunc'][jj](planProp[planets[i]]['betas'][jj]))**2)
+    return np.sum(errorHyper)
+outOptEarth = minimize(optimalHyperErrorEarth,np.asarray([0.5,2.0,0.5,np.pi/2.]),  constraints=[{'type':'eq','fun':errorConstraint0},{'type':'eq','fun':errorConstraint180}])
+############################################################################
 
 #### Verifying Plots ###############################################################
 #A plot over the ranges a planet is visible from Earth
@@ -581,8 +622,8 @@ plt.rc('lines',linewidth=2)
 plt.rcParams['axes.linewidth']=2
 plt.rc('font',weight='bold')
 for i in np.arange(len(planets)):
-    for jj in np.arange(len(planProp[planets[i]]['alphas'])):
-        plt.plot(planProp[planets[i]]['alphas'][jj],planProp[planets[i]]['phaseFunc'][jj](planProp[planets[i]]['alphas'][jj]),color=planProp[planets[i]]['planet_labelcolors'],label=planProp[planets[i]]['planet_name'])
+    for jj in np.arange(len(planProp[planets[i]]['betas'])):
+        plt.plot(planProp[planets[i]]['betas'][jj],planProp[planets[i]]['phaseFunc'][jj](planProp[planets[i]]['betas'][jj]),color=planProp[planets[i]]['planet_labelcolors'],label=planProp[planets[i]]['planet_name'])
 plt.xlim([0.,180.])
 plt.ylim([0.,1.0])
 plt.ylabel('Phase Function Mallama alphas ALL', weight='bold')
@@ -599,10 +640,14 @@ plt.rc('font',weight='bold')
 for i in np.arange(len(planets)):
     plt.plot(np.linspace(start=0.,stop=180.,num=180),planProp[planets[i]]['phaseFuncMelded'](np.linspace(start=0.,stop=180.,num=180)),color=planProp[planets[i]]['planet_labelcolors'],label=planProp[planets[i]]['planet_name'])
 plt.plot(np.linspace(start=0.,stop=180.,num=180),phi_lambert(np.linspace(start=0.,stop=180.,num=180)*np.pi/180.),color='black',label='Lambert',linestyle='--')
+# Add Hyperbolic Earth Tangent Phase Function
+plt.plot(np.linspace(start=0.,stop=180.,num=180),hyperbolicTangentPhaseFunc(np.linspace(start=0.,stop=180.,num=180)*u.deg,A=0.78415,B=1.86891455,C=0.5295894,D=1.07587213), color='purple', linestyle=':', label=r'$\Phi_{H,\oplus}$')
+# Add Hyperbolic Earth Tangent Phase Function
+plt.plot(np.linspace(start=0.,stop=180.,num=180),hyperbolicTangentPhaseFunc(np.linspace(start=0.,stop=180.,num=180)*u.deg,A=1.85908529,B=0.89598952,C=1.04850586,D=-0.08084817), color='black', linestyle=':', label=r'$\Phi_{H,all}$')
 plt.xlim([0.,180.])
 plt.ylim([0.,1.0])
-plt.ylabel(r'Melded Solar System Phase Function, $\Phi$', weight='bold')
-plt.xlabel(r'Phase Angle, $\alpha$, in ($^\circ$)', weight='bold')
+plt.ylabel(r'Solar System Planet Phase, $\Phi$', weight='bold')
+plt.xlabel(r'Phase Angle, $\beta$, in ($^\circ$)', weight='bold')
 plt.legend()
 plt.show(block=False)
 #Save Plots
