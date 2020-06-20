@@ -121,7 +121,7 @@ def phase_Venus_2(alpha):
 def phase_Venus_melded(alpha):
     phase = transitionEnd(alpha,163.7,5.)*phase_Venus_1(alpha) + \
         transitionStart(alpha,163.7,5.)*transitionEnd(alpha,179.,0.5)*phase_Venus_2(alpha) + \
-        transitionStart(alpha,179.,0.5)*phi_lambert(alpha*np.pi/180.)+2.666e-04
+        transitionStart(alpha,179.,0.5)*phi_lambert(alpha*np.pi/180.)+2.766e-04
         #2.666e-04 ensures the phase function is entirely positive (near 180 deg phase, there is a small region 
         #where phase goes negative) This small addition fixes this
     return phase
