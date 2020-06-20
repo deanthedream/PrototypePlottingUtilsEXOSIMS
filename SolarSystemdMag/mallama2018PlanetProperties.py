@@ -1033,6 +1033,7 @@ def plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_Ha
         betas[-1] = betas[-1]-1e-7
         outBetas = minimize(fun=errorPtDistances,x0=betas,args=(i), method='SLSQP', options={'eps':1e-2,'ftol':1e-8} ,bounds=[(0.+inclination,180.-inclination) for i in np.arange(len(betas))])
         betas = outBetas['x']
+        betas = np.asarray(list(dict.fromkeys(betas))) #removes any duplicates from list
 
         #### Beta corrections for Jupiter and Neptune
         #At near 180 deg phase, these planets have really low point densities. This supplants a few more points to correct for this
