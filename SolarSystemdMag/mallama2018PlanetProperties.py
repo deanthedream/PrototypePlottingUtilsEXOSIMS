@@ -12,6 +12,7 @@ from scipy.misc import derivative
 from scipy.optimize import minimize
 import sys, os.path
 from matplotlib import cm
+from EXOSIMS.util.phaseFunctions import *
 
 folder = './'
 PPoutpath = './'
@@ -515,18 +516,8 @@ for i in np.arange(len(planets)):
                                                 planetFlux_fromFluxRatio(fluxRatio_fromVmag(planProp[planets[i]]['Vmags_fromearth'][1]))]
 ####################################################################################
 
-#### Calculate Optimal Hyperbolic Phase Function ###########################
-def hyperbolicTangentPhaseFunc(beta,A=0.78415,B=1.86891455,C=0.5295894,D=1.07587213):
-    """
-    Optimal Parameters for Earth Phase Function basedon mallama2018 comparison using mallama2018PlanetProperties:
-    A=1.85908529,  B=0.89598952,  C=1.04850586, D=-0.08084817
-    Optimal Parameters for All Solar System Phase Function basedon mallama2018 comparison using mallama2018PlanetProperties:
-    A=0.78415 , B=1.86890455, C=0.5295894 , D=1.07587213
-    """
-    beta = beta.to('rad').value
-    Phi = -np.tanh((beta-D)/A)/B+C
-    return Phi
 
+#### Calculate Optimal Hyperbolic Tangent Phase Function Parameters For Each Planet
 def errorConstraint0(xs):
     yHyper = hyperbolicTangentPhaseFunc(0.*u.deg,xs[0],xs[1],xs[2],xs[3])
     error = yHyper - 1
@@ -536,24 +527,76 @@ def errorConstraint180(xs):
     error = yHyper
     return error
 
-def optimalHyperError(xs):
-    errorHyper = np.zeros((len(planets),len(planProp[planets[0]]['betas'][0])))
+def optimalHyperErrorAll(xs):
+    betas_error = np.linspace(start=0,stop=180.,num=400,endpoint=True)
+    errorHyper = np.zeros(len(planets))
     for i in np.arange(len(planets)):
-        for jj in np.arange(len(planProp[planets[i]]['betas'])):
-            ysHyper = hyperbolicTangentPhaseFunc(planProp[planets[i]]['betas'][jj]*u.deg,A=xs[0],B=xs[1],C=xs[2],D=xs[3])
-            errorHyper[i,jj] = np.sum((ysHyper - planProp[planets[i]]['phaseFunc'][jj](planProp[planets[i]]['betas'][jj]))**2)
+        ysHyper = hyperbolicTangentPhaseFunc(betas_error*u.deg,A=xs[0],B=xs[1],C=xs[2],D=xs[3])
+        errorHyper[i] = np.sum((ysHyper - planProp[planets[i]]['phaseFuncMelded'](betas_error))**2)
+    # errorHyper = np.zeros((len(planets),len(planProp[planets[0]]['betas'][0])))
+    # for i in np.arange(len(planets)):
+    #     for jj in np.arange(len(planProp[planets[i]]['betas'])):
+    #         ysHyper = hyperbolicTangentPhaseFunc(planProp[planets[i]]['betas'][jj]*u.deg,A=xs[0],B=xs[1],C=xs[2],D=xs[3])
+    #         errorHyper[i,jj] = np.sum((ysHyper - planProp[planets[i]]['phaseFunc'][jj](planProp[planets[i]]['betas'][jj]))**2)
     return np.sum(errorHyper)
-outOptAll = minimize(optimalHyperError,np.asarray([0.5,2.0,0.5,np.pi/2.]), constraints=[{'type':'eq','fun':errorConstraint0},{'type':'eq','fun':errorConstraint180}])
+outOptAll = minimize(optimalHyperErrorAll,np.asarray([0.5,2.0,0.5,np.pi/2.]), constraints=[{'type':'eq','fun':errorConstraint0},{'type':'eq','fun':errorConstraint180}])
 
-def optimalHyperErrorEarth(xs):
-    errorHyper = np.zeros(len(planProp[planets[0]]['betas'][0]))
-    i=2
-    for jj in np.arange(len(planProp[planets[i]]['betas'])):
-        ysHyper = hyperbolicTangentPhaseFunc(planProp[planets[i]]['betas'][jj]*u.deg,A=xs[0],B=xs[1],C=xs[2],D=xs[3])
-        errorHyper[jj] = np.sum((ysHyper - planProp[planets[i]]['phaseFunc'][jj](planProp[planets[i]]['betas'][jj]))**2)
+# Calculate Optimal A,B,C,D fits for each individual planet
+def optimalHyperError(xs,i):
+    betas_error = np.linspace(start=0,stop=180.,num=400,endpoint=True)
+    ysHyper = hyperbolicTangentPhaseFunc(betas_error*u.deg,A=xs[0],B=xs[1],C=xs[2],D=xs[3])
+    errorHyper = np.sum((ysHyper - planProp[planets[i]]['phaseFuncMelded'](betas_error))**2)
+    # errorHyper = np.zeros((len(planets),len(planProp[planets[0]]['betas'][0])))
+    # for jj in np.arange(len(planProp[planets[i]]['betas'])):
+    #     ysHyper = hyperbolicTangentPhaseFunc(planProp[planets[i]]['betas'][jj]*u.deg,A=xs[0],B=xs[1],C=xs[2],D=xs[3])
+    #     errorHyper[i,jj] = np.sum((ysHyper - planProp[planets[i]]['phaseFunc'][jj](planProp[planets[i]]['betas'][jj]))**2)
     return np.sum(errorHyper)
-outOptEarth = minimize(optimalHyperErrorEarth,np.asarray([0.5,2.0,0.5,np.pi/2.]),  constraints=[{'type':'eq','fun':errorConstraint0},{'type':'eq','fun':errorConstraint180}])
-############################################################################
+for i in np.arange(len(planets)):
+    out = minimize(optimalHyperError,np.asarray([0.5,2.0,0.5,np.pi/2.]),  args=(i), constraints=[{'type':'eq','fun':errorConstraint0},{'type':'eq','fun':errorConstraint180}])
+    planProp[planets[i]]['hyperError'] = out['x']
+####################################################################################
+
+#### Plot Phase Function Error vs Phase Angle ######################################
+num=3389
+plt.close(num)
+fig, (ax0,ax1,ax2) = plt.subplots(nrows=3,ncols=1,sharex=True,figsize=(6,7),num=num)
+#fig, (ax1, ax2) = plt.subplots(2)
+plt.rc('axes',linewidth=2)
+plt.rc('lines',linewidth=2)
+plt.rcParams['axes.linewidth']=2
+plt.rc('font',weight='bold')
+betas_errorPlot = np.linspace(start=0,stop=180.,num=400,endpoint=True)
+for i in np.arange(len(planets)):
+    A,B,C,D = planProp[planets[i]]['hyperError']
+    hyperPhi_errorPlot = hyperbolicTangentPhaseFunc(betas_errorPlot*u.deg,A,B,C,D,planetName=None)
+    planetPhi_errorPlot = planProp[planets[i]]['phaseFuncMelded'](betas_errorPlot)
+    errorHyper = np.abs(planetPhi_errorPlot - hyperPhi_errorPlot)
+    ax0.plot(betas_errorPlot,errorHyper,color=planProp[planets[i]]['planet_labelcolors'],label=planProp[planets[i]]['planet_name'].capitalize())
+    quasiPhi_errorPlot = quasiLambertPhaseFunction(betas_errorPlot*u.deg)
+    errorQuasi = np.abs(planetPhi_errorPlot - quasiPhi_errorPlot)
+    ax1.plot(betas_errorPlot,errorQuasi,color=planProp[planets[i]]['planet_labelcolors'])
+    lambertPhi_errorPlot = phi_lambert(betas_errorPlot*u.deg.to('rad'))
+    errorLambert = np.abs(planetPhi_errorPlot - lambertPhi_errorPlot)
+    ax2.plot(betas_errorPlot,errorLambert,color=planProp[planets[i]]['planet_labelcolors'])
+ax0.set_ylabel('Absolute Hyperbolic\nPhase Function Error',weight='bold')
+ax1.set_ylabel('Absolute Quasi Lambert\nPhase Function Error',weight='bold')
+ax2.set_ylabel('Absolute Lambert\nPhase Function Error',weight='bold')
+ax2.set_xlabel('Phase Angle in deg', weight='bold')
+# ax0.set_yscale('log')
+# ax1.set_yscale('log')
+# ax2.set_yscale('log')
+ax0.set_xlim([0,180])
+ax1.set_xlim([0,180])
+ax2.set_xlim([0,180])
+ax0.set_ylim([10**-3,1])
+ax1.set_ylim([10**-3,1])
+ax2.set_ylim([10**-3,1])
+ax0.legend(loc=9,ncol=4,labelspacing=0.2,columnspacing=0.2)
+plt.tight_layout()
+plt.show(block=False)
+####################################################################################
+
+print(saltyburrito)
 
 #### Verifying Plots ###############################################################
 #A plot over the ranges a planet is visible from Earth
@@ -782,10 +825,16 @@ def plotDmagvss(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx,inclin
     plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
     print('Done plotDmagvss')
 
+#The following throws an error at 7
+# IWA_HabEx = 0.045*u.arcsec #taken from a Habex Script in units of mas
+# plotDmagvss(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,inclination=0., folder='./', PPoutpath='./')
+
+
+
 
 #### Calculate dMag vs s plots
-uncertainty_dmag = 0.01 #HabEx requirement is 1%
-uncertainty_s = 5.*u.mas.to('rad')*10.*u.pc.to('AU')
+uncertainty_dmag = 0.01 #HabEx requirement is 1% Doesn't say anything about what sigma this is
+uncertainty_s = 5.*u.mas.to('rad')*10.*u.pc.to('AU') #doesn't say anything about what sigma this is
 def plotDmagvssLineIncs(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx,inclinations, folder, PPoutpath):
     """
     Args:
@@ -1122,9 +1171,4 @@ plt.close(710)
 
 
 
-
-
-#The following throws an error at 7
-# IWA_HabEx = 0.045*u.arcsec #taken from a Habex Script in units of mas
-# plotDmagvss(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,inclination=0., folder='./', PPoutpath='./')
 
