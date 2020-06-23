@@ -1196,7 +1196,7 @@ def plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_Ha
 
         #plt.text(7,19.5,'Credit: Dean Keithly',fontsize='small',fontweight='normal')
         plt.text(1.05*smin_telescope,41, str(IWA_HabEx.value*1000) + ' mas\nat 10 pc',fontsize='medium',fontweight='bold',rotation=90)
-        plt.text(1.05*smin_telescope,41, str(IWA2.value*1000) + ' mas\nat 10 pc',fontsize='medium',fontweight='bold',rotation=90)
+        plt.text(1.05*smin_telescope2,41, str(IWA2.value*1000) + ' mas\nat 10 pc',fontsize='medium',fontweight='bold',rotation=90)
         plt.xlim([1e-1,32.])
         plt.ylim([19.,46.])
         plt.ylabel('Planet-Star ' + r'$\Delta \mathrm{mag}$', weight='bold')
