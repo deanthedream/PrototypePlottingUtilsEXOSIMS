@@ -559,12 +559,16 @@ for i in np.arange(len(planets)):
 #### Plot Phase Function Error vs Phase Angle ######################################
 num=3389
 plt.close(num)
-fig, (ax0,ax1,ax2) = plt.subplots(nrows=3,ncols=1,sharex=True,figsize=(6,7),num=num)
-#fig, (ax1, ax2) = plt.subplots(2)
 plt.rc('axes',linewidth=2)
 plt.rc('lines',linewidth=2)
 plt.rcParams['axes.linewidth']=2
 plt.rc('font',weight='bold')
+fig, (ax0,ax1,ax2) = plt.subplots(nrows=3,ncols=1,sharex=True,figsize=(6,7),num=num)
+#fig, (ax1, ax2) = plt.subplots(2)
+# plt.rc('axes',linewidth=2)
+# plt.rc('lines',linewidth=2)
+# plt.rcParams['axes.linewidth']=2
+# plt.rc('font',weight='bold')
 betas_errorPlot = np.linspace(start=0,stop=180.,num=400,endpoint=True)
 for i in np.arange(len(planets)):
     A,B,C,D = planProp[planets[i]]['hyperError']
@@ -594,9 +598,50 @@ ax2.set_ylim([10**-3,1])
 ax0.legend(loc=9,ncol=4,labelspacing=0.2,columnspacing=0.2)
 plt.tight_layout()
 plt.show(block=False)
+
+## Same but with Percent Error
+num=4489
+plt.close(num)
+fig, (ax0,ax1,ax2) = plt.subplots(nrows=3,ncols=1,sharex=True,figsize=(6,7),num=num)
+#fig, (ax1, ax2) = plt.subplots(2)
+plt.rc('axes',linewidth=2)
+plt.rc('lines',linewidth=2)
+plt.rcParams['axes.linewidth']=2
+plt.rc('font',weight='bold')
+betas_errorPlot = np.linspace(start=0,stop=180.,num=400,endpoint=True)
+for i in np.arange(len(planets)):
+    A,B,C,D = planProp[planets[i]]['hyperError']
+    hyperPhi_errorPlot = hyperbolicTangentPhaseFunc(betas_errorPlot*u.deg,A,B,C,D,planetName=None)
+    planetPhi_errorPlot = planProp[planets[i]]['phaseFuncMelded'](betas_errorPlot)
+    errorHyper = np.abs(planetPhi_errorPlot - hyperPhi_errorPlot)
+    ax0.plot(betas_errorPlot,errorHyper/planetPhi_errorPlot*100,color=planProp[planets[i]]['planet_labelcolors'],label=planProp[planets[i]]['planet_name'].capitalize())
+    quasiPhi_errorPlot = quasiLambertPhaseFunction(betas_errorPlot*u.deg)
+    errorQuasi = np.abs(planetPhi_errorPlot - quasiPhi_errorPlot)
+    ax1.plot(betas_errorPlot,errorQuasi/planetPhi_errorPlot*100,color=planProp[planets[i]]['planet_labelcolors'])
+    lambertPhi_errorPlot = phi_lambert(betas_errorPlot*u.deg.to('rad'))
+    errorLambert = np.abs(planetPhi_errorPlot - lambertPhi_errorPlot)
+    ax2.plot(betas_errorPlot,errorLambert/planetPhi_errorPlot*100,color=planProp[planets[i]]['planet_labelcolors'])
+ax0.set_ylabel('Hyperbolic Phase\nFunction % Error',weight='bold')
+ax1.set_ylabel('Quasi Lambert Phase\nFunction % Error',weight='bold')
+ax2.set_ylabel('Lambert Phase\nFunction % Error',weight='bold')
+ax2.set_xlabel('Phase Angle in deg', weight='bold')
+ax0.set_yscale('log')
+ax1.set_yscale('log')
+ax2.set_yscale('log')
+ax0.set_ylim([10**-1,1000])
+ax1.set_ylim([10**-1,1000])
+ax2.set_ylim([10**-1,1000])
+ax0.set_xlim([0,180])
+ax1.set_xlim([0,180])
+ax2.set_xlim([0,180])
+# ax0.set_ylim([10**-1,100])
+# ax1.set_ylim([10**-1,100])
+# ax2.set_ylim([10**-1,100])
+ax0.legend(loc=9,ncol=4,labelspacing=0.2,columnspacing=0.2)
+plt.tight_layout()
+plt.show(block=False)
 ####################################################################################
 
-print(saltyburrito)
 
 #### Verifying Plots ###############################################################
 #A plot over the ranges a planet is visible from Earth
@@ -711,7 +756,7 @@ print('Done plotting Melded Phase Functions')
 #### Calculate dMag vs s plots
 uncertainty_dmag = 0.01 #HabEx requirement is 1%
 uncertainty_s = 5.*u.mas.to('rad')*10.*u.pc.to('AU')
-def plotDmagvss(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx,inclination, folder, PPoutpath):
+def plotDmagvss(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx,IWA2,inclination, folder, PPoutpath):
     """
     Args:
         inclination (float) - inclination in degrees
@@ -780,8 +825,8 @@ def plotDmagvss(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx,inclin
                 planProp[planets[i]]['phaseFuncMelded'](180./np.pi*alpha_from_dmagapseparationdmagatsmax(xs3,planProp[planets[i]]['a']*u.m.to('AU'),[1.1*dmag_at_smax]*len(tmps1),dmag_at_smax)))
         plt.fill_between(xs3,ys3,tmpdmag3,color=tmpColor,edgecolor=(0.,0.,0.,0.),linestyle='None',lw=0.)#,alpha=0.3,linewidth=0.0)
 
-        if planets[i] == 'venus':
-            print(saltyburrito)
+        # if planets[i] == 'venus':
+        #     print(saltyburrito)
 
         #Above dmag at smax upper
         indsGTdmag_at_smax2 = np.arange(smaxInd+1) #all inds where s is less than smax from 0 to dmag at smax
@@ -803,22 +848,26 @@ def plotDmagvss(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx,inclin
     #ADD SMIN FOR TELESCOPE
     smin_telescope = IWA_HabEx.to('rad').value*10.*u.pc.to('AU') #IWA for HabEx 45 mas observing target at 10 pc
     plt.plot([smin_telescope,smin_telescope],[10.,70.],color='black',linestyle='-')
+    smin_telescope2 = IWA2.to('rad').value*10.*u.pc.to('AU') #IWA for HabEx 45 mas observing target at 10 pc
+    plt.plot([smin_telescope2,smin_telescope2],[10.,70.],color='black',linestyle='-')
 
-    plt.text(7,19.5,'Credit: Dean Keithly',fontsize='small',fontweight='normal')
-    plt.text(1.05*smin_telescope,42,'IWA at\n10 pc',fontsize='medium',fontweight='bold',rotation=90)
+    #plt.text(7,19.5,'Credit: Dean Keithly',fontsize='small',fontweight='normal')
+    plt.text(1.05*smin_telescope,41, str(int(IWA_HabEx.value*1000)) + ' mas\nat 10 pc',fontsize='medium',fontweight='bold',rotation=90)
+    plt.text(1.05*smin_telescope2,41, str(int(IWA2.value*1000)) + ' mas\nat 10 pc',fontsize='medium',fontweight='bold',rotation=90)
+
     plt.xlim([1e-1,32.])
     plt.ylim([19.,46.])
     plt.xscale('log')
     plt.ylabel('Planet-Star ' + r'$\Delta \mathrm{mag}$', weight='bold')
     plt.xlabel('Projected Planet-Star Separation, ' + r'$s$,' +' in AU', weight='bold')
     plt.legend()
-    plt.title('Inclination: ' + str(inclination) + r'$^\circ$' ,weight='bold')
+    plt.title('Inclination: ' + str(int(90-inclination)) + r'$^\circ$' ,weight='bold')
     plt.show(block=False)
     #Save Plots
     # Save to a File
     date = str(datetime.datetime.now())
     date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
-    fname = 'dMagvsS_solarSystem_inc' + str(inclination) + folder.split('/')[-1] + '_' + date
+    fname = 'dMagvsS_solarSystem_inc' + str(int(90-inclination)) + folder.split('/')[-1] + '_' + date
     plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
     plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
     plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
@@ -826,8 +875,9 @@ def plotDmagvss(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx,inclin
     print('Done plotDmagvss')
 
 #The following throws an error at 7
-# IWA_HabEx = 0.045*u.arcsec #taken from a Habex Script in units of mas
-# plotDmagvss(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,inclination=0., folder='./', PPoutpath='./')
+IWA_HabEx = 0.045*u.arcsec #taken from a Habex Script in units of mas
+IWA2=0.150*u.arcsec #Suggested by dmitry as analahous to WFIRST
+plotDmagvss(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=0., folder='./', PPoutpath='./')
 
 
 
@@ -835,7 +885,7 @@ def plotDmagvss(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx,inclin
 #### Calculate dMag vs s plots
 uncertainty_dmag = 0.01 #HabEx requirement is 1% Doesn't say anything about what sigma this is
 uncertainty_s = 5.*u.mas.to('rad')*10.*u.pc.to('AU') #doesn't say anything about what sigma this is
-def plotDmagvssLineIncs(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx,inclinations, folder, PPoutpath):
+def plotDmagvssLineIncs(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx,IWA2,inclinations, folder, PPoutpath):
     """
     Args:
         inclination (float) - inclination in degrees
@@ -948,9 +998,13 @@ def plotDmagvssLineIncs(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabE
     #ADD SMIN FOR TELESCOPE
     smin_telescope = IWA_HabEx.to('rad').value*10.*u.pc.to('AU') #IWA for HabEx 45 mas observing target at 10 pc
     plt.plot([smin_telescope,smin_telescope],[10.,70.],color='black',linestyle='-')
+    smin_telescope2 = IWA2.to('rad').value*10.*u.pc.to('AU') #IWA for HabEx 45 mas observing target at 10 pc
+    plt.plot([smin_telescope2,smin_telescope2],[10.,70.],color='black',linestyle='-')
 
-    plt.text(7,19.5,'Credit: Dean Keithly',fontsize='small',fontweight='normal')
-    plt.text(1.05*smin_telescope,42,'IWA at\n10 pc',fontsize='medium',fontweight='bold',rotation=90)
+    #plt.text(7,19.5,'Credit: Dean Keithly',fontsize='small',fontweight='normal')
+    plt.text(1.05*smin_telescope,41, str(int(IWA_HabEx.value*1000)) + ' mas\nat 10 pc',fontsize='medium',fontweight='bold',rotation=90)
+    plt.text(1.05*smin_telescope2,41, str(int(IWA2.value*1000)) + ' mas\nat 10 pc',fontsize='medium',fontweight='bold',rotation=90)
+
     plt.xlim([1e-1,32.])
     plt.ylim([19.,46.])
     plt.xscale('log')
@@ -973,7 +1027,8 @@ def plotDmagvssLineIncs(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabE
 
 inclinations = np.asarray([2.,5.,10.,25.])
 IWA_HabEx = 0.045*u.arcsec #taken from a Habex Script in units of mas
-plotDmagvssLineIncs(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx,inclinations, folder, PPoutpath)
+IWA2=0.150*u.arcsec #Suggested by dmitry as analahous to WFIRST
+plotDmagvssLineIncs(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx,IWA2,inclinations, folder, PPoutpath)
 
 
 
@@ -1018,7 +1073,7 @@ def pt_pt_distances(xyzpoints):
 ####
 
 
-def plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx,inclination, num, folder, PPoutpath):
+def plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx,IWA2,inclination, num, folder, PPoutpath):
     """
     Args:
         planProp (dict)
@@ -1083,6 +1138,7 @@ def plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_Ha
         outBetas = minimize(fun=errorPtDistances,x0=betas,args=(i), method='SLSQP', options={'eps':1e-2,'ftol':1e-8} ,bounds=[(0.+inclination,180.-inclination) for i in np.arange(len(betas))])
         betas = outBetas['x']
         betas = np.asarray(list(dict.fromkeys(betas))) #removes any duplicates from list
+        print(betas)
 
         #### Beta corrections for Jupiter and Neptune
         #At near 180 deg phase, these planets have really low point densities. This supplants a few more points to correct for this
@@ -1135,22 +1191,25 @@ def plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_Ha
         #ADD SMIN FOR TELESCOPE
         smin_telescope = IWA_HabEx.to('rad').value*10.*u.pc.to('AU') #IWA for HabEx 45 mas observing target at 10 pc
         plt.plot([smin_telescope,smin_telescope],[10.,70.],color='black',linestyle='-')
+        smin_telescope2 = IWA2.to('rad').value*10.*u.pc.to('AU') #IWA for HabEx 45 mas observing target at 10 pc
+        plt.plot([smin_telescope2,smin_telescope2],[10.,70.],color='black',linestyle='-')
 
-        plt.text(7,19.5,'Credit: Dean Keithly',fontsize='small',fontweight='normal')
-        plt.text(1.05*smin_telescope,42,'IWA at\n10 pc',fontsize='medium',fontweight='bold',rotation=90)
+        #plt.text(7,19.5,'Credit: Dean Keithly',fontsize='small',fontweight='normal')
+        plt.text(1.05*smin_telescope,41, str(IWA_HabEx.value*1000) + ' mas\nat 10 pc',fontsize='medium',fontweight='bold',rotation=90)
+        plt.text(1.05*smin_telescope,41, str(IWA2.value*1000) + ' mas\nat 10 pc',fontsize='medium',fontweight='bold',rotation=90)
         plt.xlim([1e-1,32.])
         plt.ylim([19.,46.])
         plt.ylabel('Planet-Star ' + r'$\Delta \mathrm{mag}$', weight='bold')
         plt.xlabel('Projected Planet-Star Separation, ' + r'$s$,' +' in AU', weight='bold')
         plt.legend(loc=1)
-        plt.title('Inclination: ' + str(inclination) + r'$^\circ$' ,weight='bold')
+        plt.title('Inclination: ' + str(int(90-inclination)) + r'$^\circ$' ,weight='bold')
         plt.show(block=False)
         print('Done with planet: ' + str(planets[i]))
     #Save Plots
     # Save to a File
     date = str(datetime.datetime.now())
     date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
-    fname = 'dMagvsSMonteCarlo_solarSystem_inc' + str(inclination) + folder.split('/')[-1] + '_' + date
+    fname = 'dMagvsSMonteCarlo_solarSystem_inc' + str(int(90-inclination)) + folder.split('/')[-1] + '_' + date
     plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
     plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
     plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
@@ -1158,15 +1217,15 @@ def plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_Ha
     print('Done with plotDmagvssMonteCarlo')
 
 
-plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,inclination=0., num=670, folder='./', PPoutpath='./')
+plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=0., num=670, folder='./', PPoutpath='./')
 plt.close(670)
-plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,inclination=2., num=680, folder='./', PPoutpath='./')
+plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=2., num=680, folder='./', PPoutpath='./')
 plt.close(680)
-plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,inclination=5., num=690, folder='./', PPoutpath='./')
+plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=5., num=690, folder='./', PPoutpath='./')
 plt.close(690)
-plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,inclination=10., num=700, folder='./', PPoutpath='./')
+plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=10., num=700, folder='./', PPoutpath='./')
 plt.close(700)
-plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,inclination=25., num=710, folder='./', PPoutpath='./')
+plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=25., num=710, folder='./', PPoutpath='./')
 plt.close(710)
 
 
