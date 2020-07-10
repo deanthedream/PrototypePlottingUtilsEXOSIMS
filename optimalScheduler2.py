@@ -44,7 +44,9 @@ nodes_si = np.arange(2,3) #Set of all sinks
 nodes_sv = np.arange(1,1) # set of nodes with fixed total reward collectable
 nodes_one = np.arange(7,10) #set of nodes which can only communicate to one other node at a time
 nodes_two = np.arange(0,7) #set of nodes which can communicate with up to 2 other nodes at a time
-nodes_dtypes = np.arange(0,4) #The set of all data types
+nodes_dtypes = np.arange(0,4) #The set of all data types (assumed to be partial reward)
+dtype_partialReward = np.asarray([0,1,2])
+dtype_onCompletionReward =  np.asarray([3]) # a set of indicies indicating which of nodes_dtypes is data on completion
 nodes_sc = np.arange(3,10) #The set of all spacecraft nodes
 node_scTypes_i =  np.asarray([0,0,0,0,1,1,2])
 Tmax = 100 #number of timesteps
@@ -150,7 +152,12 @@ Rtk = np.asarray([np.concatenate((np.zeros(30-10),100*np.ones(10),np.zeros(Tmax-
         1*np.ones(Tmax),\
         np.concatenate((np.zeros(35-10),100*np.ones(10),np.zeros(Tmax-35))),\
         1*np.ones(Tmax)]).T
-Rzk = [np.linspace(start=300,stop=0,num=Tmax)]#declining reward for zk
+Rzk = np.asarray([np.linspace(start=300,stop=0,num=Tmax)+100])#declining reward for zk
+
+Rpltk = np.zeros((1,100,4))
+Rpltk[0] = Rtk
+Rctk = np.zeros((100,4))
+Rctk[:,3] = Rzk
 ####
 
 ################################################################################################
@@ -174,14 +181,17 @@ solver = pywraplp.Solver('SolveIntegerProblem',pywraplp.Solver.CBC_MIXED_INTEGER
 # Free Variable: Do node i send data to node j in time t?
 #xs = np.asarray([solver.IntVar(0,1,'x' + str(i) + str(j) + str(t) + str(k)) for (i,j,t,k) in itertools.product(nodes,nodes,np.arange(Tmax),nodes_dtypes)])
 xs = dict()
-for (i,j,t,k) in itertools.product(nodes,nodes,np.arange(Tmax),nodes_dtypes):
-    xs[i,j,t,k] = solver.IntVar(0,1,'x' + str(i) + str(j) + str(t) + str(k))
+for (i,j,t) in itertools.product(nodes,nodes,np.arange(Tmax)):
+    xs[i,j,t] = solver.IntVar(0,1,'x' + str(i) + str(j) + str(t))
 # Free Variable: How much data to transmit from node i to node j?
 #ys = np.asarray([solver.IntVar(0,TxRxCap_ijt[i,j,t],'y' + str(i) + str(j) + str(t) + str(k)) for (i,j,t,k) in itertools.product(nodes,nodes,np.arange(Tmax),nodes_dtypes)])
 ys = dict()
-for (i,j,t) in itertools.product(nodes,nodes,np.arange(Tmax)):
-    ys[i,j,t] = solver.IntVar(0,TxRxCap_ijt[i,j,t],'y' + str(i) + str(j) + str(t))
-
+for (i,j,t,k) in itertools.product(nodes,nodes,np.arange(Tmax),nodes_dtypes):
+    ys[i,j,t,k] = solver.IntVar(0,LOS_ijt[i,j,t]*TxRxCap_ijt[i,j,t],'y' + str(i) + str(j) + str(t) + str(k))
+#xs = np.asarray([solver.IntVar(0,1,'x' + str(i) + str(j) + str(t) + str(k)) for (i,j,t,k) in itertools.product(nodes,nodes,np.arange(Tmax),nodes_dtypes)])
+zs = dict()
+for (t,k) in itertools.product(np.arange(Tmax),nodes_dtypes):
+    zs[t,k] = solver.IntVar(0,1,'z' + str(t) + str(k))
 
 # Create zs descirbing when data transmitted must be done being transmitted
 
@@ -189,22 +199,37 @@ for (i,j,t) in itertools.product(nodes,nodes,np.arange(Tmax)):
 
 #### CONSTRAINTS ################################
 # Communication Volume Constraint
-volumeCommConstraint = [solver.Add(ys[i,j,t] <= np.sum([xs[i,j,t,k] for k in nodes_dtypes])*TxRxCap[i,j,t]) for (i,j,t) in itertools.product(nodes,nodes,np.arange(Tmax))]
+#volumeCommConstraint = [solver.Add(np.sum([ys[i,j,t,k] for k in nodes_dtypes]) <= TxRxCap[i,j,t]) for (i,j,t,k) in itertools.product(nodes,nodes,np.arange(Tmax),nodes_dtypes)]
 #DEPRICATED Comm Volume must be less than Binary Allowance
 #DEPRICATED binaryCommConstraint = [solver.Add(ys[i,j,t] <= np.sum([xs[i,j,t,k] for k in nodes_dtypes])*10**6) for (i,j,t) in itertools.product(nodes,nodes,np.arange(Tmax))]
+#Binary Comm Constraint
+binaryCommVariable = [solver.Add(solver.Sum([ys[i,j,t,k] for k in nodes_dtypes])/TxRxCap_ijt[i,j,t] <= xs[i,j,t])]
 # Only One Comm Constraint
-onlyOneCommConstraint = [solver.Add(solver.Sum([xs[i,j,t,k]+xs[j,i,t,k] for (j,k) in itertools.product(nodes,nodes_dtypes)]) <= 1) for (i,t) in itertools.product(nodes_one,np.arange(Tmax))]
+onlyOneCommConstraint = [solver.Add(solver.Sum([xs[i,j,t]+xs[j,i,t] for j in nodes]) <= 1) for (i,t) in itertools.product(nodes_one,np.arange(Tmax))]
 # Only Two Comm Constraint
-onlyTwoCommConstraint = [solver.Add([solver.Sum([xs[i,j,t,k] for (j,k) in itertools.product(nodes,nodes_dtypes)]) <= 1][0]) for (i,t) in itertools.product(nodes_two,np.arange(Tmax))]
+onlyTwoCommConstraint = [solver.Add([solver.Sum([xs[i,j,t] for j in nodes]) <= 1][0]) for (i,t) in itertools.product(nodes_two,np.arange(Tmax))]
 # LOS Constraint
-LOSCommConstraint = [solver.Add(np.sum([xs[i,j,t,k] for k in nodes_dtypes]) <= LOS_ijt[i,j,t]) for (i,j,t) in itertools.product(nodes,nodes,np.arange(Tmax))]
-#DEPRECATED TxRx Capacity Constraint
-#DEPRECATED TxRxCommConstraint = [solver.Add(ys[i,j,t] <= TxRxCap_ijt[i,j,t]) for (i,j,t) in itertools.product(nodes,nodes,np.arange(Tmax))]
+#LOSCommConstraint = [solver.Add(np.sum([xs[i,j,t,k] for k in nodes_dtypes]) <= LOS_ijt[i,j,t]) for (i,j,t) in itertools.product(nodes,nodes,np.arange(Tmax))]
+#TxRx Capacity Constraint
+TxRxCommConstraint = [solver.Add(solver.Sum([ys[i,j,t,k] for k in nodes_dtypes]) <= TxRxCap_ijt[i,j,t]) for (i,j,t) in itertools.product(nodes,nodes,np.arange(Tmax))]
 # Onboard Storage Capacity
-OnboardStorageCapacity = [solver.Add(solver.Sum([ys[i,j,t]-ys[j,i,t] for t in np.arange(TT)]) <= SCcap_l[node_scTypes_i[i-3]])  for (i,j,TT) in itertools.product(nodes_sc,nodes,np.arange(Tmax))]
+OnboardStorageCapacity = [solver.Add(solver.Sum([solver.Sum([ys[i,j,t,k]-ys[j,i,t,k] for k in nodes_dtypes]) for t in np.arange(TT)]) <= SCcap_l[node_scTypes_i[i-3]])  for (i,j,TT) in itertools.product(nodes_sc,nodes,np.arange(Tmax))]
 # Data Source extraction limit
-SourceExtractionLimitConstraint = [solver.Add(solver.Sum([ys[i,j,t] for (j,t) in itertools.product(nodes,np.arange(Tmax))])) for j in nodes_sv]
+SourceExtractionLimitConstraint = [solver.Add(solver.Sum([ys[i,j,t,k] for (j,t) in itertools.product(nodes,np.arange(Tmax))]) <= nodes_sv[i]) for (i,k) in itertools.product(nodes_sv,nodes_dtypes)] #nodes_sc are related to k
+# Data On Completion
+#DELETEt2 = sp.solver.Sum([zs[t,k]*np.arange(Tmax) for t in np.arange(Tmax)])
+#DELETEt2 = sp.solver.Sum(list(zs[t,k]*np.arange(Tmax)))
+#dataOnCompletion = [solver.Add(solver.Sum([ys[i,j,t3,k] for (i,j,t3) in itertools.product(nodes,nodes_sv,np.arange(solver.Sum(zs[t,k]*t)))]) == solver.Sum([zs[t,k] for t in np.arange(Tmax)])*Sv_byType[k]) for k in nodes_dtypes]
+# dataOnCompletion = [solver.Add(solver.Sum([ys[i,j,t3,k] for (i,j,t3) in itertools.product(nodes,nodes_sv,np.arange(solver.Sum(zs[t,k]*t)))]) == \
+#         solver.Sum([zs[t,k] for t in np.arange(Tmax)])*Sv_byType[k]) for k in nodes_dtypes] #this bit is ok should be total data volume 
 
+dataOnCompletion = [solver.Add(solver.Sum([zs[t,k] for t in np.arange(Tmax)])*Sv_byType[k] == solver.Sum([ys[i,nodes_sv[k],t2,k] for (i,t2) in itertools.product(nodes,np.arange(t3))]))\
+         for (t3,k) in itertools.product(np.arange(Tmax),nodes_dtypes[dtype_onCompletionReward])]
+#RHS sum over all zs_k and multiply by total data
+#Less than 1 zs
+lessThanOneFinish = [solver.Add(solver.Sum([zs[t,k] for t in np.arange(Tmax)]) <= 1) for k in nodes_dtypes]
+
+#constraint so sum(zs) <= 1
 
 
 #xs = [ solver.IntVar(0.0,1.0, 'x'+str(j)) for j in N] # define x_i variables for each star either 0 or 1
@@ -217,14 +242,26 @@ SourceExtractionLimitConstraint = [solver.Add(solver.Sum([ys[i,j,t] for (j,t) in
 
 #### Objective Function
 objective = solver.Objective()
-for (i,j,t,k) in xs.keys():
-    objective.SetCoefficient(ys[i,j,t], Rtk[t,k])
+#Set Total Partial Reward Coefficients
+for (i,l,t,k) in itertools.product(nodes,np.arange(len(nodes_GS)),np.arange(Tmax),nodes_dtypes):
+    objective.SetCoefficient(ys[i,nodes_GS[l],t,k], Rpltk[l,t,k])
+#Set Total Reward Upon Completion Coefficients
+for (t,k) in zs.keys():
+    objective.SetCoefficient(zs[t,k],Rctk[t,k])
 objective.SetMaximization()
 
 #solver.EnableOutput()# this line enables output of the CBC MIXED INTEGER PROGRAM (Was hard to find don't delete)
 solver.SetTimeLimit(5*60*1000)#time limit for solver in milliseconds
 cpres = solver.Solve() # actually solve MIP
-x0 = np.array([xs[i,j,t,k].solution_value() for (i,j,t,k) in xs.keys()]) # convert output solutions
-y0 = np.array([ys[i,j,t].solution_value() for (i,j,t) in ys.keys()]) # convert output solutions
-
+x0 = np.array([xs[i,j,t].solution_value() for (i,j,t) in xs.keys()]) # convert output solutions
+y0 = np.array([ys[i,j,t,k].solution_value() for (i,j,t,k) in ys.keys()]) # convert output solutions
+z0 = np.array([zs[t,k].solution_value() for (t,k) in zs.keys()]) # convert output solutions
 print('Yay it solved!')
+
+
+
+
+
+#### Plot Stuff
+import matplotlib.pyplot as plt
+
