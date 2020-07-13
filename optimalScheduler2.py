@@ -161,19 +161,6 @@ for i in np.arange(NumNodes):
         TxRxCap_ijt[i] = multiply_along_axis(np.ones((NumNodes,Tmax)), scTxRxCap[node_scTypes_i[np.asarray(jInds)-3]], axis=0)
         #np.ones((NumNodes,Tmax))*scTxRxCap[node_scTypes_i[np.asarray(jInds)-3]]
 
-#print(saltyburrito)
-# for i in np.arange(NumNodes):
-#     if i == 0:
-#         jInds = np.where(TxRxCap[i,:,0] < gsTxCap)[0]
-#         iInds = np.where(TxRxCap[:,j,0] < gsRxCap)[0]
-
-# tmpTxRxCam_ijt
-# for (i,j) in itertools.product(NumNodes,NumNodes):
-#     if i == 0:
-#         TxRxCap_ijt[i] = np.where(TxRxCap[i,:,0] < gsTxCap)
-####
-
-
 #### Generate Rewards vs time
 #Simulate 3 cases
 #1 High Volume, High Reward, Low Availability
@@ -194,37 +181,26 @@ Rctk[:,3] = Rzk
 ################################################################################################
 
 
-#### 5. Formulating MIP to filter out stars we can't or don't want to reasonably observe
+
+#nodes, Tmax, nodes_dtypes, TxRxCap_ijt, nodes_one, nodes_two, SCcap_l, node_scTypes_i, nodes_sc, Sv_byType, dtype_onCompletionReward, nodes_si, Rpltk, Rctk
+
+#### Instantiate MIP Solver
 solver = pywraplp.Solver('SolveIntegerProblem',pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING) # create solver instance
-#solver = pywraplp.Solver('simple_mip_program',pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING) #found online
-
-#### Create set of all possible communication nodes
-# allPossibleComms = list(product(N,N))
-# tmp = [allPossibleComms.remove((i,i)) for i in N] # remove spacecraft that can only talk to each other
-# del tmp
-# Edges = set(allPossibleComms)
-
-
-#xstruct = dict()
-#xstruct[i,j,t,k] = solver.IntVar(0,1,'x' + str(i) + str(j) + str(t) + str(k)) for (i,j,t,k) in itertools.product(nodes,nodes,np.arange(Tmax),nodes_dtypes))
 
 #### Free Variables
-# Free Variable: Do node i send data to node j in time t?
-#xs = np.asarray([solver.IntVar(0,1,'x' + str(i) + str(j) + str(t) + str(k)) for (i,j,t,k) in itertools.product(nodes,nodes,np.arange(Tmax),nodes_dtypes)])
 xs = dict()
 for (i,j,t) in itertools.product(nodes,nodes,np.arange(Tmax)):
     xs[i,j,t] = solver.IntVar(0,1,'x' + str(i) + str(j) + str(t))
 # Free Variable: How much data to transmit from node i to node j?
-#ys = np.asarray([solver.IntVar(0,TxRxCap_ijt[i,j,t],'y' + str(i) + str(j) + str(t) + str(k)) for (i,j,t,k) in itertools.product(nodes,nodes,np.arange(Tmax),nodes_dtypes)])
 ys = dict()
 for (i,j,t,k) in itertools.product(nodes,nodes,np.arange(Tmax),nodes_dtypes):
     ys[i,j,t,k] = solver.IntVar(0,LOS_ijt[i,j,t]*TxRxCap_ijt[i,j,t],'y' + str(i) + str(j) + str(t) + str(k))
-#xs = np.asarray([solver.IntVar(0,1,'x' + str(i) + str(j) + str(t) + str(k)) for (i,j,t,k) in itertools.product(nodes,nodes,np.arange(Tmax),nodes_dtypes)])
+# Free Variable: zs descirbing when a datatype k transmission is completed
 zs = dict()
 for (t,k) in itertools.product(np.arange(Tmax),nodes_dtypes[dtype_onCompletionReward]):
     zs[t,k] = solver.IntVar(0,1,'z' + str(t) + str(k))
 
-# Create zs descirbing when data transmitted must be done being transmitted
+
 
 ##################
 
@@ -283,16 +259,20 @@ z0 = np.array([zs[t,k].solution_value() for (t,k) in zs.keys()]) # convert outpu
 print('Yay it solved!')
 
 
-#### Evaluate How Much Reward Was Collected
+
+#### Evaluate How Much Reward Was Collected ###############################################################
 #Set Total Partial Reward Coefficients
-for (i,l,t,k) in itertools.product(nodes,np.arange(len(nodes_si)),np.arange(Tmax),nodes_dtypes):
-    y0Index = i*(len(Nodes)*len(Nodes)*Tmax*len(nodes_dtypes))
-    TPR += y0[i,nodes_si[l],t,k]*Rpltk[l,t,k]
+TPR = 0
+for (i,j,t,k) in ys.keys():
+    TPR += ys[i,j,t,k].solution_value()*Rpltk[l,t,k]
+
 #Set Total Reward Upon Completion Coefficients
 TROC = 0
-for (t,k) in itertools.product(np.arange(Tmax),nodes_dtypes):
-    TROC += z0[t,k]*Rctk[t,k]
+for (t,k) in zs.keys():
+    TROC += zs[t,k].solution_value()*Rctk[t,k]
 
+# Outputs the Solver Objective Function Value
+objFunValue = solver.Objective().Value()
 
 
 #### Plot Stuff
