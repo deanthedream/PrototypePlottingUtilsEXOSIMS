@@ -38,13 +38,14 @@ import random
 #### Inputs #############
 NumNodes = 10 #number of nodes
 nodes = np.arange(NumNodes) #Set of all Nodes
-nodes_GS = np.arange(2,3) #Set of all ground stations
-nodes_so = np.arange(0,1) #Set of all sources
-nodes_si = np.arange(2,3) #Set of all sinks
-nodes_sv = np.arange(1,1) # set of nodes with fixed total reward collectable
+nodes_GS = np.arange(3) #Set of all ground stations
+nodes_so = np.zeros(4) #Set of all sources
+nodes_si = np.arange(1,3) #Set of all sinks
 nodes_one = np.arange(7,10) #set of nodes which can only communicate to one other node at a time
-nodes_two = np.arange(0,7) #set of nodes which can communicate with up to 2 other nodes at a time
+nodes_two = np.arange(3,7) #set of nodes which can communicate with up to 2 other nodes at a time
 nodes_dtypes = np.arange(0,4) #The set of all data types (assumed to be partial reward)
+nodes_sv = np.asarray([1 for i in nodes_dtypes]) # set of nodes with fixed total reward collectable
+totalSv = nodes_sv*1000
 dtype_partialReward = np.asarray([0,1,2])
 dtype_onCompletionReward =  np.asarray([3]) # a set of indicies indicating which of nodes_dtypes is data on completion
 nodes_sc = np.arange(3,10) #The set of all spacecraft nodes
@@ -84,11 +85,12 @@ def genLOS(MaxPeaks,PeakWidths,Tmax):
 
 #### Generate LOS Boolean matrix
 MaxPeaks = 2
-PeakWidths = 10
+PeakWidths = 60
 LOS_ijt = np.zeros((NumNodes,NumNodes,Tmax))
 for (i,j) in itertools.product(np.arange(NumNodes),np.arange(NumNodes)):
-    #both nodes are spacecraft
-    if i in nodes_sc and j in nodes_sc: #these spacecraft are spacecraft
+    if i == j: # prevents self communication #NOT HANDLED IN FIRST IF STATEMENT
+        LOS_ijt[i,j] = np.zeros(Tmax)
+    elif i in nodes_sc and j in nodes_sc: #these nodes are spacecraft
         iInd = np.where(nodes_sc == i)[0]
         jInd = np.where(nodes_sc == j)[0]
         if (iInd,jInd) in edges_scTypes: # spacecraft capable of communicating to one another
@@ -115,22 +117,51 @@ Sv_byType = np.asarray([10000,10000,100,10])
 #Lets assume fixed capacities (they will likely vary)
 
 
-# def genTxRxCap(gsInd=None,tx_scTypeInd=None,rx_scTypeInd=None,gsTxCap,gsRxCap,scTxRxCap):
-#     if gs
+#DELETEfrom numpy.core._internal import AxisError
 
-#     return 
-# TxRxCap_ijt = np.asarray([])
+def multiply_along_axis(A, B, axis):
+    A = np.array(A)
+    B = np.array(B)
+    # shape check
+    if axis >= A.ndim:
+        raise AxisError(axis, A.ndim)
+    if A.shape[axis] != B.size:
+        raise ValueError("'A' and 'B' must have the same length along the given axis")
+    # Expand the 'B' according to 'axis':
+    # 1. Swap the given axis with axis=0 (just need the swapped 'shape' tuple here)
+    swapped_shape = A.swapaxes(0, axis).shape
+    # 2. Repeat:
+    # loop through the number of A's dimensions, at each step:
+    # a) repeat 'B':
+    #    The number of repetition = the length of 'A' along the 
+    #    current looping step; 
+    #    The axis along which the values are repeated. This is always axis=0,
+    #    because 'B' initially has just 1 dimension
+    # b) reshape 'B':
+    #    'B' is then reshaped as the shape of 'A'. But this 'shape' only 
+    #     contains the dimensions that have been counted by the loop
+    for dim_step in range(A.ndim-1):
+        B = B.repeat(swapped_shape[dim_step+1], axis=0)\
+             .reshape(swapped_shape[:dim_step+2])
+    # 3. Swap the axis back to ensure the returned 'B' has exactly the 
+    # same shape of 'A'
+    B = B.swapaxes(0, axis)
+    return A * B
+
 
 TxRxCap_ijt = np.ones((NumNodes,NumNodes,Tmax))*np.inf
+TxRxCap_ijt[0] = np.ones((NumNodes,Tmax))*gsRxCap
+TxRxCap_ijt[1] = np.ones((NumNodes,Tmax))*gsRxCap
 TxRxCap_ijt[2] = np.ones((NumNodes,Tmax))*gsRxCap
 for i in np.arange(NumNodes):
-    if i in [0,1,2]:
+    if i in [0,1,2]: #the node is a ground station
         continue
-    jInds = np.where(TxRxCap_ijt[i,:,0] < scTxRxCap[node_scTypes_i[i-3]])[0]
+    jInds = np.where(TxRxCap_ijt[i,:,0] > scTxRxCap[node_scTypes_i[i-3]])[0]
     if len(jInds) > 0:
-        TxRxCap_ijt[i] = np.ones(NumNodes,Tmax)*scTxRxCap[node_scTypes[np.asarray(jInds)-3]]
+        TxRxCap_ijt[i] = multiply_along_axis(np.ones((NumNodes,Tmax)), scTxRxCap[node_scTypes_i[np.asarray(jInds)-3]], axis=0)
+        #np.ones((NumNodes,Tmax))*scTxRxCap[node_scTypes_i[np.asarray(jInds)-3]]
 
-
+#print(saltyburrito)
 # for i in np.arange(NumNodes):
 #     if i == 0:
 #         jInds = np.where(TxRxCap[i,:,0] < gsTxCap)[0]
@@ -154,7 +185,7 @@ Rtk = np.asarray([np.concatenate((np.zeros(30-10),100*np.ones(10),np.zeros(Tmax-
         1*np.ones(Tmax)]).T
 Rzk = np.asarray([np.linspace(start=300,stop=0,num=Tmax)+100])#declining reward for zk
 
-Rpltk = np.zeros((1,100,4))
+Rpltk = np.zeros((3,100,4))
 Rpltk[0] = Rtk
 Rctk = np.zeros((100,4))
 Rctk[:,3] = Rzk
@@ -190,7 +221,7 @@ for (i,j,t,k) in itertools.product(nodes,nodes,np.arange(Tmax),nodes_dtypes):
     ys[i,j,t,k] = solver.IntVar(0,LOS_ijt[i,j,t]*TxRxCap_ijt[i,j,t],'y' + str(i) + str(j) + str(t) + str(k))
 #xs = np.asarray([solver.IntVar(0,1,'x' + str(i) + str(j) + str(t) + str(k)) for (i,j,t,k) in itertools.product(nodes,nodes,np.arange(Tmax),nodes_dtypes)])
 zs = dict()
-for (t,k) in itertools.product(np.arange(Tmax),nodes_dtypes):
+for (t,k) in itertools.product(np.arange(Tmax),nodes_dtypes[dtype_onCompletionReward]):
     zs[t,k] = solver.IntVar(0,1,'z' + str(t) + str(k))
 
 # Create zs descirbing when data transmitted must be done being transmitted
@@ -198,24 +229,26 @@ for (t,k) in itertools.product(np.arange(Tmax),nodes_dtypes):
 ##################
 
 #### CONSTRAINTS ################################
-# Communication Volume Constraint
-#volumeCommConstraint = [solver.Add(np.sum([ys[i,j,t,k] for k in nodes_dtypes]) <= TxRxCap[i,j,t]) for (i,j,t,k) in itertools.product(nodes,nodes,np.arange(Tmax),nodes_dtypes)]
-#DEPRICATED Comm Volume must be less than Binary Allowance
-#DEPRICATED binaryCommConstraint = [solver.Add(ys[i,j,t] <= np.sum([xs[i,j,t,k] for k in nodes_dtypes])*10**6) for (i,j,t) in itertools.product(nodes,nodes,np.arange(Tmax))]
 #Binary Comm Constraint
-binaryCommVariable = [solver.Add(solver.Sum([ys[i,j,t,k] for k in nodes_dtypes])/TxRxCap_ijt[i,j,t] <= xs[i,j,t])]
+binaryCommVariable = [solver.Add(solver.Sum([ys[i,j,t,k] for k in nodes_dtypes])/TxRxCap_ijt[i,j,t] <= xs[i,j,t]) for (i,j,t) in itertools.product(nodes,nodes,np.arange(Tmax))] # indicates communication exists
 # Only One Comm Constraint
 onlyOneCommConstraint = [solver.Add(solver.Sum([xs[i,j,t]+xs[j,i,t] for j in nodes]) <= 1) for (i,t) in itertools.product(nodes_one,np.arange(Tmax))]
 # Only Two Comm Constraint
-onlyTwoCommConstraint = [solver.Add([solver.Sum([xs[i,j,t] for j in nodes]) <= 1][0]) for (i,t) in itertools.product(nodes_two,np.arange(Tmax))]
-# LOS Constraint
-#LOSCommConstraint = [solver.Add(np.sum([xs[i,j,t,k] for k in nodes_dtypes]) <= LOS_ijt[i,j,t]) for (i,j,t) in itertools.product(nodes,nodes,np.arange(Tmax))]
-#TxRx Capacity Constraint
-TxRxCommConstraint = [solver.Add(solver.Sum([ys[i,j,t,k] for k in nodes_dtypes]) <= TxRxCap_ijt[i,j,t]) for (i,j,t) in itertools.product(nodes,nodes,np.arange(Tmax))]
+onlyOneCommInOneCommOutConstraint = [solver.Add([solver.Sum([xs[i,j,t]+xs[j,i,t] for j in nodes]) <= 2][0]) for (i,t) in itertools.product(nodes_two,np.arange(Tmax))]
+# No Self Comm #these are now handled by the LOS input
+#noSelfCommx = [solver.Add(xs[i,i,t] == 0) for (i,t) in itertools.product(nodes,np.arange(Tmax))] #this is now handled by the LOS input
+#noSelfCommy = [solver.Add(ys[i,i,t,k] == 0) for (i,t,k) in itertools.product(nodes,np.arange(Tmax),nodes_dtypes)] #this is now handled by the LOS input
+
 # Onboard Storage Capacity
-OnboardStorageCapacity = [solver.Add(solver.Sum([solver.Sum([ys[i,j,t,k]-ys[j,i,t,k] for k in nodes_dtypes]) for t in np.arange(TT)]) <= SCcap_l[node_scTypes_i[i-3]])  for (i,j,TT) in itertools.product(nodes_sc,nodes,np.arange(Tmax))]
+#i are all spacecraft nodes, j are all nodes
+OnboardStorageCapacity = [solver.Add(solver.Sum([ys[j,i,t,k]-ys[i,j,t,k] for (t,k) in itertools.product(np.arange(TT),nodes_dtypes)]) <= SCcap_l[node_scTypes_i[i-3]])  for (i,j,TT) in itertools.product(nodes_sc,nodes,np.arange(Tmax))]
+# More data cannot leave node than enter node
+positiveNetDataAtNode = [solver.Add(solver.Sum([ys[j,i,t,k]-ys[i,j,t,k] for (t,k) in itertools.product(np.arange(TT),nodes_dtypes)]) >= 0)  for (i,j,TT) in itertools.product(nodes,nodes_sc,np.arange(Tmax))]
 # Data Source extraction limit
-SourceExtractionLimitConstraint = [solver.Add(solver.Sum([ys[i,j,t,k] for (j,t) in itertools.product(nodes,np.arange(Tmax))]) <= nodes_sv[i]) for (i,k) in itertools.product(nodes_sv,nodes_dtypes)] #nodes_sc are related to k
+SourceExtractionLimitConstraint = [solver.Add(solver.Sum([ys[nodes_so[k],j,t,k] for (j,t) in itertools.product(nodes,np.arange(Tmax))]) <= Sv_byType[k]) for k in nodes_dtypes] #nodes_sc are related to k
+#Total Comm In = Total Comm Out (for spacecraft nodes)
+#totalCommInEqualsTotalCommOut = [solver.Add(solver.Sum([ys[j,i,t,k]-ys[i,j,t,k] for (j,t,k) in itertools.product(nodes,np.arange(Tmax),nodes_dtypes)]) == 0) for i in nodes_sc]
+
 # Data On Completion
 #DELETEt2 = sp.solver.Sum([zs[t,k]*np.arange(Tmax) for t in np.arange(Tmax)])
 #DELETEt2 = sp.solver.Sum(list(zs[t,k]*np.arange(Tmax)))
@@ -226,25 +259,16 @@ SourceExtractionLimitConstraint = [solver.Add(solver.Sum([ys[i,j,t,k] for (j,t) 
 dataOnCompletion = [solver.Add(solver.Sum([zs[t,k] for t in np.arange(Tmax)])*Sv_byType[k] == solver.Sum([ys[i,nodes_sv[k],t2,k] for (i,t2) in itertools.product(nodes,np.arange(t3))]))\
          for (t3,k) in itertools.product(np.arange(Tmax),nodes_dtypes[dtype_onCompletionReward])]
 #RHS sum over all zs_k and multiply by total data
-#Less than 1 zs
-lessThanOneFinish = [solver.Add(solver.Sum([zs[t,k] for t in np.arange(Tmax)]) <= 1) for k in nodes_dtypes]
 
-#constraint so sum(zs) <= 1
+# There can only be one time where a Reward On Completion Task is Completed
+lessThanOneFinish = [solver.Add(solver.Sum([zs[t,k] for t in np.arange(Tmax)]) <= 1) for k in nodes_dtypes[dtype_onCompletionReward]]
 
-
-#xs = [ solver.IntVar(0.0,1.0, 'x'+str(j)) for j in N] # define x_i variables for each star either 0 or 1
-#print('Finding baseline fixed-time optimal target set.')
-
-#constraint is x_i*t_i < maxtime
-# constraint = solver.Constraint(-solver.infinity(),maxTime.to(u.day).value) #hmmm I wonder if we could set this to 0,maxTime
-# for j,x in enumerate(xs):
-#     constraint.SetCoefficient(x, t0[j].to('day').value + ohTimeTot.to(u.day).value) # this forms x_i*(t_0i+OH) for all i
 
 #### Objective Function
 objective = solver.Objective()
 #Set Total Partial Reward Coefficients
-for (i,l,t,k) in itertools.product(nodes,np.arange(len(nodes_GS)),np.arange(Tmax),nodes_dtypes):
-    objective.SetCoefficient(ys[i,nodes_GS[l],t,k], Rpltk[l,t,k])
+for (i,l,t,k) in itertools.product(nodes,np.arange(len(nodes_si)),np.arange(Tmax),nodes_dtypes):
+    objective.SetCoefficient(ys[i,nodes_si[l],t,k], Rpltk[l,t,k])
 #Set Total Reward Upon Completion Coefficients
 for (t,k) in zs.keys():
     objective.SetCoefficient(zs[t,k],Rctk[t,k])
@@ -259,6 +283,15 @@ z0 = np.array([zs[t,k].solution_value() for (t,k) in zs.keys()]) # convert outpu
 print('Yay it solved!')
 
 
+#### Evaluate How Much Reward Was Collected
+#Set Total Partial Reward Coefficients
+for (i,l,t,k) in itertools.product(nodes,np.arange(len(nodes_si)),np.arange(Tmax),nodes_dtypes):
+    y0Index = i*(len(Nodes)*len(Nodes)*Tmax*len(nodes_dtypes))
+    TPR += y0[i,nodes_si[l],t,k]*Rpltk[l,t,k]
+#Set Total Reward Upon Completion Coefficients
+TROC = 0
+for (t,k) in itertools.product(np.arange(Tmax),nodes_dtypes):
+    TROC += z0[t,k]*Rctk[t,k]
 
 
 
