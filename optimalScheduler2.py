@@ -4,6 +4,7 @@ from ortools.linear_solver import pywraplp
 import itertools
 #from itertools import product
 import random
+import time
 
 # #### Inputs #############
 # NumNodes = 1000 #number of nodes
@@ -35,6 +36,8 @@ import random
 # #### 
 # ####
 
+startTime=time.time()
+
 #### Inputs #############
 NumNodes = 10 #number of nodes
 nodes = np.arange(NumNodes) #Set of all Nodes
@@ -50,7 +53,7 @@ dtype_partialReward = np.asarray([0,1,2])
 dtype_onCompletionReward =  np.asarray([3]) # a set of indicies indicating which of nodes_dtypes is data on completion
 nodes_sc = np.arange(3,10) #The set of all spacecraft nodes
 node_scTypes_i =  np.asarray([0,0,0,0,1,1,2])
-Tmax = 100 #number of timesteps
+Tmax = 90 #number of timesteps
 ##
 #normally, tx and rx cap between two satellites is dictated by the link-budget equation, we are doing a poor substitute for that
 gsTxCap = 10000
@@ -58,6 +61,30 @@ gsRxCap = 1000
 scTxRxCap = np.asarray([300,600,1000])
 edges_scTypes =   [(0,0),(0,2),(1,1),(1,2),(2,0),(2,1),(2,2)] #The edges of types of spacecraft that can communicate with one another
 #########################
+
+#### Calculate Number of Constraints #########################
+def recurSum(N):
+    """
+    Args:
+        N (int) - number of recursions
+    Returns:
+        sumTotal (int) - summation of recursion
+    """
+    sumTotal = np.sum([n for n in np.arange(N)])
+    return sumTotal
+numCon_binaryCommVariable = len(nodes)*len(nodes)*Tmax
+numCon_onlyOneCommConstraint = len(nodes_one)*Tmax
+numCon_onlyOneCommInOneCommOutConstraint = len(nodes_two)*Tmax
+numCon_OnboardStorageCapacity = len(nodes_sc)*len(nodes)*recurSum(Tmax)
+numCon_positiveNetDataAtNode = len(nodes)*len(nodes_sc)*recurSum(Tmax)
+numCon_SourceExtractionLimitConstraint = len(nodes_dtypes)
+numCon_dataOnCompletion = Tmax*len(dtype_onCompletionReward)
+numCon_lessThanOneFinish = len(dtype_onCompletionReward)
+TotalNumberConstraints = numCon_binaryCommVariable+numCon_onlyOneCommConstraint+numCon_onlyOneCommInOneCommOutConstraint+numCon_OnboardStorageCapacity+\
+    numCon_positiveNetDataAtNode+numCon_SourceExtractionLimitConstraint+numCon_dataOnCompletion+numCon_lessThanOneFinish
+print('Total Number Of Constraints is: ' + str(TotalNumberConstraints))
+##############################################################
+
 
 #### Set of Comm Edges
 #Normally, you would check and see of the spacecraft is capable of communicating with another one by checking the equipment and Rx Tx freq
@@ -75,16 +102,16 @@ def genLOS(MaxPeaks,PeakWidths,Tmax):
         
             visible = np.ones(PeakWidths) #the width of the visibility
             LOStmp = np.concatenate((np.zeros(startInd),visible,np.zeros(Tmax)))
-            LOS_ts.append(LOStmp[:100])
+            LOS_ts.append(LOStmp[:Tmax])
         LOS_t = np.sum(np.asarray(LOS_ts),axis=0)
         LOS_t = np.clip(LOS_t,a_min=0,a_max=1)
-        if (2,100) == LOS_t.shape:
+        if (2,Tmax) == LOS_t.shape:
             print(saltyburrito)
     return LOS_t
 ####
 
 #### Generate LOS Boolean matrix
-MaxPeaks = 2
+MaxPeaks = 10
 PeakWidths = 60
 LOS_ijt = np.zeros((NumNodes,NumNodes,Tmax))
 for (i,j) in itertools.product(np.arange(NumNodes),np.arange(NumNodes)):
@@ -172,9 +199,9 @@ Rtk = np.asarray([np.concatenate((np.zeros(30-10),100*np.ones(10),np.zeros(Tmax-
         1*np.ones(Tmax)]).T
 Rzk = np.asarray([np.linspace(start=300,stop=0,num=Tmax)+100])#declining reward for zk
 
-Rpltk = np.zeros((3,100,4))
+Rpltk = np.zeros((3,Tmax,4))
 Rpltk[0] = Rtk
-Rctk = np.zeros((100,4))
+Rctk = np.zeros((Tmax,4))
 Rctk[:,3] = Rzk
 ####
 
@@ -211,6 +238,7 @@ binaryCommVariable = [solver.Add(solver.Sum([ys[i,j,t,k] for k in nodes_dtypes])
 onlyOneCommConstraint = [solver.Add(solver.Sum([xs[i,j,t]+xs[j,i,t] for j in nodes]) <= 1) for (i,t) in itertools.product(nodes_one,np.arange(Tmax))]
 # Only Two Comm Constraint
 onlyOneCommInOneCommOutConstraint = [solver.Add([solver.Sum([xs[i,j,t]+xs[j,i,t] for j in nodes]) <= 2][0]) for (i,t) in itertools.product(nodes_two,np.arange(Tmax))]
+print('Done with Binary and Number of Comm Limitations')
 # No Self Comm #these are now handled by the LOS input
 #noSelfCommx = [solver.Add(xs[i,i,t] == 0) for (i,t) in itertools.product(nodes,np.arange(Tmax))] #this is now handled by the LOS input
 #noSelfCommy = [solver.Add(ys[i,i,t,k] == 0) for (i,t,k) in itertools.product(nodes,np.arange(Tmax),nodes_dtypes)] #this is now handled by the LOS input
@@ -218,10 +246,13 @@ onlyOneCommInOneCommOutConstraint = [solver.Add([solver.Sum([xs[i,j,t]+xs[j,i,t]
 # Onboard Storage Capacity
 #i are all spacecraft nodes, j are all nodes
 OnboardStorageCapacity = [solver.Add(solver.Sum([ys[j,i,t,k]-ys[i,j,t,k] for (t,k) in itertools.product(np.arange(TT),nodes_dtypes)]) <= SCcap_l[node_scTypes_i[i-3]])  for (i,j,TT) in itertools.product(nodes_sc,nodes,np.arange(Tmax))]
+print('Done with Onboard Storage Capacity Constraints')
 # More data cannot leave node than enter node
 positiveNetDataAtNode = [solver.Add(solver.Sum([ys[j,i,t,k]-ys[i,j,t,k] for (t,k) in itertools.product(np.arange(TT),nodes_dtypes)]) >= 0)  for (i,j,TT) in itertools.product(nodes,nodes_sc,np.arange(Tmax))]
+print('Done with Positive Net Datat At Node')
 # Data Source extraction limit
 SourceExtractionLimitConstraint = [solver.Add(solver.Sum([ys[nodes_so[k],j,t,k] for (j,t) in itertools.product(nodes,np.arange(Tmax))]) <= Sv_byType[k]) for k in nodes_dtypes] #nodes_sc are related to k
+print('Done with Source Extraction Limit')
 #Total Comm In = Total Comm Out (for spacecraft nodes)
 #totalCommInEqualsTotalCommOut = [solver.Add(solver.Sum([ys[j,i,t,k]-ys[i,j,t,k] for (j,t,k) in itertools.product(nodes,np.arange(Tmax),nodes_dtypes)]) == 0) for i in nodes_sc]
 
@@ -234,10 +265,12 @@ SourceExtractionLimitConstraint = [solver.Add(solver.Sum([ys[nodes_so[k],j,t,k] 
 
 dataOnCompletion = [solver.Add(solver.Sum([zs[t,k] for t in np.arange(Tmax)])*Sv_byType[k] == solver.Sum([ys[i,nodes_sv[k],t2,k] for (i,t2) in itertools.product(nodes,np.arange(t3))]))\
          for (t3,k) in itertools.product(np.arange(Tmax),nodes_dtypes[dtype_onCompletionReward])]
+print('Done with Data On Completion')
 #RHS sum over all zs_k and multiply by total data
 
 # There can only be one time where a Reward On Completion Task is Completed
 lessThanOneFinish = [solver.Add(solver.Sum([zs[t,k] for t in np.arange(Tmax)]) <= 1) for k in nodes_dtypes[dtype_onCompletionReward]]
+print('Done with less Than One Finish')
 
 
 #### Objective Function
@@ -258,6 +291,7 @@ y0 = np.array([ys[i,j,t,k].solution_value() for (i,j,t,k) in ys.keys()]) # conve
 z0 = np.array([zs[t,k].solution_value() for (t,k) in zs.keys()]) # convert output solutions
 print('Yay it solved!')
 
+#return solver, x0, y0, z0
 
 
 #### Evaluate How Much Reward Was Collected ###############################################################
@@ -274,6 +308,9 @@ for (t,k) in zs.keys():
 # Outputs the Solver Objective Function Value
 objFunValue = solver.Objective().Value()
 
+
+totalExecutionTime = time.time() - startTime
+print('Total Execution Time: ' + str(totalExecutionTime))
 
 #### Plot Stuff
 import matplotlib.pyplot as plt
