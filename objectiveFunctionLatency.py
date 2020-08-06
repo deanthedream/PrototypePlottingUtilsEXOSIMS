@@ -71,10 +71,10 @@ plt.rc('font',weight='bold')
 bounds = [10**-4,10**-3,10**-2,10**-1,10**0]
 #norm = colors.BoundaryNorm(bounds, cmap.N)
 clev = np.logspace(start=np.log10(theoreticalMinimumLat.min()),stop=np.log10(theoreticalMinimumLat.max()),num=100) #Adjust the .001 to get finer gradient
-plt.contourf(orbitalRadii,angularDistances,theoreticalMinimumLat,clev,cmap='bwr',locator=ticker.LogLocator())
+plt.contourf(orbitalRadii,angularDistances,theoreticalMinimumLat.T,clev,cmap='bwr',locator=ticker.LogLocator())
 cbar = plt.colorbar(ticks=bounds)
 cbar.set_label(label='Theoretical Minimum Communication Latency (s)',weight='bold')
-plt.contour(orbitalRadii,angularDistances,theoreticalMinimumLat,locator=ticker.LogLocator(),colors='black')
+plt.contour(orbitalRadii,angularDistances,theoreticalMinimumLat.T,locator=ticker.LogLocator(),colors='black')
 #cm.ScalarMappable(cmap=cmap, norm=norm),ticks=bounds,
 plt.xscale('log')
 plt.xlabel('Circular Orbit Altitude (km)', weight='bold')
@@ -201,6 +201,7 @@ def theoreticalMinimumLatency_circularOrbitPoints(A,theta):
 
 theoreticalMinimumLatpoints = np.zeros((len(orbitalRadii2),len(angularDistances2)))
 minDists = np.zeros((len(orbitalRadii2),len(angularDistances2)))
+optNumSpacecraft = np.zeros((len(orbitalRadii2),len(angularDistances2)))
 for (i,j) in itertools.product(np.arange(len(orbitalRadii2)),np.arange(len(angularDistances2))):
     print(i,j)
     optNumSC, optSCLocs, minDist = theoreticalMinimumLatency_circularOrbitPoints(orbitalRadii2[i],angularDistances2[j])
@@ -208,6 +209,7 @@ for (i,j) in itertools.product(np.arange(len(orbitalRadii2)),np.arange(len(angul
     theoreticalMinimumLatpoints[i,j] = minDists[i,j]/299792.458
     if (i,j) == (2,80):
         saved_optSCLocs = optSCLocs
+    optNumSpacecraft[i,j] = optNumSC
 
 
 
@@ -299,12 +301,61 @@ plt.rc('font',weight='bold')
 bounds = [10**-4,10**-3,10**-2,10**-1,10**0]
 #norm = colors.BoundaryNorm(bounds, cmap.N)
 clev = np.logspace(start=np.log10(theoreticalMinimumLat.min()),stop=np.log10(theoreticalMinimumLat.max()),num=100) #Adjust the .001 to get finer gradient
-plt.contourf(orbitalRadii2,angularDistances2,theoreticalMinimumLatpoints,clev,cmap='bwr',locator=ticker.LogLocator())
+plt.contourf(orbitalRadii2,angularDistances2,theoreticalMinimumLatpoints.T,clev,cmap='bwr',locator=ticker.LogLocator())
 cbar = plt.colorbar(ticks=bounds)
 cbar.set_label(label='Theoretical Minimum Communication Latency (s)',weight='bold')
-plt.contour(orbitalRadii2,angularDistances2,theoreticalMinimumLatpoints,locator=ticker.LogLocator(),colors='black')
+plt.contour(orbitalRadii2,angularDistances2,theoreticalMinimumLatpoints.T,locator=ticker.LogLocator(),colors='black')
 #cm.ScalarMappable(cmap=cmap, norm=norm),ticks=bounds,
 plt.xscale('log')
 plt.xlabel('Circular Orbit Altitude (km)', weight='bold')
 plt.ylabel('Angular Distance (rad)', weight='bold')
 plt.show(block=False)
+
+
+#### Minimum Latency vs Required Number of Spacecraft
+#### Angular Distances vs Circular Orbit Alt , Number of spacecraft
+fig2 = plt.figure(num=88321654684)
+plt.rc('axes',linewidth=2)
+plt.rc('lines',linewidth=2)
+plt.rcParams['axes.linewidth']=2
+plt.rc('font',weight='bold')
+plt.contourf(orbitalRadii2,angularDistances2,optNumSpacecraft.T,cmap='bwr')#,locator=ticker.LogLocator())
+cbar = plt.colorbar()#ticks=bounds)
+cbar.set_label(label='Minimum Number of Spacecraft (s)',weight='bold')
+clev2 = [0,1,2,3,4,5]
+plt.contour(orbitalRadii2,angularDistances2,optNumSpacecraft.T,clev2,colors='black')
+plt.xscale('log')
+plt.xlabel('Circular Orbit Altitude (km)', weight='bold')
+plt.ylabel('Angular Distance (rad)', weight='bold')
+plt.show(block=False)
+####
+
+
+#### Minimum Latency vs Required Number of Spacecraft
+gndPt = np.asarray([-1.274*10**6,-4.719*10**6,4.0862*10**6])
+airPt = np.asarray([6.3093*10**6,0.9542-10**6,-0.0056*10**6])
+angle = np.arccos(np.dot(gndPt,airPt)/np.linalg.norm(gndPt)/np.linalg.norm(airPt))
+indClosest = np.argmin(np.abs(angularDistances2-angle))
+
+fig3 = plt.figure(num=4445668796683651)
+plt.plot((optNumSpacecraft.T[indClosest]).astype(int),theoreticalMinimumLatpoints.T[indClosest],color='black')
+plt.yscale('log')
+plt.show(block=False)
+tmp = [print(str([(optNumSpacecraft.T[indClosest]).astype(int)[i], theoreticalMinimumLatpoints.T[indClosest][i]]) + ',') for i in np.arange(len(theoreticalMinimumLatpoints.T[indClosest]))]
+####
+
+numSCvsLatData = np.asarray([[3, 0.036927653930991955],[3, 0.03701413742853741],[3, 0.03710354868629944],[3, 0.037195986192321166],[3, 0.03729155146517235],[3, 0.03739034912829678],[3, 0.03749248698558368],
+[3, 0.03759807609824066],[3, 0.0377072308630638],[2, 0.03741264288891871],[2, 0.03717664953387497],[2, 0.037247244509337064],[2, 0.03731690909928323],
+[2, 0.037385512119606355],[2, 0.03745291418411222],[2, 0.037518967247594966],[2, 0.03758351412864031],[2, 0.0376463880057544],[2, 0.03770741189950571],
+[2, 0.03776639811735006],[2, 0.03782314768536277],[2, 0.03787744975246314],[2, 0.03792908097304091],[2, 0.0379778048685034],[2, 0.03802337116965533],[2, 0.03810948662293442],
+[2, 0.03831003609566931],[2, 0.038521773452780364],[2, 0.038745361764875474],[2, 0.038981503548787155],[2, 0.039230942709240164],[2, 0.03949446666921188],[2, 0.03977290861058397],
+[2, 0.04006714962650283],[2, 0.040378120892265876],[2, 0.04070680615630695],[2, 0.041054243954536725],[2, 0.04142152990320741],[2, 0.041809819200441134],[2, 0.04222032893021553],
+[2, 0.042654340481526054],[2, 0.04311320186196639],[2, 0.04359833028554426],[2, 0.04411121415524297],[2, 0.04465341576712743],[2, 0.04522657347435774],[2, 0.04583240395061749],
+[1, 0.04647270459806687],[1, 0.047149355690897635],[1, 0.047864322683358655],[1, 0.04861965845537611],[1, 0.04941750557387716],[1, 0.05026009858114794],[1, 0.051149766326376786],
+[1, 0.05208893436096251],[1, 0.05308012742080933],[1, 0.054125972021201056],[1, 0.055229199191872566],[1, 0.056392647381507746],[1, 0.05761926556204025],[1, 0.05891211656378039],
+[1, 0.06027438067252119],[1, 0.061709359519400576],[1, 0.06322048029343014],[1, 0.064811300305303],[1, 0.06648551192941338],[1, 0.06824694794904622],[1, 0.07009958732750682],[1, 0.07204756142565255],
+[1, 0.07409516068395801],[1, 0.07624684178497257],[1, 0.07850723530991494],[1, 0.08088115390124437],[1, 0.08337360094143724],[1, 0.08598977975690407],[1, 0.08873510335505631],[1, 0.09161520470197955],
+[1, 0.09463594754799767],[1, 0.09780343780861696],[1, 0.10112403550888904],[1, 0.1046043673001222],[1, 0.10825133955904019],[1, 0.11207215208093664],[1, 0.11607431238002319],[1, 0.12026565061203],
+[1, 0.12465433513610207],[1, 0.1292488887351625],[1, 0.13405820551611175],[1, 0.13909156851350196],[1, 0.14435866802263853],[1, 0.1498696206904002],[1, 0.15563498939441966],
+[1, 0.16166580394362468],[1, 0.1679735826355082],[1, 0.17457035470784385],[1, 0.1814686837249378],[1, 0.18868169194086742],[1, 0.19622308568453256],[1, 0.2041071818137418],[1, 0.21234893528797433]])
+
