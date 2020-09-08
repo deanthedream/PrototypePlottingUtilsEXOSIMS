@@ -585,7 +585,7 @@ for i in np.arange(len(planets)):
 ax0.set_ylabel('Absolute Hyperbolic\nPhase Function Error',weight='bold')
 ax1.set_ylabel('Absolute Quasi Lambert\nPhase Function Error',weight='bold')
 ax2.set_ylabel('Absolute Lambert\nPhase Function Error',weight='bold')
-ax2.set_xlabel('Phase Angle in deg', weight='bold')
+ax2.set_xlabel(r'Phase Angle, $\beta$, in ($^\circ$)', weight='bold')
 # ax0.set_yscale('log')
 # ax1.set_yscale('log')
 # ax2.set_yscale('log')
@@ -597,7 +597,17 @@ ax1.set_ylim([10**-3,1])
 ax2.set_ylim([10**-3,1])
 ax0.legend(loc=9,ncol=4,labelspacing=0.2,columnspacing=0.2)
 plt.tight_layout()
+plt.gcf().canvas.draw()
 plt.show(block=False)
+#Save Plots
+# Save to a File
+date = str(datetime.datetime.now())
+date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+fname = 'HyperbolicPhaseFunctionLinearError' + folder.split('/')[-1] + '_' + date
+plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
+plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
+plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
+plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
 
 ## Same but with Percent Error
 num=4489
@@ -624,7 +634,7 @@ for i in np.arange(len(planets)):
 ax0.set_ylabel('Hyperbolic Phase\nFunction % Error',weight='bold')
 ax1.set_ylabel('Quasi Lambert Phase\nFunction % Error',weight='bold')
 ax2.set_ylabel('Lambert Phase\nFunction % Error',weight='bold')
-ax2.set_xlabel('Phase Angle in deg', weight='bold')
+ax2.set_xlabel(r'Phase Angle, $\beta$, in ($^\circ$)', weight='bold')
 ax0.set_yscale('log')
 ax1.set_yscale('log')
 ax2.set_yscale('log')
@@ -639,7 +649,17 @@ ax2.set_xlim([0,180])
 # ax2.set_ylim([10**-1,100])
 ax0.legend(loc=9,ncol=4,labelspacing=0.2,columnspacing=0.2)
 plt.tight_layout()
+plt.gcf().canvas.draw()
 plt.show(block=False)
+#Save Plots
+# Save to a File
+date = str(datetime.datetime.now())
+date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+fname = 'HyperbolicPhaseFunctionLinearPercentError' + folder.split('/')[-1] + '_' + date
+plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
+plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
+plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
+plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
 ####################################################################################
 
 
@@ -657,8 +677,9 @@ for i in np.arange(len(planets)):
 plt.xlim([0.,180.])
 plt.ylim([-35.,10.])
 plt.ylabel('Visual Apparent Magnitude', weight='bold')
-plt.xlabel('Phase Angle in deg', weight='bold')
+plt.xlabel(r'Phase Angle, $\beta$, in ($^\circ$)', weight='bold')
 plt.legend()
+plt.gcf().canvas.draw()
 plt.show(block=False)
 # Plot Fluxes from Earth
 plt.close(11)
@@ -672,8 +693,9 @@ for i in np.arange(len(planets)):
     plt.semilogy(planProp[planets[i]]['alphas_max_fromearth'],planProp[planets[i]]['pFluxs_FromEarth'][1],color=planProp[planets[i]]['planet_labelcolors'],label=planProp[planets[i]]['planet_name'].capitalize(),linestyle='--')
 plt.xlim([0.,180.])
 plt.ylabel('Planet Flux', weight='bold')
-plt.xlabel('Phase Angle in deg', weight='bold')
+plt.xlabel(r'Phase Angle, $\beta$, in ($^\circ$)', weight='bold')
 plt.legend()
+plt.gcf().canvas.draw()
 plt.show(block=False)
 # Plot Fluxes from Earth normalized by distance^2
 plt.close(12)
@@ -687,8 +709,9 @@ for i in np.arange(len(planets)):
     plt.semilogy(planProp[planets[i]]['alphas_max_fromearth'],planProp[planets[i]]['pFluxs_FromEarth'][1]/planProp[planets[i]]['distances_fromearth'][1]**2.,color=planProp[planets[i]]['planet_labelcolors'],label=planProp[planets[i]]['planet_name'].capitalize(),linestyle='--')
 plt.xlim([0.,180.])
 plt.ylabel('Planet Flux/distance from earth squared', weight='bold')
-plt.xlabel('Phase Angle in deg', weight='bold')
+plt.xlabel('Phase Angle, ' + r'$\beta$' + ', in deg', weight='bold')
 plt.legend()
+plt.gcf().canvas.draw()
 plt.show(block=False)
 #### Phase Function over Range Visible From Earth
 plt.close(14)
@@ -701,8 +724,9 @@ for i in np.arange(len(planets)):
     plt.plot(planProp[planets[i]]['alphas_max_fromearth'],planProp[planets[i]]['phaseFuncValues'],color=planProp[planets[i]]['planet_labelcolors'],label=planProp[planets[i]]['planet_name'].capitalize())
 plt.xlim([0.,180.])
 plt.ylabel('Phase Function Mallama alphas', weight='bold')
-plt.xlabel('Phase Angle in deg', weight='bold')
+plt.xlabel(r'Phase Angle, $\beta$, in ($^\circ$)', weight='bold')
 plt.legend()
+plt.gcf().canvas.draw()
 plt.show(block=False)
 #### All Phase Functions
 plt.close(15)
@@ -717,8 +741,9 @@ for i in np.arange(len(planets)):
 plt.xlim([0.,180.])
 plt.ylim([0.,1.0])
 plt.ylabel('Phase Function Mallama alphas ALL', weight='bold')
-plt.xlabel('Phase Angle in deg', weight='bold')
+plt.xlabel(r'Phase Angle, $\beta$, in ($^\circ$)', weight='bold')
 plt.legend()
+plt.gcf().canvas.draw()
 plt.show(block=False)
 #### All Phase Functions MELDED
 plt.close(17)
@@ -739,6 +764,7 @@ plt.ylim([0.,1.0])
 plt.ylabel(r'Solar System Planet Phase, $\Phi$', weight='bold')
 plt.xlabel(r'Phase Angle, $\beta$, in ($^\circ$)', weight='bold')
 plt.legend()
+plt.gcf().canvas.draw()
 plt.show(block=False)
 #Save Plots
 # Save to a File
@@ -861,13 +887,14 @@ def plotDmagvss(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx,IWA2,i
     plt.ylabel('Planet-Star ' + r'$\Delta \mathrm{mag}$', weight='bold')
     plt.xlabel('Projected Planet-Star Separation, ' + r'$s$,' +' in AU', weight='bold')
     plt.legend()
-    plt.title('Inclination: ' + str(int(90-inclination)) + r'$^\circ$' ,weight='bold')
+    plt.title('Inclination: ' + str(np.round(90-inclination,1)) + r'$^\circ$' ,weight='bold')
+    plt.gcf().canvas.draw()
     plt.show(block=False)
     #Save Plots
     # Save to a File
     date = str(datetime.datetime.now())
     date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
-    fname = 'dMagvsS_solarSystem_inc' + str(int(90-inclination)) + folder.split('/')[-1] + '_' + date
+    fname = 'dMagvsS_solarSystem_inc' + str(np.round(90-inclination,1)) + folder.split('/')[-1] + '_' + date
     plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
     plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
     plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
@@ -1013,6 +1040,7 @@ def plotDmagvssLineIncs(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabE
     plt.legend()
     incStringList = [str(incNum) for incNum in inclinations]
     plt.title('Inclination: ' + r'$^\circ$ '.join(incStringList) + r'$^\circ$' ,weight='bold')
+    plt.gcf().canvas.draw()
     plt.show(block=False)
     #Save Plots
     # Save to a File
@@ -1186,6 +1214,7 @@ def plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_Ha
         #plt.scatter(planProp[planets[i]]['s'],planProp[planets[i]]['dmag'],color='black',s=16,zorder=50) #Used for checking spacing
         plt.xlim([1e-1,0.5])
         plt.xscale('log')
+        plt.gcf().canvas.draw()
         plt.show(block=False)
 
         #ADD SMIN FOR TELESCOPE
@@ -1202,14 +1231,15 @@ def plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_Ha
         plt.ylabel('Planet-Star ' + r'$\Delta \mathrm{mag}$', weight='bold')
         plt.xlabel('Projected Planet-Star Separation, ' + r'$s$,' +' in AU', weight='bold')
         plt.legend(loc=1)
-        plt.title('Inclination: ' + str(int(90-inclination)) + r'$^\circ$' ,weight='bold')
+        plt.title('Inclination: ' + str(np.round(90-inclination,1)) + r'$^\circ$' ,weight='bold')
+        plt.gcf().canvas.draw()
         plt.show(block=False)
         print('Done with planet: ' + str(planets[i]))
     #Save Plots
     # Save to a File
     date = str(datetime.datetime.now())
     date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
-    fname = 'dMagvsSMonteCarlo_solarSystem_inc' + str(int(90-inclination)) + folder.split('/')[-1] + '_' + date
+    fname = 'dMagvsSMonteCarlo_solarSystem_inc' + str(np.round(90-inclination,1)) + folder.split('/')[-1] + '_' + date
     plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
     plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
     plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
@@ -1219,15 +1249,25 @@ def plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_Ha
 
 plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=0., num=670, folder='./', PPoutpath='./')
 plt.close(670)
-plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=2., num=680, folder='./', PPoutpath='./')
+plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=2.2, num=680, folder='./', PPoutpath='./')
 plt.close(680)
-plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=5., num=690, folder='./', PPoutpath='./')
+plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=21., num=690, folder='./', PPoutpath='./')
 plt.close(690)
-plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=10., num=700, folder='./', PPoutpath='./')
+plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=25.3, num=700, folder='./', PPoutpath='./')
 plt.close(700)
-plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=25., num=710, folder='./', PPoutpath='./')
+plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=43.6, num=710, folder='./', PPoutpath='./')
 plt.close(710)
 
 
+#### Fraction of Solar system-like star systems with Coincident Planets
+import scipy.integrate as integrate
+intersectionInclinations = np.asarray([1.0,1.7,2.2,21.0,25.3,43.6])
+totalIntegral = integrate.quad(lambda x: np.cos(x), 0., np.pi/2.)[0]
+fractionStarsWithCoincidentPlanets = list()
+for i in np.arange(len(intersectionInclinations)):
+    fractionStarsWithCoincidentPlanets.append(integrate.quad(lambda x: np.cos(x), a=0.,b=intersectionInclinations[i]*np.pi/180.)[0])
+fractionStarsWithCoincidentPlanets = np.asarray(fractionStarsWithCoincidentPlanets)/totalIntegral
 
+print(fractionStarsWithCoincidentPlanets)
+####
 
