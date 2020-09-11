@@ -278,7 +278,40 @@ nu2 = tmp2 - w
 #######################################################################
 
 
+#### nu From dMag #####################################################
+def calcNusFromDmag(a,e,p,Rp,dmag):
+    """ Calculates nu for a given planet at the given dmag
+    Args:
+        a (numpy array):
+            semi-major axis for all planets
+        e (numpy array):
+            eccentricty for all planets
+        Rp (numpy array):
+            planet radius for all planets
+        dmag (numpy array):
+            delta magnitude to calculate nu at for all planets
+    Returns:
+        nus_from_dmag (numpy array):
+            of dimension (nplans,4)
+        success (numpy array):
+            an array of booleans with length nplans
+    """
+    var = (-(B*C+1.)*np.exp(2.*D/A))/(B*C-1.)
+    nu0 = -w + np.arcsin(np.cos(A/2.*np.log(var))/np.sin(inc))
+    nu1 = -w + np.arcsin(np.cos(A*np.log(-np.sqrt(var)))/np.sin(inc))
+    nu2 = -w - np.arcsin(np.cos(A/2.*np.log(var))/np.sin(inc)) +np.pi
+    nu3 = -w - np.arcsin(np.cos(A*np.log(-np.sqrt(var)))/np.sin(inc)) + np.pi
+
+    return nus
+nus_from_dmag, success = calcNusFromDmag(a,e,p,Rp,dmag)
+#######################################################################
+
+
 #### Dynamic Completeness Calculations ################################
 
 #######################################################################
+
+#### Dynamic Completeness By Subtype Calculations #####################
+#######################################################################
+
 
