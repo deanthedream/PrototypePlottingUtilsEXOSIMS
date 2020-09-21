@@ -16,6 +16,7 @@ except:
     import pickle
 from itertools import combinations
 from scipy.optimize import minimize
+import matplotlib.pyplot as plt
 
 w = np.asarray(np.linspace(start=0.,stop=2.*np.pi,num=5))
 inc = np.linspace(start=0.,stop=np.pi/2.,num=5)
@@ -116,9 +117,13 @@ t0 = time.time()
 rbsDict = dict()
 extremaDict = dict()
 extremaDict['min'] = dict() 
-extremaDict['lmin'] = dict() 
-extremaDict['lmax'] = dict() 
-extremaDict['max'] = dict() 
+extremaDict['nu_min'] = dict()
+extremaDict['lmin'] = dict()
+extremaDict['nu_lmin'] = dict()
+extremaDict['lmax'] = dict()
+extremaDict['nu_lmax'] = dict()
+extremaDict['max'] = dict()
+extremaDict['nu_max'] = dict()
 for i,j in itertools.product(np.arange(len(inc)),np.arange(len(w))):
     #rhsArray = np.zeros((len(e),len(yarray)))
     #for k,l in itertools.product(np.arange(len(v)),np.arange(len(e))):
@@ -159,6 +164,10 @@ for i,j in itertools.product(np.arange(len(inc)),np.arange(len(w))):
         extremaDict['lmin'][(i,j,k)] = lmin
         extremaDict['lmax'][(i,j,k)] = lmax
         extremaDict['max'][(i,j,k)] = np.max(rhsArray[k,minInd])
+        extremaDict['nu_min'][(i,j,k)] = v[minInd]
+        extremaDict['nu_lmin'][(i,j,k)] = v[lminInd]
+        extremaDict['nu_lmax'][(i,j,k)] = v[lmaxInd]
+        extremaDict['nu_max'][(i,j,k)] = v[maxInd]
     rbsDict[(i,j)] = RBS(e,v,rhsArray)
 
     #Finds min, max, lmin, lmax of RBS vs nu at specific e
@@ -339,6 +348,12 @@ def rhs_model(x,inc,nu,omega,e):
     x[622]*e*inc**3*nu**3*omega**3+x[623]*e**2*inc**3*nu**3*omega**3+x[624]*e**3*inc**3*nu**3*omega**3
     return rhs
 
+def rhs_model2(x,inc,nu,omega,e):
+    """ The double gaussian doesn't have an analytical solution either so I can't use it
+    """
+    rhs = x[0]*np.exp(-(nu-x[1])**2/x[2]**2) + x[3]*np.exp(-(nu-x[4])**2/x[5]**2)
+    return rhs
+
 def rhs_error(x,inc,v,w,e):
     #interpArray = np.zeros((len(w),len(inc),len(e),len(v)))
     error = 0
@@ -367,3 +382,4 @@ out = minimize(rhs_error,x0,args=(inc,v,w,e))
 # store dynamic completeness array as .dcomp file
 with open(path2, 'wb') as ff:
     pickle.dump(out.x, ff)
+
