@@ -49,11 +49,12 @@ sma, e, p, Rp = PPop.gen_plan_params(n)
 sma = sma.to('AU').value
 
 a = sma*u.AU
-dmag = 25. #specify the dmag to calculate for
+dmag = 29. #specify the dmag to calculate for
 
+#################################################################################################################
 #This is a solver for nu from dmag assuming a quasi-lambert phase function fullEqnX from AnalyticalNuFromDmag3.ipynb
 #Generate terms
-lhs = 10.**(-0.4*dmag)*(1.-e**2.)**2.*(a.to('AU')/Rp.to('AU')).decompose().value**2/p
+lhs = 10.**(-0.4*dmag)*(1.-e**2.)**2.*(a.to('AU')/Rp.to('AU')).decompose().value**2./p
 
 
 tstart_cos = time.time()
@@ -78,18 +79,18 @@ out = np.asarray(out)
 #Throw out roots not in correct bounds
 inBoundsBools = (np.abs(out.imag) <= 1e-7)*(out.real >= -1.)*(out.real <= 1.) #the out2 solutions that are inside of the desired bounds
 outBoundsBools = np.logical_not(inBoundsBools) # the out2 solutions that are inside the desired bounds
-outReal = out
+outReal = np.zeros(out.shape) #just getting something with the right shape
 outReal[outBoundsBools] = out[outBoundsBools]*np.nan
 #For arccos in 0-pi
 nuReal = np.ones(outReal.shape)*np.nan
 nuReal[inBoundsBools] = np.arccos(outReal[inBoundsBools]) #calculate arccos, there are 2 potential solutions... need to calculate both
-gPhi = (1.+np.sin(np.tile(inc,(8,1)).T)*np.sin(nuReal+np.tile(w,(8,1)).T))**2./4 #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
+gPhi = (1.+np.sin(np.tile(inc,(8,1)).T)*np.sin(nuReal+np.tile(w,(8,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
 gd = np.tile(a.to('AU'),(8,1)).T*(1.-np.tile(e,(8,1)).T**2.)/(np.tile(e,(8,1)).T*np.cos(nuReal)+1.)
 gdmags = deltaMag(np.tile(p,(8,1)).T,np.tile(Rp.to('AU'),(8,1)).T,gd,gPhi) #calculate dmag of the specified x-value
 #For arccos in pi-2pi 
 nuReal2 = np.ones(outReal.shape)*np.nan
 nuReal2[inBoundsBools] = 2.*np.pi - np.arccos(outReal[inBoundsBools])
-gPhi2 = (1.+np.sin(np.tile(inc,(8,1)).T)*np.sin(nuReal2+np.tile(w,(8,1)).T))**2./4 #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
+gPhi2 = (1.+np.sin(np.tile(inc,(8,1)).T)*np.sin(nuReal2+np.tile(w,(8,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
 gd2 = np.tile(a.to('AU'),(8,1)).T*(1.-np.tile(e,(8,1)).T**2.)/(np.tile(e,(8,1)).T*np.cos(nuReal2)+1.)
 gdmags2 = deltaMag(np.tile(p,(8,1)).T,np.tile(Rp.to('AU'),(8,1)).T,gd2,gPhi2) #calculate dmag of the specified x-value
 
@@ -133,6 +134,79 @@ ttstart = time.time()
 np.roots(coeffs[:,i])
 ttstop = time.time()
 
+#####################################################################
+#### Solving for dmag_min and dmag_max for each planet
+def calc_planet_dmagmin_dmagmax(e,inc,w,a,p,Rp):
+    """ A method for calculating the minimum and maximum dmag of any given planet
+    Assumes the planet has a quasi-lambert phase function (a poor approximation).
+    Args:
+        e (array):
+        inc (array):
+        w (array):
+        a (array):
+        p (array):
+        Rp (array):
+    Returns:
+        mindmag (array):
+            an array containing the minimum dmags 
+        maxdmag
+        indsWith4
+    """
+    A = e**4.*np.sin(inc)**4.*np.sin(w)**4. + 2.*e**4.*np.sin(inc)**4.*np.sin(w)**2.*np.cos(w)**2. + e**4.*np.sin(inc)**4.*np.cos(w)**4.
+    B = 3.*e**4.*np.sin(inc)**3.*np.sin(w)**3. + 3.*e**4.*np.sin(inc)**3.*np.sin(w)*np.cos(w)**2. + 3.*e**3.*np.sin(inc)**4.*np.sin(w)**4. + 6.*e**3.*np.sin(inc)**4.*np.sin(w)**2.*np.cos(w)**2. + 3.*e**3.*np.sin(inc)**4.*np.cos(w)**4.
+    C = -e**4.*np.sin(inc)**4.*np.sin(w)**4. - 3.*e**4.*np.sin(inc)**4.*np.sin(w)**2.*np.cos(w)**2. - 2.*e**4.*np.sin(inc)**4.*np.cos(w)**4. + 13.*e**4.*np.sin(inc)**2.*np.sin(w)**2./4. + 5.*e**4.*np.sin(inc)**2.*np.cos(w)**2./4. + 17.*e**3.*np.sin(inc)**3.*np.sin(w)**3./2. + 17.*e**3.*np.sin(inc)**3.*np.sin(w)*np.cos(w)**2./2. + 13.*e**2.*np.sin(inc)**4.*np.sin(w)**4./4. + 13.*e**2.*np.sin(inc)**4.*np.sin(w)**2.*np.cos(w)**2./2. + 13.*e**2.*np.sin(inc)**4.*np.cos(w)**4./4.
+    D = -3.*e**4.*np.sin(inc)**3.*np.sin(w)**3. - 4.*e**4.*np.sin(inc)**3.*np.sin(w)*np.cos(w)**2. + 3.*e**4.*np.sin(inc)*np.sin(w)/2. - 3.*e**3.*np.sin(inc)**4.*np.sin(w)**4. - 17.*e**3.*np.sin(inc)**4.*np.sin(w)**2.*np.cos(w)**2./2. - 11.*e**3.*np.sin(inc)**4.*np.cos(w)**4./2. + 17.*e**3.*np.sin(inc)**2.*np.sin(w)**2./2. + 7.*e**3.*np.sin(inc)**2.*np.cos(w)**2./2. + 17.*e**2.*np.sin(inc)**3.*np.sin(w)**3./2. + 17.*e**2.*np.sin(inc)**3.*np.sin(w)*np.cos(w)**2./2. + 3.*e*np.sin(inc)**4.*np.sin(w)**4./2. + 3.*e*np.sin(inc)**4.*np.sin(w)**2.*np.cos(w)**2. + 3.*e*np.sin(inc)**4.*np.cos(w)**4./2.
+    E = 5.*e**4.*np.sin(inc)**4.*np.sin(w)**2.*np.cos(w)**2./4. + 5.*e**4.*np.sin(inc)**4.*np.cos(w)**4./4. - 13.*e**4.*np.sin(inc)**2.*np.sin(w)**2./4. - 3.*e**4.*np.sin(inc)**2.*np.cos(w)**2./2. + e**4./4. - 17.*e**3.*np.sin(inc)**3.*np.sin(w)**3./2. - 10.*e**3.*np.sin(inc)**3.*np.sin(w)*np.cos(w)**2. + 7.*e**3.*np.sin(inc)*np.sin(w)/2. - 13.*e**2.*np.sin(inc)**4.*np.sin(w)**4./4. - 17.*e**2.*np.sin(inc)**4.*np.sin(w)**2.*np.cos(w)**2./2. - 21.*e**2.*np.sin(inc)**4.*np.cos(w)**4./4. + 15.*e**2.*np.sin(inc)**2.*np.sin(w)**2./2. + 7.*e**2.*np.sin(inc)**2.*np.cos(w)**2./2. + 7.*e*np.sin(inc)**3.*np.sin(w)**3./2. + 7.*e*np.sin(inc)**3.*np.sin(w)*np.cos(w)**2./2. + np.sin(inc)**4.*np.sin(w)**4./4. + np.sin(inc)**4.*np.sin(w)**2.*np.cos(w)**2./2. + np.sin(inc)**4.*np.cos(w)**4./4.
+    F = 3.*e**4.*np.sin(inc)**3.*np.sin(w)*np.cos(w)**2./2. - 3.*e**4.*np.sin(inc)*np.sin(w)/2. + 7.*e**3.*np.sin(inc)**4.*np.sin(w)**2.*np.cos(w)**2./2. + 3.*e**3.*np.sin(inc)**4.*np.cos(w)**4. - 17.*e**3.*np.sin(inc)**2.*np.sin(w)**2./2. - 7.*e**3.*np.sin(inc)**2.*np.cos(w)**2./2. + e**3./2. - 17.*e**2.*np.sin(inc)**3.*np.sin(w)**3./2. - 8.*e**2.*np.sin(inc)**3.*np.sin(w)*np.cos(w)**2. + 5.*e**2.*np.sin(inc)*np.sin(w)/2. - 3.*e*np.sin(inc)**4.*np.sin(w)**4./2. - 7.*e*np.sin(inc)**4.*np.sin(w)**2.*np.cos(w)**2./2. - 2.*e*np.sin(inc)**4.*np.cos(w)**4. + 5.*e*np.sin(inc)**2.*np.sin(w)**2./2. + 3.*e*np.sin(inc)**2.*np.cos(w)**2./2. + np.sin(inc)**3.*np.sin(w)**3./2. + np.sin(inc)**3.*np.sin(w)*np.cos(w)**2./2.
+    G = -e**4.*np.sin(inc)**4.*np.cos(w)**4./4. + e**4.*np.sin(inc)**2.*np.cos(w)**2./2. - e**4./4. + 7.*e**3.*np.sin(inc)**3.*np.sin(w)*np.cos(w)**2./2. - 7.*e**3.*np.sin(inc)*np.sin(w)/2. + 7.*e**2.*np.sin(inc)**4.*np.sin(w)**2.*np.cos(w)**2./2. + 9.*e**2.*np.sin(inc)**4.*np.cos(w)**4./4. - 15.*e**2.*np.sin(inc)**2.*np.sin(w)**2./2. - 5.*e**2.*np.sin(inc)**2.*np.cos(w)**2./2. + e**2./4. - 7.*e*np.sin(inc)**3.*np.sin(w)**3./2. - 2.*e*np.sin(inc)**3.*np.sin(w)*np.cos(w)**2. + e*np.sin(inc)*np.sin(w)/2. - np.sin(inc)**4.*np.sin(w)**4./4. - np.sin(inc)**4.*np.sin(w)**2.*np.cos(w)**2./2. - np.sin(inc)**4.*np.cos(w)**4./4. + np.sin(inc)**2.*np.sin(w)**2./4. + np.sin(inc)**2.*np.cos(w)**2./4.
+    H = -e**3.*np.sin(inc)**4.*np.cos(w)**4./2. + e**3.*np.sin(inc)**2.*np.cos(w)**2. - e**3./2. + 5.*e**2.*np.sin(inc)**3.*np.sin(w)*np.cos(w)**2./2. - 5.*e**2.*np.sin(inc)*np.sin(w)/2. + 3.*e*np.sin(inc)**4.*np.sin(w)**2.*np.cos(w)**2./2. + e*np.sin(inc)**4.*np.cos(w)**4./2. - 5.*e*np.sin(inc)**2.*np.sin(w)**2./2. - e*np.sin(inc)**2.*np.cos(w)**2./2. - np.sin(inc)**3.*np.sin(w)**3./2.
+    I = -e**2.*np.sin(inc)**4.*np.cos(w)**4./4. + e**2.*np.sin(inc)**2.*np.cos(w)**2./2. - e**2./4. + e*np.sin(inc)**3.*np.sin(w)*np.cos(w)**2./2. - e*np.sin(inc)*np.sin(w)/2. + np.sin(inc)**4.*np.sin(w)**2.*np.cos(w)**2./4. - np.sin(inc)**2.*np.sin(w)**2./4.
+    coeffs = np.asarray([A,B,C,D,E,F,G,H,I]) #compile the coefficients into a single array
+    del A, B, C, D, E, F, G, H, I #delete the
+    #solve for x in the polynomial (where x=cos(nu))
+    out = list()
+    for i in np.arange(coeffs.shape[1]):
+        out.append(np.roots(coeffs[:,i])) # this is x
+    out = np.asarray(out)
+    del coeffs #delete the coefficients. They are no longer needed
+
+    #Throw out roots not in correct bounds
+    inBoundsBools = (np.abs(out.imag) <= 1e-7)*(out.real >= -1.)*(out.real <= 1.) #the out2 solutions that are inside of the desired bounds
+    outBoundsBools = np.logical_not(inBoundsBools) # the out2 solutions that are inside the desired bounds
+    outReal = np.zeros(out.shape) #just getting something with the correct shape
+    outReal[outBoundsBools] = out[outBoundsBools]*np.nan #make all zeros out of legal bounds nan
+    #For arccos in 0-pi
+    nuReal = np.ones(outReal.shape)*np.nan
+    nuReal[inBoundsBools] = np.arccos(outReal[inBoundsBools]) #calculate arccos, there are 2 potential solutions... need to calculate both
+    gPhi = (1.+np.sin(np.tile(inc,(8,1)).T)*np.sin(nuReal+np.tile(w,(8,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
+    gd = np.tile(a.to('AU'),(8,1)).T*(1.-np.tile(e,(8,1)).T**2.)/(np.tile(e,(8,1)).T*np.cos(nuReal)+1.)
+    gdmags = deltaMag(np.tile(p,(8,1)).T,np.tile(Rp.to('AU'),(8,1)).T,gd,gPhi) #calculate dmag of the specified x-value
+
+    mindmags = np.zeros((2,gdmags.shape[0])) #create an array for storing mindmags for the first set of solutions
+    maxdmags = np.zeros((2,gdmags.shape[0])) #create an array for storing maxdmags for the second set of solutions
+    mindmags[0] = np.nanmin(gdmags,axis=1) #min dmags from first array
+    maxdmags[0] = np.nanmax(gdmags,axis=1) #max dmags from first array
+    
+    #For arccos in pi-2pi 
+    nuReal2 = np.ones(outReal.shape)*np.nan
+    nuReal2[inBoundsBools] = 2.*np.pi - np.arccos(outReal[inBoundsBools])
+    gPhi2 = (1.+np.sin(np.tile(inc,(8,1)).T)*np.sin(nuReal2+np.tile(w,(8,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
+    gd2 = np.tile(a.to('AU'),(8,1)).T*(1.-np.tile(e,(8,1)).T**2.)/(np.tile(e,(8,1)).T*np.cos(nuReal2)+1.)
+    gdmags2 = deltaMag(np.tile(p,(8,1)).T,np.tile(Rp.to('AU'),(8,1)).T,gd2,gPhi2) #calculate dmag of the specified x-value
+    mindmags[1] = np.nanmin(gdmags2,axis=1) #min dmags from second array
+    maxdmags[1] = np.nanmax(gdmags2,axis=1) #max dmags from second array
+
+    mindmag = np.min(mindmags,axis=0) #mindmag for each planet
+    maxdmag = np.max(maxdmags,axis=0) #maxdmag for each planet
+
+    indsWith4 = np.where(np.sum(~np.isnan(gdmags),axis=1) == 4)[0] #finds planet indicies with min, max, local min, local max
+    #Could add local min and local max to output
+
+    return mindmag, maxdmag, indsWith4
+
+mindmag, maxdmag, indsWith4 = calc_planet_dmagmin_dmagmax(e,inc,w,a,,p,Rp)
+print('Num Planets with given dmag: ' + str(np.sum((mindmag < dmag)*(maxdmag > dmag)))
+#####################################################################
 
 ####################################################################
 # #Using the derivative dFullEqnX from AnalyticalNuFromDmag3.ipynb
