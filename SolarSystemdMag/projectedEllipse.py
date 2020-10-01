@@ -12,7 +12,9 @@ import astropy.units as u
 #import jax.numpy as jxnp
 
 def projected_apbpPsipsi(a,e,W,w,inc):
-    """
+    """ Given the KOE of a planet, calculate the semi-paramters of the projected ellipse
+    and the angle from two construction lines to the x-axis (construction lines are 
+    intermediaries to determine the angle of the projected semi-major axis from the x-axis) 
     Args:
         a (numpy array):
             semi-major axis in AU
@@ -29,12 +31,12 @@ def projected_apbpPsipsi(a,e,W,w,inc):
             Semi-major axis of the projected ellipse in AU
         dminorp (numpy array):
             Semi-minor axis of the projected ellipse in AU
-        Psi (numpy array):
-            Angle between Op1 and OpQp
-        psi (numpy array):
-            Angle between OpQ and x-axis
+        theta_OpQ_X (numpy array):
+            Angle from the x-axis to line OpQ
+        theta_OpQp_X (numpy array):
+            Angle from the x-axis to line OpQp
     """
-
+    #DELETE A list of conversions when moving from jupyter notebook to python code 
     #sqrt to np.sqrt
     #Abs to np.abs
     #sin to np.sin
@@ -42,30 +44,35 @@ def projected_apbpPsipsi(a,e,W,w,inc):
     #atan to np.arctan
     #1.0* to 
     #3.14159265358979 to np.pi
-    Gamma = e*(1 - e**2)
+
+    Gamma = e*(1. - e**2.)
     gamma = (np.sin(W)*np.cos(w) + np.sin(w)*np.cos(W)*np.cos(inc))
-    Phi = np.sqrt((e+1)/(1-e)) #np.sqrt(e + 1)*np.sqrt(1/(1 - e))
-    phi = a**2*(e**2 - 1)**2
+    Phi = np.sqrt((e+1.)/(1.-e)) #np.sqrt(e + 1)*np.sqrt(1/(1 - e))
+    phi = a**2.*(e**2. - 1.)**2.
     #DELETE lam1 = np.sin(W)*np.sin(w)*np.cos(inc) - np.cos(W)*np.cos(w)
     lam2 = (-np.sin(W)*np.sin(w)*np.cos(inc) + np.cos(W)*np.cos(w))
-    Omicron = (np.sin(W)*np.cos(w + 2*np.arctan(Phi)) + np.sin(w + 2*np.arctan(Phi))*np.cos(W)*np.cos(inc))
-    Eeps = (e + 1)**2
-    Eeps2 = a*(1 - e**2)
-    Gorgon = (-np.sin(W)*np.sin(w + 2*np.arctan(Phi))*np.cos(inc) + np.cos(W)*np.cos(w + 2*np.arctan(Phi)))
-    Gemini = (e*np.cos(2*np.arctan(Phi)) + 1)
+    Omicron = (np.sin(W)*np.cos(w + 2.*np.arctan(Phi)) + np.sin(w + 2.*np.arctan(Phi))*np.cos(W)*np.cos(inc))
+    Eeps = (e + 1.)**2.
+    Eeps2 = a*(1. - e**2.)
+    Gorgon = (-np.sin(W)*np.sin(w + 2.*np.arctan(Phi))*np.cos(inc) + np.cos(W)*np.cos(w + 2.*np.arctan(Phi)))
+    Gemini = (e*np.cos(2.*np.arctan(Phi)) + 1.)
 
-    #Specific Calc Substitutions
-    Ramgy = ((e + 1)*np.sqrt(phi*gamma**2/Eeps + phi*(np.sin(W)*np.sin(w)*np.cos(inc) - np.cos(W)*np.cos(w))**2/Eeps + phi*np.sin(inc)**2*np.sin(w)**2/Eeps))
-    Affinity1 = a**2*Gamma*gamma/Ramgy
+    #Specific Calc Substitutions to shorten the code
+    Ramgy = ((e + 1.)*np.sqrt(phi*gamma**2./Eeps + phi*(np.sin(W)*np.sin(w)*np.cos(inc) - np.cos(W)*np.cos(w))**2./Eeps + phi*np.sin(inc)**2.*np.sin(w)**2./Eeps))
+    Affinity1 = a**2.*Gamma*gamma/Ramgy
     Yolo1 = (np.sin(W)*np.cos(w + np.pi) + np.sin(w + np.pi)*np.cos(W)*np.cos(inc))
     Kolko1 = (-np.sin(W)*np.sin(w + np.pi)*np.cos(inc) + np.cos(W)*np.cos(w + np.pi))
     #Semi-major axis length
-    dmajorp = np.sqrt(np.abs(Affinity1 + Eeps2*Yolo1/(1 - e) - (a**2*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2))**2 + np.abs(a**2*Gamma*(lam2)/Ramgy + Eeps2*Kolko1/(1 - e) - (-Affinity1 - Eeps2*Omicron/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2))**2)/2\
-             + np.sqrt(np.abs(Affinity1 + Eeps2*Yolo1/(1 - e) + (a**2*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2))**2 + np.abs(a**2*Gamma*(lam2)/Ramgy + Eeps2*Kolko1/(1 - e) + (-Affinity1 - Eeps2*Omicron/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2))**2)/2
+    dmajorp = np.sqrt(np.abs(Affinity1 + Eeps2*Yolo1/(1. - e) - (a**2.*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron/Gemini)**2. + np.abs(a**2.*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2.)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron/Gemini)**2. + np.abs(a**2.*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2.))**2. + np.abs(a**2.*Gamma*(lam2)/Ramgy + Eeps2*Kolko1/(1. - e) - (-Affinity1 - Eeps2*Omicron/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron/Gemini)**2. + np.abs(a**2.*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2.)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron/Gemini)**2 + np.abs(a**2.*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2.))**2.)/2.\
+             + np.sqrt(np.abs(Affinity1 + Eeps2*Yolo1/(1. - e) + (a**2.*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron/Gemini)**2. + np.abs(a**2.*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2.)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron/Gemini)**2. + np.abs(a**2.*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2.))**2. + np.abs(a**2.*Gamma*(lam2)/Ramgy + Eeps2*Kolko1/(1. - e) + (-Affinity1 - Eeps2*Omicron/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron/Gemini)**2. + np.abs(a**2.*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2.)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron/Gemini)**2. + np.abs(a**2.*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2.))**2.)/2.
     #Semi-minor axis length
-    dminorp = -np.sqrt(np.abs(Affinity1 + Eeps2*Yolo1/(1 - e) - (a**2*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2))**2 + np.abs(a**2*Gamma*(lam2)/Ramgy + Eeps2*Kolko1/(1 - e) - (-Affinity1 - Eeps2*Omicron/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2))**2)/2\
-             + np.sqrt(np.abs(Affinity1 + Eeps2*Yolo1/(1 - e) + (a**2*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2))**2 + np.abs(a**2*Gamma*(lam2)/Ramgy + Eeps2*Kolko1/(1 - e) + (-Affinity1 - Eeps2*Omicron/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2))**2)/2
-    #Angle between OpQ and OpQp
+    dminorp = -np.sqrt(np.abs(Affinity1 + Eeps2*Yolo1/(1. - e) - (a**2.*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron/Gemini)**2. + np.abs(a**2.*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2.)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron/Gemini)**2. + np.abs(a**2.*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2.))**2. + np.abs(a**2.*Gamma*(lam2)/Ramgy + Eeps2*Kolko1/(1. - e) - (-Affinity1 - Eeps2*Omicron/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron/Gemini)**2. + np.abs(a**2.*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2.)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron/Gemini)**2. + np.abs(a**2.*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2.))**2.)/2.\
+             + np.sqrt(np.abs(Affinity1 + Eeps2*Yolo1/(1. - e) + (a**2.*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron/Gemini)**2. + np.abs(a**2.*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2.)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron/Gemini)**2. + np.abs(a**2.*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2.))**2. + np.abs(a**2.*Gamma*(lam2)/Ramgy + Eeps2*Kolko1/(1. - e) + (-Affinity1 - Eeps2*Omicron/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron/Gemini)**2. + np.abs(a**2.*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2.)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron/Gemini)**2. + np.abs(a**2.*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2.))**2.)/2.
+    #Angle between OpQ and OpQp  #Keeping because it is the correct equation, this is the correct place to implement it if needed, but generally not necessary
+    # Psi (numpy array):
+    #     Angle between Op1 and OpQp
+    # psi (numpy array):
+    #     Angle between OpQ and x-axis
     # Psi = np.arccos(((Affinity1 + Eeps2*Yolo1/(1 - e) - (a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)**2)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)**2))*(Affinity1 + Eeps2*Yolo1/(1 - e) + (a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)**2)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)**2)) + (a**2*Gamma*lam2/Ramgy + Eeps2*Kolko1/(1 - e)\
     #          - (-Affinity1 - Eeps2*Omicron/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)**2)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)**2))*(a**2*Gamma*lam2/Ramgy + Eeps2*Kolko1/(1 - e) + (-Affinity1 - Eeps2*Omicron/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)**2)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)**2)))/(np.sqrt(np.abs(Affinity1 + Eeps2*Yolo1/(1 - e) - (a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)*np.sqrt(np.abs(Affinity1\
     #          + Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)**2)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)**2))**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*Kolko1/(1 - e) - (-Affinity1 - Eeps2*Omicron/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)**2)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)**2))**2)*np.sqrt(np.abs(Affinity1 + Eeps2*Yolo1/(1 - e) + (a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron/Gemini)**2\
@@ -92,17 +99,17 @@ def projected_apbpPsipsi(a,e,W,w,inc):
     # psi_v2 = np.arccos((a**2*Gamma*lam2/Ramgy + Eeps2*Kolko1/(1 - e) - (-Affinity1 - Eeps2*Omicron_v2/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron_v2/Gemini)**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)**2)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron_v2/Gemini)**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)**2))/np.sqrt(np.abs(Affinity1 + Eeps2*Yolo1/(1 - e) - (a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron_v2/Gemini)**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)**2)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron_v2/Gemini)**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)**2))**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*Kolko1/(1 - e)\
     #      - (-Affinity1 - Eeps2*Omicron_v2/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron_v2/Gemini)**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)**2)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron_v2/Gemini)**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)**2))**2))
 
-    #theta_OpQ_X
-    theta_OpQ_X = np.arctan2(Affinity1 + Eeps2*Yolo1/(1 - e) - (a**2*Gamma*lam2/Ramgy + Eeps2*(-np.sin(W)*np.sin(w + 2*np.arctan(Phi))*np.cos(inc) + np.cos(W)*np.cos(w + 2*np.arctan(Phi)))/(e*np.cos(2*np.arctan(Phi)) + 1))*np.sqrt(np.abs(Affinity1 + Eeps2*(np.sin(W)*np.cos(w + 2*np.arctan(Phi)) + np.sin(w + 2*np.arctan(Phi))*np.cos(W)*np.cos(inc))/(e*np.cos(2*np.arctan(Phi)) + 1))**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*(-np.sin(W)*np.sin(w + 2*np.arctan(Phi))*np.cos(inc) + np.cos(W)*np.cos(w + 2*np.arctan(Phi)))/(e*np.cos(2*np.arctan(Phi)) + 1))**2)/np.sqrt(np.abs(-Affinity1 - Eeps2*(np.sin(W)*np.cos(w + 2*np.arctan(Phi)) + np.sin(w + 2*np.arctan(Phi))*np.cos(W)*np.cos(inc))/(e*np.cos(2*np.arctan(Phi)) + 1))**2\
-         + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*(-np.sin(W)*np.sin(w + 2*np.arctan(Phi))*np.cos(inc) + np.cos(W)*np.cos(w + 2*np.arctan(Phi)))/(e*np.cos(2*np.arctan(Phi)) + 1))**2), a**2*Gamma*lam2/Ramgy + Eeps2*Kolko1/(1 - e) - (-Affinity1 - Eeps2*(np.sin(W)*np.cos(w + 2*np.arctan(Phi)) + np.sin(w + 2*np.arctan(Phi))*np.cos(W)*np.cos(inc))/(e*np.cos(2*np.arctan(Phi)) + 1))*np.sqrt(np.abs(Affinity1 + Eeps2*(np.sin(W)*np.cos(w + 2*np.arctan(Phi)) + np.sin(w + 2*np.arctan(Phi))*np.cos(W)*np.cos(inc))/(e*np.cos(2*np.arctan(Phi)) + 1))**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*(-np.sin(W)*np.sin(w + 2*np.arctan(Phi))*np.cos(inc) + np.cos(W)*np.cos(w + 2*np.arctan(Phi)))/(e*np.cos(2*np.arctan(Phi)) + 1))**2)/np.sqrt(np.abs(-Affinity1\
-          - Eeps2*(np.sin(W)*np.cos(w + 2*np.arctan(Phi)) + np.sin(w + 2*np.arctan(Phi))*np.cos(W)*np.cos(inc))/(e*np.cos(2*np.arctan(Phi)) + 1))**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*(-np.sin(W)*np.sin(w + 2*np.arctan(Phi))*np.cos(inc) + np.cos(W)*np.cos(w + 2*np.arctan(Phi)))/(e*np.cos(2*np.arctan(Phi)) + 1))**2))
+    #theta_OpQ_X: Angle between x-axis and line OpQ
+    theta_OpQ_X = np.arctan2(Affinity1 + Eeps2*Yolo1/(1. - e) - (a**2.*Gamma*lam2/Ramgy + Eeps2*(-np.sin(W)*np.sin(w + 2.*np.arctan(Phi))*np.cos(inc) + np.cos(W)*np.cos(w + 2.*np.arctan(Phi)))/(e*np.cos(2.*np.arctan(Phi)) + 1.))*np.sqrt(np.abs(Affinity1 + Eeps2*(np.sin(W)*np.cos(w + 2.*np.arctan(Phi)) + np.sin(w + 2.*np.arctan(Phi))*np.cos(W)*np.cos(inc))/(e*np.cos(2.*np.arctan(Phi)) + 1.))**2. + np.abs(a**2.*Gamma*lam2/Ramgy + Eeps2*(-np.sin(W)*np.sin(w + 2.*np.arctan(Phi))*np.cos(inc) + np.cos(W)*np.cos(w + 2.*np.arctan(Phi)))/(e*np.cos(2.*np.arctan(Phi)) + 1.))**2.)/np.sqrt(np.abs(-Affinity1 - Eeps2*(np.sin(W)*np.cos(w + 2.*np.arctan(Phi)) + np.sin(w + 2.*np.arctan(Phi))*np.cos(W)*np.cos(inc))/(e*np.cos(2.*np.arctan(Phi)) + 1.))**2.\
+         + np.abs(a**2.*Gamma*lam2/Ramgy + Eeps2*(-np.sin(W)*np.sin(w + 2.*np.arctan(Phi))*np.cos(inc) + np.cos(W)*np.cos(w + 2.*np.arctan(Phi)))/(e*np.cos(2.*np.arctan(Phi)) + 1.))**2.), a**2.*Gamma*lam2/Ramgy + Eeps2*Kolko1/(1. - e) - (-Affinity1 - Eeps2*(np.sin(W)*np.cos(w + 2.*np.arctan(Phi)) + np.sin(w + 2.*np.arctan(Phi))*np.cos(W)*np.cos(inc))/(e*np.cos(2.*np.arctan(Phi)) + 1.))*np.sqrt(np.abs(Affinity1 + Eeps2*(np.sin(W)*np.cos(w + 2.*np.arctan(Phi)) + np.sin(w + 2.*np.arctan(Phi))*np.cos(W)*np.cos(inc))/(e*np.cos(2.*np.arctan(Phi)) + 1.))**2. + np.abs(a**2.*Gamma*lam2/Ramgy + Eeps2*(-np.sin(W)*np.sin(w + 2.*np.arctan(Phi))*np.cos(inc) + np.cos(W)*np.cos(w + 2.*np.arctan(Phi)))/(e*np.cos(2.*np.arctan(Phi)) + 1.))**2.)/np.sqrt(np.abs(-Affinity1\
+          - Eeps2*(np.sin(W)*np.cos(w + 2.*np.arctan(Phi)) + np.sin(w + 2.*np.arctan(Phi))*np.cos(W)*np.cos(inc))/(e*np.cos(2.*np.arctan(Phi)) + 1.))**2. + np.abs(a**2.*Gamma*lam2/Ramgy + Eeps2*(-np.sin(W)*np.sin(w + 2.*np.arctan(Phi))*np.cos(inc) + np.cos(W)*np.cos(w + 2.*np.arctan(Phi)))/(e*np.cos(2.*np.arctan(Phi)) + 1.))**2.))
 
-    #theta_OpQp_X
-    theta_OpQp_X = np.arctan2(Affinity1 + Eeps2*Yolo1/(1 - e) + (a**2*Gamma*lam2/Ramgy + Eeps2*(-np.sin(W)*np.sin(w + 2*np.arctan(Phi))*np.cos(inc) + np.cos(W)*np.cos(w + 2*np.arctan(Phi)))/(e*np.cos(2*np.arctan(Phi)) + 1))*np.sqrt(np.abs(Affinity1 + Eeps2*(np.sin(W)*np.cos(w + 2*np.arctan(Phi)) + np.sin(w + 2*np.arctan(Phi))*np.cos(W)*np.cos(inc))/(e*np.cos(2*np.arctan(Phi)) + 1))**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*(-np.sin(W)*np.sin(w + 2*np.arctan(Phi))*np.cos(inc) + np.cos(W)*np.cos(w + 2*np.arctan(Phi)))/(e*np.cos(2*np.arctan(Phi)) + 1))**2)/np.sqrt(np.abs(-Affinity1 - Eeps2*(np.sin(W)*np.cos(w + 2*np.arctan(Phi)) + np.sin(w + 2*np.arctan(Phi))*np.cos(W)*np.cos(inc))/(e*np.cos(2*np.arctan(Phi)) + 1))**2 + np.abs(a**2*Gamma*lam2/Ramgy\
-         + Eeps2*(-np.sin(W)*np.sin(w + 2*np.arctan(Phi))*np.cos(inc) + np.cos(W)*np.cos(w + 2*np.arctan(Phi)))/(e*np.cos(2*np.arctan(Phi)) + 1))**2), a**2*Gamma*lam2/Ramgy + Eeps2*Kolko1/(1 - e) + (-Affinity1 - Eeps2*(np.sin(W)*np.cos(w + 2*np.arctan(Phi)) + np.sin(w + 2*np.arctan(Phi))*np.cos(W)*np.cos(inc))/(e*np.cos(2*np.arctan(Phi)) + 1))*np.sqrt(np.abs(Affinity1 + Eeps2*(np.sin(W)*np.cos(w + 2*np.arctan(Phi)) + np.sin(w + 2*np.arctan(Phi))*np.cos(W)*np.cos(inc))/(e*np.cos(2*np.arctan(Phi)) + 1))**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*(-np.sin(W)*np.sin(w + 2*np.arctan(Phi))*np.cos(inc) + np.cos(W)*np.cos(w + 2*np.arctan(Phi)))/(e*np.cos(2*np.arctan(Phi)) + 1))**2)/np.sqrt(np.abs(-Affinity1 - Eeps2*(np.sin(W)*np.cos(w + 2*np.arctan(Phi))\
-          + np.sin(w + 2*np.arctan(Phi))*np.cos(W)*np.cos(inc))/(e*np.cos(2*np.arctan(Phi)) + 1))**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*(-np.sin(W)*np.sin(w + 2*np.arctan(Phi))*np.cos(inc) + np.cos(W)*np.cos(w + 2*np.arctan(Phi)))/(e*np.cos(2*np.arctan(Phi)) + 1))**2))
+    #theta_OpQp_X: Angle between x-axis and line OpQp
+    theta_OpQp_X = np.arctan2(Affinity1 + Eeps2*Yolo1/(1. - e) + (a**2.*Gamma*lam2/Ramgy + Eeps2*(-np.sin(W)*np.sin(w + 2.*np.arctan(Phi))*np.cos(inc) + np.cos(W)*np.cos(w + 2.*np.arctan(Phi)))/(e*np.cos(2.*np.arctan(Phi)) + 1.))*np.sqrt(np.abs(Affinity1 + Eeps2*(np.sin(W)*np.cos(w + 2.*np.arctan(Phi)) + np.sin(w + 2.*np.arctan(Phi))*np.cos(W)*np.cos(inc))/(e*np.cos(2.*np.arctan(Phi)) + 1.))**2. + np.abs(a**2.*Gamma*lam2/Ramgy + Eeps2*(-np.sin(W)*np.sin(w + 2.*np.arctan(Phi))*np.cos(inc) + np.cos(W)*np.cos(w + 2.*np.arctan(Phi)))/(e*np.cos(2.*np.arctan(Phi)) + 1.))**2.)/np.sqrt(np.abs(-Affinity1 - Eeps2*(np.sin(W)*np.cos(w + 2.*np.arctan(Phi)) + np.sin(w + 2.*np.arctan(Phi))*np.cos(W)*np.cos(inc))/(e*np.cos(2.*np.arctan(Phi)) + 1.))**2. + np.abs(a**2.*Gamma*lam2/Ramgy\
+         + Eeps2*(-np.sin(W)*np.sin(w + 2.*np.arctan(Phi))*np.cos(inc) + np.cos(W)*np.cos(w + 2.*np.arctan(Phi)))/(e*np.cos(2.*np.arctan(Phi)) + 1.))**2.), a**2.*Gamma*lam2/Ramgy + Eeps2*Kolko1/(1. - e) + (-Affinity1 - Eeps2*(np.sin(W)*np.cos(w + 2.*np.arctan(Phi)) + np.sin(w + 2.*np.arctan(Phi))*np.cos(W)*np.cos(inc))/(e*np.cos(2.*np.arctan(Phi)) + 1.))*np.sqrt(np.abs(Affinity1 + Eeps2*(np.sin(W)*np.cos(w + 2.*np.arctan(Phi)) + np.sin(w + 2.*np.arctan(Phi))*np.cos(W)*np.cos(inc))/(e*np.cos(2.*np.arctan(Phi)) + 1.))**2. + np.abs(a**2.*Gamma*lam2/Ramgy + Eeps2*(-np.sin(W)*np.sin(w + 2.*np.arctan(Phi))*np.cos(inc) + np.cos(W)*np.cos(w + 2.*np.arctan(Phi)))/(e*np.cos(2.*np.arctan(Phi)) + 1.))**2.)/np.sqrt(np.abs(-Affinity1 - Eeps2*(np.sin(W)*np.cos(w + 2.*np.arctan(Phi))\
+          + np.sin(w + 2.*np.arctan(Phi))*np.cos(W)*np.cos(inc))/(e*np.cos(2.*np.arctan(Phi)) + 1.))**2. + np.abs(a**2.*Gamma*lam2/Ramgy + Eeps2*(-np.sin(W)*np.sin(w + 2.*np.arctan(Phi))*np.cos(inc) + np.cos(W)*np.cos(w + 2.*np.arctan(Phi)))/(e*np.cos(2.*np.arctan(Phi)) + 1.))**2.))
 
-    return dmajorp, dminorp, theta_OpQ_X, theta_OpQp_X#KEEP, dmajorp_v2, dminorp_v2, Psi_v2, psi_v2, Psi, psi,
+    return dmajorp, dminorp, theta_OpQ_X, theta_OpQp_X #KEEP, dmajorp_v2, dminorp_v2, Psi_v2, psi_v2, Psi, psi,
 
 def xyz_3Dellipse(a,e,W,w,inc,v):
     """
@@ -1846,6 +1853,8 @@ def intersectionFixer_pm(x, y, sep_xlocs, sep_ylocs, afflictedIndsxy, rs):
 def trueAnomaliesOfPoints(minSepPoints_x_dr, minSepPoints_y_dr, maxSepPoints_x_dr, maxSepPoints_y_dr, lminSepPoints_x_dr, lminSepPoints_y_dr, lmaxSepPoints_x_dr, lmaxSepPoints_y_dr,\
     fourInt_x_dr, fourInt_y_dr, twoIntSameY_x_dr, twoIntSameY_y_dr, twoIntOppositeX_x_dr, twoIntOppositeX_y_dr, xIntersectionsOnly2_dr, yIntersectionsOnly2_dr,\
     yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds, W, w, inc):
+    """TODO
+    """
     nu_minSepPoints = trueAnomalyFromXY(minSepPoints_x_dr, minSepPoints_y_dr,W,w,inc)
     nu_maxSepPoints = trueAnomalyFromXY(maxSepPoints_x_dr, maxSepPoints_y_dr,W,w,inc)
     nu_lminSepPoints = trueAnomalyFromXY(lminSepPoints_x_dr, lminSepPoints_y_dr,W[yrealAllRealInds],w[yrealAllRealInds],inc[yrealAllRealInds])
@@ -2095,7 +2104,7 @@ def calcMasterIntersections(sma,e,W,w,inc,s_circle,starMass,plotBool):
 
     #### Calculate X,Y Position of Minimum and Maximums with Quartic
     start7 = time.time()
-    A, B, C, D = quarticCoefficients_smin_smax_lmin_lmax(dmajorp.astype('complex128'), dminorp, np.abs(x), np.abs(y))
+    A, B, C, D = quarticCoefficients_smin_smax_lmin_lmax(dmajorp.astype('complex128'), dminorp, np.abs(x), np.abs(y)) #calculate the quartic solutions to the min-max separation problem
     #xreal, delta, P, D2, R, delta_0 = quarticSolutions_ellipse_to_Quarticipynb(A.astype('complex128'), B, C, D)
     xreal, _, _, _, _, _ = quarticSolutions_ellipse_to_Quarticipynb(A.astype('complex128'), B, C, D)
     del A, B, C, D #delting for memory efficiency
@@ -2103,9 +2112,9 @@ def calcMasterIntersections(sma,e,W,w,inc,s_circle,starMass,plotBool):
     #print(w[np.argmax(np.nanmin(np.abs(np.imag(xreal)),axis=1))]) #prints the argument of perigee (assert above fails on 1.57 or 1.5*pi)
     #Failure of the above occured where w=4.712 which is approx 1.5pi
     #NOTE: originally 1e-15 but there were some with x=1e-7 and w=pi/2, 5e-6 from 
-    tind = np.argmax(np.nanmin(np.abs(np.imag(xreal)),axis=1)) #DELETE
-    tinds = np.argsort(np.nanmin(np.abs(np.imag(xreal)),axis=1)) #DELETE
-    del tind, tinds #DELETE
+    #DELETEtind = np.argmax(np.nanmin(np.abs(np.imag(xreal)),axis=1)) #DELETE
+    #DELETEtinds = np.argsort(np.nanmin(np.abs(np.imag(xreal)),axis=1)) #DELETE
+    #DELETEdel tind, tinds #DELETE
     xreal.real = np.abs(xreal)
     stop7 = time.time()
     print('stop7: ' + str(stop7-start7))
