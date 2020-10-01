@@ -168,7 +168,7 @@ def projected_Op(a,e,W,w,inc):
     # return np.asarray([O[0][0], O[1][0]])
     r1 = xyz_3Dellipse(a,e,W,w,inc,0.)
     r2 = xyz_3Dellipse(a,e,W,w,inc,np.pi)
-    r_center = (r1+r2)/2
+    r_center = (r1+r2)/2.
     return np.asarray([r_center[0][0],r_center[1][0]])
 
 def projected_BpAngle(a,e,W,w,inc):
@@ -262,7 +262,7 @@ def derotatedEllipse(theta_OpQ_X, theta_OpQp_X, Op):
         Phi (numpy array):
             Angle of projected ellipse semi-major axis from x-axis
     """
-    Phi = (theta_OpQ_X+theta_OpQp_X)/2
+    Phi = (theta_OpQ_X+theta_OpQp_X)/2.
     x, y = derotate_arbitraryPoint(Op[0],Op[1],Phi)
     return x, y, Phi
 
@@ -1238,13 +1238,31 @@ def quarticCoefficients_ellipse_to_Quarticipynb(a, b, x, y, r):
 def quarticCoefficients_smin_smax_lmin_lmax(a, b, x, y):
     """ Calculates coefficients of the quartic equation solving where ds2/dxe = 0 for the distance between a point and the ellipse
     for an ellipse with semi-major axis a, semi-minor axis b, and point at x, y
+    Args:
+        a (numpy array):
+            semi-major axis of the projected ellipse
+        b (numpy array):
+            semi-minor axis of the projected ellipse
+        x (numpy array):
+            x position of the center of the projected ellipse
+        y (numpy array):
+            y position of the center of the projected ellipse
+    Returns:
+        A (numpy array):
+            coefficients of x^3
+        B (numpy array):
+            coefficients of x^2
+        C (numpy array):
+            coefficients of x
+        D (numpy array):
+            constants
     """
     Gamma = np.zeros(len(a),dtype='complex128')
-    Gamma = (4*a**4 - 8*a**2*b**2 + 4*b**4)/a**2
-    A = (-8*a**2*x + 8*b**2*x)/Gamma
-    B = (-4*a**4 + 8*a**2*b**2 + 4*a**2*x**2 - 4*b**4 + 4*b**2*y**2)/Gamma
-    C = (8*a**4*x - 8*a**2*b**2*x)/Gamma
-    D = (-4*a**4*x**2)/Gamma
+    Gamma = (4.*a**4. - 8.*a**2.*b**2. + 4.*b**4.)/a**2.
+    A = (-8.*a**2.*x + 8.*b**2.*x)/Gamma
+    B = (-4.*a**4. + 8.*a**2.*b**2. + 4.*a**2.*x**2. - 4.*b**4. + 4.*b**2.*y**2.)/Gamma
+    C = (8.*a**4.*x - 8.*a**2.*b**2.*x)/Gamma
+    D = (-4.*a**4.*x**2.)/Gamma
     return A, B, C, D
 
 def quarticSolutions_ellipse_to_Quarticipynb(A, B, C, D):
@@ -2095,7 +2113,10 @@ def calcMasterIntersections(sma,e,W,w,inc,s_circle,starMass,plotBool):
     #### Derotate Ellipse Calculations
     start5 = time.time()
     x, y, Phi = derotatedEllipse(theta_OpQ_X, theta_OpQp_X, Op)
-    if plotBool == False:
+    #x- x coordinates of host star relative to projected ellipse center
+    #y- y coordinates of host star relative to projected ellipse center
+    #Phi- Angle of projected ellipse semi-major axis from x-axis
+    if plotBool == False: #deletes these angles because they are no longer necessary
         del theta_OpQ_X, theta_OpQp_X
     stop5 = time.time()
     print('stop5: ' + str(stop5-start5))
