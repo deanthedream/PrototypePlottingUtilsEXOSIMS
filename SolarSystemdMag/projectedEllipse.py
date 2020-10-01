@@ -374,7 +374,7 @@ def quarticSolutions(a,b,mx,my):
     return xreal, imag
 
 def ellipseYFromX(xreal, a, b):
-    """ Calculates y values in the positive quadrant 
+    """ Calculates y values in the positive quadrant of the ellipse
     Args:
         xreal (numpy array):
             shape n planets by 4
@@ -1377,11 +1377,52 @@ def quarticSolutions_ellipse_to_Quarticipynb(A, B, C, D):
 
 
 def smin_smax_slmin_slmax(n, xreal, yreal, mx, my, x, y):
-    """
-
+    """ Calculates the planet-star separation extrema, the x/y coordinates that each of these extrema occur at, the planet inds which have 4 extrema (min, max, local min, local max), and 
+    the planet inds which have 2 extrema (min and max)
+    Args:
+        n (integer):
+            number of planets
+        xreal (numpy array):
+            n x 4 array of the x-coordinate solutions to the quartic 
+        yreal (numpy array):
+            n x 4 array of the y-coordinate solutions corresponding to |xreal|
+        mx (numpy array):
+            star center x componentx located solely in the first quadrant, |x|
+        my (numpy array):
+            star center y componentx located solely in the first quadrant, |y|
+        x (numpy array):
+            star center x components
+        y (numpy array):
+            star cetner y components
     Returns:
-        yrealAllRealInds - these indicies must have min, max, local min, local max
-        yrealImagInds - these indicies must have min, max
+        minSepPoints_x (numpy array):
+            the first quadrant x-coordinates of the minimum separations (with length n)
+        minSepPoints_y (numpy array):
+            the first quadrant y-coordinates of the minimum separations (with length n)
+        maxSepPoints_x (numpy array):
+            the first quadrant x-coordinates of the maximum separations (with length n)
+        maxSepPoints_y (numpy array):
+            the first quadrant y-coordinates of the maximum separations (with length n)
+        lminSepPoints_x (numpy array):
+            the first quadrant x-coordinates of the local minimum separations (with same length as yrealImagInds)
+        lminSepPoints_y (numpy array):
+            the first quadrant y-coordinates of the local minimum separations (with same length as yrealImagInds)
+        lmaxSepPoints_x (numpy array):
+            the first quadrant x-coordinates of the local maximum separations (with same length as yrealImagInds)
+        lmaxSepPoints_y (numpy array):
+            the first quadrant y-coordinates of the local maximum separations (with same length as yrealImagInds)
+        minSep (numpy array):
+            the minimum planet-star separations for each star with length n
+        maxSep (numpy array):
+            the maximum planet-star separations for each star with length n
+        lminSep (numpy array):
+            the local minimum planet-star separations for each star with same length as yrealImagInds
+        lmaxSep (numpy array):
+            the local maximum planet-star separations for each star with same length as yrealImagInds
+        yrealAllRealInds (numpy array):
+            an array of integers acting as indicies of planets which have min, max, local min, local max
+        yrealImagInds (numpy array):
+            an array of integers acting as indicies of planets whihc only have min, max (no local min or local max)
     """
     yrealAllRealInds = np.where(np.all(np.abs(np.imag(yreal)) < 1e-5,axis=1))[0]
     yreal[np.abs(np.imag(yreal)) < 1e-5] = np.real(yreal[np.abs(np.imag(yreal)) < 1e-5]) #eliminate any unreasonably small imaginary components
@@ -1525,8 +1566,6 @@ def smin_smax_slmin_slmax(n, xreal, yreal, mx, my, x, y):
     smp = smp.T
     #spm = spm.T #removed for efficiency
     spp = spp.T
-
-
 
     #KEEP
     #### minSep
@@ -2160,7 +2199,7 @@ def calcMasterIntersections(sma,e,W,w,inc,s_circle,starMass,plotBool):
     #DELETEtind = np.argmax(np.nanmin(np.abs(np.imag(xreal)),axis=1)) #DELETE
     #DELETEtinds = np.argsort(np.nanmin(np.abs(np.imag(xreal)),axis=1)) #DELETE
     #DELETEdel tind, tinds #DELETE
-    xreal.real = np.abs(xreal)
+    xreal.real = np.abs(xreal) #all solutions should be positive
     stop7 = time.time()
     print('stop7: ' + str(stop7-start7))
     del stop7, start7
@@ -2168,7 +2207,7 @@ def calcMasterIntersections(sma,e,W,w,inc,s_circle,starMass,plotBool):
 
     #### Technically, each row must have at least 2 solutions, but whatever
     start8 = time.time()
-    yreal = ellipseYFromX(xreal.astype('complex128'), dmajorp, dminorp)
+    yreal = ellipseYFromX(xreal.astype('complex128'), dmajorp, dminorp) #Calculates the y values corresponding to the x values in the first quadrant of an ellipse
     stop8 = time.time()
     print('stop8: ' + str(stop8-start8))
     del start8, stop8
