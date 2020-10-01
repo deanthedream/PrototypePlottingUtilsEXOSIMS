@@ -1266,49 +1266,73 @@ def quarticCoefficients_smin_smax_lmin_lmax(a, b, x, y):
     return A, B, C, D
 
 def quarticSolutions_ellipse_to_Quarticipynb(A, B, C, D):
-    """ Equations from ellipse_to_Quartic.ipynb
+    """ Equations from ellipse_to_Quartic.ipynb solves the quartic 
+    Uses the coefficients of the quartic to find
+    Args:
+        A (numpy array):
+            coefficients of x^3
+        B (numpy array):
+            coefficients of x^2
+        C (numpy array):
+            coefficients of x
+        D (numpy array):
+            constants
+    Returns:
+        xreal (numpy array):
+            an nx4 array contianing the solutions to the quartic expression
+        delta (numpy array):
+            indicator parameter for quartic solution types
+        P (numpy array):
+            indicator parameter for quartic solution types
+        D2 (numpy array):
+            indicator parameter for quartic solution types
+        R (numpy array):
+            indicator parameter for quartic solution types
+        delta_0 (numpy array):
+            indicator parameter for quartic solution types
     """
-    p0 = (-3*A**2/8+B)**3
-    p1 = (A*(A**2/8-B/2)+C)**2
-    p2 = -A*(A*(3*A**2/256-B/16)+C/4)+D
-    p3 = -3*A**2/8+B
-    p4 = 2*A*(A**2/8-B/2)
-    p5 = -p0/108-p1/8+p2*p3/3
-    p6 = (p0/216+p1/16-p2*p3/6+np.sqrt(p5**2/4+(-p2-p3**2/12)**3/27))**(1/3)
-    p7 = A**2/4-2*B/3
-    p8 = (2*p2+p3**2/6)/(3*p6)
+    #A bunch of simplifications
+    p0 = (-3.*A**2./8.+B)**3.
+    p1 = (A*(A**2./8.-B/2.)+C)**2.
+    p2 = -A*(A*(3.*A**2./256.-B/16.)+C/4.)+D
+    p3 = -3.*A**2./8.+B
+    p4 = 2.*A*(A**2./8.-B/2.)
+    p5 = -p0/108.-p1/8.+p2*p3/3.
+    p6 = (p0/216.+p1/16.-p2*p3/6.+np.sqrt(p5**2./4.+(-p2-p3**2./12.)**3./27.))**(1./3.)
+    p7 = A**2./4.-2.*B/3.
+    p8 = (2.*p2+p3**2./6.)/(3.*p6)
     #, (-2*p2-p3**2/6)/(3*p6)
-    p9 = np.sqrt(-2*p5**(1/3)+p7)
-    p10 = np.sqrt(2*p6+p7+p8)
-    p11 = A**2/2-4*B/3
+    p9 = np.sqrt(-2.*p5**(1./3.)+p7)
+    p10 = np.sqrt(2.*p6+p7+p8)
+    p11 = A**2./2.-4.*B/3.
 
     #otherwise case
-    x0 = -A/4 - p10/2 - np.sqrt(p11 - 2*p6 - p8 + (2*C + p4)/p10)/2
-    x1 = -A/4 - p10/2 + np.sqrt(p11 - 2*p6 - p8 + (2*C + p4)/p10)/2
-    x2 = -A/4 + p10/2 - np.sqrt(p11 - 2*p6 - p8 + (-2*C - p4)/p10)/2
-    x3 = -A/4 + p10/2 + np.sqrt(p11 - 2*p6 - p8 + (-2*C - p4)/p10)/2
-    zeroInds = np.where(p2 + p3**2/12 == 0)[0] #piecewise condition
-    if len(zeroInds) != 0:
-        x0[zeroInds] = -A[zeroInds]/4 - p9[zeroInds]/2 - np.sqrt(p11[zeroInds] + 2*np.cbrt(p5[zeroInds]) + (2*C[zeroInds] + p4[zeroInds])/p9[zeroInds])/2
-        x1[zeroInds] = -A[zeroInds]/4 - p9[zeroInds]/2 + np.sqrt(p11[zeroInds] + 2*np.cbrt(p5[zeroInds]) + (2*C[zeroInds] + p4[zeroInds])/p9[zeroInds])/2
-        x2[zeroInds] = -A[zeroInds]/4 + p9[zeroInds]/2 - np.sqrt(p11[zeroInds] + 2*np.cbrt(p5[zeroInds]) + (-2*C[zeroInds] - p4[zeroInds])/p9[zeroInds])/2
-        x3[zeroInds] = -A[zeroInds]/4 + p9[zeroInds]/2 + np.sqrt(p11[zeroInds] + 2*np.cbrt(p5[zeroInds]) + (-2*C[zeroInds] - p4[zeroInds])/p9[zeroInds])/2
+    x0 = -A/4. - p10/2. - np.sqrt(p11 - 2.*p6 - p8 + (2.*C + p4)/p10)/2.
+    x1 = -A/4. - p10/2. + np.sqrt(p11 - 2.*p6 - p8 + (2.*C + p4)/p10)/2.
+    x2 = -A/4. + p10/2. - np.sqrt(p11 - 2.*p6 - p8 + (-2.*C - p4)/p10)/2.
+    x3 = -A/4. + p10/2. + np.sqrt(p11 - 2.*p6 - p8 + (-2.*C - p4)/p10)/2.
+    zeroInds = np.where(p2 + p3**2./12. == 0)[0] #piecewise condition
+    if len(zeroInds) != 0.:
+        x0[zeroInds] = -A[zeroInds]/4. - p9[zeroInds]/2. - np.sqrt(p11[zeroInds] + 2.*np.cbrt(p5[zeroInds]) + (2.*C[zeroInds] + p4[zeroInds])/p9[zeroInds])/2.
+        x1[zeroInds] = -A[zeroInds]/4. - p9[zeroInds]/2. + np.sqrt(p11[zeroInds] + 2.*np.cbrt(p5[zeroInds]) + (2.*C[zeroInds] + p4[zeroInds])/p9[zeroInds])/2.
+        x2[zeroInds] = -A[zeroInds]/4. + p9[zeroInds]/2. - np.sqrt(p11[zeroInds] + 2.*np.cbrt(p5[zeroInds]) + (-2.*C[zeroInds] - p4[zeroInds])/p9[zeroInds])/2.
+        x3[zeroInds] = -A[zeroInds]/4. + p9[zeroInds]/2. + np.sqrt(p11[zeroInds] + 2.*np.cbrt(p5[zeroInds]) + (-2.*C[zeroInds] - p4[zeroInds])/p9[zeroInds])/2.
 
-    delta = 256*D**3 - 192*A*C*D**2 - 128*B**2*D**2 + 144*B*C**2*D - 27*C**4\
-        + 144*A**2*B*D**2 - 6*A**2*C**2*D - 80*A*B**2*C*D + 18*A*B*C**3 + 16*B**4*D\
-        - 4*B**3*C**2 - 27*A**4*D**2 + 18*A**3*B*C*D - 4*A**3*C**3 - 4*A**2*B**3*D + A**2*B**2*C**2 #verified against wikipedia multiple times
+    delta = 256.*D**3. - 192.*A*C*D**2. - 128.*B**2.*D**2. + 144.*B*C**2.*D - 27.*C**4.\
+        + 144.*A**2.*B*D**2. - 6.*A**2.*C**2.*D - 80.*A*B**2.*C*D + 18.*A*B*C**3. + 16.*B**4.*D\
+        - 4.*B**3.*C**2. - 27.*A**4.*D**2. + 18.*A**3.*B*C*D - 4.*A**3.*C**3. - 4.*A**2.*B**3.*D + A**2.*B**2.*C**2. #verified against wikipedia multiple times
     assert 0 == np.count_nonzero(np.imag(delta)), 'All delta are real'
     delta = np.real(delta)
-    P = 8*B - 3*A**2
+    P = 8.*B - 3.*A**2.
     assert 0 == np.count_nonzero(np.imag(P)), 'Not all P are real'
     P = np.real(P)
-    D2 = 64*D - 16*B**2 + 16*A**2*B - 16*A*C - 3*A**4 #is 0 if the quartic has 2 double roots 
+    D2 = 64.*D - 16.*B**2. + 16.*A**2.*B - 16.*A*C - 3.*A**4. #is 0 if the quartic has 2 double roots 
     assert 0 == np.count_nonzero(np.imag(D2)), 'Not all D2 are real'
     D2 = np.real(D2)
-    R = A**3 + 8*C - 4*A*B
+    R = A**3. + 8.*C - 4.*A*B
     assert 0 == np.count_nonzero(np.imag(R)), 'Not all R are real'
     R = np.real(R)
-    delta_0 = B**2 - 3*A*C + 12*D
+    delta_0 = B**2. - 3.*A*C + 12.*D
     assert 0 == np.count_nonzero(np.imag(delta_0)), 'Not all delta_0 are real'
     delta_0 = np.real(delta_0)
 
