@@ -1971,7 +1971,29 @@ def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lmi
 
 #### Generalized Correct Ellipse Circle Intersection Fixer
 def intersectionFixer_pm(x, y, sep_xlocs, sep_ylocs, afflictedIndsxy, rs):
-    """
+    """ NOTE: where 1e-7 error floor comes from
+    Uses x and y intersections from above to calculate intersection star distances,
+    calculate error from the desired distance pick out indicies to fix error for (anything greater than 1e-7),
+    calculate separations for different x,y scenarios (checking if the quadrant is wrong),
+    Pick the lowest error solutions
+    Args:
+        x (numpy array):
+            x components of host star in projected ellipse
+        y (numpy array):
+            y components of host star in projected ellipse
+        sep_xlocs (numpy array):
+            x components of proposed locations of ellipse circle intersections
+        sep_ylocs (numpy array):
+            y components of proposed locations of ellipse circle intersections
+        afflictedIndsxy (numpy array):
+            the inds to fix errors for
+        rs (numpy array):
+            the desired circle radius in AU with length n (number of planets)
+    Returns:
+        sep_xlocs (numpy array):
+            quadrant adjusted x components of proposed locations of ellipse circle intersections
+        sep_ylocs (numpy array):
+            quadrant adjusted y components of proposed locations of ellipse circle intersections
     """
     # seps = np.sqrt((sep_xlocs-x[afflictedIndsxy])**2 + (sep_ylocs-y[afflictedIndsxy])**2) #calculate error for all TwoIntSameY
     # error = np.abs(np.sort(-np.abs(np.ones(len(seps)) - seps))) #calculate error for all TwoIntSameY
