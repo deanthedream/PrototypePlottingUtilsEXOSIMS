@@ -1677,6 +1677,96 @@ def printKOE(ind,a,e,W,w,inc):
 
 #### Ellipse Circle Intersection
 def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lminSep, lmaxSep, yrealAllRealInds, yrealImagInds):
+    """ Calculates the intersections between a circle centered at x,y with radius s_circle and an ellipse centered at x=0, y=0 with semi-major axis aligned with x-axis
+    Args:
+        s_circle (float):
+            the circle radius in AU
+        a (numpy array):
+            semi-major axis of the projected ellipse
+        b (numpy array):
+            semi-minor axis of the projected ellipse
+        mx (numpy array):
+            star center x componentx located solely in the first quadrant, |x|
+        my (numpy array):
+            star center y componentx located solely in the first quadrant, |y|
+        x (numpy array):
+            star center x components
+        y (numpy array):
+            star cetner y components
+        minSep (numpy array):
+            the minimum planet-star separations for each star with length n
+        maxSep (numpy array):
+            the maximum planet-star separations for each star with length n
+        lminSep (numpy array):
+            the local minimum planet-star separations for each star with same length as yrealImagInds
+        lmaxSep (numpy array):
+            the local maximum planet-star separations for each star with same length as yrealImagInds
+        yrealAllRealInds (numpy array):
+            an array of integers acting as indicies of planets which have min, max, local min, local max
+        yrealImagInds (numpy array):
+            an array of integers acting as indicies of planets whihc only have min, max (no local min or local max)
+    Returns: 
+        only2RealInds (numpy array):
+            indicies where there can only ever by 2 circle-ellipse intersections
+        typeInds0 (numpy array):
+            inds of only2RealInds where s_x,b-y < s_a-x,y < s_a+x,y < s_x,b+y
+            used to determine solutions for only2RealInds 
+        typeInds1 (numpy array):
+            inds of only2RealInds where s_x,b-y < s_x,b+y < s_a-x,y < s_a+x,y
+            used to determine solutions for only2RealInds 
+        typeInds2 (numpy array):
+            inds of only2RealInds where s_x,b-y < s_a-x,y < s_x,b+y < s_a+x,y
+            used to determine solutions for only2RealInds 
+        typeInds3 (numpy array):
+            inds of only2RealInds where s_a-x,y < s_x,b-y < s_x,b+y < s_a+x,y
+            used to determine solutions for only2RealInds 
+        fourIntInds (numpy array):
+            indicies of yrealAllRealInds which should have 4 intersections
+        fourInt_x (numpy array):
+            x coordinates of fourIntInds
+        fourInt_y (numpy array):
+            y coordinates of fourIntInds
+        twoIntSameY_x (numpy array):
+            x components of intersections which must occur on same Y side of the projected ellipse as the star
+        twoIntSameY_y (numpy array):
+            y components of intersections which must occur on same Y side of the projected ellipse as the star
+        twoIntOppositeXInds (numpy array):
+            indicies of yrealAllRealInds which should have 2 intersections on the 
+            opposite X side of the projected ellipse as the star
+        twoIntOppositeX_x (numpy array):
+            x components of intersections which must occur on opposite X side of the projected ellipse as the star
+        twoIntOppositeX_y (numpy array):
+            y components of intersections which must occur on opposite X side of the projected ellipse as the star
+        xIntersectionsOnly2 (numpy array):
+            x components of intersections where there must be only 2 intersections
+        yIntersectionsOnly2 (numpy array):
+            y components of intersections where there must be only 2 intersections
+        twoIntSameYInds (numpy array):
+            indicies of yrealAllRealInds which should have 2 intersections on the 
+            same Y side of the projected ellipse as the star
+        type0_0Inds (numpy array):
+        type0_1Inds (numpy array):
+        type0_2Inds (numpy array):
+        type0_3Inds (numpy array):
+        type0_4Inds (numpy array):
+        type1_0Inds (numpy array):
+        type1_1Inds (numpy array):
+        type1_2Inds (numpy array):
+        type1_3Inds (numpy array):
+        type1_4Inds (numpy array):
+        type2_0Inds (numpy array):
+        type2_1Inds (numpy array):
+        type2_2Inds (numpy array):
+        type2_3Inds (numpy array):
+        type2_4Inds (numpy array):
+        type3_0Inds (numpy array):
+        type3_1Inds (numpy array):
+        type3_2Inds (numpy array):
+        type3_3Inds (numpy array):
+        type3_4Inds (numpy array):
+        allIndsUsed (numpy array):
+            contains all typeA_BInds concatenated. typeA_BInds can be deleted once everything works 100%
+    """
     #### Testing ellipse_to_Quartic solution
     #DELETEif r == None:
     #DELETEr = np.ones(len(a),dtype='complex128')
@@ -1776,7 +1866,7 @@ def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lmi
     twoIntOppositeX_y = (twoIntOppositeX_y.T*(2*bool2[yrealAllRealInds[twoIntOppositeXInds]]-1)).T
     ####
 
-    #### ONLY 2 Real Inds (No Local Min/Max)
+    #### ONLY 2 Real Inds (No Local Min or Local Max) ########################################
     sepsInsideInds = np.where((maxSep[yrealImagInds] >= s_circle[yrealImagInds]) & (s_circle[yrealImagInds] >= minSep[yrealImagInds]))[0] #inds where r is within the minimum and maximum separations
     only2RealInds = yrealImagInds[sepsInsideInds] #indicies of planets with only 2 real interesections
     #lets try usnig separation bounds
@@ -1872,8 +1962,8 @@ def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lmi
             type2_0Inds,type2_1Inds,type2_2Inds,type2_3Inds,type2_4Inds,type3_0Inds,type3_1Inds,type3_2Inds,type3_3Inds,type3_4Inds))
 
 
-    return a, b, only2RealInds, typeInds0, typeInds1, typeInds2, typeInds3,\
-        yrealAllRealInds, fourIntInds, fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y,\
+    return only2RealInds, typeInds0, typeInds1, typeInds2, typeInds3,\
+        fourIntInds, fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y,\
         twoIntOppositeXInds, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2, twoIntSameYInds,\
         type0_0Inds,type0_1Inds,type0_2Inds,type0_3Inds,type0_4Inds,type1_0Inds,type1_1Inds,type1_2Inds,type1_3Inds,type1_4Inds,\
         type2_0Inds,type2_1Inds,type2_2Inds,type2_3Inds,type2_4Inds,type3_0Inds,type3_1Inds,type3_2Inds,type3_3Inds,type3_4Inds,\
@@ -2227,8 +2317,8 @@ def calcMasterIntersections(sma,e,W,w,inc,s_circle,starMass,plotBool):
 
     #### Ellipse Circle Intersection #######################################################################
     start11 = time.time()
-    dmajorp, dminorp, only2RealInds, typeInds0, typeInds1, typeInds2, typeInds3,\
-            yrealAllRealInds, fourIntInds, fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y,\
+    only2RealInds, typeInds0, typeInds1, typeInds2, typeInds3,\
+            fourIntInds, fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y,\
             twoIntOppositeXInds, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2, twoIntSameYInds,\
             type0_0Inds,type0_1Inds,type0_2Inds,type0_3Inds,type0_4Inds,type1_0Inds,type1_1Inds,type1_2Inds,type1_3Inds,type1_4Inds,\
             type2_0Inds,type2_1Inds,type2_2Inds,type2_3Inds,type2_4Inds,type3_0Inds,type3_1Inds,type3_2Inds,type3_3Inds,type3_4Inds,\
