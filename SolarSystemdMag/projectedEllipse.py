@@ -2118,8 +2118,89 @@ def nuCorrections_int(sma,e,W,w,inc,r,nus,mainInds,subInds):
 def rerotateExtremaAndIntersectionPoints(minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y,\
     fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2,\
     Phi, Op, yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds):
-    """
-    Rotate the intersection points to the original projected ellipse
+    """ Rotate the intersection points from (the projected ellipse centered at the origin and x-axis aligned with semi-major axis) to the original projected ellipse
+    Args:
+        minSepPoints_x (numpy array):
+            the first quadrant x-coordinates of the minimum separations (with length n)
+        minSepPoints_y (numpy array):
+            the first quadrant y-coordinates of the minimum separations (with length n)
+        maxSepPoints_x (numpy array):
+            the first quadrant x-coordinates of the maximum separations (with length n)
+        maxSepPoints_y (numpy array):
+            the first quadrant y-coordinates of the maximum separations (with length n)
+        lminSepPoints_x (numpy array):
+            the first quadrant x-coordinates of the local minimum separations (with same length as yrealImagInds)
+        lminSepPoints_y (numpy array):
+            the first quadrant y-coordinates of the local minimum separations (with same length as yrealImagInds)
+        lmaxSepPoints_x (numpy array):
+            the first quadrant x-coordinates of the local maximum separations (with same length as yrealImagInds)
+        lmaxSepPoints_y (numpy array):
+            the first quadrant y-coordinates of the local maximum separations (with same length as yrealImagInds)
+        fourInt_x (numpy array):
+            x coordinates of fourIntInds
+        fourInt_y (numpy array):
+            y coordinates of fourIntInds
+        twoIntSameY_x (numpy array):
+            x components of intersections which must occur on same Y side of the projected ellipse as the star
+        twoIntSameY_y (numpy array):
+            y components of intersections which must occur on same Y side of the projected ellipse as the star
+        twoIntOppositeX_x (numpy array):
+            x components of intersections which must occur on opposite X side of the projected ellipse as the star
+        twoIntOppositeX_y (numpy array):
+            y components of intersections which must occur on opposite X side of the projected ellipse as the star
+        xIntersectionsOnly2 (numpy array):
+            x components of intersections where there must be only 2 intersections
+        yIntersectionsOnly2 (numpy array):
+            y components of intersections where there must be only 2 intersections
+        phi (numpy array):
+            angle from X-axis to semi-minor axis of projected ellipse 
+        Op (numpy array):
+            the geometric center of the projected ellipse
+        yrealAllRealInds (numpy array):
+            an array of integers acting as indicies of planets which have min, max, local min, local max
+        fourIntInds (numpy array):
+            indicies of yrealAllRealInds which should have 4 intersections
+        twoIntSameYInds (numpy array):
+            indicies of yrealAllRealInds which should have 2 intersections on the 
+            same Y side of the projected ellipse as the star
+        twoIntOppositeXInds (numpy array):
+            indicies of yrealAllRealInds which should have 2 intersections on the 
+            opposite X side of the projected ellipse as the star
+        only2RealInds (numpy array):
+            indicies where there can only ever by 2 circle-ellipse intersections
+    Returns:
+        minSepPoints_x_dr (numpy array):
+            derotated minSepPoints_x
+        minSepPoints_y_dr (numpy array):
+            derotated minSepPoints_y
+        maxSepPoints_x_dr (numpy array):
+            derotated maxSepPoints_x
+        maxSepPoints_y_dr (numpy array):
+            derotated maxSepPoints_y
+        lminSepPoints_x_dr (numpy array):
+            derotated lminSepPoints_x
+        lminSepPoints_y_dr (numpy array):
+            derotated lminSepPoints_y
+        lmaxSepPoints_x_dr (numpy array):
+            derotated lmaxSepPoints_x
+        lmaxSepPoints_y_dr (numpy array):
+            derotated lmaxSepPoints_y
+        fourInt_x_dr (numpy array):
+            derotated fourInt_x
+        fourInt_y_dr (numpy array):
+            derotated fourInt_y
+        twoIntSameY_x_dr (numpy array):
+            derotated twoIntSameY_x
+        twoIntSameY_y_dr (numpy array):
+            derotated twoIntSameY_y
+        twoIntOppositeX_x_dr (numpy array):
+            derotated twoIntOppositeX_x
+        twoIntOppositeX_y_dr (numpy array):
+            derotated twoIntOppositeX_y
+        xIntersectionsOnly2_dr (numpy array):
+            derotated xIntersectionsOnly2
+        yIntersectionsOnly2_dr (numpy array):
+            derotated yIntersectionsOnly2
     """
     minSepPoints_x_dr = np.zeros(len(minSepPoints_x))
     minSepPoints_y_dr = np.zeros(len(minSepPoints_y))
@@ -2197,7 +2278,8 @@ def calcMasterIntersections(sma,e,W,w,inc,s_circle,starMass,plotBool):
             the x component of the projected star location
         y (numpy array):
             the y component of the projected star location
-        Phi (numpy array):
+        phi (numpy array):
+            angle from X-axis to semi-minor axis of projected ellipse 
 
         xreal (numpy array):
         only2RealInds (numpy array):
