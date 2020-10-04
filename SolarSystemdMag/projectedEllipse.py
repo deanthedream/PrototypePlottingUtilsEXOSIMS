@@ -2139,15 +2139,24 @@ def nuCorrections_extrema(sma,e,W,w,inc,nus,mainInds,seps):
     """ A method for correcting the nus of the extrema points. The input nus are calculated with arctan meaning it could be nu or nu+pi
     Args:
         sma (numpy array):
+            semi-major axis
         e (numpy array):
+            eccentricity
         W (numpy array):
+            Longitude of the ascending nodes
         w (numpy array):
+            Argument of periapsis
         inc (numpy array):
+            inclination
         nus (numpy array):
+            the true anomalies 
         mainInds (numpy array):
+            the set of all inds to consider for corrections
         seps (numpy array):
+            the expected separations of all these points
     Returns:
         nus (numpy array):
+            the corrected true anomalies
     """
     #Calculates the planet-star separations at the input nus
     r_extrema = xyz_3Dellipse(sma[mainInds],e[mainInds],W[mainInds],w[mainInds],inc[mainInds],nus)
@@ -2174,6 +2183,28 @@ def nuCorrections_extrema(sma,e,W,w,inc,nus,mainInds,seps):
 
 #### Correcting nu for ellipse-circle intersections
 def nuCorrections_int(sma,e,W,w,inc,r,nus,mainInds,subInds):
+    """ A method for correcting the nus of the intersection points. The input nus are calculated with arctan meaning it could be nu or nu+pi
+    Args:
+        sma (numpy array):
+            semi-major axis
+        e (numpy array):
+            eccentricity
+        W (numpy array):
+            Longitude of the ascending nodes
+        w (numpy array):
+            Argument of periapsis
+        inc (numpy array):
+            inclination
+        nus (numpy array):
+            the true anomalies of intersections
+        mainInds (numpy array):
+            the set of all inds to consider for corrections (the subset of all planet inds i.e. yrealAllRealInds)
+        subInds (numpy array):
+            the subset of mianInds to consider (i.e. fourIntInds)
+    Returns:
+        nus (numpy array):
+            the corrected true anomalies
+    """
     r_fourInt0 = xyz_3Dellipse(sma[mainInds[subInds]],e[mainInds[subInds]],W[mainInds[subInds]],w[mainInds[subInds]],inc[mainInds[subInds]],nus)
     tmp_fourInt0Seps = np.sqrt(r_fourInt0[0,0]**2 + r_fourInt0[1,0]**2)
     wrong_fourInt0Inds = np.where(np.abs(r[mainInds[subInds]] - tmp_fourInt0Seps) > 1e-6)[0]#1e-6)[0]
