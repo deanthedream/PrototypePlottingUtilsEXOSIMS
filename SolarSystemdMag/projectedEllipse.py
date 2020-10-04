@@ -2046,7 +2046,71 @@ def intersectionFixer_pm(x, y, sep_xlocs, sep_ylocs, afflictedIndsxy, rs):
 def trueAnomaliesOfPoints(minSepPoints_x_dr, minSepPoints_y_dr, maxSepPoints_x_dr, maxSepPoints_y_dr, lminSepPoints_x_dr, lminSepPoints_y_dr, lmaxSepPoints_x_dr, lmaxSepPoints_y_dr,\
     fourInt_x_dr, fourInt_y_dr, twoIntSameY_x_dr, twoIntSameY_y_dr, twoIntOppositeX_x_dr, twoIntOppositeX_y_dr, xIntersectionsOnly2_dr, yIntersectionsOnly2_dr,\
     yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds, W, w, inc):
-    """TODO
+    """ Given the location of the points of the intersections between the circle and the derotated ellipse,
+    this method calculates the true anomalies of these intersections
+    Args:
+        minSepPoints_x_dr (numpy array):
+            derotated minSepPoints_x
+        minSepPoints_y_dr (numpy array):
+            derotated minSepPoints_y
+        maxSepPoints_x_dr (numpy array):
+            derotated maxSepPoints_x
+        maxSepPoints_y_dr (numpy array):
+            derotated maxSepPoints_y
+        lminSepPoints_x_dr (numpy array):
+            derotated lminSepPoints_x
+        lminSepPoints_y_dr (numpy array):
+            derotated lminSepPoints_y
+        lmaxSepPoints_x_dr (numpy array):
+            derotated lmaxSepPoints_x
+        lmaxSepPoints_y_dr (numpy array):
+            derotated lmaxSepPoints_y
+        fourInt_x_dr (numpy array):
+            derotated fourInt_x
+        fourInt_y_dr (numpy array):
+            derotated fourInt_y
+        twoIntSameY_x_dr (numpy array):
+            derotated twoIntSameY_x
+        twoIntSameY_y_dr (numpy array):
+            derotated twoIntSameY_y
+        twoIntOppositeX_x_dr (numpy array):
+            derotated twoIntOppositeX_x
+        twoIntOppositeX_y_dr (numpy array):
+            derotated twoIntOppositeX_y
+        xIntersectionsOnly2_dr (numpy array):
+            derotated xIntersectionsOnly2
+        yIntersectionsOnly2_dr (numpy array):
+            derotated yIntersectionsOnly2
+        yrealAllRealInds (numpy array):
+            an array of integers acting as indicies of planets which have min, max, local min, local max        fourIntInds (numpy array):
+        twoIntSameYInds (numpy array):
+            indicies of yrealAllRealInds which should have 2 intersections on the 
+            same Y side of the projected ellipse as the star        twoIntOppositeXInds (numpy array):
+        only2RealInds (numpy array):
+            indicies where there can only ever by 2 circle-ellipse intersections
+        W (numpy array): 
+            Longitude of the ascending node of the body
+        w (numpy array): 
+            argument of periapsis of the body
+        inc (numpy array): 
+            inclination of the body's orbit
+    Returns:
+        nu_minSepPoints (numpy array):
+            true anomaly of the minimum separation points
+        nu_maxSepPoints (numpy array):
+            true anomaly of the maximum separation points
+        nu_lminSepPoints (numpy array):
+            true anomaly of the local minimum separation points
+        nu_lmaxSepPoints (numpy array):
+            true anomaly of the maximum separation points
+        nu_fourInt (numpy array):
+            true anomalies of the four intersection point cases
+        nu_twoIntSameY (numpy array):
+            true anomalies of the two intersection points on same y-side as star cases
+        nu_twoIntOppositeX (numpy array):
+            true anomalies of the two intersection point on the opposite x-side of the star cases
+        nu_IntersectionsOnly2 (numpy array):
+            true anomalies of the only two intersection point cases
     """
     nu_minSepPoints = trueAnomalyFromXY(minSepPoints_x_dr, minSepPoints_y_dr,W,w,inc)
     nu_maxSepPoints = trueAnomalyFromXY(maxSepPoints_x_dr, maxSepPoints_y_dr,W,w,inc)
