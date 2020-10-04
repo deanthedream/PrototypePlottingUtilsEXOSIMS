@@ -1632,6 +1632,8 @@ def smin_smax_slmin_slmax(n, xreal, yreal, mx, my, x, y):
 
 def trueAnomalyFromXY(X,Y,W,w,inc):
     """ Calculated true anomaly from X, Y, and KOE
+    These nus are not necessarily the actual value
+    due to the use of arctan. A subsequent fixer function exists
     Args:
         X (numpy array): 
             x component of body in 3D elliptical orbit
@@ -1645,7 +1647,7 @@ def trueAnomalyFromXY(X,Y,W,w,inc):
             inclination of the body's orbit
     Returns:
         nu (numpy array):
-            true anomalies
+            true anomalies in radians
     """
     #nu = np.arctan2( -X/Y*np.sin(W)*np.cos(w) -X/Y*np.cos(W)*np.cos(inc)*np.sin(w) + np.cos(W)*np.cos(w) - np.sin(W)*np.cos(inc)*np.cos(w),\
     #            -X/Y*np.sin(W)*np.sin(w) + X/Y*np.cos(W)*np.cos(inc)*np.cos(w) + np.cos(W)*np.sin(w) + np.sin(W)*np.cos(inc)*np.cos(w) ) #Manual Typing
@@ -2134,14 +2136,33 @@ def trueAnomaliesOfPoints(minSepPoints_x_dr, minSepPoints_y_dr, maxSepPoints_x_d
 
 #### Nu corections for extrema
 def nuCorrections_extrema(sma,e,W,w,inc,nus,mainInds,seps):
+    """ A method for correcting the nus of the extrema points. The input nus are calculated with arctan meaning it could be nu or nu+pi
+    Args:
+        sma (numpy array):
+        e (numpy array):
+        W (numpy array):
+        w (numpy array):
+        inc (numpy array):
+        nus (numpy array):
+        mainInds (numpy array):
+        seps (numpy array):
+    Returns:
+        nus (numpy array):
+    """
+    #Calculates the planet-star separations at the input nus
     r_extrema = xyz_3Dellipse(sma[mainInds],e[mainInds],W[mainInds],w[mainInds],inc[mainInds],nus)
     s_extrema = np.sqrt(r_extrema[0,0]**2 + r_extrema[1,0]**2)
+    #Calculates the errors for the input nus
     error0 = np.abs(seps - s_extrema)
+    #Sets up nus for off by pi error (nu+pi)
     nus_extrema_ppi = nus + np.pi
+    #Calculates the planet-star separations for nus+pi
     r_extrema_ppi = xyz_3Dellipse(sma[mainInds],e[mainInds],W[mainInds],w[mainInds],inc[mainInds],nus_extrema_ppi)
     s_extrema_ppi = np.sqrt(r_extrema_ppi[0,0]**2 + r_extrema_ppi[1,0]**2)
+    #Calculates the error for the adjusted nus
     error1 = np.abs(seps - s_extrema_ppi)
 
+    #Figure out which inds to keep the adjusted nus for
     error_deciding = np.stack((error0,error1),axis=1)
     minErrorInds = np.argmin(error_deciding,axis=1)
 
