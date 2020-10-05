@@ -1662,10 +1662,14 @@ def timeFromTrueAnomaly(nu,T,e):
     """ Time (since periastron) from true anomaly
     Args:
         nu (numpy array):
+            true anomalies
         T (numpy array):
+            orbital periods
         e (numpy array):
+            planet eccentricities
     Returns:
-
+        time (numpy array):
+            time past periastron corresponding to the input true anomaly 
     """
 
     E = np.arctan2(np.sqrt(1-e**2)*np.sin(nu),e+np.cos(nu))
