@@ -91,6 +91,7 @@ plt.rcParams['axes.linewidth']=2
 plt.rc('font',weight='bold')
 plt.plot(1.5*np.cos(Ds),1.5*np.sin(Ds),color='blue')
 plt.show(block=False)
+plt.gcf().canvas.draw()
 plt.close(199)
 plt.figure(num=199)
 plt.plot(Ds,alphas1,color='red')
@@ -98,6 +99,7 @@ plt.plot(Ds,alphas2,color='green')
 plt.xlabel('Earth-Sun-Planet Angle, ' + r'$D$' + ' in rad',weight='bold')
 plt.ylabel('Sun-Planet-Earth Phase Angle, ' + r'$\alpha$' + ' in rad',weight='bold')
 plt.show(block=False)
+plt.gcf().canvas.draw()
 plt.close(299)
 plt.figure(num=299)
 plt.plot(Ds,ds1,color='red')
@@ -105,6 +107,7 @@ plt.plot(Ds,ds2,color='green')
 plt.xlabel('Earth-Sun-Planet Angle, ' + r'$D$' + ' in rad',weight='bold')
 plt.ylabel('Earth-Planet distance, ' + r'$d$' + ' in AU',weight='bold')
 plt.show(block=False)
+plt.gcf().canvas.draw()
 
 
 def calc_Vmag(solarFlux, bulk_albedo, r_sun_sc, nhat, A_aperture, r_gs_sc, vegaFlux):
@@ -175,7 +178,7 @@ plt.close(999)
 plt.figure(num=999)
 plt.plot(1.+d*np.cos(alpha),d*np.sin(alpha))
 plt.show(block=False)
-
+plt.gcf().canvas.draw()
 
 
 
@@ -958,6 +961,7 @@ plt.plot(Rsss1,Rmmm1,color=(0.5,0.5,1.-0.5),linestyle='--')
 plt.plot(Rsss2,Rmmm2,color=(0.2,0.5,1.-0.2),linestyle='--')
 plt.plot(Rsss3,Rmmm3,color=(0.,0.5,1.-0.),linestyle='--')
 plt.show(block=False)
+plt.gcf().canvas.draw()
 ####
 
 #v1 and v2 as functions of inclination FROM SEPARATION
@@ -1031,11 +1035,13 @@ out = [eqnLAMBERT.subs(alpha,vvv[i]) for i in np.arange(len(vvv))]
 plt.figure(num=9878907896)
 plt.plot(vvv,out)
 plt.show(block=False)
+plt.gcf().canvas.draw()
 
 
-plotDmagvss(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,inclination=0., folder='./', PPoutpath='./')
-plotDmagvss(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,inclination=0.5, folder='./', PPoutpath='./')
-plotDmagvss(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,inclination=0.85, folder='./', PPoutpath='./')
-plotDmagvss(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,inclination=25.3, folder='./', PPoutpath='./')
+IWA2=0.150*u.arcsec #Suggested by dmitry as analahous to WFIRST
+plotDmagvss(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=0., folder='./', PPoutpath='./')
+plotDmagvss(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=0.5, folder='./', PPoutpath='./')
+plotDmagvss(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=0.85, folder='./', PPoutpath='./')
+plotDmagvss(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=25.3, folder='./', PPoutpath='./')
 
 
