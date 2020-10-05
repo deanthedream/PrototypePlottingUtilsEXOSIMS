@@ -1783,7 +1783,7 @@ def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lmi
     #DELETEamy.astype('complex128')
     #DELETEas_circle.astype('complex128')
     A, B, C, D = quarticCoefficients_ellipse_to_Quarticipynb(a, b, mx, my, s_circle)
-    xreal2, delta, P, D2, R, delta_0 = quarticSolutions_ellipse_to_Quarticipynb(A, B, C, D)
+    xreal2, delta, P, D2, R, delta_0 = quarticSolutions_ellipse_to_Quarticipynb(A.astype('complex128'), B, C, D)
     yreal2 = ellipseYFromX(xreal2.astype('complex128'), a, b)
 
     #### All Real Inds
