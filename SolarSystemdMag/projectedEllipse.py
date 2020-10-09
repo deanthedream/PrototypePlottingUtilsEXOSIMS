@@ -2763,20 +2763,26 @@ def calc_planet_dmagmin_dmagmax(e,inc,w,a,p,Rp):
     """ A method for calculating the minimum and maximum dmag of any given planet
     Assumes the planet has a quasi-lambert phase function (a poor approximation).
     Args:
-        e (array):
-        inc (array):
-        w (array):
-        a (array):
-        p (array):
-        Rp (array):
+        e (numpy array):
+        inc (numpy array):
+        w (numpy array):
+        a (numpy array):
+        p (numpy array):
+        Rp (numpy array):
     Returns:
-        mindmag (array):
+        mindmag (numpy array):
             an array containing the minimum dmags 
-        maxdmag (arrray):
-        indsWith2 (array):
+        maxdmag (numpy array):
+        dmaglminAll (numpy array):
+        dmaglmaxAll (numpy array):
+        indsWith2 (numpy array):
             planet indicies where there are only 2 solutions
-        indsWith4 (array):
+        indsWith4 (numpy array):
             planet indicies where there are 4 solutions
+        nuMinDmag (numpy array):
+        nuMaxDmag (numpy array):
+        nulminAll (numpy array):
+        nulmaxAll (numpy array):
     """
     A = e**4.*np.sin(inc)**4.*np.sin(w)**4. + 2.*e**4.*np.sin(inc)**4.*np.sin(w)**2.*np.cos(w)**2. + e**4.*np.sin(inc)**4.*np.cos(w)**4.
     B = 3.*e**4.*np.sin(inc)**3.*np.sin(w)**3. + 3.*e**4.*np.sin(inc)**3.*np.sin(w)*np.cos(w)**2. + 3.*e**3.*np.sin(inc)**4.*np.sin(w)**4. + 6.*e**3.*np.sin(inc)**4.*np.sin(w)**2.*np.cos(w)**2. + 3.*e**3.*np.sin(inc)**4.*np.cos(w)**4.
@@ -2927,19 +2933,31 @@ def calc_planet_dmagmin_dmagmax(e,inc,w,a,p,Rp):
     assert np.all(numlmin+numlmin2==1) #if these are all true, there is only 1 solution that is true in each one
     assert np.all(numlmax+numlmax2==1) #if these are all true, there is only 1 solution that is true in each one
 
-    left off here
+    #Create arrays containing all local min and max nus and dmags
+    nulminAll = np.zeros(len(indsWith4))
+    nulmaxAll = np.zeros(len(indsWith4))
+    dmaglminAll = np.zeros(len(indsWith4))
+    dmaglmaxAll = np.zeros(len(indsWith4))
 
     nulmin = nuReal[indsWith4][realLocalMinBool]
+    nulminAll[np.where(numlmin==1)[0]] = nulmin
     nulminInds = np.tile(np.arange(8),(len(indsWith4),1))[realLocalMinBool] #Get inds of each potential solution
+    dmaglminAll[np.where(numlmin==1)[0]] = gdmags[indsWith4][realLocalMinBool]
     #DELETEassert np.all(numlmax==1) #if these are all true, there is only 1 solution that is true in each one 
     nulmax = nuReal[indsWith4][realLocalMaxBool]
+    nulmaxAll[np.where(numlmax==1)[0]] = nulmax
     nulmaxInds = np.tile(np.arange(8),(len(indsWith4),1))[realLocalMaxBool] #Get inds of each potential solution
+    dmaglmaxAll[np.where(numlmax==1)[0]] = gdmags[indsWith4][realLocalMaxBool]
     #DELETEassert np.all(numlmin2==1)
     nu2lmin = nuReal2[indsWith4][real2LocalMinBool]
+    nulminAll[np.where(numlmin2==1)[0]] = nu2lmin
     nu2lminInds = np.tile(np.arange(8),(len(indsWith4),1))[real2LocalMinBool] #Get inds of each potential solution
+    dmaglminAll[np.where(numlmin2==1)[0]] = gdmags2[indsWith4][real2LocalMinBool]
     #DELETEassert np.all(numlmax2==1)
     nu2lmax = nuReal2[indsWith4][real2LocalMaxBool]
+    nulmaxAll[np.where(numlmax2==1)[0]] = nu2lmax
     nu2lmaxInds = np.tile(np.arange(8),(len(indsWith4),1))[real2LocalMinBool] #Get inds of each potential solution
+    dmaglmaxAll[np.where(numlmin2==1)[0]] = gdmags2[indsWith4][real2LocalMaxBool]
 
 
     assert np.all(np.sum(realLocalMinBool*real2LocalMinBool,axis=1) < 2) #only one or other or both are local min
@@ -2970,16 +2988,10 @@ def calc_planet_dmagmin_dmagmax(e,inc,w,a,p,Rp):
     #However, it is distinctly possible that dmag_0 < dmag_1 
 
     #Simple Quality Checks
-    assert np.all(localmaxdmag > localmindmag)
-    assert np.all(localmaxdmag < maxdmag2[indsWith4])
-    assert np.all(localmindmag > mindmag2[indsWith4])
-
-
-    print(saltyburrito)
+    assert np.all(localmaxdmag >= localmindmag)
+    assert np.all(localmaxdmag <= maxdmag2[indsWith4])
+    assert np.all(localmindmag >= mindmag2[indsWith4])
     ###################################################################################################
 
-
-
-    return mindmag, maxdmag, localmindmag, localmaxdmag, indsWith2, indsWith4
-
+    return mindmag, maxdmag, dmaglminAll, dmaglmaxAll, indsWith2, indsWith4, nuMinDmag, nuMaxDmag, nulminAll, nulmaxAll
 #################################################################################################################
