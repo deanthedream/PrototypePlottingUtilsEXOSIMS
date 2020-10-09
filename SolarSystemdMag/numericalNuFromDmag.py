@@ -56,7 +56,17 @@ dmag = 29. #specify the dmag to calculate for
 #####################################################################
 #### Solving for dmag_min and dmag_max for each planet
 mindmag, maxdmag, dmaglminAll, dmaglmaxAll, indsWith2, indsWith4, nuMinDmag, nuMaxDmag, nulminAll, nulmaxAll = calc_planet_dmagmin_dmagmax(e,inc,w,a,p,Rp)
-print('Num Planets with given dmag: ' + str(np.sum((mindmag < dmag)*(maxdmag > dmag))))
+print('Num Planets with At Least 2 Int given dmag: ' + str(np.sum((mindmag < dmag)*(maxdmag > dmag))))
+print('Num Planets with dmag local extrema: ' + str(len(indsWith4)))
+print('Num Planets with given 4 Int given dmag: ' + str(np.sum((dmaglminAll < dmag)*(dmaglmaxAll > dmag))))
+indsWith4Int = indsWith4[np.where((dmaglminAll < dmag)*(dmaglmaxAll > dmag))[0]]
+indsWith2Int = list(set(np.where((mindmag < dmag)*(maxdmag > dmag))[0]) - set(indsWith4Int))
+
+#A subsequent check to see if the the mindmag or maxdmag are close to the dmaglmaxAll or dmaglminAll
+errormin = mindmag[indsWith4] - dmaglminAll
+errormax = maxdmag[indsWith4] - dmaglmaxAll
+print(saltyburrito)
+
 #####################################################################
 
 #### Plot histogram of dmagmin and dmagmax
@@ -102,7 +112,7 @@ plt.gcf().canvas.draw()
 # 2. make wrapper function which first calls dmagmin and dmag max to detemrine the number of solutions (should I specify whether I am looking for 2 or 4 solutions??)
 
 
-def calc_planetnu_from_dmag(dmag,e,inc,w,a,p,Rp,mindmag, maxdmag, indsWith2, indsWith4):
+def calc_planetnu_from_dmag(dmag,e,inc,w,a,p,Rp,mindmag, maxdmag, indsWith2Int, indsWith4Int):
     """ This method calculates nu of a planet which have the provided dmag assuming a quasi-lambert phase function fullEqnX from AnalyticalNuFromDmag3.ipynb
     Args:
         dmag,e,inc,w,a,p,Rp,pInds
@@ -135,6 +145,8 @@ def calc_planetnu_from_dmag(dmag,e,inc,w,a,p,Rp,mindmag, maxdmag, indsWith2, ind
     outBoundsBools = np.logical_not(inBoundsBools) # the out2 solutions that are inside the desired bounds
     outReal = np.zeros(out.shape) #just getting something with the right shape
     outReal[outBoundsBools] = out[outBoundsBools]*np.nan
+    outReal[inBoundsBools] = out[inBoundsBools]
+    outReal = np.real(outReal)
     #For arccos in 0-pi
     nuReal = np.ones(outReal.shape)*np.nan
     nuReal[inBoundsBools] = np.arccos(outReal[inBoundsBools]) #calculate arccos, there are 2 potential solutions... need to calculate both
@@ -181,10 +193,13 @@ def calc_planetnu_from_dmag(dmag,e,inc,w,a,p,Rp,mindmag, maxdmag, indsWith2, ind
     plt.yscale('log')
     plt.show(block=False)
 
+    print(saltyburrito)
+
     return nusCombined, gdmagsCombined, sumNumSol, numSols, numSolHist 
 
-nusCombined, gdmagsCombined, sumNumSol, numSols, numSolHist = calc_planetnu_from_dmag(dmag,e,inc,w,a,p,Rp,mindmag, maxdmag, indsWith2, indsWith4)
+nusCombined, gdmagsCombined, sumNumSol, numSols, numSolHist = calc_planetnu_from_dmag(dmag,e,inc,w,a,p,Rp,mindmag, maxdmag, indsWith2Int, indsWith4Int)
 
+#print(saltyburrito)
 ####################################################################
 
 
