@@ -2957,7 +2957,7 @@ def calc_planet_dmagmin_dmagmax(e,inc,w,a,p,Rp):
     nu2lmax = nuReal2[indsWith4][real2LocalMaxBool]
     nulmaxAll[np.where(numlmax2==1)[0]] = nu2lmax
     nu2lmaxInds = np.tile(np.arange(8),(len(indsWith4),1))[real2LocalMinBool] #Get inds of each potential solution
-    dmaglmaxAll[np.where(numlmin2==1)[0]] = gdmags2[indsWith4][real2LocalMaxBool]
+    dmaglmaxAll[np.where(numlmax2==1)[0]] = gdmags2[indsWith4][real2LocalMaxBool]
 
 
     assert np.all(np.sum(realLocalMinBool*real2LocalMinBool,axis=1) < 2) #only one or other or both are local min
