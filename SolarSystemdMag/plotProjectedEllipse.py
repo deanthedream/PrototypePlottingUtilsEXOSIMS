@@ -47,6 +47,7 @@ def plotProjectedEllipse(ind, sma, e, W, w, inc, Phi, dmajorp, dminorp, Op, num)
     dminorpy2 = Op[1][ind] + dminorp[ind]*np.sin(ang2-np.pi/2)
     plt.plot([Op[0][ind],dminorpx1],[Op[1][ind],dminorpy1],color='purple',linestyle='-')
     plt.plot([Op[0][ind],dminorpx2],[Op[1][ind],dminorpy2],color='purple',linestyle='-')
+    plt.title('sma: ' + str(np.round(sma[ind],4)) + ' e: ' + str(np.round(e[ind],4)) + ' W: ' + str(np.round(W[ind],4)) + '\nw: ' + str(np.round(w[ind],4)) + ' inc: ' + str(np.round(inc[ind],4)))
     plt.show(block=False)
     ####
 
@@ -235,6 +236,7 @@ def plot3DEllipseto2DEllipseProjectionDiagram(ind, sma, e, W, w, inc, Op, Phi,\
     ax.set_zlim3d(-0.99*xmax,0.99*xmax)
     ax.xaxis.set_pane_color((1.0, 1.0, 1.0, 0.0)) #remove background color
     ax.set_axis_off() #removes axes
+    plt.title('sma: ' + str(np.round(sma[ind],4)) + ' e: ' + str(np.round(e[ind],4)) + ' W: ' + str(np.round(W[ind],4)) + '\nw: ' + str(np.round(w[ind],4)) + ' inc: ' + str(np.round(inc[ind],4)))
     plt.show(block=False)
     ####
 
@@ -352,6 +354,7 @@ def plotEllipseMajorAxisFromConjugate(ind, sma, e, W, w, inc, Op, Phi,\
     ax.set_ylim(-0.99*xmax+Op[1][ind],0.99*xmax+Op[1][ind])
     ax.set_axis_off() #removes axes
     ax.axis('equal')
+    plt.title('sma: ' + str(np.round(sma[ind],4)) + ' e: ' + str(np.round(e[ind],4)) + ' W: ' + str(np.round(W[ind],4)) + '\nw: ' + str(np.round(w[ind],4)) + ' inc: ' + str(np.round(inc[ind],4)))
     plt.show(block=False)
 
 def plotDerotatedEllipse(ind, sma, e, W, w, inc, Phi, dmajorp, dminorp, Op, x, y, num=879):
@@ -399,6 +402,7 @@ def plotDerotatedEllipse(ind, sma, e, W, w, inc, Phi, dmajorp, dminorp, Op, x, y
     c_ae = dmajorp[ind]*np.sqrt(1-dminorp[ind]**2/dmajorp[ind]**2)
     plt.scatter([-c_ae,c_ae],[0,0],color='blue')
 
+    plt.title('sma: ' + str(np.round(sma[ind],4)) + ' e: ' + str(np.round(e[ind],4)) + ' W: ' + str(np.round(W[ind],4)) + '\nw: ' + str(np.round(w[ind],4)) + ' inc: ' + str(np.round(inc[ind],4)))
     plt.show(block=False)
 
 def plotReorientationMethod(ind, sma, e, W, w, inc, x, y, Phi, Op, dmajorp, dminorp,\
@@ -451,9 +455,10 @@ def plotReorientationMethod(ind, sma, e, W, w, inc, x, y, Phi, Op, dmajorp, dmin
     uy = np.sin(Phi[ind])*minSepPoints_x[ind] + np.cos(Phi[ind])*minSepPoints_y[ind] + Op[1][ind] 
     plt.scatter(ux,uy,color='green')
 
+    plt.title('sma: ' + str(np.round(sma[ind],4)) + ' e: ' + str(np.round(e[ind],4)) + ' W: ' + str(np.round(W[ind],4)) + '\nw: ' + str(np.round(w[ind],4)) + ' inc: ' + str(np.round(inc[ind],4)))
     plt.show(block=False)
 
-def plotDerotatedIntersectionsMinMaxStarLocBounds(ind, x, y, dmajorp, dminorp, only2RealInds, typeInds0, typeInds1, typeInds2, typeInds3, minSepPoints_x,\
+def plotDerotatedIntersectionsMinMaxStarLocBounds(ind, sma, e, W, w, inc, x, y, dmajorp, dminorp, only2RealInds, typeInds0, typeInds1, typeInds2, typeInds3, minSepPoints_x,\
     minSepPoints_y, yrealAllRealInds, lminSepPoints_x, lminSepPoints_y, fourIntInds, fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y,\
     lmaxSepPoints_x, lmaxSepPoints_y, twoIntSameYInds,\
     maxSepPoints_x, maxSepPoints_y, twoIntOppositeXInds, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2,\
@@ -612,9 +617,10 @@ def plotDerotatedIntersectionsMinMaxStarLocBounds(ind, x, y, dmajorp, dminorp, o
     plt.plot(xran, ylineQ4, color='red', linestyle='-.')
     plt.xlim([-1.2*dmajorp[ind],1.2*dmajorp[ind]])
     plt.ylim([-1.2*dminorp[ind],1.2*dminorp[ind]])
+    plt.title('sma: ' + str(np.round(sma[ind],4)) + ' e: ' + str(np.round(e[ind],4)) + ' W: ' + str(np.round(W[ind],4)) + '\nw: ' + str(np.round(w[ind],4)) + ' inc: ' + str(np.round(inc[ind],4)))
     plt.show(block=False)
 
-def plotDerotatedExtrema(ind, x, y, dmajorp, dminorp, only2RealInds, typeInds0, typeInds1, typeInds2, typeInds3, minSepPoints_x,\
+def plotDerotatedExtrema(ind, sma, e, W, w, inc, x, y, dmajorp, dminorp, only2RealInds, typeInds0, typeInds1, typeInds2, typeInds3, minSepPoints_x,\
     maxSepPoints_x, maxSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y,\
     minSepPoints_y, yrealAllRealInds, lminSepPoints_x, lminSepPoints_y, fourIntInds, fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y,\
     twoIntOppositeXInds, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2, num):
@@ -691,6 +697,7 @@ def plotDerotatedExtrema(ind, x, y, dmajorp, dminorp, only2RealInds, typeInds0, 
     plt.ylim([-1.2*dminorp[ind],1.2*dminorp[ind]])
     plt.xlabel('X Position In Image Plane (AU)', weight='bold')
     plt.ylabel('Y Position In Image Plane (AU)', weight='bold')
+    plt.title('sma: ' + str(np.round(sma[ind],4)) + ' e: ' + str(np.round(e[ind],4)) + ' W: ' + str(np.round(W[ind],4)) + '\nw: ' + str(np.round(w[ind],4)) + ' inc: ' + str(np.round(inc[ind],4)))
     plt.show(block=False)
 
 def plotRerotatedFromNus(ind, sma, e, W, w, inc, Op, yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds,\
@@ -803,6 +810,7 @@ def plotRerotatedFromNus(ind, sma, e, W, w, inc, Op, yrealAllRealInds, fourIntIn
         r_lmax = xyz_3Dellipse(sma,e,W,w,inc,nu_lmaxSepPoints[tind])
         plt.scatter(r_lmax[0],r_lmax[1],color='gold',marker='D',s=64)
 
+    plt.title('sma: ' + str(np.round(sma,4)) + ' e: ' + str(np.round(e,4)) + ' W: ' + str(np.round(W,4)) + '\nw: ' + str(np.round(w,4)) + ' inc: ' + str(np.round(inc,4)))
     plt.show(block=False)
 
 def errorLinePlot(fourIntInds,errors_fourInt0,errors_fourInt1,errors_fourInt2,errors_fourInt3,\
@@ -965,6 +973,7 @@ def plotProjectedEllipseWithNu(ind,sma,e,W,w,inc,nu_minSepPoints,nu_maxSepPoints
     plt.plot(x_circ2,y_circ2,color='green')
     ca = plt.gca()
     ca.axis('equal')
+    plt.title('sma: ' + str(np.round(sma[ind],4)) + ' e: ' + str(np.round(e[ind],4)) + ' W: ' + str(np.round(W[ind],4)) + '\nw: ' + str(np.round(w[ind],4)) + ' inc: ' + str(np.round(inc[ind],4)))
     plt.show(block=False)
 
 def plotSeparationvsnu(ind, sma, e, W, w, inc, minSep, maxSep, lminSep, lmaxSep, \
@@ -1016,20 +1025,21 @@ def plotSeparationvsnu(ind, sma, e, W, w, inc, minSep, maxSep, lminSep, lmaxSep,
         plt.scatter(nu_twoIntSameY[yind,1],np.sqrt(r_twoIntSameY1[0]**2 + r_twoIntSameY1[1]**2),color='green',marker='o')
     elif ind in yrealAllRealInds[twoIntOppositeXInds]: #Same X
         yind = np.where(yrealAllRealInds[twoIntOppositeXInds] == ind)[0]
-        r_twoIntOppositeX0 = xyz_3Dellipse(a[ind],e[ind],W[ind],w[ind],inc[ind],nu_twoIntOppositeX[yind,0])
-        r_twoIntOppositeX1 = xyz_3Dellipse(a[ind],e[ind],W[ind],w[ind],inc[ind],nu_twoIntOppositeX[yind,1])
+        r_twoIntOppositeX0 = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],nu_twoIntOppositeX[yind,0])
+        r_twoIntOppositeX1 = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],nu_twoIntOppositeX[yind,1])
         plt.scatter(nu_twoIntOppositeX[yind,0],np.sqrt(r_twoIntOppositeX0[0]**2 + r_twoIntOppositeX0[1]**2),color='green',marker='o')
         plt.scatter(nu_twoIntOppositeX[yind,1],np.sqrt(r_twoIntOppositeX1[0]**2 + r_twoIntOppositeX1[1]**2),color='green',marker='o')
     elif ind in only2RealInds:
         yind = np.where(only2RealInds == ind)[0]
-        r_IntersectionOnly20 = xyz_3Dellipse(a[ind],e[ind],W[ind],w[ind],inc[ind],nu_IntersectionsOnly2[yind,0])
-        r_IntersectionOnly21 = xyz_3Dellipse(a[ind],e[ind],W[ind],w[ind],inc[ind],nu_IntersectionsOnly2[yind,1])
+        r_IntersectionOnly20 = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],nu_IntersectionsOnly2[yind,0])
+        r_IntersectionOnly21 = xyz_3Dellipse(sma[ind],e[ind],W[ind],w[ind],inc[ind],nu_IntersectionsOnly2[yind,1])
         plt.scatter(nu_IntersectionsOnly2[yind,0],np.sqrt(r_IntersectionOnly20[0]**2 + r_IntersectionOnly20[1]**2),color='green',marker='o')
         plt.scatter(nu_IntersectionsOnly2[yind,1],np.sqrt(r_IntersectionOnly21[0]**2 + r_IntersectionOnly21[1]**2),color='green',marker='o')
 
     plt.xlim([0,2.*np.pi])
     plt.ylabel('Projected Separation, s, in AU',weight='bold')
     plt.xlabel(r'$True Anomaly, \nu, (rad)$',weight='bold')
+    plt.title('sma: ' + str(np.round(sma[ind],4)) + ' e: ' + str(np.round(e[ind],4)) + ' W: ' + str(np.round(W[ind],4)) + '\nw: ' + str(np.round(w[ind],4)) + ' inc: ' + str(np.round(inc[ind],4)))
     plt.show(block=False)
 
 def plotSeparationVsTime(ind, sma, e, W, w, inc, minSep, maxSep, lminSep, lmaxSep,\
@@ -1120,10 +1130,11 @@ def plotSeparationVsTime(ind, sma, e, W, w, inc, minSep, maxSep, lminSep, lmaxSe
     plt.xlim([0,periods[ind]])
     plt.ylabel('Projected Separation, s, in AU',weight='bold')
     plt.xlabel('Time Past Periastron, t, (years)',weight='bold')
+    plt.title('sma: ' + str(np.round(sma[ind],4)) + ' e: ' + str(np.round(e[ind],4)) + ' W: ' + str(np.round(W[ind],4)) + '\nw: ' + str(np.round(w[ind],4)) + ' inc: ' + str(np.round(inc[ind],4)))
     plt.show(block=False)
 
 
-def plotDerotatedEllipseStarLocDividers(ind, x, y, dmajorp, dminorp, only2RealInds, typeInds0, typeInds1, typeInds2, typeInds3, minSepPoints_x,\
+def plotDerotatedEllipseStarLocDividers(ind, sma, e, W, w, inc, x, y, dmajorp, dminorp, only2RealInds, typeInds0, typeInds1, typeInds2, typeInds3, minSepPoints_x,\
     minSepPoints_y, yrealAllRealInds, lminSepPoints_x, lminSepPoints_y, fourIntInds, fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y,\
     lmaxSepPoints_x, lmaxSepPoints_y, twoIntSameYInds,\
     maxSepPoints_x, maxSepPoints_y, twoIntOppositeXInds, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2,\
@@ -1276,6 +1287,7 @@ def plotDerotatedEllipseStarLocDividers(ind, x, y, dmajorp, dminorp, only2RealIn
     plt.plot(xran, ylineQ4, color='red', linestyle='-.')
     plt.xlim([-1.2*dmajorp[ind],1.2*dmajorp[ind]])
     plt.ylim([-1.2*dminorp[ind],1.2*dminorp[ind]])
+    plt.title('sma: ' + str(np.round(sma[ind],4)) + ' e: ' + str(np.round(e[ind],4)) + ' W: ' + str(np.round(W[ind],4)) + '\nw: ' + str(np.round(w[ind],4)) + ' inc: ' + str(np.round(inc[ind],4)))
     plt.show(block=False)
 
 

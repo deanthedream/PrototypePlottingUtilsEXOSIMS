@@ -3,6 +3,7 @@ import numpy as np
 import time
 from astropy import constants as const
 import astropy.units as u
+from EXOSIMS.util.deltaMag import deltaMag
 #from numba import jit, cuda
 #pip3 install numba
 #https://developer.nvidia.com/cuda-downloads?target_os=Linux&target_arch=x86_64&target_distro=Ubuntu&target_version=1804&target_type=debnetwork
@@ -12,7 +13,9 @@ import astropy.units as u
 #import jax.numpy as jxnp
 
 def projected_apbpPsipsi(a,e,W,w,inc):
-    """
+    """ Given the KOE of a planet, calculate the semi-paramters of the projected ellipse
+    and the angle from two construction lines to the x-axis (construction lines are 
+    intermediaries to determine the angle of the projected semi-major axis from the x-axis) 
     Args:
         a (numpy array):
             semi-major axis in AU
@@ -29,12 +32,12 @@ def projected_apbpPsipsi(a,e,W,w,inc):
             Semi-major axis of the projected ellipse in AU
         dminorp (numpy array):
             Semi-minor axis of the projected ellipse in AU
-        Psi (numpy array):
-            Angle between Op1 and OpQp
-        psi (numpy array):
-            Angle between OpQ and x-axis
+        theta_OpQ_X (numpy array):
+            Angle from the x-axis to line OpQ
+        theta_OpQp_X (numpy array):
+            Angle from the x-axis to line OpQp
     """
-
+    #DELETE A list of conversions when moving from jupyter notebook to python code 
     #sqrt to np.sqrt
     #Abs to np.abs
     #sin to np.sin
@@ -42,30 +45,35 @@ def projected_apbpPsipsi(a,e,W,w,inc):
     #atan to np.arctan
     #1.0* to 
     #3.14159265358979 to np.pi
-    Gamma = e*(1 - e**2)
+
+    Gamma = e*(1. - e**2.)
     gamma = (np.sin(W)*np.cos(w) + np.sin(w)*np.cos(W)*np.cos(inc))
-    Phi = np.sqrt((e+1)/(1-e)) #np.sqrt(e + 1)*np.sqrt(1/(1 - e))
-    phi = a**2*(e**2 - 1)**2
+    Phi = np.sqrt((e+1.)/(1.-e)) #np.sqrt(e + 1)*np.sqrt(1/(1 - e))
+    phi = a**2.*(e**2. - 1.)**2.
     #DELETE lam1 = np.sin(W)*np.sin(w)*np.cos(inc) - np.cos(W)*np.cos(w)
     lam2 = (-np.sin(W)*np.sin(w)*np.cos(inc) + np.cos(W)*np.cos(w))
-    Omicron = (np.sin(W)*np.cos(w + 2*np.arctan(Phi)) + np.sin(w + 2*np.arctan(Phi))*np.cos(W)*np.cos(inc))
-    Eeps = (e + 1)**2
-    Eeps2 = a*(1 - e**2)
-    Gorgon = (-np.sin(W)*np.sin(w + 2*np.arctan(Phi))*np.cos(inc) + np.cos(W)*np.cos(w + 2*np.arctan(Phi)))
-    Gemini = (e*np.cos(2*np.arctan(Phi)) + 1)
+    Omicron = (np.sin(W)*np.cos(w + 2.*np.arctan(Phi)) + np.sin(w + 2.*np.arctan(Phi))*np.cos(W)*np.cos(inc))
+    Eeps = (e + 1.)**2.
+    Eeps2 = a*(1. - e**2.)
+    Gorgon = (-np.sin(W)*np.sin(w + 2.*np.arctan(Phi))*np.cos(inc) + np.cos(W)*np.cos(w + 2.*np.arctan(Phi)))
+    Gemini = (e*np.cos(2.*np.arctan(Phi)) + 1.)
 
-    #Specific Calc Substitutions
-    Ramgy = ((e + 1)*np.sqrt(phi*gamma**2/Eeps + phi*(np.sin(W)*np.sin(w)*np.cos(inc) - np.cos(W)*np.cos(w))**2/Eeps + phi*np.sin(inc)**2*np.sin(w)**2/Eeps))
-    Affinity1 = a**2*Gamma*gamma/Ramgy
+    #Specific Calc Substitutions to shorten the code
+    Ramgy = ((e + 1.)*np.sqrt(phi*gamma**2./Eeps + phi*(np.sin(W)*np.sin(w)*np.cos(inc) - np.cos(W)*np.cos(w))**2./Eeps + phi*np.sin(inc)**2.*np.sin(w)**2./Eeps))
+    Affinity1 = a**2.*Gamma*gamma/Ramgy
     Yolo1 = (np.sin(W)*np.cos(w + np.pi) + np.sin(w + np.pi)*np.cos(W)*np.cos(inc))
     Kolko1 = (-np.sin(W)*np.sin(w + np.pi)*np.cos(inc) + np.cos(W)*np.cos(w + np.pi))
     #Semi-major axis length
-    dmajorp = np.sqrt(np.abs(Affinity1 + Eeps2*Yolo1/(1 - e) - (a**2*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2))**2 + np.abs(a**2*Gamma*(lam2)/Ramgy + Eeps2*Kolko1/(1 - e) - (-Affinity1 - Eeps2*Omicron/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2))**2)/2\
-             + np.sqrt(np.abs(Affinity1 + Eeps2*Yolo1/(1 - e) + (a**2*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2))**2 + np.abs(a**2*Gamma*(lam2)/Ramgy + Eeps2*Kolko1/(1 - e) + (-Affinity1 - Eeps2*Omicron/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2))**2)/2
+    dmajorp = np.sqrt(np.abs(Affinity1 + Eeps2*Yolo1/(1. - e) - (a**2.*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron/Gemini)**2. + np.abs(a**2.*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2.)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron/Gemini)**2. + np.abs(a**2.*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2.))**2. + np.abs(a**2.*Gamma*(lam2)/Ramgy + Eeps2*Kolko1/(1. - e) - (-Affinity1 - Eeps2*Omicron/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron/Gemini)**2. + np.abs(a**2.*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2.)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron/Gemini)**2 + np.abs(a**2.*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2.))**2.)/2.\
+             + np.sqrt(np.abs(Affinity1 + Eeps2*Yolo1/(1. - e) + (a**2.*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron/Gemini)**2. + np.abs(a**2.*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2.)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron/Gemini)**2. + np.abs(a**2.*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2.))**2. + np.abs(a**2.*Gamma*(lam2)/Ramgy + Eeps2*Kolko1/(1. - e) + (-Affinity1 - Eeps2*Omicron/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron/Gemini)**2. + np.abs(a**2.*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2.)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron/Gemini)**2. + np.abs(a**2.*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2.))**2.)/2.
     #Semi-minor axis length
-    dminorp = -np.sqrt(np.abs(Affinity1 + Eeps2*Yolo1/(1 - e) - (a**2*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2))**2 + np.abs(a**2*Gamma*(lam2)/Ramgy + Eeps2*Kolko1/(1 - e) - (-Affinity1 - Eeps2*Omicron/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2))**2)/2\
-             + np.sqrt(np.abs(Affinity1 + Eeps2*Yolo1/(1 - e) + (a**2*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2))**2 + np.abs(a**2*Gamma*(lam2)/Ramgy + Eeps2*Kolko1/(1 - e) + (-Affinity1 - Eeps2*Omicron/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2))**2)/2
-    #Angle between OpQ and OpQp
+    dminorp = -np.sqrt(np.abs(Affinity1 + Eeps2*Yolo1/(1. - e) - (a**2.*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron/Gemini)**2. + np.abs(a**2.*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2.)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron/Gemini)**2. + np.abs(a**2.*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2.))**2. + np.abs(a**2.*Gamma*(lam2)/Ramgy + Eeps2*Kolko1/(1. - e) - (-Affinity1 - Eeps2*Omicron/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron/Gemini)**2. + np.abs(a**2.*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2.)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron/Gemini)**2. + np.abs(a**2.*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2.))**2.)/2.\
+             + np.sqrt(np.abs(Affinity1 + Eeps2*Yolo1/(1. - e) + (a**2.*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron/Gemini)**2. + np.abs(a**2.*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2.)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron/Gemini)**2. + np.abs(a**2.*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2.))**2. + np.abs(a**2.*Gamma*(lam2)/Ramgy + Eeps2*Kolko1/(1. - e) + (-Affinity1 - Eeps2*Omicron/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron/Gemini)**2. + np.abs(a**2.*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2.)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron/Gemini)**2. + np.abs(a**2.*Gamma*(lam2)/Ramgy + Eeps2*Gorgon/Gemini)**2.))**2.)/2.
+    #Angle between OpQ and OpQp  #Keeping because it is the correct equation, this is the correct place to implement it if needed, but generally not necessary
+    # Psi (numpy array):
+    #     Angle between Op1 and OpQp
+    # psi (numpy array):
+    #     Angle between OpQ and x-axis
     # Psi = np.arccos(((Affinity1 + Eeps2*Yolo1/(1 - e) - (a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)**2)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)**2))*(Affinity1 + Eeps2*Yolo1/(1 - e) + (a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)**2)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)**2)) + (a**2*Gamma*lam2/Ramgy + Eeps2*Kolko1/(1 - e)\
     #          - (-Affinity1 - Eeps2*Omicron/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)**2)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)**2))*(a**2*Gamma*lam2/Ramgy + Eeps2*Kolko1/(1 - e) + (-Affinity1 - Eeps2*Omicron/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)**2)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)**2)))/(np.sqrt(np.abs(Affinity1 + Eeps2*Yolo1/(1 - e) - (a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)*np.sqrt(np.abs(Affinity1\
     #          + Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)**2)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)**2))**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*Kolko1/(1 - e) - (-Affinity1 - Eeps2*Omicron/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)**2)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron/Gemini)**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)**2))**2)*np.sqrt(np.abs(Affinity1 + Eeps2*Yolo1/(1 - e) + (a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron/Gemini)**2\
@@ -92,17 +100,17 @@ def projected_apbpPsipsi(a,e,W,w,inc):
     # psi_v2 = np.arccos((a**2*Gamma*lam2/Ramgy + Eeps2*Kolko1/(1 - e) - (-Affinity1 - Eeps2*Omicron_v2/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron_v2/Gemini)**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)**2)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron_v2/Gemini)**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)**2))/np.sqrt(np.abs(Affinity1 + Eeps2*Yolo1/(1 - e) - (a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron_v2/Gemini)**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)**2)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron_v2/Gemini)**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)**2))**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*Kolko1/(1 - e)\
     #      - (-Affinity1 - Eeps2*Omicron_v2/Gemini)*np.sqrt(np.abs(Affinity1 + Eeps2*Omicron_v2/Gemini)**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)**2)/np.sqrt(np.abs(-Affinity1 - Eeps2*Omicron_v2/Gemini)**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*Gorgon/Gemini)**2))**2))
 
-    #theta_OpQ_X
-    theta_OpQ_X = np.arctan2(Affinity1 + Eeps2*Yolo1/(1 - e) - (a**2*Gamma*lam2/Ramgy + Eeps2*(-np.sin(W)*np.sin(w + 2*np.arctan(Phi))*np.cos(inc) + np.cos(W)*np.cos(w + 2*np.arctan(Phi)))/(e*np.cos(2*np.arctan(Phi)) + 1))*np.sqrt(np.abs(Affinity1 + Eeps2*(np.sin(W)*np.cos(w + 2*np.arctan(Phi)) + np.sin(w + 2*np.arctan(Phi))*np.cos(W)*np.cos(inc))/(e*np.cos(2*np.arctan(Phi)) + 1))**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*(-np.sin(W)*np.sin(w + 2*np.arctan(Phi))*np.cos(inc) + np.cos(W)*np.cos(w + 2*np.arctan(Phi)))/(e*np.cos(2*np.arctan(Phi)) + 1))**2)/np.sqrt(np.abs(-Affinity1 - Eeps2*(np.sin(W)*np.cos(w + 2*np.arctan(Phi)) + np.sin(w + 2*np.arctan(Phi))*np.cos(W)*np.cos(inc))/(e*np.cos(2*np.arctan(Phi)) + 1))**2\
-         + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*(-np.sin(W)*np.sin(w + 2*np.arctan(Phi))*np.cos(inc) + np.cos(W)*np.cos(w + 2*np.arctan(Phi)))/(e*np.cos(2*np.arctan(Phi)) + 1))**2), a**2*Gamma*lam2/Ramgy + Eeps2*Kolko1/(1 - e) - (-Affinity1 - Eeps2*(np.sin(W)*np.cos(w + 2*np.arctan(Phi)) + np.sin(w + 2*np.arctan(Phi))*np.cos(W)*np.cos(inc))/(e*np.cos(2*np.arctan(Phi)) + 1))*np.sqrt(np.abs(Affinity1 + Eeps2*(np.sin(W)*np.cos(w + 2*np.arctan(Phi)) + np.sin(w + 2*np.arctan(Phi))*np.cos(W)*np.cos(inc))/(e*np.cos(2*np.arctan(Phi)) + 1))**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*(-np.sin(W)*np.sin(w + 2*np.arctan(Phi))*np.cos(inc) + np.cos(W)*np.cos(w + 2*np.arctan(Phi)))/(e*np.cos(2*np.arctan(Phi)) + 1))**2)/np.sqrt(np.abs(-Affinity1\
-          - Eeps2*(np.sin(W)*np.cos(w + 2*np.arctan(Phi)) + np.sin(w + 2*np.arctan(Phi))*np.cos(W)*np.cos(inc))/(e*np.cos(2*np.arctan(Phi)) + 1))**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*(-np.sin(W)*np.sin(w + 2*np.arctan(Phi))*np.cos(inc) + np.cos(W)*np.cos(w + 2*np.arctan(Phi)))/(e*np.cos(2*np.arctan(Phi)) + 1))**2))
+    #theta_OpQ_X: Angle between x-axis and line OpQ
+    theta_OpQ_X = np.arctan2(Affinity1 + Eeps2*Yolo1/(1. - e) - (a**2.*Gamma*lam2/Ramgy + Eeps2*(-np.sin(W)*np.sin(w + 2.*np.arctan(Phi))*np.cos(inc) + np.cos(W)*np.cos(w + 2.*np.arctan(Phi)))/(e*np.cos(2.*np.arctan(Phi)) + 1.))*np.sqrt(np.abs(Affinity1 + Eeps2*(np.sin(W)*np.cos(w + 2.*np.arctan(Phi)) + np.sin(w + 2.*np.arctan(Phi))*np.cos(W)*np.cos(inc))/(e*np.cos(2.*np.arctan(Phi)) + 1.))**2. + np.abs(a**2.*Gamma*lam2/Ramgy + Eeps2*(-np.sin(W)*np.sin(w + 2.*np.arctan(Phi))*np.cos(inc) + np.cos(W)*np.cos(w + 2.*np.arctan(Phi)))/(e*np.cos(2.*np.arctan(Phi)) + 1.))**2.)/np.sqrt(np.abs(-Affinity1 - Eeps2*(np.sin(W)*np.cos(w + 2.*np.arctan(Phi)) + np.sin(w + 2.*np.arctan(Phi))*np.cos(W)*np.cos(inc))/(e*np.cos(2.*np.arctan(Phi)) + 1.))**2.\
+         + np.abs(a**2.*Gamma*lam2/Ramgy + Eeps2*(-np.sin(W)*np.sin(w + 2.*np.arctan(Phi))*np.cos(inc) + np.cos(W)*np.cos(w + 2.*np.arctan(Phi)))/(e*np.cos(2.*np.arctan(Phi)) + 1.))**2.), a**2.*Gamma*lam2/Ramgy + Eeps2*Kolko1/(1. - e) - (-Affinity1 - Eeps2*(np.sin(W)*np.cos(w + 2.*np.arctan(Phi)) + np.sin(w + 2.*np.arctan(Phi))*np.cos(W)*np.cos(inc))/(e*np.cos(2.*np.arctan(Phi)) + 1.))*np.sqrt(np.abs(Affinity1 + Eeps2*(np.sin(W)*np.cos(w + 2.*np.arctan(Phi)) + np.sin(w + 2.*np.arctan(Phi))*np.cos(W)*np.cos(inc))/(e*np.cos(2.*np.arctan(Phi)) + 1.))**2. + np.abs(a**2.*Gamma*lam2/Ramgy + Eeps2*(-np.sin(W)*np.sin(w + 2.*np.arctan(Phi))*np.cos(inc) + np.cos(W)*np.cos(w + 2.*np.arctan(Phi)))/(e*np.cos(2.*np.arctan(Phi)) + 1.))**2.)/np.sqrt(np.abs(-Affinity1\
+          - Eeps2*(np.sin(W)*np.cos(w + 2.*np.arctan(Phi)) + np.sin(w + 2.*np.arctan(Phi))*np.cos(W)*np.cos(inc))/(e*np.cos(2.*np.arctan(Phi)) + 1.))**2. + np.abs(a**2.*Gamma*lam2/Ramgy + Eeps2*(-np.sin(W)*np.sin(w + 2.*np.arctan(Phi))*np.cos(inc) + np.cos(W)*np.cos(w + 2.*np.arctan(Phi)))/(e*np.cos(2.*np.arctan(Phi)) + 1.))**2.))
 
-    #theta_OpQp_X
-    theta_OpQp_X = np.arctan2(Affinity1 + Eeps2*Yolo1/(1 - e) + (a**2*Gamma*lam2/Ramgy + Eeps2*(-np.sin(W)*np.sin(w + 2*np.arctan(Phi))*np.cos(inc) + np.cos(W)*np.cos(w + 2*np.arctan(Phi)))/(e*np.cos(2*np.arctan(Phi)) + 1))*np.sqrt(np.abs(Affinity1 + Eeps2*(np.sin(W)*np.cos(w + 2*np.arctan(Phi)) + np.sin(w + 2*np.arctan(Phi))*np.cos(W)*np.cos(inc))/(e*np.cos(2*np.arctan(Phi)) + 1))**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*(-np.sin(W)*np.sin(w + 2*np.arctan(Phi))*np.cos(inc) + np.cos(W)*np.cos(w + 2*np.arctan(Phi)))/(e*np.cos(2*np.arctan(Phi)) + 1))**2)/np.sqrt(np.abs(-Affinity1 - Eeps2*(np.sin(W)*np.cos(w + 2*np.arctan(Phi)) + np.sin(w + 2*np.arctan(Phi))*np.cos(W)*np.cos(inc))/(e*np.cos(2*np.arctan(Phi)) + 1))**2 + np.abs(a**2*Gamma*lam2/Ramgy\
-         + Eeps2*(-np.sin(W)*np.sin(w + 2*np.arctan(Phi))*np.cos(inc) + np.cos(W)*np.cos(w + 2*np.arctan(Phi)))/(e*np.cos(2*np.arctan(Phi)) + 1))**2), a**2*Gamma*lam2/Ramgy + Eeps2*Kolko1/(1 - e) + (-Affinity1 - Eeps2*(np.sin(W)*np.cos(w + 2*np.arctan(Phi)) + np.sin(w + 2*np.arctan(Phi))*np.cos(W)*np.cos(inc))/(e*np.cos(2*np.arctan(Phi)) + 1))*np.sqrt(np.abs(Affinity1 + Eeps2*(np.sin(W)*np.cos(w + 2*np.arctan(Phi)) + np.sin(w + 2*np.arctan(Phi))*np.cos(W)*np.cos(inc))/(e*np.cos(2*np.arctan(Phi)) + 1))**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*(-np.sin(W)*np.sin(w + 2*np.arctan(Phi))*np.cos(inc) + np.cos(W)*np.cos(w + 2*np.arctan(Phi)))/(e*np.cos(2*np.arctan(Phi)) + 1))**2)/np.sqrt(np.abs(-Affinity1 - Eeps2*(np.sin(W)*np.cos(w + 2*np.arctan(Phi))\
-          + np.sin(w + 2*np.arctan(Phi))*np.cos(W)*np.cos(inc))/(e*np.cos(2*np.arctan(Phi)) + 1))**2 + np.abs(a**2*Gamma*lam2/Ramgy + Eeps2*(-np.sin(W)*np.sin(w + 2*np.arctan(Phi))*np.cos(inc) + np.cos(W)*np.cos(w + 2*np.arctan(Phi)))/(e*np.cos(2*np.arctan(Phi)) + 1))**2))
+    #theta_OpQp_X: Angle between x-axis and line OpQp
+    theta_OpQp_X = np.arctan2(Affinity1 + Eeps2*Yolo1/(1. - e) + (a**2.*Gamma*lam2/Ramgy + Eeps2*(-np.sin(W)*np.sin(w + 2.*np.arctan(Phi))*np.cos(inc) + np.cos(W)*np.cos(w + 2.*np.arctan(Phi)))/(e*np.cos(2.*np.arctan(Phi)) + 1.))*np.sqrt(np.abs(Affinity1 + Eeps2*(np.sin(W)*np.cos(w + 2.*np.arctan(Phi)) + np.sin(w + 2.*np.arctan(Phi))*np.cos(W)*np.cos(inc))/(e*np.cos(2.*np.arctan(Phi)) + 1.))**2. + np.abs(a**2.*Gamma*lam2/Ramgy + Eeps2*(-np.sin(W)*np.sin(w + 2.*np.arctan(Phi))*np.cos(inc) + np.cos(W)*np.cos(w + 2.*np.arctan(Phi)))/(e*np.cos(2.*np.arctan(Phi)) + 1.))**2.)/np.sqrt(np.abs(-Affinity1 - Eeps2*(np.sin(W)*np.cos(w + 2.*np.arctan(Phi)) + np.sin(w + 2.*np.arctan(Phi))*np.cos(W)*np.cos(inc))/(e*np.cos(2.*np.arctan(Phi)) + 1.))**2. + np.abs(a**2.*Gamma*lam2/Ramgy\
+         + Eeps2*(-np.sin(W)*np.sin(w + 2.*np.arctan(Phi))*np.cos(inc) + np.cos(W)*np.cos(w + 2.*np.arctan(Phi)))/(e*np.cos(2.*np.arctan(Phi)) + 1.))**2.), a**2.*Gamma*lam2/Ramgy + Eeps2*Kolko1/(1. - e) + (-Affinity1 - Eeps2*(np.sin(W)*np.cos(w + 2.*np.arctan(Phi)) + np.sin(w + 2.*np.arctan(Phi))*np.cos(W)*np.cos(inc))/(e*np.cos(2.*np.arctan(Phi)) + 1.))*np.sqrt(np.abs(Affinity1 + Eeps2*(np.sin(W)*np.cos(w + 2.*np.arctan(Phi)) + np.sin(w + 2.*np.arctan(Phi))*np.cos(W)*np.cos(inc))/(e*np.cos(2.*np.arctan(Phi)) + 1.))**2. + np.abs(a**2.*Gamma*lam2/Ramgy + Eeps2*(-np.sin(W)*np.sin(w + 2.*np.arctan(Phi))*np.cos(inc) + np.cos(W)*np.cos(w + 2.*np.arctan(Phi)))/(e*np.cos(2.*np.arctan(Phi)) + 1.))**2.)/np.sqrt(np.abs(-Affinity1 - Eeps2*(np.sin(W)*np.cos(w + 2.*np.arctan(Phi))\
+          + np.sin(w + 2.*np.arctan(Phi))*np.cos(W)*np.cos(inc))/(e*np.cos(2.*np.arctan(Phi)) + 1.))**2. + np.abs(a**2.*Gamma*lam2/Ramgy + Eeps2*(-np.sin(W)*np.sin(w + 2.*np.arctan(Phi))*np.cos(inc) + np.cos(W)*np.cos(w + 2.*np.arctan(Phi)))/(e*np.cos(2.*np.arctan(Phi)) + 1.))**2.))
 
-    return dmajorp, dminorp, theta_OpQ_X, theta_OpQp_X#KEEP, dmajorp_v2, dminorp_v2, Psi_v2, psi_v2, Psi, psi,
+    return dmajorp, dminorp, theta_OpQ_X, theta_OpQp_X #KEEP, dmajorp_v2, dminorp_v2, Psi_v2, psi_v2, Psi, psi,
 
 def xyz_3Dellipse(a,e,W,w,inc,v):
     """
@@ -161,7 +169,7 @@ def projected_Op(a,e,W,w,inc):
     # return np.asarray([O[0][0], O[1][0]])
     r1 = xyz_3Dellipse(a,e,W,w,inc,0.)
     r2 = xyz_3Dellipse(a,e,W,w,inc,np.pi)
-    r_center = (r1+r2)/2
+    r_center = (r1+r2)/2.
     return np.asarray([r_center[0][0],r_center[1][0]])
 
 def projected_BpAngle(a,e,W,w,inc):
@@ -255,7 +263,7 @@ def derotatedEllipse(theta_OpQ_X, theta_OpQp_X, Op):
         Phi (numpy array):
             Angle of projected ellipse semi-major axis from x-axis
     """
-    Phi = (theta_OpQ_X+theta_OpQp_X)/2
+    Phi = (theta_OpQ_X+theta_OpQp_X)/2.
     x, y = derotate_arbitraryPoint(Op[0],Op[1],Phi)
     return x, y, Phi
 
@@ -367,7 +375,7 @@ def quarticSolutions(a,b,mx,my):
     return xreal, imag
 
 def ellipseYFromX(xreal, a, b):
-    """ Calculates y values in the positive quadrant 
+    """ Calculates y values in the positive quadrant of the ellipse
     Args:
         xreal (numpy array):
             shape n planets by 4
@@ -1231,59 +1239,101 @@ def quarticCoefficients_ellipse_to_Quarticipynb(a, b, x, y, r):
 def quarticCoefficients_smin_smax_lmin_lmax(a, b, x, y):
     """ Calculates coefficients of the quartic equation solving where ds2/dxe = 0 for the distance between a point and the ellipse
     for an ellipse with semi-major axis a, semi-minor axis b, and point at x, y
+    Args:
+        a (numpy array):
+            semi-major axis of the projected ellipse
+        b (numpy array):
+            semi-minor axis of the projected ellipse
+        x (numpy array):
+            x position of the center of the projected ellipse
+        y (numpy array):
+            y position of the center of the projected ellipse
+    Returns:
+        A (numpy array):
+            coefficients of x^3
+        B (numpy array):
+            coefficients of x^2
+        C (numpy array):
+            coefficients of x
+        D (numpy array):
+            constants
     """
     Gamma = np.zeros(len(a),dtype='complex128')
-    Gamma = (4*a**4 - 8*a**2*b**2 + 4*b**4)/a**2
-    A = (-8*a**2*x + 8*b**2*x)/Gamma
-    B = (-4*a**4 + 8*a**2*b**2 + 4*a**2*x**2 - 4*b**4 + 4*b**2*y**2)/Gamma
-    C = (8*a**4*x - 8*a**2*b**2*x)/Gamma
-    D = (-4*a**4*x**2)/Gamma
+    Gamma = (4.*a**4. - 8.*a**2.*b**2. + 4.*b**4.)/a**2.
+    A = (-8.*a**2.*x + 8.*b**2.*x)/Gamma
+    B = (-4.*a**4. + 8.*a**2.*b**2. + 4.*a**2.*x**2. - 4.*b**4. + 4.*b**2.*y**2.)/Gamma
+    C = (8.*a**4.*x - 8.*a**2.*b**2.*x)/Gamma
+    D = (-4.*a**4.*x**2.)/Gamma
     return A, B, C, D
 
 def quarticSolutions_ellipse_to_Quarticipynb(A, B, C, D):
-    """ Equations from ellipse_to_Quartic.ipynb
+    """ Equations from ellipse_to_Quartic.ipynb solves the quartic 
+    Uses the coefficients of the quartic to find
+    Args:
+        A (numpy array):
+            coefficients of x^3
+        B (numpy array):
+            coefficients of x^2
+        C (numpy array):
+            coefficients of x
+        D (numpy array):
+            constants
+    Returns:
+        xreal (numpy array):
+            an nx4 array contianing the solutions to the quartic expression
+        delta (numpy array):
+            indicator parameter for quartic solution types
+        P (numpy array):
+            indicator parameter for quartic solution types
+        D2 (numpy array):
+            indicator parameter for quartic solution types
+        R (numpy array):
+            indicator parameter for quartic solution types
+        delta_0 (numpy array):
+            indicator parameter for quartic solution types
     """
-    p0 = (-3*A**2/8+B)**3
-    p1 = (A*(A**2/8-B/2)+C)**2
-    p2 = -A*(A*(3*A**2/256-B/16)+C/4)+D
-    p3 = -3*A**2/8+B
-    p4 = 2*A*(A**2/8-B/2)
-    p5 = -p0/108-p1/8+p2*p3/3
-    p6 = (p0/216+p1/16-p2*p3/6+np.sqrt(p5**2/4+(-p2-p3**2/12)**3/27))**(1/3)
-    p7 = A**2/4-2*B/3
-    p8 = (2*p2+p3**2/6)/(3*p6)
+    #A bunch of simplifications
+    p0 = (-3.*A**2./8.+B)**3.
+    p1 = (A*(A**2./8.-B/2.)+C)**2.
+    p2 = -A*(A*(3.*A**2./256.-B/16.)+C/4.)+D
+    p3 = -3.*A**2./8.+B
+    p4 = 2.*A*(A**2./8.-B/2.)
+    p5 = -p0/108.-p1/8.+p2*p3/3.
+    p6 = (p0/216.+p1/16.-p2*p3/6.+np.sqrt(p5**2./4.+(-p2-p3**2./12.)**3./27.))**(1./3.)
+    p7 = A**2./4.-2.*B/3.
+    p8 = (2.*p2+p3**2./6.)/(3.*p6)
     #, (-2*p2-p3**2/6)/(3*p6)
-    p9 = np.sqrt(-2*p5**(1/3)+p7)
-    p10 = np.sqrt(2*p6+p7+p8)
-    p11 = A**2/2-4*B/3
+    p9 = np.sqrt(-2.*p5**(1./3.)+p7)
+    p10 = np.sqrt(2.*p6+p7+p8)
+    p11 = A**2./2.-4.*B/3.
 
     #otherwise case
-    x0 = -A/4 - p10/2 - np.sqrt(p11 - 2*p6 - p8 + (2*C + p4)/p10)/2
-    x1 = -A/4 - p10/2 + np.sqrt(p11 - 2*p6 - p8 + (2*C + p4)/p10)/2
-    x2 = -A/4 + p10/2 - np.sqrt(p11 - 2*p6 - p8 + (-2*C - p4)/p10)/2
-    x3 = -A/4 + p10/2 + np.sqrt(p11 - 2*p6 - p8 + (-2*C - p4)/p10)/2
-    zeroInds = np.where(p2 + p3**2/12 == 0)[0] #piecewise condition
-    if len(zeroInds) != 0:
-        x0[zeroInds] = -A[zeroInds]/4 - p9[zeroInds]/2 - np.sqrt(p11[zeroInds] + 2*np.cbrt(p5[zeroInds]) + (2*C[zeroInds] + p4[zeroInds])/p9[zeroInds])/2
-        x1[zeroInds] = -A[zeroInds]/4 - p9[zeroInds]/2 + np.sqrt(p11[zeroInds] + 2*np.cbrt(p5[zeroInds]) + (2*C[zeroInds] + p4[zeroInds])/p9[zeroInds])/2
-        x2[zeroInds] = -A[zeroInds]/4 + p9[zeroInds]/2 - np.sqrt(p11[zeroInds] + 2*np.cbrt(p5[zeroInds]) + (-2*C[zeroInds] - p4[zeroInds])/p9[zeroInds])/2
-        x3[zeroInds] = -A[zeroInds]/4 + p9[zeroInds]/2 + np.sqrt(p11[zeroInds] + 2*np.cbrt(p5[zeroInds]) + (-2*C[zeroInds] - p4[zeroInds])/p9[zeroInds])/2
+    x0 = -A/4. - p10/2. - np.sqrt(p11 - 2.*p6 - p8 + (2.*C + p4)/p10)/2.
+    x1 = -A/4. - p10/2. + np.sqrt(p11 - 2.*p6 - p8 + (2.*C + p4)/p10)/2.
+    x2 = -A/4. + p10/2. - np.sqrt(p11 - 2.*p6 - p8 + (-2.*C - p4)/p10)/2.
+    x3 = -A/4. + p10/2. + np.sqrt(p11 - 2.*p6 - p8 + (-2.*C - p4)/p10)/2.
+    zeroInds = np.where(p2 + p3**2./12. == 0)[0] #piecewise condition
+    if len(zeroInds) != 0.:
+        x0[zeroInds] = -A[zeroInds]/4. - p9[zeroInds]/2. - np.sqrt(p11[zeroInds] + 2.*np.cbrt(p5[zeroInds]) + (2.*C[zeroInds] + p4[zeroInds])/p9[zeroInds])/2.
+        x1[zeroInds] = -A[zeroInds]/4. - p9[zeroInds]/2. + np.sqrt(p11[zeroInds] + 2.*np.cbrt(p5[zeroInds]) + (2.*C[zeroInds] + p4[zeroInds])/p9[zeroInds])/2.
+        x2[zeroInds] = -A[zeroInds]/4. + p9[zeroInds]/2. - np.sqrt(p11[zeroInds] + 2.*np.cbrt(p5[zeroInds]) + (-2.*C[zeroInds] - p4[zeroInds])/p9[zeroInds])/2.
+        x3[zeroInds] = -A[zeroInds]/4. + p9[zeroInds]/2. + np.sqrt(p11[zeroInds] + 2.*np.cbrt(p5[zeroInds]) + (-2.*C[zeroInds] - p4[zeroInds])/p9[zeroInds])/2.
 
-    delta = 256*D**3 - 192*A*C*D**2 - 128*B**2*D**2 + 144*B*C**2*D - 27*C**4\
-        + 144*A**2*B*D**2 - 6*A**2*C**2*D - 80*A*B**2*C*D + 18*A*B*C**3 + 16*B**4*D\
-        - 4*B**3*C**2 - 27*A**4*D**2 + 18*A**3*B*C*D - 4*A**3*C**3 - 4*A**2*B**3*D + A**2*B**2*C**2 #verified against wikipedia multiple times
+    delta = 256.*D**3. - 192.*A*C*D**2. - 128.*B**2.*D**2. + 144.*B*C**2.*D - 27.*C**4.\
+        + 144.*A**2.*B*D**2. - 6.*A**2.*C**2.*D - 80.*A*B**2.*C*D + 18.*A*B*C**3. + 16.*B**4.*D\
+        - 4.*B**3.*C**2. - 27.*A**4.*D**2. + 18.*A**3.*B*C*D - 4.*A**3.*C**3. - 4.*A**2.*B**3.*D + A**2.*B**2.*C**2. #verified against wikipedia multiple times
     assert 0 == np.count_nonzero(np.imag(delta)), 'All delta are real'
     delta = np.real(delta)
-    P = 8*B - 3*A**2
+    P = 8.*B - 3.*A**2.
     assert 0 == np.count_nonzero(np.imag(P)), 'Not all P are real'
     P = np.real(P)
-    D2 = 64*D - 16*B**2 + 16*A**2*B - 16*A*C - 3*A**4 #is 0 if the quartic has 2 double roots 
+    D2 = 64.*D - 16.*B**2. + 16.*A**2.*B - 16.*A*C - 3.*A**4. #is 0 if the quartic has 2 double roots 
     assert 0 == np.count_nonzero(np.imag(D2)), 'Not all D2 are real'
     D2 = np.real(D2)
-    R = A**3 + 8*C - 4*A*B
+    R = A**3. + 8.*C - 4.*A*B
     assert 0 == np.count_nonzero(np.imag(R)), 'Not all R are real'
     R = np.real(R)
-    delta_0 = B**2 - 3*A*C + 12*D
+    delta_0 = B**2. - 3.*A*C + 12.*D
     assert 0 == np.count_nonzero(np.imag(delta_0)), 'Not all delta_0 are real'
     delta_0 = np.real(delta_0)
 
@@ -1328,11 +1378,52 @@ def quarticSolutions_ellipse_to_Quarticipynb(A, B, C, D):
 
 
 def smin_smax_slmin_slmax(n, xreal, yreal, mx, my, x, y):
-    """
-
+    """ Calculates the planet-star separation extrema, the x/y coordinates that each of these extrema occur at, the planet inds which have 4 extrema (min, max, local min, local max), and 
+    the planet inds which have 2 extrema (min and max)
+    Args:
+        n (integer):
+            number of planets
+        xreal (numpy array):
+            n x 4 array of the x-coordinate solutions to the quartic 
+        yreal (numpy array):
+            n x 4 array of the y-coordinate solutions corresponding to |xreal|
+        mx (numpy array):
+            star center x componentx located solely in the first quadrant, |x|
+        my (numpy array):
+            star center y componentx located solely in the first quadrant, |y|
+        x (numpy array):
+            star center x components
+        y (numpy array):
+            star cetner y components
     Returns:
-        yrealAllRealInds - these indicies must have min, max, local min, local max
-        yrealImagInds - these indicies must have min, max
+        minSepPoints_x (numpy array):
+            the first quadrant x-coordinates of the minimum separations (with length n)
+        minSepPoints_y (numpy array):
+            the first quadrant y-coordinates of the minimum separations (with length n)
+        maxSepPoints_x (numpy array):
+            the first quadrant x-coordinates of the maximum separations (with length n)
+        maxSepPoints_y (numpy array):
+            the first quadrant y-coordinates of the maximum separations (with length n)
+        lminSepPoints_x (numpy array):
+            the first quadrant x-coordinates of the local minimum separations (with same length as yrealImagInds)
+        lminSepPoints_y (numpy array):
+            the first quadrant y-coordinates of the local minimum separations (with same length as yrealImagInds)
+        lmaxSepPoints_x (numpy array):
+            the first quadrant x-coordinates of the local maximum separations (with same length as yrealImagInds)
+        lmaxSepPoints_y (numpy array):
+            the first quadrant y-coordinates of the local maximum separations (with same length as yrealImagInds)
+        minSep (numpy array):
+            the minimum planet-star separations for each star with length n
+        maxSep (numpy array):
+            the maximum planet-star separations for each star with length n
+        lminSep (numpy array):
+            the local minimum planet-star separations for each star with same length as yrealImagInds
+        lmaxSep (numpy array):
+            the local maximum planet-star separations for each star with same length as yrealImagInds
+        yrealAllRealInds (numpy array):
+            an array of integers acting as indicies of planets which have min, max, local min, local max
+        yrealImagInds (numpy array):
+            an array of integers acting as indicies of planets whihc only have min, max (no local min or local max)
     """
     yrealAllRealInds = np.where(np.all(np.abs(np.imag(yreal)) < 1e-5,axis=1))[0]
     yreal[np.abs(np.imag(yreal)) < 1e-5] = np.real(yreal[np.abs(np.imag(yreal)) < 1e-5]) #eliminate any unreasonably small imaginary components
@@ -1477,8 +1568,6 @@ def smin_smax_slmin_slmax(n, xreal, yreal, mx, my, x, y):
     #spm = spm.T #removed for efficiency
     spp = spp.T
 
-
-
     #KEEP
     #### minSep
     minSep[yrealAllRealInds] = smm[:,1]
@@ -1544,6 +1633,8 @@ def smin_smax_slmin_slmax(n, xreal, yreal, mx, my, x, y):
 
 def trueAnomalyFromXY(X,Y,W,w,inc):
     """ Calculated true anomaly from X, Y, and KOE
+    These nus are not necessarily the actual value
+    due to the use of arctan. A subsequent fixer function exists
     Args:
         X (numpy array): 
             x component of body in 3D elliptical orbit
@@ -1557,7 +1648,7 @@ def trueAnomalyFromXY(X,Y,W,w,inc):
             inclination of the body's orbit
     Returns:
         nu (numpy array):
-            true anomalies
+            true anomalies in radians
     """
     #nu = np.arctan2( -X/Y*np.sin(W)*np.cos(w) -X/Y*np.cos(W)*np.cos(inc)*np.sin(w) + np.cos(W)*np.cos(w) - np.sin(W)*np.cos(inc)*np.cos(w),\
     #            -X/Y*np.sin(W)*np.sin(w) + X/Y*np.cos(W)*np.cos(inc)*np.cos(w) + np.cos(W)*np.sin(w) + np.sin(W)*np.cos(inc)*np.cos(w) ) #Manual Typing
@@ -1572,10 +1663,14 @@ def timeFromTrueAnomaly(nu,T,e):
     """ Time (since periastron) from true anomaly
     Args:
         nu (numpy array):
+            true anomalies
         T (numpy array):
+            orbital periods
         e (numpy array):
+            planet eccentricities
     Returns:
-
+        time (numpy array):
+            time past periastron corresponding to the input true anomaly 
     """
 
     E = np.arctan2(np.sqrt(1-e**2)*np.sin(nu),e+np.cos(nu))
@@ -1589,6 +1684,96 @@ def printKOE(ind,a,e,W,w,inc):
 
 #### Ellipse Circle Intersection
 def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lminSep, lmaxSep, yrealAllRealInds, yrealImagInds):
+    """ Calculates the intersections between a circle centered at x,y with radius s_circle and an ellipse centered at x=0, y=0 with semi-major axis aligned with x-axis
+    Args:
+        s_circle (float):
+            the circle radius in AU
+        a (numpy array):
+            semi-major axis of the projected ellipse
+        b (numpy array):
+            semi-minor axis of the projected ellipse
+        mx (numpy array):
+            star center x componentx located solely in the first quadrant, |x|
+        my (numpy array):
+            star center y componentx located solely in the first quadrant, |y|
+        x (numpy array):
+            star center x components
+        y (numpy array):
+            star cetner y components
+        minSep (numpy array):
+            the minimum planet-star separations for each star with length n
+        maxSep (numpy array):
+            the maximum planet-star separations for each star with length n
+        lminSep (numpy array):
+            the local minimum planet-star separations for each star with same length as yrealImagInds
+        lmaxSep (numpy array):
+            the local maximum planet-star separations for each star with same length as yrealImagInds
+        yrealAllRealInds (numpy array):
+            an array of integers acting as indicies of planets which have min, max, local min, local max
+        yrealImagInds (numpy array):
+            an array of integers acting as indicies of planets whihc only have min, max (no local min or local max)
+    Returns: 
+        only2RealInds (numpy array):
+            indicies where there can only ever by 2 circle-ellipse intersections
+        typeInds0 (numpy array):
+            inds of only2RealInds where s_x,b-y < s_a-x,y < s_a+x,y < s_x,b+y
+            used to determine solutions for only2RealInds 
+        typeInds1 (numpy array):
+            inds of only2RealInds where s_x,b-y < s_x,b+y < s_a-x,y < s_a+x,y
+            used to determine solutions for only2RealInds 
+        typeInds2 (numpy array):
+            inds of only2RealInds where s_x,b-y < s_a-x,y < s_x,b+y < s_a+x,y
+            used to determine solutions for only2RealInds 
+        typeInds3 (numpy array):
+            inds of only2RealInds where s_a-x,y < s_x,b-y < s_x,b+y < s_a+x,y
+            used to determine solutions for only2RealInds 
+        fourIntInds (numpy array):
+            indicies of yrealAllRealInds which should have 4 intersections
+        fourInt_x (numpy array):
+            x coordinates of fourIntInds
+        fourInt_y (numpy array):
+            y coordinates of fourIntInds
+        twoIntSameY_x (numpy array):
+            x components of intersections which must occur on same Y side of the projected ellipse as the star
+        twoIntSameY_y (numpy array):
+            y components of intersections which must occur on same Y side of the projected ellipse as the star
+        twoIntOppositeXInds (numpy array):
+            indicies of yrealAllRealInds which should have 2 intersections on the 
+            opposite X side of the projected ellipse as the star
+        twoIntOppositeX_x (numpy array):
+            x components of intersections which must occur on opposite X side of the projected ellipse as the star
+        twoIntOppositeX_y (numpy array):
+            y components of intersections which must occur on opposite X side of the projected ellipse as the star
+        xIntersectionsOnly2 (numpy array):
+            x components of intersections where there must be only 2 intersections
+        yIntersectionsOnly2 (numpy array):
+            y components of intersections where there must be only 2 intersections
+        twoIntSameYInds (numpy array):
+            indicies of yrealAllRealInds which should have 2 intersections on the 
+            same Y side of the projected ellipse as the star
+        type0_0Inds (numpy array):
+        type0_1Inds (numpy array):
+        type0_2Inds (numpy array):
+        type0_3Inds (numpy array):
+        type0_4Inds (numpy array):
+        type1_0Inds (numpy array):
+        type1_1Inds (numpy array):
+        type1_2Inds (numpy array):
+        type1_3Inds (numpy array):
+        type1_4Inds (numpy array):
+        type2_0Inds (numpy array):
+        type2_1Inds (numpy array):
+        type2_2Inds (numpy array):
+        type2_3Inds (numpy array):
+        type2_4Inds (numpy array):
+        type3_0Inds (numpy array):
+        type3_1Inds (numpy array):
+        type3_2Inds (numpy array):
+        type3_3Inds (numpy array):
+        type3_4Inds (numpy array):
+        allIndsUsed (numpy array):
+            contains all typeA_BInds concatenated. typeA_BInds can be deleted once everything works 100%
+    """
     #### Testing ellipse_to_Quartic solution
     #DELETEif r == None:
     #DELETEr = np.ones(len(a),dtype='complex128')
@@ -1599,7 +1784,7 @@ def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lmi
     #DELETEamy.astype('complex128')
     #DELETEas_circle.astype('complex128')
     A, B, C, D = quarticCoefficients_ellipse_to_Quarticipynb(a, b, mx, my, s_circle)
-    xreal2, delta, P, D2, R, delta_0 = quarticSolutions_ellipse_to_Quarticipynb(A, B, C, D)
+    xreal2, delta, P, D2, R, delta_0 = quarticSolutions_ellipse_to_Quarticipynb(A.astype('complex128'), B, C, D)
     yreal2 = ellipseYFromX(xreal2.astype('complex128'), a, b)
 
     #### All Real Inds
@@ -1661,7 +1846,7 @@ def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lmi
     twoIntSameY_y = np.zeros((len(twoIntSameYInds),2))
     #DELETEassert np.max(np.imag(xreal2[yrealAllRealInds[twoIntSameYInds],0])) < 1e-8, 'An Imaginary component was too large' #Was 1e-12, but is now 1e-8
     if len(twoIntSameYInds) > 0:
-        assert np.max(np.imag(xreal2[yrealAllRealInds[twoIntSameYInds],0])) < 1e-7, 'An Imaginary component was too large' #Was 1e-12, but is now 1e-7
+        assert np.max(np.imag(xreal2[yrealAllRealInds[twoIntSameYInds],0])) < 1e-5, 'An Imaginary component was too large' #Was 1e-12, but is now 1e-5
     twoIntSameY_x[:,0] = np.real(xreal2[yrealAllRealInds[twoIntSameYInds],0])
     smallImagInds = np.where(np.abs(np.imag(xreal2[yrealAllRealInds[twoIntSameYInds],1])) < 1e-9)[0]
     largeImagInds = np.where(np.abs(np.imag(xreal2[yrealAllRealInds[twoIntSameYInds],1])) > 1e-9)[0]
@@ -1688,7 +1873,7 @@ def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lmi
     twoIntOppositeX_y = (twoIntOppositeX_y.T*(2*bool2[yrealAllRealInds[twoIntOppositeXInds]]-1)).T
     ####
 
-    #### ONLY 2 Real Inds (No Local Min/Max)
+    #### ONLY 2 Real Inds (No Local Min or Local Max) ########################################
     sepsInsideInds = np.where((maxSep[yrealImagInds] >= s_circle[yrealImagInds]) & (s_circle[yrealImagInds] >= minSep[yrealImagInds]))[0] #inds where r is within the minimum and maximum separations
     only2RealInds = yrealImagInds[sepsInsideInds] #indicies of planets with only 2 real interesections
     #lets try usnig separation bounds
@@ -1784,8 +1969,8 @@ def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lmi
             type2_0Inds,type2_1Inds,type2_2Inds,type2_3Inds,type2_4Inds,type3_0Inds,type3_1Inds,type3_2Inds,type3_3Inds,type3_4Inds))
 
 
-    return a, b, only2RealInds, typeInds0, typeInds1, typeInds2, typeInds3,\
-        yrealAllRealInds, fourIntInds, fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y,\
+    return only2RealInds, typeInds0, typeInds1, typeInds2, typeInds3,\
+        fourIntInds, fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y,\
         twoIntOppositeXInds, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2, twoIntSameYInds,\
         type0_0Inds,type0_1Inds,type0_2Inds,type0_3Inds,type0_4Inds,type1_0Inds,type1_1Inds,type1_2Inds,type1_3Inds,type1_4Inds,\
         type2_0Inds,type2_1Inds,type2_2Inds,type2_3Inds,type2_4Inds,type3_0Inds,type3_1Inds,type3_2Inds,type3_3Inds,type3_4Inds,\
@@ -1793,7 +1978,29 @@ def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lmi
 
 #### Generalized Correct Ellipse Circle Intersection Fixer
 def intersectionFixer_pm(x, y, sep_xlocs, sep_ylocs, afflictedIndsxy, rs):
-    """
+    """ NOTE: where 1e-7 error floor comes from
+    Uses x and y intersections from above to calculate intersection star distances,
+    calculate error from the desired distance pick out indicies to fix error for (anything greater than 1e-7),
+    calculate separations for different x,y scenarios (checking if the quadrant is wrong),
+    Pick the lowest error solutions
+    Args:
+        x (numpy array):
+            x components of host star in projected ellipse
+        y (numpy array):
+            y components of host star in projected ellipse
+        sep_xlocs (numpy array):
+            x components of proposed locations of ellipse circle intersections
+        sep_ylocs (numpy array):
+            y components of proposed locations of ellipse circle intersections
+        afflictedIndsxy (numpy array):
+            the inds to fix errors for
+        rs (numpy array):
+            the desired circle radius in AU with length n (number of planets)
+    Returns:
+        sep_xlocs (numpy array):
+            quadrant adjusted x components of proposed locations of ellipse circle intersections
+        sep_ylocs (numpy array):
+            quadrant adjusted y components of proposed locations of ellipse circle intersections
     """
     # seps = np.sqrt((sep_xlocs-x[afflictedIndsxy])**2 + (sep_ylocs-y[afflictedIndsxy])**2) #calculate error for all TwoIntSameY
     # error = np.abs(np.sort(-np.abs(np.ones(len(seps)) - seps))) #calculate error for all TwoIntSameY
@@ -1846,6 +2053,72 @@ def intersectionFixer_pm(x, y, sep_xlocs, sep_ylocs, afflictedIndsxy, rs):
 def trueAnomaliesOfPoints(minSepPoints_x_dr, minSepPoints_y_dr, maxSepPoints_x_dr, maxSepPoints_y_dr, lminSepPoints_x_dr, lminSepPoints_y_dr, lmaxSepPoints_x_dr, lmaxSepPoints_y_dr,\
     fourInt_x_dr, fourInt_y_dr, twoIntSameY_x_dr, twoIntSameY_y_dr, twoIntOppositeX_x_dr, twoIntOppositeX_y_dr, xIntersectionsOnly2_dr, yIntersectionsOnly2_dr,\
     yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds, W, w, inc):
+    """ Given the location of the points of the intersections between the circle and the derotated ellipse,
+    this method calculates the true anomalies of these intersections
+    Args:
+        minSepPoints_x_dr (numpy array):
+            derotated minSepPoints_x
+        minSepPoints_y_dr (numpy array):
+            derotated minSepPoints_y
+        maxSepPoints_x_dr (numpy array):
+            derotated maxSepPoints_x
+        maxSepPoints_y_dr (numpy array):
+            derotated maxSepPoints_y
+        lminSepPoints_x_dr (numpy array):
+            derotated lminSepPoints_x
+        lminSepPoints_y_dr (numpy array):
+            derotated lminSepPoints_y
+        lmaxSepPoints_x_dr (numpy array):
+            derotated lmaxSepPoints_x
+        lmaxSepPoints_y_dr (numpy array):
+            derotated lmaxSepPoints_y
+        fourInt_x_dr (numpy array):
+            derotated fourInt_x
+        fourInt_y_dr (numpy array):
+            derotated fourInt_y
+        twoIntSameY_x_dr (numpy array):
+            derotated twoIntSameY_x
+        twoIntSameY_y_dr (numpy array):
+            derotated twoIntSameY_y
+        twoIntOppositeX_x_dr (numpy array):
+            derotated twoIntOppositeX_x
+        twoIntOppositeX_y_dr (numpy array):
+            derotated twoIntOppositeX_y
+        xIntersectionsOnly2_dr (numpy array):
+            derotated xIntersectionsOnly2
+        yIntersectionsOnly2_dr (numpy array):
+            derotated yIntersectionsOnly2
+        yrealAllRealInds (numpy array):
+            an array of integers acting as indicies of planets which have min, max, local min, local max        fourIntInds (numpy array):
+        twoIntSameYInds (numpy array):
+            indicies of yrealAllRealInds which should have 2 intersections on the 
+            same Y side of the projected ellipse as the star        twoIntOppositeXInds (numpy array):
+        only2RealInds (numpy array):
+            indicies where there can only ever by 2 circle-ellipse intersections
+        W (numpy array): 
+            Longitude of the ascending node of the body
+        w (numpy array): 
+            argument of periapsis of the body
+        inc (numpy array): 
+            inclination of the body's orbit
+    Returns:
+        nu_minSepPoints (numpy array):
+            true anomaly of the minimum separation points
+        nu_maxSepPoints (numpy array):
+            true anomaly of the maximum separation points
+        nu_lminSepPoints (numpy array):
+            true anomaly of the local minimum separation points
+        nu_lmaxSepPoints (numpy array):
+            true anomaly of the maximum separation points
+        nu_fourInt (numpy array):
+            true anomalies of the four intersection point cases
+        nu_twoIntSameY (numpy array):
+            true anomalies of the two intersection points on same y-side as star cases
+        nu_twoIntOppositeX (numpy array):
+            true anomalies of the two intersection point on the opposite x-side of the star cases
+        nu_IntersectionsOnly2 (numpy array):
+            true anomalies of the only two intersection point cases
+    """
     nu_minSepPoints = trueAnomalyFromXY(minSepPoints_x_dr, minSepPoints_y_dr,W,w,inc)
     nu_maxSepPoints = trueAnomalyFromXY(maxSepPoints_x_dr, maxSepPoints_y_dr,W,w,inc)
     nu_lminSepPoints = trueAnomalyFromXY(lminSepPoints_x_dr, lminSepPoints_y_dr,W[yrealAllRealInds],w[yrealAllRealInds],inc[yrealAllRealInds])
@@ -1868,14 +2141,42 @@ def trueAnomaliesOfPoints(minSepPoints_x_dr, minSepPoints_y_dr, maxSepPoints_x_d
 
 #### Nu corections for extrema
 def nuCorrections_extrema(sma,e,W,w,inc,nus,mainInds,seps):
+    """ A method for correcting the nus of the extrema points. The input nus are calculated with arctan meaning it could be nu or nu+pi
+    Args:
+        sma (numpy array):
+            semi-major axis
+        e (numpy array):
+            eccentricity
+        W (numpy array):
+            Longitude of the ascending nodes
+        w (numpy array):
+            Argument of periapsis
+        inc (numpy array):
+            inclination
+        nus (numpy array):
+            the true anomalies 
+        mainInds (numpy array):
+            the set of all inds to consider for corrections
+        seps (numpy array):
+            the expected separations of all these points
+    Returns:
+        nus (numpy array):
+            the corrected true anomalies
+    """
+    #Calculates the planet-star separations at the input nus
     r_extrema = xyz_3Dellipse(sma[mainInds],e[mainInds],W[mainInds],w[mainInds],inc[mainInds],nus)
     s_extrema = np.sqrt(r_extrema[0,0]**2 + r_extrema[1,0]**2)
+    #Calculates the errors for the input nus
     error0 = np.abs(seps - s_extrema)
+    #Sets up nus for off by pi error (nu+pi)
     nus_extrema_ppi = nus + np.pi
+    #Calculates the planet-star separations for nus+pi
     r_extrema_ppi = xyz_3Dellipse(sma[mainInds],e[mainInds],W[mainInds],w[mainInds],inc[mainInds],nus_extrema_ppi)
     s_extrema_ppi = np.sqrt(r_extrema_ppi[0,0]**2 + r_extrema_ppi[1,0]**2)
+    #Calculates the error for the adjusted nus
     error1 = np.abs(seps - s_extrema_ppi)
 
+    #Figure out which inds to keep the adjusted nus for
     error_deciding = np.stack((error0,error1),axis=1)
     minErrorInds = np.argmin(error_deciding,axis=1)
 
@@ -1887,6 +2188,28 @@ def nuCorrections_extrema(sma,e,W,w,inc,nus,mainInds,seps):
 
 #### Correcting nu for ellipse-circle intersections
 def nuCorrections_int(sma,e,W,w,inc,r,nus,mainInds,subInds):
+    """ A method for correcting the nus of the intersection points. The input nus are calculated with arctan meaning it could be nu or nu+pi
+    Args:
+        sma (numpy array):
+            semi-major axis
+        e (numpy array):
+            eccentricity
+        W (numpy array):
+            Longitude of the ascending nodes
+        w (numpy array):
+            Argument of periapsis
+        inc (numpy array):
+            inclination
+        nus (numpy array):
+            the true anomalies of intersections
+        mainInds (numpy array):
+            the set of all inds to consider for corrections (the subset of all planet inds i.e. yrealAllRealInds)
+        subInds (numpy array):
+            the subset of mianInds to consider (i.e. fourIntInds)
+    Returns:
+        nus (numpy array):
+            the corrected true anomalies
+    """
     r_fourInt0 = xyz_3Dellipse(sma[mainInds[subInds]],e[mainInds[subInds]],W[mainInds[subInds]],w[mainInds[subInds]],inc[mainInds[subInds]],nus)
     tmp_fourInt0Seps = np.sqrt(r_fourInt0[0,0]**2 + r_fourInt0[1,0]**2)
     wrong_fourInt0Inds = np.where(np.abs(r[mainInds[subInds]] - tmp_fourInt0Seps) > 1e-6)[0]#1e-6)[0]
@@ -1916,8 +2239,89 @@ def nuCorrections_int(sma,e,W,w,inc,r,nus,mainInds,subInds):
 def rerotateExtremaAndIntersectionPoints(minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y,\
     fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2,\
     Phi, Op, yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds):
-    """
-    Rotate the intersection points to the original projected ellipse
+    """ Rotate the intersection points from (the projected ellipse centered at the origin and x-axis aligned with semi-major axis) to the original projected ellipse
+    Args:
+        minSepPoints_x (numpy array):
+            the first quadrant x-coordinates of the minimum separations (with length n)
+        minSepPoints_y (numpy array):
+            the first quadrant y-coordinates of the minimum separations (with length n)
+        maxSepPoints_x (numpy array):
+            the first quadrant x-coordinates of the maximum separations (with length n)
+        maxSepPoints_y (numpy array):
+            the first quadrant y-coordinates of the maximum separations (with length n)
+        lminSepPoints_x (numpy array):
+            the first quadrant x-coordinates of the local minimum separations (with same length as yrealImagInds)
+        lminSepPoints_y (numpy array):
+            the first quadrant y-coordinates of the local minimum separations (with same length as yrealImagInds)
+        lmaxSepPoints_x (numpy array):
+            the first quadrant x-coordinates of the local maximum separations (with same length as yrealImagInds)
+        lmaxSepPoints_y (numpy array):
+            the first quadrant y-coordinates of the local maximum separations (with same length as yrealImagInds)
+        fourInt_x (numpy array):
+            x coordinates of fourIntInds
+        fourInt_y (numpy array):
+            y coordinates of fourIntInds
+        twoIntSameY_x (numpy array):
+            x components of intersections which must occur on same Y side of the projected ellipse as the star
+        twoIntSameY_y (numpy array):
+            y components of intersections which must occur on same Y side of the projected ellipse as the star
+        twoIntOppositeX_x (numpy array):
+            x components of intersections which must occur on opposite X side of the projected ellipse as the star
+        twoIntOppositeX_y (numpy array):
+            y components of intersections which must occur on opposite X side of the projected ellipse as the star
+        xIntersectionsOnly2 (numpy array):
+            x components of intersections where there must be only 2 intersections
+        yIntersectionsOnly2 (numpy array):
+            y components of intersections where there must be only 2 intersections
+        phi (numpy array):
+            angle from X-axis to semi-minor axis of projected ellipse 
+        Op (numpy array):
+            the geometric center of the projected ellipse
+        yrealAllRealInds (numpy array):
+            an array of integers acting as indicies of planets which have min, max, local min, local max
+        fourIntInds (numpy array):
+            indicies of yrealAllRealInds which should have 4 intersections
+        twoIntSameYInds (numpy array):
+            indicies of yrealAllRealInds which should have 2 intersections on the 
+            same Y side of the projected ellipse as the star
+        twoIntOppositeXInds (numpy array):
+            indicies of yrealAllRealInds which should have 2 intersections on the 
+            opposite X side of the projected ellipse as the star
+        only2RealInds (numpy array):
+            indicies where there can only ever by 2 circle-ellipse intersections
+    Returns:
+        minSepPoints_x_dr (numpy array):
+            derotated minSepPoints_x
+        minSepPoints_y_dr (numpy array):
+            derotated minSepPoints_y
+        maxSepPoints_x_dr (numpy array):
+            derotated maxSepPoints_x
+        maxSepPoints_y_dr (numpy array):
+            derotated maxSepPoints_y
+        lminSepPoints_x_dr (numpy array):
+            derotated lminSepPoints_x
+        lminSepPoints_y_dr (numpy array):
+            derotated lminSepPoints_y
+        lmaxSepPoints_x_dr (numpy array):
+            derotated lmaxSepPoints_x
+        lmaxSepPoints_y_dr (numpy array):
+            derotated lmaxSepPoints_y
+        fourInt_x_dr (numpy array):
+            derotated fourInt_x
+        fourInt_y_dr (numpy array):
+            derotated fourInt_y
+        twoIntSameY_x_dr (numpy array):
+            derotated twoIntSameY_x
+        twoIntSameY_y_dr (numpy array):
+            derotated twoIntSameY_y
+        twoIntOppositeX_x_dr (numpy array):
+            derotated twoIntOppositeX_x
+        twoIntOppositeX_y_dr (numpy array):
+            derotated twoIntOppositeX_y
+        xIntersectionsOnly2_dr (numpy array):
+            derotated xIntersectionsOnly2
+        yIntersectionsOnly2_dr (numpy array):
+            derotated yIntersectionsOnly2
     """
     minSepPoints_x_dr = np.zeros(len(minSepPoints_x))
     minSepPoints_y_dr = np.zeros(len(minSepPoints_y))
@@ -1995,7 +2399,8 @@ def calcMasterIntersections(sma,e,W,w,inc,s_circle,starMass,plotBool):
             the x component of the projected star location
         y (numpy array):
             the y component of the projected star location
-        Phi (numpy array):
+        phi (numpy array):
+            angle from X-axis to semi-minor axis of projected ellipse 
 
         xreal (numpy array):
         only2RealInds (numpy array):
@@ -2086,7 +2491,10 @@ def calcMasterIntersections(sma,e,W,w,inc,s_circle,starMass,plotBool):
     #### Derotate Ellipse Calculations
     start5 = time.time()
     x, y, Phi = derotatedEllipse(theta_OpQ_X, theta_OpQp_X, Op)
-    if plotBool == False:
+    #x- x coordinates of host star relative to projected ellipse center
+    #y- y coordinates of host star relative to projected ellipse center
+    #Phi- Angle of projected ellipse semi-major axis from x-axis
+    if plotBool == False: #deletes these angles because they are no longer necessary
         del theta_OpQ_X, theta_OpQp_X
     stop5 = time.time()
     print('stop5: ' + str(stop5-start5))
@@ -2095,7 +2503,7 @@ def calcMasterIntersections(sma,e,W,w,inc,s_circle,starMass,plotBool):
 
     #### Calculate X,Y Position of Minimum and Maximums with Quartic
     start7 = time.time()
-    A, B, C, D = quarticCoefficients_smin_smax_lmin_lmax(dmajorp.astype('complex128'), dminorp, np.abs(x), np.abs(y))
+    A, B, C, D = quarticCoefficients_smin_smax_lmin_lmax(dmajorp.astype('complex128'), dminorp, np.abs(x), np.abs(y)) #calculate the quartic solutions to the min-max separation problem
     #xreal, delta, P, D2, R, delta_0 = quarticSolutions_ellipse_to_Quarticipynb(A.astype('complex128'), B, C, D)
     xreal, _, _, _, _, _ = quarticSolutions_ellipse_to_Quarticipynb(A.astype('complex128'), B, C, D)
     del A, B, C, D #delting for memory efficiency
@@ -2103,10 +2511,10 @@ def calcMasterIntersections(sma,e,W,w,inc,s_circle,starMass,plotBool):
     #print(w[np.argmax(np.nanmin(np.abs(np.imag(xreal)),axis=1))]) #prints the argument of perigee (assert above fails on 1.57 or 1.5*pi)
     #Failure of the above occured where w=4.712 which is approx 1.5pi
     #NOTE: originally 1e-15 but there were some with x=1e-7 and w=pi/2, 5e-6 from 
-    tind = np.argmax(np.nanmin(np.abs(np.imag(xreal)),axis=1)) #DELETE
-    tinds = np.argsort(np.nanmin(np.abs(np.imag(xreal)),axis=1)) #DELETE
-    del tind, tinds #DELETE
-    xreal.real = np.abs(xreal)
+    #DELETEtind = np.argmax(np.nanmin(np.abs(np.imag(xreal)),axis=1)) #DELETE
+    #DELETEtinds = np.argsort(np.nanmin(np.abs(np.imag(xreal)),axis=1)) #DELETE
+    #DELETEdel tind, tinds #DELETE
+    xreal.real = np.abs(xreal) #all solutions should be positive
     stop7 = time.time()
     print('stop7: ' + str(stop7-start7))
     del stop7, start7
@@ -2114,7 +2522,7 @@ def calcMasterIntersections(sma,e,W,w,inc,s_circle,starMass,plotBool):
 
     #### Technically, each row must have at least 2 solutions, but whatever
     start8 = time.time()
-    yreal = ellipseYFromX(xreal.astype('complex128'), dmajorp, dminorp)
+    yreal = ellipseYFromX(xreal.astype('complex128'), dmajorp, dminorp) #Calculates the y values corresponding to the x values in the first quadrant of an ellipse
     stop8 = time.time()
     print('stop8: ' + str(stop8-start8))
     del start8, stop8
@@ -2134,8 +2542,8 @@ def calcMasterIntersections(sma,e,W,w,inc,s_circle,starMass,plotBool):
 
     #### Ellipse Circle Intersection #######################################################################
     start11 = time.time()
-    dmajorp, dminorp, only2RealInds, typeInds0, typeInds1, typeInds2, typeInds3,\
-            yrealAllRealInds, fourIntInds, fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y,\
+    only2RealInds, typeInds0, typeInds1, typeInds2, typeInds3,\
+            fourIntInds, fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y,\
             twoIntOppositeXInds, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2, twoIntSameYInds,\
             type0_0Inds,type0_1Inds,type0_2Inds,type0_3Inds,type0_4Inds,type1_0Inds,type1_1Inds,type1_2Inds,type1_3Inds,type1_4Inds,\
             type2_0Inds,type2_1Inds,type2_2Inds,type2_3Inds,type2_4Inds,type3_0Inds,type3_1Inds,type3_2Inds,type3_3Inds,type3_4Inds,\
@@ -2350,5 +2758,240 @@ def calcMasterIntersections(sma,e,W,w,inc,s_circle,starMass,plotBool):
             twoIntOppositeX_y,xIntersectionsOnly2,yIntersectionsOnly2,typeInds0,typeInds1,typeInds2,typeInds3, periods
 
 
+#### nu from dmag functions ##############################################################################
+def calc_planet_dmagmin_dmagmax(e,inc,w,a,p,Rp):
+    """ A method for calculating the minimum and maximum dmag of any given planet
+    Assumes the planet has a quasi-lambert phase function (a poor approximation).
+    Args:
+        e (numpy array):
+        inc (numpy array):
+        w (numpy array):
+        a (numpy array):
+        p (numpy array):
+        Rp (numpy array):
+    Returns:
+        mindmag (numpy array):
+            an array containing the minimum dmags 
+        maxdmag (numpy array):
+        dmaglminAll (numpy array):
+        dmaglmaxAll (numpy array):
+        indsWith2 (numpy array):
+            planet indicies where there are only 2 solutions
+        indsWith4 (numpy array):
+            planet indicies where there are 4 solutions
+        nuMinDmag (numpy array):
+        nuMaxDmag (numpy array):
+        nulminAll (numpy array):
+        nulmaxAll (numpy array):
+    """
+    A = e**4.*np.sin(inc)**4.*np.sin(w)**4. + 2.*e**4.*np.sin(inc)**4.*np.sin(w)**2.*np.cos(w)**2. + e**4.*np.sin(inc)**4.*np.cos(w)**4.
+    B = 3.*e**4.*np.sin(inc)**3.*np.sin(w)**3. + 3.*e**4.*np.sin(inc)**3.*np.sin(w)*np.cos(w)**2. + 3.*e**3.*np.sin(inc)**4.*np.sin(w)**4. + 6.*e**3.*np.sin(inc)**4.*np.sin(w)**2.*np.cos(w)**2. + 3.*e**3.*np.sin(inc)**4.*np.cos(w)**4.
+    C = -e**4.*np.sin(inc)**4.*np.sin(w)**4. - 3.*e**4.*np.sin(inc)**4.*np.sin(w)**2.*np.cos(w)**2. - 2.*e**4.*np.sin(inc)**4.*np.cos(w)**4. + 13.*e**4.*np.sin(inc)**2.*np.sin(w)**2./4. + 5.*e**4.*np.sin(inc)**2.*np.cos(w)**2./4. + 17.*e**3.*np.sin(inc)**3.*np.sin(w)**3./2. + 17.*e**3.*np.sin(inc)**3.*np.sin(w)*np.cos(w)**2./2. + 13.*e**2.*np.sin(inc)**4.*np.sin(w)**4./4. + 13.*e**2.*np.sin(inc)**4.*np.sin(w)**2.*np.cos(w)**2./2. + 13.*e**2.*np.sin(inc)**4.*np.cos(w)**4./4.
+    D = -3.*e**4.*np.sin(inc)**3.*np.sin(w)**3. - 4.*e**4.*np.sin(inc)**3.*np.sin(w)*np.cos(w)**2. + 3.*e**4.*np.sin(inc)*np.sin(w)/2. - 3.*e**3.*np.sin(inc)**4.*np.sin(w)**4. - 17.*e**3.*np.sin(inc)**4.*np.sin(w)**2.*np.cos(w)**2./2. - 11.*e**3.*np.sin(inc)**4.*np.cos(w)**4./2. + 17.*e**3.*np.sin(inc)**2.*np.sin(w)**2./2. + 7.*e**3.*np.sin(inc)**2.*np.cos(w)**2./2. + 17.*e**2.*np.sin(inc)**3.*np.sin(w)**3./2. + 17.*e**2.*np.sin(inc)**3.*np.sin(w)*np.cos(w)**2./2. + 3.*e*np.sin(inc)**4.*np.sin(w)**4./2. + 3.*e*np.sin(inc)**4.*np.sin(w)**2.*np.cos(w)**2. + 3.*e*np.sin(inc)**4.*np.cos(w)**4./2.
+    E = 5.*e**4.*np.sin(inc)**4.*np.sin(w)**2.*np.cos(w)**2./4. + 5.*e**4.*np.sin(inc)**4.*np.cos(w)**4./4. - 13.*e**4.*np.sin(inc)**2.*np.sin(w)**2./4. - 3.*e**4.*np.sin(inc)**2.*np.cos(w)**2./2. + e**4./4. - 17.*e**3.*np.sin(inc)**3.*np.sin(w)**3./2. - 10.*e**3.*np.sin(inc)**3.*np.sin(w)*np.cos(w)**2. + 7.*e**3.*np.sin(inc)*np.sin(w)/2. - 13.*e**2.*np.sin(inc)**4.*np.sin(w)**4./4. - 17.*e**2.*np.sin(inc)**4.*np.sin(w)**2.*np.cos(w)**2./2. - 21.*e**2.*np.sin(inc)**4.*np.cos(w)**4./4. + 15.*e**2.*np.sin(inc)**2.*np.sin(w)**2./2. + 7.*e**2.*np.sin(inc)**2.*np.cos(w)**2./2. + 7.*e*np.sin(inc)**3.*np.sin(w)**3./2. + 7.*e*np.sin(inc)**3.*np.sin(w)*np.cos(w)**2./2. + np.sin(inc)**4.*np.sin(w)**4./4. + np.sin(inc)**4.*np.sin(w)**2.*np.cos(w)**2./2. + np.sin(inc)**4.*np.cos(w)**4./4.
+    F = 3.*e**4.*np.sin(inc)**3.*np.sin(w)*np.cos(w)**2./2. - 3.*e**4.*np.sin(inc)*np.sin(w)/2. + 7.*e**3.*np.sin(inc)**4.*np.sin(w)**2.*np.cos(w)**2./2. + 3.*e**3.*np.sin(inc)**4.*np.cos(w)**4. - 17.*e**3.*np.sin(inc)**2.*np.sin(w)**2./2. - 7.*e**3.*np.sin(inc)**2.*np.cos(w)**2./2. + e**3./2. - 17.*e**2.*np.sin(inc)**3.*np.sin(w)**3./2. - 8.*e**2.*np.sin(inc)**3.*np.sin(w)*np.cos(w)**2. + 5.*e**2.*np.sin(inc)*np.sin(w)/2. - 3.*e*np.sin(inc)**4.*np.sin(w)**4./2. - 7.*e*np.sin(inc)**4.*np.sin(w)**2.*np.cos(w)**2./2. - 2.*e*np.sin(inc)**4.*np.cos(w)**4. + 5.*e*np.sin(inc)**2.*np.sin(w)**2./2. + 3.*e*np.sin(inc)**2.*np.cos(w)**2./2. + np.sin(inc)**3.*np.sin(w)**3./2. + np.sin(inc)**3.*np.sin(w)*np.cos(w)**2./2.
+    G = -e**4.*np.sin(inc)**4.*np.cos(w)**4./4. + e**4.*np.sin(inc)**2.*np.cos(w)**2./2. - e**4./4. + 7.*e**3.*np.sin(inc)**3.*np.sin(w)*np.cos(w)**2./2. - 7.*e**3.*np.sin(inc)*np.sin(w)/2. + 7.*e**2.*np.sin(inc)**4.*np.sin(w)**2.*np.cos(w)**2./2. + 9.*e**2.*np.sin(inc)**4.*np.cos(w)**4./4. - 15.*e**2.*np.sin(inc)**2.*np.sin(w)**2./2. - 5.*e**2.*np.sin(inc)**2.*np.cos(w)**2./2. + e**2./4. - 7.*e*np.sin(inc)**3.*np.sin(w)**3./2. - 2.*e*np.sin(inc)**3.*np.sin(w)*np.cos(w)**2. + e*np.sin(inc)*np.sin(w)/2. - np.sin(inc)**4.*np.sin(w)**4./4. - np.sin(inc)**4.*np.sin(w)**2.*np.cos(w)**2./2. - np.sin(inc)**4.*np.cos(w)**4./4. + np.sin(inc)**2.*np.sin(w)**2./4. + np.sin(inc)**2.*np.cos(w)**2./4.
+    H = -e**3.*np.sin(inc)**4.*np.cos(w)**4./2. + e**3.*np.sin(inc)**2.*np.cos(w)**2. - e**3./2. + 5.*e**2.*np.sin(inc)**3.*np.sin(w)*np.cos(w)**2./2. - 5.*e**2.*np.sin(inc)*np.sin(w)/2. + 3.*e*np.sin(inc)**4.*np.sin(w)**2.*np.cos(w)**2./2. + e*np.sin(inc)**4.*np.cos(w)**4./2. - 5.*e*np.sin(inc)**2.*np.sin(w)**2./2. - e*np.sin(inc)**2.*np.cos(w)**2./2. - np.sin(inc)**3.*np.sin(w)**3./2.
+    I = -e**2.*np.sin(inc)**4.*np.cos(w)**4./4. + e**2.*np.sin(inc)**2.*np.cos(w)**2./2. - e**2./4. + e*np.sin(inc)**3.*np.sin(w)*np.cos(w)**2./2. - e*np.sin(inc)*np.sin(w)/2. + np.sin(inc)**4.*np.sin(w)**2.*np.cos(w)**2./4. - np.sin(inc)**2.*np.sin(w)**2./4.
+    coeffs = np.asarray([A,B,C,D,E,F,G,H,I]) #compile the coefficients into a single array
+    del A, B, C, D, E, F, G, H, I #delete the
+    #solve for x in the polynomial (where x=cos(nu))
+    out = list()
+    for i in np.arange(coeffs.shape[1]):
+        out.append(np.roots(coeffs[:,i])) # this is x
+    out = np.asarray(out)
+    del coeffs #delete the coefficients. They are no longer needed
+
+    #Throw out roots not in correct bounds
+    inBoundsBools = (np.abs(out.imag) <= 1e-7)*(out.real >= -1.)*(out.real <= 1.) #the out2 solutions that are inside of the desired bounds
+    outBoundsBools = np.logical_not(inBoundsBools) # the out2 solutions that are inside the desired bounds
+    outReal = np.real(out) #filling in all terms with numbers with the correct shape
+    outReal[outBoundsBools] = out[outBoundsBools]*np.nan #make all zeros out of legal bounds nan
+    #For arccos in 0-pi
+    nuReal = np.ones(outReal.shape)*np.nan
+    nuReal[inBoundsBools] = np.arccos(outReal[inBoundsBools]) #calculate arccos, there are 2 potential solutions... need to calculate both
+    gPhi = (1.+np.sin(np.tile(inc,(8,1)).T)*np.sin(nuReal+np.tile(w,(8,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
+    gd = np.tile(a.to('AU'),(8,1)).T*(1.-np.tile(e,(8,1)).T**2.)/(np.tile(e,(8,1)).T*np.cos(nuReal)+1.)
+    gdmags = deltaMag(np.tile(p,(8,1)).T,np.tile(Rp.to('AU'),(8,1)).T,gd,gPhi) #calculate dmag of the specified x-value
 
 
+    mindmags = np.zeros((2,gdmags.shape[0])) #create an array for storing mindmags for the first set of solutions
+    maxdmags = np.zeros((2,gdmags.shape[0])) #create an array for storing maxdmags for the second set of solutions
+    mindmags[0] = np.nanmin(gdmags,axis=1) #min dmags from first array
+    maxdmags[0] = np.nanmax(gdmags,axis=1) #max dmags from first array
+    
+    #For arccos in pi-2pi 
+    nuReal2 = np.ones(outReal.shape)*np.nan
+    nuReal2[inBoundsBools] = 2.*np.pi - nuReal[inBoundsBools]
+    gPhi2 = (1.+np.sin(np.tile(inc,(8,1)).T)*np.sin(nuReal2+np.tile(w,(8,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
+    gd2 = np.tile(a.to('AU'),(8,1)).T*(1.-np.tile(e,(8,1)).T**2.)/(np.tile(e,(8,1)).T*np.cos(nuReal2)+1.)
+    gdmags2 = deltaMag(np.tile(p,(8,1)).T,np.tile(Rp.to('AU'),(8,1)).T,gd2,gPhi2) #calculate dmag of the specified x-value
+    mindmags[1] = np.nanmin(gdmags2,axis=1) #min dmags from second array
+    maxdmags[1] = np.nanmax(gdmags2,axis=1) #max dmags from second array
+
+    mindmag = np.min(mindmags,axis=0) #mindmag for each planet
+    maxdmag = np.max(maxdmags,axis=0) #maxdmag for each planet
+
+    numSols = np.sum(~np.isnan(gdmags),axis=1)
+    indsWith2 = np.where(numSols == 2)[0] #finds planet indicies with min, max
+    indsWith4 = np.where(numSols == 4)[0] #finds planet indicies with min, max, local min, local max
+
+    #Temporary for debugging
+    countNans = np.sum(np.isnan(nuReal).astype('int'),axis=1) #holds the original number of nans
+    coundNans2 = np.sum(np.isnan(nuReal2).astype('int'),axis=1)
+
+
+    #### Extracting All Extrema NEW METHOD ############################################################################
+    #Find the mindmag (it must be the smallest dmag producing solution of all possible solutions)
+    argmindmags = np.nanargmin(gdmags,axis=1)
+    argmindmags2 = np.nanargmin(gdmags2,axis=1)
+    #DELETEmindmags2 = np.concatenate((gdmags[np.arange(len(a)),argmindmags],gdmags2[np.arange(len(a)),argmindmags2]),axis=1)
+    mindmags2 = np.stack((gdmags[np.arange(len(a)),argmindmags],gdmags2[np.arange(len(a)),argmindmags2]),axis=1)
+    argmindmag2 = np.argmin(mindmags2,axis=1) #
+    mindmag2 = mindmags2[np.arange(mindmags2.shape[0]),argmindmag2]
+    nuMinDmag = nuReal[np.arange(mindmags2.shape[0]),argmindmag2] #the saved true anomalies of the minimum dmags
+    assert np.all(mindmag2 == mindmag)
+    #mindmag solutions are saved, set associated gdmags and gdmags2 to zero
+    inds_fordmag = np.where(mindmags2 == 0)[0]
+    gdmags[inds_fordmag,argmindmags[inds_fordmag]] = np.ones(len(inds_fordmag))*np.nan
+    gdmags2[inds_fordmag,argmindmags[inds_fordmag]] = np.ones(len(inds_fordmag))*np.nan
+    nuReal[inds_fordmag,argmindmags[inds_fordmag]] = np.ones(len(inds_fordmag))*np.nan
+    nuReal2[inds_fordmag,argmindmags[inds_fordmag]] = np.ones(len(inds_fordmag))*np.nan
+    inds_fordmag2 = np.where(mindmags2 == 1)[0]
+    gdmags[inds_fordmag2,argmindmags2[inds_fordmag2]] = np.ones(len(inds_fordmag2))*np.nan
+    gdmags2[inds_fordmag2,argmindmags2[inds_fordmag2]] = np.ones(len(inds_fordmag2))*np.nan
+    nuReal[inds_fordmag2,argmindmags2[inds_fordmag2]] = np.ones(len(inds_fordmag2))*np.nan
+    nuReal2[inds_fordmag2,argmindmags2[inds_fordmag2]] = np.ones(len(inds_fordmag2))*np.nan
+
+    #Find the maxdmag (it must be the largest dmag producing solution of all possible solutions)
+    argmaxdmags = np.nanargmax(gdmags,axis=1)
+    argmaxdmags2 = np.nanargmax(gdmags2,axis=1)
+    #DELETEmindmags2 = np.concatenate((gdmags[np.arange(len(a)),argmindmags],gdmags2[np.arange(len(a)),argmindmags2]),axis=1)
+    maxdmags2 = np.stack((gdmags[np.arange(len(a)),argmaxdmags],gdmags2[np.arange(len(a)),argmaxdmags2]),axis=1)
+    argmaxdmag2 = np.argmax(maxdmags2,axis=1) #
+    maxdmag2 = maxdmags2[np.arange(maxdmags2.shape[0]),argmaxdmag2]
+    nuMaxDmag = nuReal[np.arange(maxdmags2.shape[0]),argmaxdmag2] #the saved true anomalies of the maximum dmags
+    assert np.all(maxdmag2 == maxdmag)
+    #mindmag solutions are saved, set associated gdmags, gdmags2, nuReal, and nuReal2 to zero
+    inds_fordmag = np.where(maxdmags2 == 0)[0]
+    gdmags[inds_fordmag,argmaxdmags[inds_fordmag]] = np.ones(len(inds_fordmag))*np.nan
+    gdmags2[inds_fordmag,argmaxdmags[inds_fordmag]] = np.ones(len(inds_fordmag))*np.nan
+    nuReal[inds_fordmag,argmaxdmags[inds_fordmag]] = np.ones(len(inds_fordmag))*np.nan
+    nuReal2[inds_fordmag,argmaxdmags[inds_fordmag]] = np.ones(len(inds_fordmag))*np.nan
+    inds_fordmag2 = np.where(maxdmags2 == 1)[0]
+    gdmags[inds_fordmag2,argmaxdmags2[inds_fordmag2]] = np.ones(len(inds_fordmag2))*np.nan
+    gdmags2[inds_fordmag2,argmaxdmags2[inds_fordmag2]] = np.ones(len(inds_fordmag2))*np.nan
+    nuReal[inds_fordmag2,argmaxdmags2[inds_fordmag2]] = np.ones(len(inds_fordmag2))*np.nan
+    nuReal2[inds_fordmag2,argmaxdmags2[inds_fordmag2]] = np.ones(len(inds_fordmag2))*np.nan
+
+
+    #Of the remaining 4 possible values that local min and local max could take, we will need to manually verify whether each point is a local minimum or local maximum by 
+    #taking the original solution and adding/subtracting dnu (nu+dnu)
+    nuRealpABIT = nuReal[indsWith4] + 1e-3
+    nuRealmABIT = nuReal[indsWith4] - 1e-3
+    nuReal2pABIT = nuReal2[indsWith4] + 1e-3
+    nuReal2mABIT = nuReal2[indsWith4] - 1e-3
+
+    #Calculate the associated dmags
+    phi = (1.+np.sin(np.tile(inc[indsWith4],(8,1)).T)*np.sin(nuRealpABIT+np.tile(w[indsWith4],(8,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
+    d = np.tile(a[indsWith4].to('AU'),(8,1)).T*(1.-np.tile(e[indsWith4],(8,1)).T**2.)/(np.tile(e[indsWith4],(8,1)).T*np.cos(nuRealpABIT)+1.)
+    dmagpABIT = deltaMag(np.tile(p[indsWith4],(8,1)).T,np.tile(Rp[indsWith4].to('AU'),(8,1)).T,d,phi) #calculate dmag of the specified x-value
+    phi = (1.+np.sin(np.tile(inc[indsWith4],(8,1)).T)*np.sin(nuRealmABIT+np.tile(w[indsWith4],(8,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
+    d = np.tile(a[indsWith4].to('AU'),(8,1)).T*(1.-np.tile(e[indsWith4],(8,1)).T**2.)/(np.tile(e[indsWith4],(8,1)).T*np.cos(nuRealmABIT)+1.)
+    dmagmABIT = deltaMag(np.tile(p[indsWith4],(8,1)).T,np.tile(Rp[indsWith4].to('AU'),(8,1)).T,d,phi) #calculate dmag of the specified x-value
+    phi = (1.+np.sin(np.tile(inc[indsWith4],(8,1)).T)*np.sin(nuReal2pABIT+np.tile(w[indsWith4],(8,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
+    d = np.tile(a[indsWith4].to('AU'),(8,1)).T*(1.-np.tile(e[indsWith4],(8,1)).T**2.)/(np.tile(e[indsWith4],(8,1)).T*np.cos(nuReal2pABIT)+1.)
+    dmag2pABIT = deltaMag(np.tile(p[indsWith4],(8,1)).T,np.tile(Rp[indsWith4].to('AU'),(8,1)).T,d,phi) #calculate dmag of the specified x-value
+    phi = (1.+np.sin(np.tile(inc[indsWith4],(8,1)).T)*np.sin(nuReal2mABIT+np.tile(w[indsWith4],(8,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
+    d = np.tile(a[indsWith4].to('AU'),(8,1)).T*(1.-np.tile(e[indsWith4],(8,1)).T**2.)/(np.tile(e[indsWith4],(8,1)).T*np.cos(nuReal2mABIT)+1.)
+    dmag2mABIT = deltaMag(np.tile(p[indsWith4],(8,1)).T,np.tile(Rp[indsWith4].to('AU'),(8,1)).T,d,phi) #calculate dmag of the specified x-value
+
+    #Now do the boolean Comparisons. Can this point be a local min or local max
+    realLocalMinBool = (dmagpABIT > gdmags[indsWith4])*(dmagmABIT > gdmags[indsWith4])#*~np.isnan(gdmags[indsWith4])
+    realLocalMaxBool = (dmagpABIT < gdmags[indsWith4])*(dmagmABIT < gdmags[indsWith4])#*~np.isnan(gdmags[indsWith4])
+    real2LocalMinBool = (dmag2pABIT > gdmags2[indsWith4])*(dmag2mABIT > gdmags2[indsWith4])#*~np.isnan(gdmags[indsWith4])
+    real2LocalMaxBool = (dmag2pABIT < gdmags2[indsWith4])*(dmag2mABIT < gdmags2[indsWith4])#*~np.isnan(gdmags[indsWith4])
+
+    #Booleans where solutions are equal to mindmag2 or maxdmag2
+    equalToMinDmagBooleans = gdmags[indsWith4] == np.tile(mindmag2[indsWith4],(8,1)).T
+    equalToMaxDmagBooleans = gdmags[indsWith4] == np.tile(maxdmag2[indsWith4],(8,1)).T
+    equal2ToMinDmagBooleans = gdmags2[indsWith4] == np.tile(mindmag2[indsWith4],(8,1)).T
+    equal2ToMaxDmagBooleans = gdmags2[indsWith4] == np.tile(maxdmag2[indsWith4],(8,1)).T
+
+    #Add additional solution restrictions because they are equal to the min or max
+    realLocalMinBool = equalToMinDmagBooleans*realLocalMinBool
+    realLocalMaxBool = equalToMaxDmagBooleans*realLocalMaxBool
+    real2LocalMinBool = equal2ToMinDmagBooleans*real2LocalMinBool
+    real2LocalMaxBool = equal2ToMaxDmagBooleans*real2LocalMaxBool
+
+    #Check if any have multiple within their own array
+    numlmin = np.sum(realLocalMinBool.astype('int'),axis=1) #these are all true, there is only 1 solution that is true in each one
+    numlmax = np.sum(realLocalMaxBool.astype('int'),axis=1) #these are all 2 for some reason
+    numlmin2 = np.sum(real2LocalMinBool.astype('int'),axis=1)
+    numlmax2 = np.sum(real2LocalMaxBool.astype('int'),axis=1)
+
+    assert np.all(numlmin+numlmin2==1) #if these are all true, there is only 1 solution that is true in each one
+    assert np.all(numlmax+numlmax2==1) #if these are all true, there is only 1 solution that is true in each one
+
+    #Create arrays containing all local min and max nus and dmags
+    nulminAll = np.zeros(len(indsWith4))
+    nulmaxAll = np.zeros(len(indsWith4))
+    dmaglminAll = np.zeros(len(indsWith4))
+    dmaglmaxAll = np.zeros(len(indsWith4))
+
+    nulmin = nuReal[indsWith4][realLocalMinBool]
+    nulminAll[np.where(numlmin==1)[0]] = nulmin
+    nulminInds = np.tile(np.arange(8),(len(indsWith4),1))[realLocalMinBool] #Get inds of each potential solution
+    dmaglminAll[np.where(numlmin==1)[0]] = gdmags[indsWith4][realLocalMinBool]
+    #DELETEassert np.all(numlmax==1) #if these are all true, there is only 1 solution that is true in each one 
+    nulmax = nuReal[indsWith4][realLocalMaxBool]
+    nulmaxAll[np.where(numlmax==1)[0]] = nulmax
+    nulmaxInds = np.tile(np.arange(8),(len(indsWith4),1))[realLocalMaxBool] #Get inds of each potential solution
+    dmaglmaxAll[np.where(numlmax==1)[0]] = gdmags[indsWith4][realLocalMaxBool]
+    #DELETEassert np.all(numlmin2==1)
+    nu2lmin = nuReal2[indsWith4][real2LocalMinBool]
+    nulminAll[np.where(numlmin2==1)[0]] = nu2lmin
+    nu2lminInds = np.tile(np.arange(8),(len(indsWith4),1))[real2LocalMinBool] #Get inds of each potential solution
+    dmaglminAll[np.where(numlmin2==1)[0]] = gdmags2[indsWith4][real2LocalMinBool]
+    #DELETEassert np.all(numlmax2==1)
+    nu2lmax = nuReal2[indsWith4][real2LocalMaxBool]
+    nulmaxAll[np.where(numlmax2==1)[0]] = nu2lmax
+    nu2lmaxInds = np.tile(np.arange(8),(len(indsWith4),1))[real2LocalMinBool] #Get inds of each potential solution
+    dmaglmaxAll[np.where(numlmax2==1)[0]] = gdmags2[indsWith4][real2LocalMaxBool]
+
+
+    assert np.all(np.sum(realLocalMinBool*real2LocalMinBool,axis=1) < 2) #only one or other or both are local min
+
+
+    assert ~np.any(realLocalMinBool + real2LocalMinBool == 2), 'local min could occur for both potential solutions so I need a better solution'
+    assert ~np.any(realLocalMaxBool + real2LocalMaxBool == 2), 'local max could occur for both potential solutions so I need a better solution' 
+
+    #Repeat the above procdess for indsWith4 solutions
+    #Find the localmindmag (it must be the smallest dmag producing solution of all possible solutions)
+    argmindmags = np.nanargmin(gdmags[indsWith4],axis=1)
+    argmindmags2 = np.nanargmin(gdmags2[indsWith4],axis=1)
+    mindmags2 = np.stack((gdmags[indsWith4,argmindmags],gdmags2[indsWith4,argmindmags2]),axis=1)
+    argmindmag2 = np.argmin(mindmags2,axis=1) #
+    localmindmag = mindmags2[np.arange(mindmags2.shape[0]),argmindmag2]
+
+    #Find the localmaxdmag (it must be the largest dmag producing solution of all possible solutions)
+    argmaxdmags = np.nanargmax(gdmags[indsWith4],axis=1)
+    argmaxdmags2 = np.nanargmax(gdmags2[indsWith4],axis=1)
+    maxdmags2 = np.stack((gdmags[indsWith4,argmaxdmags],gdmags2[indsWith4,argmaxdmags2]),axis=1)
+    argmaxdmag2 = np.argmax(maxdmags2,axis=1) #
+    localmaxdmag = maxdmags2[np.arange(maxdmags2.shape[0]),argmaxdmag2]
+    
+
+
+    #hmmmm.. we must test all scenarios to determine what localmindmag and localmaxdmag are.
+    #It must be true that localmindmag < localmaxdmag
+    #However, it is distinctly possible that dmag_0 < dmag_1 
+
+    #Simple Quality Checks
+    assert np.all(localmaxdmag >= localmindmag)
+    assert np.all(localmaxdmag <= maxdmag2[indsWith4])
+    assert np.all(localmindmag >= mindmag2[indsWith4])
+    ###################################################################################################
+
+    return mindmag, maxdmag, dmaglminAll, dmaglmaxAll, indsWith2, indsWith4, nuMinDmag, nuMaxDmag, nulminAll, nulmaxAll
+#################################################################################################################

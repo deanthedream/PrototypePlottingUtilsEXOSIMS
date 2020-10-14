@@ -599,6 +599,7 @@ ax0.legend(loc=9,ncol=4,labelspacing=0.2,columnspacing=0.2)
 plt.tight_layout()
 plt.gcf().canvas.draw()
 plt.show(block=False)
+plt.gcf().canvas.draw()
 #Save Plots
 # Save to a File
 date = str(datetime.datetime.now())
@@ -651,6 +652,7 @@ ax0.legend(loc=9,ncol=4,labelspacing=0.2,columnspacing=0.2)
 plt.tight_layout()
 plt.gcf().canvas.draw()
 plt.show(block=False)
+plt.gcf().canvas.draw()
 #Save Plots
 # Save to a File
 date = str(datetime.datetime.now())
@@ -681,6 +683,7 @@ plt.xlabel(r'Phase Angle, $\beta$, in ($^\circ$)', weight='bold')
 plt.legend()
 plt.gcf().canvas.draw()
 plt.show(block=False)
+plt.gcf().canvas.draw()
 # Plot Fluxes from Earth
 plt.close(11)
 fig11 = plt.figure(num=11)
@@ -697,6 +700,7 @@ plt.xlabel(r'Phase Angle, $\beta$, in ($^\circ$)', weight='bold')
 plt.legend()
 plt.gcf().canvas.draw()
 plt.show(block=False)
+plt.gcf().canvas.draw()
 # Plot Fluxes from Earth normalized by distance^2
 plt.close(12)
 fig12 = plt.figure(num=12)
@@ -713,6 +717,7 @@ plt.xlabel('Phase Angle, ' + r'$\beta$' + ', in deg', weight='bold')
 plt.legend()
 plt.gcf().canvas.draw()
 plt.show(block=False)
+plt.gcf().canvas.draw()
 #### Phase Function over Range Visible From Earth
 plt.close(14)
 fig14 = plt.figure(num=14)
@@ -728,6 +733,7 @@ plt.xlabel(r'Phase Angle, $\beta$, in ($^\circ$)', weight='bold')
 plt.legend()
 plt.gcf().canvas.draw()
 plt.show(block=False)
+plt.gcf().canvas.draw()
 #### All Phase Functions
 plt.close(15)
 fig16 = plt.figure(num=15)
@@ -745,6 +751,7 @@ plt.xlabel(r'Phase Angle, $\beta$, in ($^\circ$)', weight='bold')
 plt.legend()
 plt.gcf().canvas.draw()
 plt.show(block=False)
+plt.gcf().canvas.draw()
 #### All Phase Functions MELDED
 plt.close(17)
 fig17 = plt.figure(num=17)
@@ -766,6 +773,7 @@ plt.xlabel(r'Phase Angle, $\beta$, in ($^\circ$)', weight='bold')
 plt.legend()
 plt.gcf().canvas.draw()
 plt.show(block=False)
+plt.gcf().canvas.draw()
 #Save Plots
 # Save to a File
 date = str(datetime.datetime.now())
@@ -890,6 +898,7 @@ def plotDmagvss(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx,IWA2,i
     plt.title('Inclination: ' + str(np.round(90-inclination,1)) + r'$^\circ$' ,weight='bold')
     plt.gcf().canvas.draw()
     plt.show(block=False)
+    plt.gcf().canvas.draw()
     #Save Plots
     # Save to a File
     date = str(datetime.datetime.now())
@@ -1042,6 +1051,7 @@ def plotDmagvssLineIncs(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabE
     plt.title('Inclination: ' + r'$^\circ$ '.join(incStringList) + r'$^\circ$' ,weight='bold')
     plt.gcf().canvas.draw()
     plt.show(block=False)
+    plt.gcf().canvas.draw()
     #Save Plots
     # Save to a File
     date = str(datetime.datetime.now())
@@ -1216,6 +1226,7 @@ def plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_Ha
         plt.xscale('log')
         plt.gcf().canvas.draw()
         plt.show(block=False)
+        plt.gcf().canvas.draw()
 
         #ADD SMIN FOR TELESCOPE
         smin_telescope = IWA_HabEx.to('rad').value*10.*u.pc.to('AU') #IWA for HabEx 45 mas observing target at 10 pc
@@ -1234,6 +1245,7 @@ def plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_Ha
         plt.title('Inclination: ' + str(np.round(90-inclination,1)) + r'$^\circ$' ,weight='bold')
         plt.gcf().canvas.draw()
         plt.show(block=False)
+        plt.gcf().canvas.draw()
         print('Done with planet: ' + str(planets[i]))
     #Save Plots
     # Save to a File

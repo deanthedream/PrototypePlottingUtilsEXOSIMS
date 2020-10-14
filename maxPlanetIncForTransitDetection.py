@@ -11,9 +11,10 @@ PPoutpath = './'
 
 R_sun_AU = 0.00465047 #AU radius of the sun in AU
 
-a = (np.arange(100)+1.)/105.*39.48
-i_max = np.arctan2(a,R_sun_AU)*180./np.pi
-
+#OLD a = (np.arange(100)+1.)/105.*39.48
+#OLD i_max = np.arctan2(a,R_sun_AU)*180./np.pi
+a = np.linspace(start=0.39,stop=39.48,num=100)
+i_max = np.arcsin(R_sun_AU/a)*180./np.pi
 
 
 ### Planets Inclination
@@ -35,7 +36,7 @@ plt.rc('axes',linewidth=2)
 plt.rc('lines',linewidth=2)
 plt.rcParams['axes.linewidth']=2
 plt.rc('font',weight='bold')
-plt.semilogy(a,90.-i_max, color='k')
+plt.semilogy(a,i_max, color='k')
 plt.ylabel('Maximum Inclination (deg)', weight='bold')
 plt.xlabel('Distance form Sun (AU)', weight='bold')
 plt.xlim([0., 1.05*np.max(solarSystemAU)])

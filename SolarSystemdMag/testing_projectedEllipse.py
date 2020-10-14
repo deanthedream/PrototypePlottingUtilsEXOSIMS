@@ -18,6 +18,7 @@ folder = os.path.normpath(os.path.expandvars('$HOME/Documents/exosims/Scripts'))
 filename = 'HabEx_CKL2_PPKL2.json'
 filename = 'WFIRSTcycle6core.json'
 filename = 'HabEx_CSAG13_PPSAG13_compSubtype.json'
+filename = 'HabEx_CSAG13_PPSAG13_compSubtypeHighEccen.json'
 scriptfile = os.path.join(folder,filename)
 sim = EXOSIMS.MissionSim.MissionSim(scriptfile=scriptfile,nopar=True)
 PPop = sim.PlanetPopulation
@@ -36,10 +37,10 @@ del wReplacementInds
 inc = inc.to('rad').value
 inc[np.where(inc>np.pi/2)[0]] = np.pi - inc[np.where(inc>np.pi/2)[0]]
 sma, e, p, Rp = PPop.gen_plan_params(n)
-sma = sma.to('AU').value
 
 #### Classify Planets
 bini, binj, earthLike = comp.classifyPlanets(Rp, TL, np.arange(len(sma)), sma, e)
+sma = sma.to('AU').value
 ####
 
 #Separations
@@ -102,6 +103,7 @@ if plotBool == True:
     #### Plotting Projected Ellipse
     start2 = time.time()
     ind = random.randint(low=0,high=n)
+    ind = 24 #for testing purposes
     plotProjectedEllipse(ind, sma, e, W, w, inc, Phi, dmajorp, dminorp, Op, num=877)
     stop2 = time.time()
     print('stop2: ' + str(stop2-start2))
@@ -155,7 +157,7 @@ if plotBool == True:
     #### Plot Derotated Intersections, Min/Max, and Star Location Type Bounds
     start12 = time.time()
     num = 960
-    plotDerotatedIntersectionsMinMaxStarLocBounds(ind, x, y, dmajorp, dminorp, only2RealInds, typeInds0, typeInds1, typeInds2, typeInds3, minSepPoints_x,\
+    plotDerotatedIntersectionsMinMaxStarLocBounds(ind, sma, e, W, w, inc, x, y, dmajorp, dminorp, only2RealInds, typeInds0, typeInds1, typeInds2, typeInds3, minSepPoints_x,\
         minSepPoints_y, yrealAllRealInds, lminSepPoints_x, lminSepPoints_y, fourIntInds, fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y,\
         lmaxSepPoints_x, lmaxSepPoints_y, twoIntSameYInds,\
         maxSepPoints_x, maxSepPoints_y, twoIntOppositeXInds, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2,\
@@ -170,7 +172,7 @@ if plotBool == True:
     #### Plot Derotated Ellipse Separation Extrema
     start12_1 = time.time()
     num = 961
-    plotDerotatedExtrema(derotatedInd, x, y, dmajorp, dminorp, only2RealInds, typeInds0, typeInds1, typeInds2, typeInds3, minSepPoints_x,\
+    plotDerotatedExtrema(derotatedInd, sma, e, W, w, inc, x, y, dmajorp, dminorp, only2RealInds, typeInds0, typeInds1, typeInds2, typeInds3, minSepPoints_x,\
         maxSepPoints_x, maxSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y,\
         minSepPoints_y, yrealAllRealInds, lminSepPoints_x, lminSepPoints_y, fourIntInds, fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y,\
         twoIntOppositeXInds, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2, num)
@@ -193,8 +195,8 @@ if plotBool == True:
     #     nu_minSepPoints, nu_maxSepPoints, nu_lminSepPoints, nu_lmaxSepPoints, nu_fourInt, nu_twoIntSameY, nu_twoIntOppositeX, nu_IntersectionsOnly2,\
     #     twoIntSameY_x, twoIntSameY_y, num=8001)
 
-    ind = yrealAllRealInds[twoIntSameYInds[np.argsort(-errors_twoIntSameY1)[0]]]
-    plotRerotatedFromNus(ind, sma[ind], e[ind], W[ind], w[ind], inc[ind], Op[:,ind], yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds,\
+    tmpind = yrealAllRealInds[twoIntSameYInds[np.argsort(-errors_twoIntSameY1)[0]]]
+    plotRerotatedFromNus(tmpind, sma[tmpind], e[tmpind], W[tmpind], w[tmpind], inc[tmpind], Op[:,tmpind], yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds,\
         nu_minSepPoints, nu_maxSepPoints, nu_lminSepPoints, nu_lmaxSepPoints, nu_fourInt, nu_twoIntSameY, nu_twoIntOppositeX, nu_IntersectionsOnly2,\
         twoIntSameY_x, twoIntSameY_y, num=8001)
 
@@ -245,9 +247,9 @@ if plotBool == True:
 
     ####  Plot Derotate Ellipse
     tinds = np.argsort(-np.abs(errors_fourInt1))
-    ind = yrealAllRealInds[fourIntInds[tinds[1]]]
+    tind2 = yrealAllRealInds[fourIntInds[tinds[1]]]
     num=55670
-    plotDerotatedEllipseStarLocDividers(ind, x, y, dmajorp, dminorp, only2RealInds, typeInds0, typeInds1, typeInds2, typeInds3, minSepPoints_x,\
+    plotDerotatedEllipseStarLocDividers(tind2, sma, e, W, w, inc, x, y, dmajorp, dminorp, only2RealInds, typeInds0, typeInds1, typeInds2, typeInds3, minSepPoints_x,\
         minSepPoints_y, yrealAllRealInds, lminSepPoints_x, lminSepPoints_y, fourIntInds, fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y,\
         lmaxSepPoints_x, lmaxSepPoints_y, twoIntSameYInds,\
         maxSepPoints_x, maxSepPoints_y, twoIntOppositeXInds, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2,\
@@ -261,6 +263,68 @@ if plotBool == True:
     plotSepsHistogram(minSep,maxSep,lminSep,lmaxSep,sma,yrealAllRealInds,num)
 
 
+#### s_inner, s_upper 
+def calc_t_sInnersOuter(sma,e,W,w,inc,s_inner,s_outer,starMass,plotBool):
+    """
+    Args:
+    Returns:
+        times (numpy array):
+            the collective array of times when the planet crosses the separation circle size (n x 8)
+    """
+    times_o = np.zeros((sma.shape[0],4))*np.nan
+    times_i = np.zeros((sma.shape[0],4))*np.nan
+
+    _,_,_,_,_,_,_,_,_,only2RealInds_o,yrealAllRealInds_o,\
+        fourIntInds_o,twoIntOppositeXInds_o,twoIntSameYInds_o,_,_,_,_,_,\
+        _,_,_, yrealImagInds_o,\
+        _,_,_,_,t_fourInt0_o,t_fourInt1_o,t_fourInt2_o,t_fourInt3_o,t_twoIntSameY0_o,\
+        t_twoIntSameY1_o,t_twoIntOppositeX0_o,t_twoIntOppositeX1_o,t_IntersectionOnly20_o,t_IntersectionOnly21_o,\
+        _, _, _, _, _, _, _, _, _, _, _, _,\
+        _,_,_,_,_,\
+        _,_,_,_,_,_,\
+        _,_,_,_,_,_,_,_,_,_,_,_,\
+        _,_,_,_,_,_,_,_,_,_,_,_,\
+        _,_,_,_,_,_,_, _ = calcMasterIntersections(sma,e,W,w,inc,s_inner,starMass,False)
+
+    #Combine them all into one storage array
+    times_o[yrealAllRealInds_o[fourIntInds_o],0] = t_fourInt0_o
+    times_o[yrealAllRealInds_o[fourIntInds_o],1] = t_fourInt1_o
+    times_o[yrealAllRealInds_o[fourIntInds_o],2] = t_fourInt2_o
+    times_o[yrealAllRealInds_o[fourIntInds_o],3] = t_fourInt3_o
+    times_o[yrealAllRealInds_o[twoIntSameYInds_o],0] = t_twoIntSameY0_o
+    times_o[yrealAllRealInds_o[twoIntSameYInds_o],1] = t_twoIntSameY1_o
+    times_o[yrealAllRealInds_o[twoIntOppositeXInds_o],0] = t_twoIntOppositeX0_o
+    times_o[yrealAllRealInds_o[twoIntOppositeXInds_o],1] = t_twoIntOppositeX1_o
+    times_o[yrealAllRealInds_o[only2RealInds_o],0] = t_IntersectionOnly20_o
+    times_o[yrealAllRealInds_o[only2RealInds_o],1] = t_IntersectionOnly21_o
+
+    _,_,_,_,_,_,_,_,_,only2RealInds_i,yrealAllRealInds_i,\
+        fourIntInds_i,twoIntOppositeXInds_i,twoIntSameYInds_i,_,_,_,_,_,\
+        _,_,_, yrealImagInds_i,\
+        _,_,_,_,t_fourInt0_i,t_fourInt1_i,t_fourInt2_i,t_fourInt3_i,t_twoIntSameY0_i,\
+        t_twoIntSameY1_i,t_twoIntOppositeX0_i,t_twoIntOppositeX1_i,t_IntersectionOnly20_i,t_IntersectionOnly21_i,\
+        _, _, _, _, _, _, _, _, _, _, _, _,\
+        _,_,_,_,_,\
+        _,_,_,_,_,_,\
+        _,_,_,_,_,_,_,_,_,_,_,_,\
+        _,_,_,_,_,_,_,_,_,_,_,_,\
+        _,_,_,_,_,_,_, _ = calcMasterIntersections(sma,e,W,w,inc,s_outer,starMass,False)
+
+    #Combine them all into one storage array
+    times_i[yrealAllRealInds_i[fourIntInds_i],0] = t_fourInt0_i
+    times_i[yrealAllRealInds_i[fourIntInds_i],1] = t_fourInt1_i
+    times_i[yrealAllRealInds_i[fourIntInds_i],2] = t_fourInt2_i
+    times_i[yrealAllRealInds_i[fourIntInds_i],3] = t_fourInt3_i
+    times_i[yrealAllRealInds_i[twoIntSameYInds_i],0] = t_twoIntSameY0_i
+    times_i[yrealAllRealInds_i[twoIntSameYInds_i],1] = t_twoIntSameY1_i
+    times_i[yrealAllRealInds_i[twoIntOppositeXInds_i],0] = t_twoIntOppositeX0_i
+    times_i[yrealAllRealInds_i[twoIntOppositeXInds_i],1] = t_twoIntOppositeX1_i
+    times_i[yrealAllRealInds_i[only2RealInds_i],0] = t_IntersectionOnly20_i
+    times_i[yrealAllRealInds_i[only2RealInds_i],1] = t_IntersectionOnly21_i
+
+    times = np.concatenate((times_o,times_i),axis=1)
+    return times
+
 
 #### Time from dMagLim ################################################
 
@@ -269,41 +333,43 @@ if plotBool == True:
 #3 where dmagMin < dmaglim < dmagMax, calculate Phase angle (beta) producing this
 #use beta(x,y,z) or beta(s,r_z) to solve for nu producing the intersection
 
-#Equations from "Solar System Phase Angles" Section in paper
-tmp1 = np.arcsin(np.cos(beta)/np.sin(inc))
-tmp2 = np.pi*np.ones(len(tmp1)) - tmp1
-nu1 = tmp1 - w
-nu2 = tmp2 - w
+#DELETE???? Equations from "Solar System Phase Angles" Section in paper
+# tmp1 = np.arcsin(np.cos(beta)/np.sin(inc))
+# tmp2 = np.pi*np.ones(len(tmp1)) - tmp1
+# nu1 = tmp1 - w
+# nu2 = tmp2 - w
 
 #######################################################################
 
 
 #### nu From dMag #####################################################
-def calcNusFromDmag(a,e,p,Rp,dmag):
-    """ Calculates nu for a given planet at the given dmag
-    Args:
-        a (numpy array):
-            semi-major axis for all planets
-        e (numpy array):
-            eccentricty for all planets
-        Rp (numpy array):
-            planet radius for all planets
-        dmag (numpy array):
-            delta magnitude to calculate nu at for all planets
-    Returns:
-        nus_from_dmag (numpy array):
-            of dimension (nplans,4)
-        success (numpy array):
-            an array of booleans with length nplans
-    """
-    var = (-(B*C+1.)*np.exp(2.*D/A))/(B*C-1.)
-    nu0 = -w + np.arcsin(np.cos(A/2.*np.log(var))/np.sin(inc))
-    nu1 = -w + np.arcsin(np.cos(A*np.log(-np.sqrt(var)))/np.sin(inc))
-    nu2 = -w - np.arcsin(np.cos(A/2.*np.log(var))/np.sin(inc)) +np.pi
-    nu3 = -w - np.arcsin(np.cos(A*np.log(-np.sqrt(var)))/np.sin(inc)) + np.pi
+# # this stuff appears to assume a hyperbolic tangent phase function # need to redo
+# #DELETE ALL THIS AND SEE numericalNuFromDmag
+# def calcNusFromDmag(a,e,p,Rp,dmag):
+#     """ Calculates nu for a given planet at the given dmag
+#     Args:
+#         a (numpy array):
+#             semi-major axis for all planets
+#         e (numpy array):
+#             eccentricty for all planets
+#         Rp (numpy array):
+#             planet radius for all planets
+#         dmag (numpy array):
+#             delta magnitude to calculate nu at for all planets
+#     Returns:
+#         nus_from_dmag (numpy array):
+#             of dimension (nplans,4)
+#         success (numpy array):
+#             an array of booleans with length nplans
+#     """
+#     var = (-(B*C+1.)*np.exp(2.*D/A))/(B*C-1.)
+#     nu0 = -w + np.arcsin(np.cos(A/2.*np.log(var))/np.sin(inc))
+#     nu1 = -w + np.arcsin(np.cos(A*np.log(-np.sqrt(var)))/np.sin(inc))
+#     nu2 = -w - np.arcsin(np.cos(A/2.*np.log(var))/np.sin(inc)) +np.pi
+#     nu3 = -w - np.arcsin(np.cos(A*np.log(-np.sqrt(var)))/np.sin(inc)) + np.pi
 
-    return nus
-nus_from_dmag, success = calcNusFromDmag(a,e,p,Rp,dmag)
+#     return nus
+# nus_from_dmag, success = calcNusFromDmag(sma,e,p,Rp,dmag)
 #######################################################################
 
 
