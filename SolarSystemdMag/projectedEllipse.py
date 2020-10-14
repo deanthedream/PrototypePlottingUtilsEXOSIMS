@@ -2559,8 +2559,10 @@ def calcMasterIntersections(sma,e,W,w,inc,s_circle,starMass,plotBool):
 
 
     #### Correct Ellipse Circle Intersections fourInt1 ####################################
-    fourInt_x[:,0], fourInt_y[:,0] = intersectionFixer_pm(x, y, fourInt_x[:,0], fourInt_y[:,0], yrealAllRealInds[fourIntInds], s_circle[fourIntInds])
-    fourInt_x[:,1], fourInt_y[:,1] = intersectionFixer_pm(x, y, fourInt_x[:,1], fourInt_y[:,1], yrealAllRealInds[fourIntInds], s_circle[fourIntInds])
+    fourInt_x[:,0], fourInt_y[:,0] = intersectionFixer_pm(x, y, fourInt_x[:,0], fourInt_y[:,0], yrealAllRealInds[fourIntInds], s_circle[fourIntInds]) #necessary because a minority of cases occur in quadrant 3
+    fourInt_x[:,1], fourInt_y[:,1] = intersectionFixer_pm(x, y, fourInt_x[:,1], fourInt_y[:,1], yrealAllRealInds[fourIntInds], s_circle[fourIntInds]) #necessary because a minority of cases occur in quadrant 4
+    #fourInt_x[:,2], fourInt_y[:,2] #unnecessary because these solution quadrants are well known
+    #fourInt_x[:,3], fourInt_y[:,3] #unnecessary becasue these solution quadrants are well known
     #### Correct Ellipse Circle Intersections twoIntSameY0
     twoIntSameY_x[:,0], twoIntSameY_y[:,0] = intersectionFixer_pm(x, y, twoIntSameY_x[:,0], twoIntSameY_y[:,0], yrealAllRealInds[twoIntSameYInds], s_circle[twoIntSameYInds])
     #### Correct Ellipse Circle Intersections twoIntSameY1 
@@ -2966,20 +2968,20 @@ def calc_planet_dmagmin_dmagmax(e,inc,w,a,p,Rp):
     assert ~np.any(realLocalMinBool + real2LocalMinBool == 2), 'local min could occur for both potential solutions so I need a better solution'
     assert ~np.any(realLocalMaxBool + real2LocalMaxBool == 2), 'local max could occur for both potential solutions so I need a better solution' 
 
-    #Repeat the above procdess for indsWith4 solutions
-    #Find the localmindmag (it must be the smallest dmag producing solution of all possible solutions)
-    argmindmags = np.nanargmin(gdmags[indsWith4],axis=1)
-    argmindmags2 = np.nanargmin(gdmags2[indsWith4],axis=1)
-    mindmags2 = np.stack((gdmags[indsWith4,argmindmags],gdmags2[indsWith4,argmindmags2]),axis=1)
-    argmindmag2 = np.argmin(mindmags2,axis=1) #
-    localmindmag = mindmags2[np.arange(mindmags2.shape[0]),argmindmag2]
+    # #Repeat the above procdess for indsWith4 solutions
+    # #Find the localmindmag (it must be the smallest dmag producing solution of all possible solutions)
+    # argmindmags = np.nanargmin(gdmags[indsWith4],axis=1)
+    # argmindmags2 = np.nanargmin(gdmags2[indsWith4],axis=1)
+    # mindmags2 = np.stack((gdmags[indsWith4,argmindmags],gdmags2[indsWith4,argmindmags2]),axis=1)
+    # argmindmag2 = np.argmin(mindmags2,axis=1) #
+    # localmindmag = mindmags2[np.arange(mindmags2.shape[0]),argmindmag2]
 
-    #Find the localmaxdmag (it must be the largest dmag producing solution of all possible solutions)
-    argmaxdmags = np.nanargmax(gdmags[indsWith4],axis=1)
-    argmaxdmags2 = np.nanargmax(gdmags2[indsWith4],axis=1)
-    maxdmags2 = np.stack((gdmags[indsWith4,argmaxdmags],gdmags2[indsWith4,argmaxdmags2]),axis=1)
-    argmaxdmag2 = np.argmax(maxdmags2,axis=1) #
-    localmaxdmag = maxdmags2[np.arange(maxdmags2.shape[0]),argmaxdmag2]
+    # #Find the localmaxdmag (it must be the largest dmag producing solution of all possible solutions)
+    # argmaxdmags = np.nanargmax(gdmags[indsWith4],axis=1)
+    # argmaxdmags2 = np.nanargmax(gdmags2[indsWith4],axis=1)
+    # maxdmags2 = np.stack((gdmags[indsWith4,argmaxdmags],gdmags2[indsWith4,argmaxdmags2]),axis=1)
+    # argmaxdmag2 = np.argmax(maxdmags2,axis=1) #
+    # localmaxdmag = maxdmags2[np.arange(maxdmags2.shape[0]),argmaxdmag2]
     
 
 
@@ -2988,9 +2990,9 @@ def calc_planet_dmagmin_dmagmax(e,inc,w,a,p,Rp):
     #However, it is distinctly possible that dmag_0 < dmag_1 
 
     #Simple Quality Checks
-    assert np.all(localmaxdmag >= localmindmag)
-    assert np.all(localmaxdmag <= maxdmag2[indsWith4])
-    assert np.all(localmindmag >= mindmag2[indsWith4])
+    assert np.all(dmaglmaxAll >= dmaglminAll)
+    assert np.all(dmaglmaxAll < maxdmag2[indsWith4]) #this must be true
+    assert np.all(dmaglminAll > mindmag2[indsWith4]) #this must be true
     ###################################################################################################
 
     return mindmag, maxdmag, dmaglminAll, dmaglmaxAll, indsWith2, indsWith4, nuMinDmag, nuMaxDmag, nulminAll, nulmaxAll
