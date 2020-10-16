@@ -2838,6 +2838,12 @@ def calc_planet_dmagmin_dmagmax(e,inc,w,a,p,Rp):
     indsWith2 = np.where(numSols == 2)[0] #finds planet indicies with min, max
     indsWith4 = np.where(numSols == 4)[0] #finds planet indicies with min, max, local min, local max
 
+    #create smaller arrays for handling indsWith4 data subsets
+    subdmags = gdmags[indsWith4]
+    subdmags2 = gdmags2[indsWith4]
+    subnuReal = nuReal[indsWith4]
+    subnuReal2 = nuReal2[indsWith4]
+
     #Temporary for debugging
     countNans = np.sum(np.isnan(nuReal).astype('int'),axis=1) #holds the original number of nans
     coundNans2 = np.sum(np.isnan(nuReal2).astype('int'),axis=1)
@@ -2849,50 +2855,86 @@ def calc_planet_dmagmin_dmagmax(e,inc,w,a,p,Rp):
     argmindmags2 = np.nanargmin(gdmags2,axis=1)
     #DELETEmindmags2 = np.concatenate((gdmags[np.arange(len(a)),argmindmags],gdmags2[np.arange(len(a)),argmindmags2]),axis=1)
     mindmags2 = np.stack((gdmags[np.arange(len(a)),argmindmags],gdmags2[np.arange(len(a)),argmindmags2]),axis=1)
+    nu_mindmags2 = np.stack((nuReal[np.arange(len(a)),argmindmags],nuReal2[np.arange(len(a)),argmindmags2]),axis=1)
     argmindmag2 = np.argmin(mindmags2,axis=1) #
     mindmag2 = mindmags2[np.arange(mindmags2.shape[0]),argmindmag2]
-    nuMinDmag = nuReal[np.arange(mindmags2.shape[0]),argmindmag2] #the saved true anomalies of the minimum dmags
+    nuMinDmag = nu_mindmags2[np.arange(mindmags2.shape[0]),argmindmag2] #the saved true anomalies of the minimum dmags
     assert np.all(mindmag2 == mindmag)
-    #mindmag solutions are saved, set associated gdmags and gdmags2 to zero
-    inds_fordmag = np.where(mindmags2 == 0)[0]
-    gdmags[inds_fordmag,argmindmags[inds_fordmag]] = np.ones(len(inds_fordmag))*np.nan
-    gdmags2[inds_fordmag,argmindmags[inds_fordmag]] = np.ones(len(inds_fordmag))*np.nan
-    nuReal[inds_fordmag,argmindmags[inds_fordmag]] = np.ones(len(inds_fordmag))*np.nan
-    nuReal2[inds_fordmag,argmindmags[inds_fordmag]] = np.ones(len(inds_fordmag))*np.nan
-    inds_fordmag2 = np.where(mindmags2 == 1)[0]
-    gdmags[inds_fordmag2,argmindmags2[inds_fordmag2]] = np.ones(len(inds_fordmag2))*np.nan
-    gdmags2[inds_fordmag2,argmindmags2[inds_fordmag2]] = np.ones(len(inds_fordmag2))*np.nan
-    nuReal[inds_fordmag2,argmindmags2[inds_fordmag2]] = np.ones(len(inds_fordmag2))*np.nan
-    nuReal2[inds_fordmag2,argmindmags2[inds_fordmag2]] = np.ones(len(inds_fordmag2))*np.nan
+    assert np.all(~np.isnan(nuMinDmag))
+    #mindmag solutions are saved, find which indicies I should set to nan
+    mindmagsIdenticalBoolean = np.abs(subdmags - mindmag2[indsWith4,None]) < 1e-7
+    mindmags2IdenticalBoolean = np.abs(subdmags2 - mindmag2[indsWith4,None]) < 1e-7
 
     #Find the maxdmag (it must be the largest dmag producing solution of all possible solutions)
     argmaxdmags = np.nanargmax(gdmags,axis=1)
     argmaxdmags2 = np.nanargmax(gdmags2,axis=1)
     #DELETEmindmags2 = np.concatenate((gdmags[np.arange(len(a)),argmindmags],gdmags2[np.arange(len(a)),argmindmags2]),axis=1)
     maxdmags2 = np.stack((gdmags[np.arange(len(a)),argmaxdmags],gdmags2[np.arange(len(a)),argmaxdmags2]),axis=1)
+    nu_maxdmags2 = np.stack((nuReal[np.arange(len(a)),argmaxdmags],nuReal2[np.arange(len(a)),argmaxdmags2]),axis=1)
     argmaxdmag2 = np.argmax(maxdmags2,axis=1) #
     maxdmag2 = maxdmags2[np.arange(maxdmags2.shape[0]),argmaxdmag2]
-    nuMaxDmag = nuReal[np.arange(maxdmags2.shape[0]),argmaxdmag2] #the saved true anomalies of the maximum dmags
+    nuMaxDmag = nu_maxdmags2[np.arange(maxdmags2.shape[0]),argmaxdmag2] #the saved true anomalies of the maximum dmags
+    assert np.all(~np.isnan(nuMaxDmag))
     assert np.all(maxdmag2 == maxdmag)
-    #mindmag solutions are saved, set associated gdmags, gdmags2, nuReal, and nuReal2 to zero
-    inds_fordmag = np.where(maxdmags2 == 0)[0]
-    gdmags[inds_fordmag,argmaxdmags[inds_fordmag]] = np.ones(len(inds_fordmag))*np.nan
-    gdmags2[inds_fordmag,argmaxdmags[inds_fordmag]] = np.ones(len(inds_fordmag))*np.nan
-    nuReal[inds_fordmag,argmaxdmags[inds_fordmag]] = np.ones(len(inds_fordmag))*np.nan
-    nuReal2[inds_fordmag,argmaxdmags[inds_fordmag]] = np.ones(len(inds_fordmag))*np.nan
-    inds_fordmag2 = np.where(maxdmags2 == 1)[0]
-    gdmags[inds_fordmag2,argmaxdmags2[inds_fordmag2]] = np.ones(len(inds_fordmag2))*np.nan
-    gdmags2[inds_fordmag2,argmaxdmags2[inds_fordmag2]] = np.ones(len(inds_fordmag2))*np.nan
-    nuReal[inds_fordmag2,argmaxdmags2[inds_fordmag2]] = np.ones(len(inds_fordmag2))*np.nan
-    nuReal2[inds_fordmag2,argmaxdmags2[inds_fordmag2]] = np.ones(len(inds_fordmag2))*np.nan
+    #maxdmag solutions are saved, find which indicies I should set to 0 nan.set associated gdmags, gdmags2, nuReal, and nuReal2 to zero
+    maxdmagsIdenticalBoolean = np.abs(subdmags - maxdmag2[indsWith4,None]) < 1e-7
+    maxdmags2IdenticalBoolean = np.abs(subdmags2 - maxdmag2[indsWith4,None]) < 1e-7
+
+    #Set dmag extrema identical to min or max to 0
+    extremadmagsBooleans = np.logical_or(mindmagsIdenticalBoolean,maxdmagsIdenticalBoolean)
+    extremadmags2Booleans = np.logical_or(mindmags2IdenticalBoolean,maxdmags2IdenticalBoolean)
+    #DELETEsavedgdmags = subdmags #DELETE
+    #DELETEsavedgdmags2 = subdmags2 #DELETE
+
+    subdmags[extremadmagsBooleans] = np.nan #np.ones(extremadmagsBooleans.shape)[extremadmagsBooleans]*np.nan
+    subdmags2[extremadmags2Booleans] = np.nan #np.ones(extremadmags2Booleans.shape)[extremadmags2Booleans]*np.nan
+    subnuReal[extremadmagsBooleans] = np.nan #np.ones(extremadmagsBooleans.shape)[extremadmagsBooleans]*np.nan
+    subnuReal2[extremadmags2Booleans] = np.nan #np.ones(extremadmags2Booleans.shape)[extremadmags2Booleans]*np.nan
+
+    # gdmags[indsWith4][extremadmagsBooleans] = np.ones(extremadmagsBooleans.shape)[extremadmagsBooleans]*np.nan
+    # gdmags2[indsWith4][extremadmags2Booleans] = np.ones(extremadmags2Booleans.shape)[extremadmags2Booleans]*np.nan
+    # nuReal[indsWith4][extremadmagsBooleans] = np.ones(extremadmagsBooleans.shape)[extremadmagsBooleans]*np.nan
+    # nuReal2[indsWith4][extremadmags2Booleans] = np.ones(extremadmags2Booleans.shape)[extremadmags2Booleans]*np.nan
+    # tmp = gdmags[indsWith4]
+    # tmp[extremadmagsBooleans] = np.ones(extremadmagsBooleans.shape)[extremadmagsBooleans]*np.nan
+    # gdmags[indsWith4] = tmp
+
+    # gdmags[indsWith4][extremadmagsBooleans] = np.ones(extremadmagsBooleans.shape)[extremadmagsBooleans]*np.nan
+    # gdmags2[indsWith4][extremadmags2Booleans] = np.ones(extremadmags2Booleans.shape)[extremadmags2Booleans]*np.nan
+    # nuReal[indsWith4][extremadmagsBooleans] = np.ones(extremadmagsBooleans.shape)[extremadmagsBooleans]*np.nan
+    # nuReal2[indsWith4][extremadmags2Booleans] = np.ones(extremadmags2Booleans.shape)[extremadmags2Booleans]*np.nan
+
+    #DELETE
+    # inds_fordmag = np.where(mindmags2 == 0)[0]
+    # gdmags[inds_fordmag,argmindmags[inds_fordmag]] = np.ones(len(inds_fordmag))*np.nan
+    # gdmags2[inds_fordmag,argmindmags[inds_fordmag]] = np.ones(len(inds_fordmag))*np.nan
+    # nuReal[inds_fordmag,argmindmags[inds_fordmag]] = np.ones(len(inds_fordmag))*np.nan
+    # nuReal2[inds_fordmag,argmindmags[inds_fordmag]] = np.ones(len(inds_fordmag))*np.nan
+    # inds_fordmag2 = np.where(mindmags2 == 1)[0]
+    # gdmags[inds_fordmag2,argmindmags2[inds_fordmag2]] = np.ones(len(inds_fordmag2))*np.nan
+    # gdmags2[inds_fordmag2,argmindmags2[inds_fordmag2]] = np.ones(len(inds_fordmag2))*np.nan
+    # nuReal[inds_fordmag2,argmindmags2[inds_fordmag2]] = np.ones(len(inds_fordmag2))*np.nan
+    # nuReal2[inds_fordmag2,argmindmags2[inds_fordmag2]] = np.ones(len(inds_fordmag2))*np.nan
+
+    #DELETE
+    # inds_fordmag = np.where(maxdmags2 == 0)[0]
+    # gdmags[inds_fordmag,argmaxdmags[inds_fordmag]] = np.ones(len(inds_fordmag))*np.nan
+    # gdmags2[inds_fordmag,argmaxdmags[inds_fordmag]] = np.ones(len(inds_fordmag))*np.nan
+    # nuReal[inds_fordmag,argmaxdmags[inds_fordmag]] = np.ones(len(inds_fordmag))*np.nan
+    # nuReal2[inds_fordmag,argmaxdmags[inds_fordmag]] = np.ones(len(inds_fordmag))*np.nan
+    # inds_fordmag2 = np.where(maxdmags2 == 1)[0]
+    # gdmags[inds_fordmag2,argmaxdmags2[inds_fordmag2]] = np.ones(len(inds_fordmag2))*np.nan
+    # gdmags2[inds_fordmag2,argmaxdmags2[inds_fordmag2]] = np.ones(len(inds_fordmag2))*np.nan
+    # nuReal[inds_fordmag2,argmaxdmags2[inds_fordmag2]] = np.ones(len(inds_fordmag2))*np.nan
+    # nuReal2[inds_fordmag2,argmaxdmags2[inds_fordmag2]] = np.ones(len(inds_fordmag2))*np.nan
 
 
     #Of the remaining 4 possible values that local min and local max could take, we will need to manually verify whether each point is a local minimum or local maximum by 
     #taking the original solution and adding/subtracting dnu (nu+dnu)
-    nuRealpABIT = nuReal[indsWith4] + 1e-3
-    nuRealmABIT = nuReal[indsWith4] - 1e-3
-    nuReal2pABIT = nuReal2[indsWith4] + 1e-3
-    nuReal2mABIT = nuReal2[indsWith4] - 1e-3
+    nuRealpABIT = subnuReal + 1e-5
+    nuRealmABIT = subnuReal - 1e-5
+    nuReal2pABIT = subnuReal2 + 1e-5
+    nuReal2mABIT = subnuReal2 - 1e-5
 
     #Calculate the associated dmags
     phi = (1.+np.sin(np.tile(inc[indsWith4],(8,1)).T)*np.sin(nuRealpABIT+np.tile(w[indsWith4],(8,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
@@ -2909,22 +2951,22 @@ def calc_planet_dmagmin_dmagmax(e,inc,w,a,p,Rp):
     dmag2mABIT = deltaMag(np.tile(p[indsWith4],(8,1)).T,np.tile(Rp[indsWith4].to('AU'),(8,1)).T,d,phi) #calculate dmag of the specified x-value
 
     #Now do the boolean Comparisons. Can this point be a local min or local max
-    realLocalMinBool = (dmagpABIT > gdmags[indsWith4])*(dmagmABIT > gdmags[indsWith4])#*~np.isnan(gdmags[indsWith4])
-    realLocalMaxBool = (dmagpABIT < gdmags[indsWith4])*(dmagmABIT < gdmags[indsWith4])#*~np.isnan(gdmags[indsWith4])
-    real2LocalMinBool = (dmag2pABIT > gdmags2[indsWith4])*(dmag2mABIT > gdmags2[indsWith4])#*~np.isnan(gdmags[indsWith4])
-    real2LocalMaxBool = (dmag2pABIT < gdmags2[indsWith4])*(dmag2mABIT < gdmags2[indsWith4])#*~np.isnan(gdmags[indsWith4])
+    realLocalMinBool = (dmagpABIT > subdmags)*(dmagmABIT > subdmags)#*~np.isnan(gdmags[indsWith4])
+    realLocalMaxBool = (dmagpABIT < subdmags)*(dmagmABIT < subdmags)#*~np.isnan(gdmags[indsWith4])
+    real2LocalMinBool = (dmag2pABIT > subdmags2)*(dmag2mABIT > subdmags2)#*~np.isnan(gdmags[indsWith4])
+    real2LocalMaxBool = (dmag2pABIT < subdmags2)*(dmag2mABIT < subdmags2)#*~np.isnan(gdmags[indsWith4])
 
     #Booleans where solutions are equal to mindmag2 or maxdmag2
-    equalToMinDmagBooleans = gdmags[indsWith4] == np.tile(mindmag2[indsWith4],(8,1)).T
-    equalToMaxDmagBooleans = gdmags[indsWith4] == np.tile(maxdmag2[indsWith4],(8,1)).T
-    equal2ToMinDmagBooleans = gdmags2[indsWith4] == np.tile(mindmag2[indsWith4],(8,1)).T
-    equal2ToMaxDmagBooleans = gdmags2[indsWith4] == np.tile(maxdmag2[indsWith4],(8,1)).T
+    equalToMinDmagBooleans = subdmags == np.tile(mindmag2[indsWith4],(8,1)).T
+    equalToMaxDmagBooleans = subdmags == np.tile(maxdmag2[indsWith4],(8,1)).T
+    equal2ToMinDmagBooleans = subdmags2 == np.tile(mindmag2[indsWith4],(8,1)).T
+    equal2ToMaxDmagBooleans = subdmags2 == np.tile(maxdmag2[indsWith4],(8,1)).T
 
     #Add additional solution restrictions because they are equal to the min or max
-    realLocalMinBool = equalToMinDmagBooleans*realLocalMinBool
-    realLocalMaxBool = equalToMaxDmagBooleans*realLocalMaxBool
-    real2LocalMinBool = equal2ToMinDmagBooleans*real2LocalMinBool
-    real2LocalMaxBool = equal2ToMaxDmagBooleans*real2LocalMaxBool
+    realLocalMinBool = np.logical_not(equalToMinDmagBooleans)*realLocalMinBool
+    realLocalMaxBool = np.logical_not(equalToMaxDmagBooleans)*realLocalMaxBool
+    real2LocalMinBool = np.logical_not(equal2ToMinDmagBooleans)*real2LocalMinBool
+    real2LocalMaxBool = np.logical_not(equal2ToMaxDmagBooleans)*real2LocalMaxBool
 
     #Check if any have multiple within their own array
     numlmin = np.sum(realLocalMinBool.astype('int'),axis=1) #these are all true, there is only 1 solution that is true in each one
@@ -2934,6 +2976,7 @@ def calc_planet_dmagmin_dmagmax(e,inc,w,a,p,Rp):
 
     assert np.all(numlmin+numlmin2==1) #if these are all true, there is only 1 solution that is true in each one
     assert np.all(numlmax+numlmax2==1) #if these are all true, there is only 1 solution that is true in each one
+    #buggyInds = np.where(~(numlmax+numlmax2==1))[0]
 
     #Create arrays containing all local min and max nus and dmags
     nulminAll = np.zeros(len(indsWith4))
@@ -2941,25 +2984,33 @@ def calc_planet_dmagmin_dmagmax(e,inc,w,a,p,Rp):
     dmaglminAll = np.zeros(len(indsWith4))
     dmaglmaxAll = np.zeros(len(indsWith4))
 
-    nulmin = nuReal[indsWith4][realLocalMinBool]
+    #DELETEnulmin = nuReal[indsWith4][realLocalMinBool]
+    nulmin = subnuReal[realLocalMinBool]
     nulminAll[np.where(numlmin==1)[0]] = nulmin
     nulminInds = np.tile(np.arange(8),(len(indsWith4),1))[realLocalMinBool] #Get inds of each potential solution
-    dmaglminAll[np.where(numlmin==1)[0]] = gdmags[indsWith4][realLocalMinBool]
+    #DELETEdmaglminAll[np.where(numlmin==1)[0]] = gdmags[indsWith4][realLocalMinBool]
+    dmaglminAll[np.where(numlmin==1)[0]] = subdmags[realLocalMinBool]
     #DELETEassert np.all(numlmax==1) #if these are all true, there is only 1 solution that is true in each one 
-    nulmax = nuReal[indsWith4][realLocalMaxBool]
+    #DELETEnulmax = nuReal[indsWith4][realLocalMaxBool]
+    nulmax = subnuReal[realLocalMaxBool]
     nulmaxAll[np.where(numlmax==1)[0]] = nulmax
     nulmaxInds = np.tile(np.arange(8),(len(indsWith4),1))[realLocalMaxBool] #Get inds of each potential solution
-    dmaglmaxAll[np.where(numlmax==1)[0]] = gdmags[indsWith4][realLocalMaxBool]
+    #DELETE    dmaglmaxAll[np.where(numlmax==1)[0]] = gdmags[indsWith4][realLocalMaxBool]
+    dmaglmaxAll[np.where(numlmax==1)[0]] = subdmags[realLocalMaxBool]
     #DELETEassert np.all(numlmin2==1)
-    nu2lmin = nuReal2[indsWith4][real2LocalMinBool]
+    #DELETE    nu2lmin = nuReal2[indsWith4][real2LocalMinBool]
+    nu2lmin = subnuReal2[real2LocalMinBool]
     nulminAll[np.where(numlmin2==1)[0]] = nu2lmin
     nu2lminInds = np.tile(np.arange(8),(len(indsWith4),1))[real2LocalMinBool] #Get inds of each potential solution
-    dmaglminAll[np.where(numlmin2==1)[0]] = gdmags2[indsWith4][real2LocalMinBool]
+    #DELETEdmaglminAll[np.where(numlmin2==1)[0]] = gdmags2[indsWith4][real2LocalMinBool]
+    dmaglminAll[np.where(numlmin2==1)[0]] = subdmags2[real2LocalMinBool]
     #DELETEassert np.all(numlmax2==1)
-    nu2lmax = nuReal2[indsWith4][real2LocalMaxBool]
+    #DELETE    nu2lmax = nuReal2[indsWith4][real2LocalMaxBool]
+    nu2lmax = subnuReal2[real2LocalMaxBool]
     nulmaxAll[np.where(numlmax2==1)[0]] = nu2lmax
     nu2lmaxInds = np.tile(np.arange(8),(len(indsWith4),1))[real2LocalMinBool] #Get inds of each potential solution
-    dmaglmaxAll[np.where(numlmax2==1)[0]] = gdmags2[indsWith4][real2LocalMaxBool]
+    #DELETEdmaglmaxAll[np.where(numlmax2==1)[0]] = gdmags2[indsWith4][real2LocalMaxBool]
+    dmaglmaxAll[np.where(numlmax2==1)[0]] = subdmags2[real2LocalMaxBool]
 
 
     assert np.all(np.sum(realLocalMinBool*real2LocalMinBool,axis=1) < 2) #only one or other or both are local min
@@ -2994,6 +3045,173 @@ def calc_planet_dmagmin_dmagmax(e,inc,w,a,p,Rp):
     assert np.all(dmaglmaxAll < maxdmag2[indsWith4]) #this must be true
     assert np.all(dmaglminAll > mindmag2[indsWith4]) #this must be true
     ###################################################################################################
-
+    #print(saltyburrito)
     return mindmag, maxdmag, dmaglminAll, dmaglmaxAll, indsWith2, indsWith4, nuMinDmag, nuMaxDmag, nulminAll, nulmaxAll
 #################################################################################################################
+
+
+def solve_dmag_Poly(dmag,e,inc,w,a,p,Rp):
+    """
+    """
+    #Calculate the left hand side (all the things that are separable and constant)
+    lhs = 10.**(-0.4*dmag)*(1.-e**2.)**2.*(a.to('AU')/Rp.to('AU')).decompose().value**2./p
+
+    #These are the coefficients starting at cos(nu)^8 
+    A = e**4.*np.sin(inc)**4.*np.sin(w)**4./16. + e**4.*np.sin(inc)**4.*np.sin(w)**2.*np.cos(w)**2./8. + e**4.*np.sin(inc)**4.*np.cos(w)**4./16.
+    B = e**4.*np.sin(inc)**3.*np.sin(w)**3./4. + e**4.*np.sin(inc)**3.*np.sin(w)*np.cos(w)**2./4. + e**3.*np.sin(inc)**4.*np.sin(w)**4./4. + e**3.*np.sin(inc)**4.*np.sin(w)**2.*np.cos(w)**2./2. + e**3.*np.sin(inc)**4.*np.cos(w)**4./4.
+    C = -e**4.*np.sin(inc)**4.*np.sin(w)**2.*np.cos(w)**2./8. - e**4.*np.sin(inc)**4.*np.cos(w)**4./8. + 3.*e**4.*np.sin(inc)**2.*np.sin(w)**2./8. + e**4.*np.sin(inc)**2.*np.cos(w)**2./8. + e**3.*np.sin(inc)**3.*np.sin(w)**3. + e**3.*np.sin(inc)**3.*np.sin(w)*np.cos(w)**2. + 3.*e**2.*np.sin(inc)**4.*np.sin(w)**4./8. + 3.*e**2.*np.sin(inc)**4.*np.sin(w)**2.*np.cos(w)**2./4. + 3.*e**2.*np.sin(inc)**4.*np.cos(w)**4./8.
+    D = -e**4.*np.sin(inc)**3.*np.sin(w)*np.cos(w)**2./4. + e**4.*np.sin(inc)*np.sin(w)/4. - e**3.*np.sin(inc)**4.*np.sin(w)**2.*np.cos(w)**2./2. - e**3.*np.sin(inc)**4.*np.cos(w)**4./2. + 3.*e**3.*np.sin(inc)**2.*np.sin(w)**2./2. + e**3.*np.sin(inc)**2.*np.cos(w)**2./2. + 3.*e**2.*np.sin(inc)**3.*np.sin(w)**3./2. + 3.*e**2.*np.sin(inc)**3.*np.sin(w)*np.cos(w)**2./2. + e*np.sin(inc)**4.*np.sin(w)**4./4. + e*np.sin(inc)**4.*np.sin(w)**2.*np.cos(w)**2./2. + e*np.sin(inc)**4.*np.cos(w)**4./4.
+    E = e**4.*np.sin(inc)**4.*np.cos(w)**4./16. - e**4.*np.sin(inc)**2.*np.cos(w)**2./8. + e**4./16. - e**3.*np.sin(inc)**3.*np.sin(w)*np.cos(w)**2. + e**3.*np.sin(inc)*np.sin(w) - e**2.*lhs*np.sin(inc)**2.*np.sin(w)**2./2. + e**2.*lhs*np.sin(inc)**2.*np.cos(w)**2./2. - 3.*e**2.*np.sin(inc)**4.*np.sin(w)**2.*np.cos(w)**2./4. - 3.*e**2.*np.sin(inc)**4.*np.cos(w)**4./4. + 9*e**2.*np.sin(inc)**2.*np.sin(w)**2./4. + 3.*e**2.*np.sin(inc)**2.*np.cos(w)**2./4. + e*np.sin(inc)**3.*np.sin(w)**3. + e*np.sin(inc)**3.*np.sin(w)*np.cos(w)**2. + np.sin(inc)**4.*np.sin(w)**4./16. + np.sin(inc)**4.*np.sin(w)**2.*np.cos(w)**2./8. + np.sin(inc)**4.*np.cos(w)**4./16.
+    F = e**3.*np.sin(inc)**4.*np.cos(w)**4./4. - e**3.*np.sin(inc)**2.*np.cos(w)**2./2. + e**3./4. - e**2.*lhs*np.sin(inc)*np.sin(w) - 3.*e**2.*np.sin(inc)**3.*np.sin(w)*np.cos(w)**2./2. + 3.*e**2.*np.sin(inc)*np.sin(w)/2. - e*lhs*np.sin(inc)**2.*np.sin(w)**2. + e*lhs*np.sin(inc)**2.*np.cos(w)**2. - e*np.sin(inc)**4.*np.sin(w)**2.*np.cos(w)**2./2. - e*np.sin(inc)**4.*np.cos(w)**4./2. + 3.*e*np.sin(inc)**2.*np.sin(w)**2./2. + e*np.sin(inc)**2.*np.cos(w)**2./2. + np.sin(inc)**3.*np.sin(w)**3./4. + np.sin(inc)**3.*np.sin(w)*np.cos(w)**2./4.
+    G = -e**2.*lhs*np.sin(inc)**2.*np.cos(w)**2./2. - e**2.*lhs/2. + 3.*e**2.*np.sin(inc)**4.*np.cos(w)**4./8. - 3.*e**2.*np.sin(inc)**2.*np.cos(w)**2./4. + 3.*e**2./8. - 2*e*lhs*np.sin(inc)*np.sin(w) - e*np.sin(inc)**3.*np.sin(w)*np.cos(w)**2. + e*np.sin(inc)*np.sin(w) - lhs*np.sin(inc)**2.*np.sin(w)**2./2. + lhs*np.sin(inc)**2.*np.cos(w)**2./2. - np.sin(inc)**4.*np.sin(w)**2.*np.cos(w)**2./8. - np.sin(inc)**4.*np.cos(w)**4./8. + 3.*np.sin(inc)**2.*np.sin(w)**2./8. + np.sin(inc)**2.*np.cos(w)**2./8.
+    H = -e*lhs*np.sin(inc)**2.*np.cos(w)**2. - e*lhs + e*np.sin(inc)**4.*np.cos(w)**4./4. - e*np.sin(inc)**2.*np.cos(w)**2./2. + e/4. - lhs*np.sin(inc)*np.sin(w) - np.sin(inc)**3.*np.sin(w)*np.cos(w)**2./4. + np.sin(inc)*np.sin(w)/4.
+    I = lhs**2. - lhs*np.sin(inc)**2.*np.cos(w)**2./2. - lhs/2. + np.sin(inc)**4.*np.cos(w)**4./16. - np.sin(inc)**2.*np.cos(w)**2./8. + 1/16.
+    coeffs = np.asarray([A,B,C,D,E,F,G,H,I])
+
+    #solve for x in the polynomial (where x=cos(nu))
+    out = list()
+    for i in np.arange(coeffs.shape[1]):
+        out.append(np.roots(coeffs[:,i])) # this is x)
+    out = np.asarray(out)
+
+    return out
+
+def calc_planetnu_from_dmag(dmag,e,inc,w,a,p,Rp,mindmag, maxdmag, indsWith2Int, indsWith4Int):
+    """ This method calculates nu of a planet which have the provided dmag assuming a quasi-lambert phase function fullEqnX from AnalyticalNuFromDmag3.ipynb
+    Args:
+        dmag,e,inc,w,a,p,Rp,pInds
+    Returns:
+    """
+    tstart_cos = time.time()
+    out2Int = solve_dmag_Poly(dmag,e[indsWith2Int],inc[indsWith2Int],w[indsWith2Int],a[indsWith2Int],p[indsWith2Int],Rp[indsWith2Int])
+    #Throw out roots not in correct bounds
+    inBoundsBools2Int = (np.abs(out2Int.imag) <= 1e-7)*(out2Int.real >= -1.)*(out2Int.real <= 1.) #the out2 solutions that are inside of the desired bounds
+    outBoundsBools2Int = np.logical_not(inBoundsBools2Int) # the out2 solutions that are inside the desired bounds
+    outReal2Int = np.zeros(out2Int.shape) #just getting something with the right shape
+    outReal2Int[outBoundsBools2Int] = out2Int[outBoundsBools2Int]*np.nan
+    outReal2Int[inBoundsBools2Int] = out2Int[inBoundsBools2Int]
+    outReal2Int = np.real(outReal2Int)
+    #For arccos in 0-pi
+    nuReal2Int = np.ones(outReal2Int.shape)*np.nan
+    nuReal2Int[inBoundsBools2Int] = np.arccos(outReal2Int[inBoundsBools2Int]) #calculate arccos, there are 2 potential solutions... need to calculate both
+    gPhi2Int = (1.+np.sin(np.tile(inc[indsWith2Int],(8,1)).T)*np.sin(nuReal2Int+np.tile(w[indsWith2Int],(8,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
+    gd2Int = np.tile(a[indsWith2Int].to('AU'),(8,1)).T*(1.-np.tile(e[indsWith2Int],(8,1)).T**2.)/(np.tile(e[indsWith2Int],(8,1)).T*np.cos(nuReal2Int)+1.)
+    gdmags2Int = deltaMag(np.tile(p[indsWith2Int],(8,1)).T,np.tile(Rp[indsWith2Int].to('AU'),(8,1)).T,gd2Int,gPhi2Int) #calculate dmag of the specified x-value
+    #For arccos in pi-2pi
+    nuReal22Int = np.ones(outReal2Int.shape)*np.nan
+    nuReal22Int[inBoundsBools2Int] = 2.*np.pi - np.arccos(outReal2Int[inBoundsBools2Int])
+    gPhi22Int = (1.+np.sin(np.tile(inc[indsWith2Int],(8,1)).T)*np.sin(nuReal22Int+np.tile(w[indsWith2Int],(8,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
+    gd22Int = np.tile(a[indsWith2Int].to('AU'),(8,1)).T*(1.-np.tile(e[indsWith2Int],(8,1)).T**2.)/(np.tile(e[indsWith2Int],(8,1)).T*np.cos(nuReal22Int)+1.)
+    gdmags22Int = deltaMag(np.tile(p[indsWith2Int],(8,1)).T,np.tile(Rp[indsWith2Int].to('AU'),(8,1)).T,gd22Int,gPhi22Int) #calculate dmag of the specified x-value
+    #Evaluate which solutions are good and which aren't
+    correctValBoolean12Int = np.abs(gdmags2Int - dmag) < 1e-2 #Values of nuReal which yield the desired dmag
+    correctValBoolean22Int = np.abs(gdmags22Int - dmag) < 1e-2 #values of nuReal2 which yield the desired dmag
+    bothBools2Int = correctValBoolean12Int*correctValBoolean22Int #values of nuReal 
+    #Combine the two sets of solutions
+    nusCombined2Int = np.zeros(nuReal2Int.shape)
+    nusCombined2Int = nuReal2Int*np.logical_xor(correctValBoolean12Int,bothBools2Int) + nuReal22Int*np.logical_xor(correctValBoolean22Int,bothBools2Int) + nuReal2Int*bothBools2Int #these are the nus where intersections occur
+    #Combine and verify the two sets of dmags resulting from the solutions
+    gdmagsCombined2Int = np.zeros(gdmags2Int.shape)
+    gdmagsCombined2Int = gdmags2Int*np.logical_xor(correctValBoolean12Int,bothBools2Int) + gdmags22Int*np.logical_xor(correctValBoolean22Int,bothBools2Int) + gdmags2Int*bothBools2Int
+    numSolsPer2Int = np.sum((~np.isnan(gdmagsCombined2Int)).astype('int'),axis=1)
+    #DELETEnumSolsHist2Int = np.histogram(numSolsPer2Int,bins=[-0.1,0.9,1.9,2.9,3.9,4.9,5.9,6.9,7.9,8.9,9.9])
+    assert np.all(numSolsPer2Int == 2) #All 2 int must have 2 solutions
+    #Now that all 2Int only have 2 solutions
+    nus2IntSol0 = np.nanargmin(nusCombined2Int,axis=1)
+    nus2IntSol1 = np.nanargmax(nusCombined2Int,axis=1)
+    assert np.all(~(nus2IntSol0 == nus2IntSol1))
+    #Combine the 2 individual intersection solutions
+    nus2Int = np.stack((nusCombined2Int[np.arange(nusCombined2Int.shape[0]),nus2IntSol0],nusCombined2Int[np.arange(nusCombined2Int.shape[0]),nus2IntSol1])).T
+    dmag2Int = np.stack((gdmagsCombined2Int[np.arange(nusCombined2Int.shape[0]),nus2IntSol0],gdmagsCombined2Int[np.arange(nusCombined2Int.shape[0]),nus2IntSol1])).T
+
+    #DELETEindsWherenusCombined2IntNotNan = np.tile(np.arange(8),(nusCombined2Int.shape[0],1))[~np.isnan(nusCombined2Int)]
+    #DELETEnus2Int = nusCombined2Int[np.arange(nusCombined2Int.shape[0]),indsWherenusCombined2IntNotNan]
+    #delete unnececssary things
+
+    if ~(indsWith4Int.size == 0):
+        #4 Int
+        out4Int = solve_dmag_Poly(dmag,e[indsWith4Int],inc[indsWith4Int],w[indsWith4Int],a[indsWith4Int],p[indsWith4Int],Rp[indsWith4Int])
+        #Throw out roots not in correct bounds
+        inBoundsBools4Int = (np.abs(out4Int.imag) <= 1e-7)*(out4Int.real >= -1.)*(out4Int.real <= 1.) #the out2 solutions that are inside of the desired bounds
+        outBoundsBools4Int = np.logical_not(inBoundsBools4Int) # the out2 solutions that are inside the desired bounds
+        outReal4Int = np.zeros(out4Int.shape) #just getting something with the right shape
+        outReal4Int[outBoundsBools4Int] = out4Int[outBoundsBools4Int]*np.nan
+        outReal4Int[inBoundsBools4Int] = out4Int[inBoundsBools4Int]
+        outReal4Int = np.real(outReal4Int)
+        #For arccos in 0-pi
+        nuReal4Int = np.ones(outReal4Int.shape)*np.nan
+        nuReal4Int[inBoundsBools4Int] = np.arccos(outReal4Int[inBoundsBools4Int]) #calculate arccos, there are 2 potential solutions... need to calculate both
+        gPhi4Int = (1.+np.sin(np.tile(inc[indsWith4Int],(8,1)).T)*np.sin(nuReal4Int+np.tile(w[indsWith4Int],(8,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
+        gd4Int = np.tile(a[indsWith4Int].to('AU'),(8,1)).T*(1.-np.tile(e[indsWith4Int],(8,1)).T**2.)/(np.tile(e[indsWith4Int],(8,1)).T*np.cos(nuReal4Int)+1.)
+        gdmags4Int = deltaMag(np.tile(p[indsWith4Int],(8,1)).T,np.tile(Rp[indsWith4Int].to('AU'),(8,1)).T,gd4Int,gPhi4Int) #calculate dmag of the specified x-value
+        #For arccos in pi-2pi 
+        nuReal24Int = np.ones(outReal4Int.shape)*np.nan
+        nuReal24Int[inBoundsBools4Int] = 2.*np.pi - np.arccos(outReal4Int[inBoundsBools4Int])
+        gPhi24Int = (1.+np.sin(np.tile(inc[indsWith4Int],(8,1)).T)*np.sin(nuReal24Int+np.tile(w[indsWith4Int],(8,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
+        gd24Int = np.tile(a[indsWith4Int].to('AU'),(8,1)).T*(1.-np.tile(e[indsWith4Int],(8,1)).T**2.)/(np.tile(e[indsWith4Int],(8,1)).T*np.cos(nuReal24Int)+1.)
+        gdmags24Int = deltaMag(np.tile(p[indsWith4Int],(8,1)).T,np.tile(Rp[indsWith4Int].to('AU'),(8,1)).T,gd24Int,gPhi24Int) #calculate dmag of the specified x-value
+        #Evaluate which solutions are good and which aren't
+        correctValBoolean14Int = np.abs(gdmags4Int - dmag) < 1e-2 #Values of nuReal which yield the desired dmag
+        correctValBoolean24Int = np.abs(gdmags24Int - dmag) < 1e-2 #values of nuReal2 which yield the desired dmag
+        bothBools4Int = correctValBoolean14Int*correctValBoolean24Int #values of nuReal 
+        #Combine the two sets of solutions
+        nusCombined4Int = np.zeros(nuReal4Int.shape)
+        nusCombined4Int = nuReal4Int*np.logical_xor(correctValBoolean14Int,bothBools4Int) + nuReal24Int*np.logical_xor(correctValBoolean24Int,bothBools4Int) + nuReal4Int*bothBools4Int #these are the nus where intersections occur
+        #Combine and verify the two sets of dmags resulting from the solutions
+        gdmagsCombined4Int = np.zeros(gdmags4Int.shape)
+        gdmagsCombined4Int = gdmags4Int*np.logical_xor(correctValBoolean14Int,bothBools4Int) + gdmags24Int*np.logical_xor(correctValBoolean24Int,bothBools4Int) + gdmags4Int*bothBools4Int
+        numSolsPer4Int = np.sum((~np.isnan(gdmagsCombined4Int)).astype('int'),axis=1)
+        assert np.all(numSolsPer4Int == 4) #All 4 int must have 4 solutions
+        #Now that all 4Int only have 4 solutions, remove the nans from the combined array
+        nus4IntSol0Ind = np.nanargmin(nusCombined4Int,axis=1)
+        nus4IntSol3Ind = np.nanargmax(nusCombined4Int,axis=1)
+        assert np.all(~(nus4IntSol0Ind == nus4IntSol3Ind))
+        nus4IntSol0 = nusCombined4Int[np.arange(nusCombined4Int.shape[0]),nus4IntSol0Ind]
+        nus4IntSol3 = nusCombined4Int[np.arange(nusCombined4Int.shape[0]),nus4IntSol3Ind]
+        gdmags4IntSol0 = gdmagsCombined4Int[np.arange(nusCombined4Int.shape[0]),nus4IntSol0Ind]
+        gdmags4IntSol3 = gdmagsCombined4Int[np.arange(nusCombined4Int.shape[0]),nus4IntSol3Ind]
+        nusCombined4Int[np.arange(nusCombined4Int.shape[0]),nus4IntSol0Ind] = np.nan
+        nusCombined4Int[np.arange(nusCombined4Int.shape[0]),nus4IntSol3Ind] = np.nan
+        nus4IntSol1Ind = np.nanargmin(nusCombined4Int,axis=1)
+        nus4IntSol2Ind = np.nanargmax(nusCombined4Int,axis=1)
+        assert np.all(~(nus4IntSol1Ind == nus4IntSol2Ind))
+        nus4IntSol1 = nusCombined4Int[np.arange(nusCombined4Int.shape[0]),nus4IntSol1Ind]
+        nus4IntSol2 = nusCombined4Int[np.arange(nusCombined4Int.shape[0]),nus4IntSol2Ind]
+        gdmags4IntSol1 = gdmagsCombined4Int[np.arange(nusCombined4Int.shape[0]),nus4IntSol1Ind]
+        gdmags4IntSol2 = gdmagsCombined4Int[np.arange(nusCombined4Int.shape[0]),nus4IntSol2Ind]
+        nusCombined4Int[np.arange(nusCombined4Int.shape[0]),nus4IntSol1Ind] = np.nan
+        nusCombined4Int[np.arange(nusCombined4Int.shape[0]),nus4IntSol2Ind] = np.nan
+        #Combine the 4 individual intersection solutions
+        nus4Int = np.stack((nus4IntSol0,nus4IntSol1,nus4IntSol2,nus4IntSol3)).T
+        dmag4Int = np.stack((gdmags4IntSol0,gdmags4IntSol1,gdmags4IntSol2,gdmags4IntSol3)).T
+    else:
+        nus4Int = None
+        dmag4Int = None
+
+    #histogram check for number of solutions. We should see either 0, 2, or 4
+    #DELETEvals1Hist = np.histogram(np.sum(correctValBoolean1,axis=1),bins=[-0.1,0.9,1.9,2.9,3.9,4.9,5.9])
+    #DELETEvals2Hist = np.histogram(np.sum(correctValBoolean2,axis=1),bins=[-0.1,0.9,1.9,2.9,3.9,4.9,5.9])
+    #Take nuReal1, and nuReal2 where not in both Bools
+
+    # sumNumSol = np.sum(np.logical_xor(correctValBoolean1,bothBools)) + np.sum(np.logical_xor(correctValBoolean2,bothBools)) + np.sum(bothBools)
+    # numSols = np.sum(np.logical_xor(correctValBoolean1,bothBools) + np.logical_xor(correctValBoolean2,bothBools) + bothBools,axis=1)
+    # numSolHist = np.histogram(numSols,bins=[-0.1,0.9,1.9,2.9,3.9,4.9])
+    # np.sum(np.histogram(numSols,bins=[-0.1,0.9,1.9,2.9,3.9,4.9])[0])
+    tstop_cos = time.time()
+    print('nu From dmag execution time: ' + str(tstop_cos-tstart_cos))
+
+    # #Verification Histogram
+    # plt.figure(num=9000)
+    # if ~(indsWith4Int.size == 0):
+    #     plt.hist(dmag4Int.flatten(),alpha=0.3,color='red',bins=50)
+    # plt.hist(dmag2Int.flatten(),alpha=0.3,color='blue',bins=50)
+    # plt.yscale('log')
+    # plt.show(block=False)
+
+    #Quality Checks
+    # assert np.all(numSols[indsWith2Int]==2)
+    # assert np.all(numSols[indsWith4Int]==4)
+
+    return nus2Int, nus4Int, dmag2Int, dmag4Int #nusCombined, gdmagsCombined, sumNumSol, numSols, numSolHist 
+
+    
