@@ -3085,7 +3085,7 @@ def calc_planetnu_from_dmag(dmag,e,inc,w,a,p,Rp,mindmag, maxdmag, indsWith2Int, 
     tstart_cos = time.time()
     out2Int = solve_dmag_Poly(dmag,e[indsWith2Int],inc[indsWith2Int],w[indsWith2Int],a[indsWith2Int],p[indsWith2Int],Rp[indsWith2Int])
     #Throw out roots not in correct bounds
-    inBoundsBools2Int = (np.abs(out2Int.imag) <= 1e-7)*(out2Int.real >= -1.)*(out2Int.real <= 1.) #the out2 solutions that are inside of the desired bounds
+    inBoundsBools2Int = (np.abs(out2Int.imag) <= 1e-7)*(out2Int.real >= -1.-1e-9)*(out2Int.real <= 1.+1e-9) #the out2 solutions that are inside of the desired bounds #adding 1e-9 bc a solution that was 1. was filtered out once
     outBoundsBools2Int = np.logical_not(inBoundsBools2Int) # the out2 solutions that are inside the desired bounds
     outReal2Int = np.zeros(out2Int.shape) #just getting something with the right shape
     outReal2Int[outBoundsBools2Int] = out2Int[outBoundsBools2Int]*np.nan
@@ -3124,6 +3124,8 @@ def calc_planetnu_from_dmag(dmag,e,inc,w,a,p,Rp,mindmag, maxdmag, indsWith2Int, 
     nus2Int = np.stack((nusCombined2Int[np.arange(nusCombined2Int.shape[0]),nus2IntSol0],nusCombined2Int[np.arange(nusCombined2Int.shape[0]),nus2IntSol1])).T
     dmag2Int = np.stack((gdmagsCombined2Int[np.arange(nusCombined2Int.shape[0]),nus2IntSol0],gdmagsCombined2Int[np.arange(nusCombined2Int.shape[0]),nus2IntSol1])).T
 
+
+    assert ~np.any(np.equal(nus2Int[:,0],nus2Int[:,1])), 'one of the 2 extrema nus are identical'
     #DELETEindsWherenusCombined2IntNotNan = np.tile(np.arange(8),(nusCombined2Int.shape[0],1))[~np.isnan(nusCombined2Int)]
     #DELETEnus2Int = nusCombined2Int[np.arange(nusCombined2Int.shape[0]),indsWherenusCombined2IntNotNan]
     #delete unnececssary things
@@ -3132,7 +3134,7 @@ def calc_planetnu_from_dmag(dmag,e,inc,w,a,p,Rp,mindmag, maxdmag, indsWith2Int, 
         #4 Int
         out4Int = solve_dmag_Poly(dmag,e[indsWith4Int],inc[indsWith4Int],w[indsWith4Int],a[indsWith4Int],p[indsWith4Int],Rp[indsWith4Int])
         #Throw out roots not in correct bounds
-        inBoundsBools4Int = (np.abs(out4Int.imag) <= 1e-7)*(out4Int.real >= -1.)*(out4Int.real <= 1.) #the out2 solutions that are inside of the desired bounds
+        inBoundsBools4Int = (np.abs(out4Int.imag) <= 1e-7)*(out4Int.real >= -1.-1e-9)*(out4Int.real <= 1.+1e-9) #the out2 solutions that are inside of the desired bounds
         outBoundsBools4Int = np.logical_not(inBoundsBools4Int) # the out2 solutions that are inside the desired bounds
         outReal4Int = np.zeros(out4Int.shape) #just getting something with the right shape
         outReal4Int[outBoundsBools4Int] = out4Int[outBoundsBools4Int]*np.nan
@@ -3184,6 +3186,12 @@ def calc_planetnu_from_dmag(dmag,e,inc,w,a,p,Rp,mindmag, maxdmag, indsWith2Int, 
         #Combine the 4 individual intersection solutions
         nus4Int = np.stack((nus4IntSol0,nus4IntSol1,nus4IntSol2,nus4IntSol3)).T
         dmag4Int = np.stack((gdmags4IntSol0,gdmags4IntSol1,gdmags4IntSol2,gdmags4IntSol3)).T
+        assert ~np.any(np.equal(nus4Int[:,0],nus4Int[:,1])), 'one of the 4 extrema nus are identical'
+        assert ~np.any(np.equal(nus4Int[:,0],nus4Int[:,2])), 'one of the 4 extrema nus are identical'
+        assert ~np.any(np.equal(nus4Int[:,0],nus4Int[:,3])), 'one of the 4 extrema nus are identical'
+        assert ~np.any(np.equal(nus4Int[:,1],nus4Int[:,2])), 'one of the 4 extrema nus are identical'
+        assert ~np.any(np.equal(nus4Int[:,1],nus4Int[:,3])), 'one of the 4 extrema nus are identical'
+        assert ~np.any(np.equal(nus4Int[:,2],nus4Int[:,3])), 'one of the 4 extrema nus are identical'
     else:
         nus4Int = None
         dmag4Int = None
@@ -3214,4 +3222,4 @@ def calc_planetnu_from_dmag(dmag,e,inc,w,a,p,Rp,mindmag, maxdmag, indsWith2Int, 
 
     return nus2Int, nus4Int, dmag2Int, dmag4Int #nusCombined, gdmagsCombined, sumNumSol, numSols, numSolHist 
 
-    
+

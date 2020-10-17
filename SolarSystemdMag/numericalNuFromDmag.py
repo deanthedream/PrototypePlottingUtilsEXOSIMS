@@ -71,13 +71,6 @@ indsWith2Int = list(set(np.where((mindmag < dmag)*(maxdmag > dmag))[0]) - set(in
 ######################################################################
 #### Solving for nu, dmag intersections
 nus2Int, nus4Int, dmag2Int, dmag4Int = calc_planetnu_from_dmag(dmag,e,inc,w,a,p,Rp,mindmag, maxdmag, indsWith2Int, indsWith4Int)
-assert ~np.any(np.equal(nus2Int[:,0],nus2Int[:,1])), 'one of the 2 extrema nus are identical'
-assert ~np.any(np.equal(nus4Int[:,0],nus4Int[:,1])), 'one of the 4 extrema nus are identical'
-assert ~np.any(np.equal(nus4Int[:,0],nus4Int[:,2])), 'one of the 4 extrema nus are identical'
-assert ~np.any(np.equal(nus4Int[:,0],nus4Int[:,3])), 'one of the 4 extrema nus are identical'
-assert ~np.any(np.equal(nus4Int[:,1],nus4Int[:,2])), 'one of the 4 extrema nus are identical'
-assert ~np.any(np.equal(nus4Int[:,1],nus4Int[:,3])), 'one of the 4 extrema nus are identical'
-assert ~np.any(np.equal(nus4Int[:,2],nus4Int[:,3])), 'one of the 4 extrema nus are identical'
 ######################################################################
 
 
@@ -88,7 +81,7 @@ plt.rc('axes',linewidth=2)
 plt.rc('lines',linewidth=2)
 plt.rcParams['axes.linewidth']=2
 plt.rc('font',weight='bold')
-ind = indsWith4[0]
+ind = indsWith4Int[0]
 nus = np.linspace(start=0,stop=2.*np.pi,num=100)
 phis = (1.+np.sin(inc[ind])*np.sin(nus+w[ind]))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
 ds = a[ind]*(1.-e[ind]**2.)/(e[ind]*np.cos(nus)+1.)
@@ -99,6 +92,14 @@ plt.plot(nus,dmags,color='black',zorder=10)
 plt.scatter(nuMinDmag[ind],mindmag[ind],color='cyan',marker='d',zorder=20)
 plt.scatter(nuMaxDmag[ind],maxdmag[ind],color='red',marker='d',zorder=20)
 lind = np.where(ind == indsWith4)[0]
+if  ind in indsWith2Int:
+    mind = np.where(ind == indsWith2Int)[0]
+    plt.scatter(nus2Int[mind],dmag2Int[mind],color='green',marker='o',zorder=20)
+    plt.scatter([0.,2.*np.pi],[dmag,dmag],color='green',zorder=10)
+elif ind in indsWith4Int:
+    nind = np.where(ind == indsWith4Int)[0]
+    plt.scatter(nus4Int[nind],dmag4Int[nind],color='green',marker='o',zorder=20)
+    plt.scatter([0.,2.*np.pi],[dmag,dmag],color='green',zorder=10)
 plt.scatter(nulminAll[lind],dmaglminAll[lind],color='magenta',marker='d',zorder=20)
 plt.scatter(nulmaxAll[lind],dmaglmaxAll[lind],color='gold',marker='d',zorder=20)
 plt.xlim([0.,2.*np.pi])
