@@ -1,3 +1,4 @@
+#DELETE THIS file
 # Written by Dean Keithly
 import os
 from projectedEllipse import *
