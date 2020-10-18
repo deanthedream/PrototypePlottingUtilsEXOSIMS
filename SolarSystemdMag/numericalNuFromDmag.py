@@ -71,6 +71,14 @@ indsWith2Int = list(set(np.where((mindmag < dmag)*(maxdmag > dmag))[0]) - set(in
 ######################################################################
 #### Solving for nu, dmag intersections
 nus2Int, nus4Int, dmag2Int, dmag4Int = calc_planetnu_from_dmag(dmag,e,inc,w,a,p,Rp,mindmag, maxdmag, indsWith2Int, indsWith4Int)
+t2Int = np.zeros((len(e),2))
+t2Int[:,0] = timeFromTrueAnomaly(nus2Int[:,0],periods[indsWith2Int],e[indsWith2Int])
+t2Int[:,1] = timeFromTrueAnomaly(nus2Int[:,1],periods[indsWith2Int],e[indsWith2Int])
+t4Int = np.zeros((len(e),4))
+t4Int[:,0] = timeFromTrueAnomaly(nus4Int[:,0],periods[indsWith4Int],e[indsWith4Int])
+t4Int[:,1] = timeFromTrueAnomaly(nus4Int[:,1],periods[indsWith4Int],e[indsWith4Int])
+t4Int[:,2] = timeFromTrueAnomaly(nus4Int[:,2],periods[indsWith4Int],e[indsWith4Int])
+t4Int[:,3] = timeFromTrueAnomaly(nus4Int[:,3],periods[indsWith4Int],e[indsWith4Int])
 ######################################################################
 
 

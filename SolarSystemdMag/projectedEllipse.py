@@ -3052,6 +3052,11 @@ def calc_planet_dmagmin_dmagmax(e,inc,w,a,p,Rp):
 
 def solve_dmag_Poly(dmag,e,inc,w,a,p,Rp):
     """
+    Args:
+        dmag,e,inc,w,a,p,Rp,pInds
+    Returns:
+        out (numpy array):
+            a len(e) by 8 array of cos(x) values
     """
     #Calculate the left hand side (all the things that are separable and constant)
     lhs = 10.**(-0.4*dmag)*(1.-e**2.)**2.*(a.to('AU')/Rp.to('AU')).decompose().value**2./p
@@ -3081,6 +3086,7 @@ def calc_planetnu_from_dmag(dmag,e,inc,w,a,p,Rp,mindmag, maxdmag, indsWith2Int, 
     Args:
         dmag,e,inc,w,a,p,Rp,pInds
     Returns:
+        nus2Int, nus4Int, dmag2Int, dmag4Int
     """
     tstart_cos = time.time()
     out2Int = solve_dmag_Poly(dmag,e[indsWith2Int],inc[indsWith2Int],w[indsWith2Int],a[indsWith2Int],p[indsWith2Int],Rp[indsWith2Int])
@@ -3089,7 +3095,9 @@ def calc_planetnu_from_dmag(dmag,e,inc,w,a,p,Rp,mindmag, maxdmag, indsWith2Int, 
     outBoundsBools2Int = np.logical_not(inBoundsBools2Int) # the out2 solutions that are inside the desired bounds
     outReal2Int = np.zeros(out2Int.shape) #just getting something with the right shape
     outReal2Int[outBoundsBools2Int] = out2Int[outBoundsBools2Int]*np.nan
+    del outBoundsBools2Int
     outReal2Int[inBoundsBools2Int] = out2Int[inBoundsBools2Int]
+    del out2Int
     outReal2Int = np.real(outReal2Int)
     #For arccos in 0-pi
     nuReal2Int = np.ones(outReal2Int.shape)*np.nan
@@ -3097,12 +3105,15 @@ def calc_planetnu_from_dmag(dmag,e,inc,w,a,p,Rp,mindmag, maxdmag, indsWith2Int, 
     gPhi2Int = (1.+np.sin(np.tile(inc[indsWith2Int],(8,1)).T)*np.sin(nuReal2Int+np.tile(w[indsWith2Int],(8,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
     gd2Int = np.tile(a[indsWith2Int].to('AU'),(8,1)).T*(1.-np.tile(e[indsWith2Int],(8,1)).T**2.)/(np.tile(e[indsWith2Int],(8,1)).T*np.cos(nuReal2Int)+1.)
     gdmags2Int = deltaMag(np.tile(p[indsWith2Int],(8,1)).T,np.tile(Rp[indsWith2Int].to('AU'),(8,1)).T,gd2Int,gPhi2Int) #calculate dmag of the specified x-value
+    del gPhi2Int, gd2Int
     #For arccos in pi-2pi
     nuReal22Int = np.ones(outReal2Int.shape)*np.nan
     nuReal22Int[inBoundsBools2Int] = 2.*np.pi - np.arccos(outReal2Int[inBoundsBools2Int])
+    del inBoundsBools2Int, outReal2Int
     gPhi22Int = (1.+np.sin(np.tile(inc[indsWith2Int],(8,1)).T)*np.sin(nuReal22Int+np.tile(w[indsWith2Int],(8,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
     gd22Int = np.tile(a[indsWith2Int].to('AU'),(8,1)).T*(1.-np.tile(e[indsWith2Int],(8,1)).T**2.)/(np.tile(e[indsWith2Int],(8,1)).T*np.cos(nuReal22Int)+1.)
     gdmags22Int = deltaMag(np.tile(p[indsWith2Int],(8,1)).T,np.tile(Rp[indsWith2Int].to('AU'),(8,1)).T,gd22Int,gPhi22Int) #calculate dmag of the specified x-value
+    del gPhi22Int, gd22Int
     #Evaluate which solutions are good and which aren't
     correctValBoolean12Int = np.abs(gdmags2Int - dmag) < 1e-2 #Values of nuReal which yield the desired dmag
     correctValBoolean22Int = np.abs(gdmags22Int - dmag) < 1e-2 #values of nuReal2 which yield the desired dmag
@@ -3110,12 +3121,15 @@ def calc_planetnu_from_dmag(dmag,e,inc,w,a,p,Rp,mindmag, maxdmag, indsWith2Int, 
     #Combine the two sets of solutions
     nusCombined2Int = np.zeros(nuReal2Int.shape)
     nusCombined2Int = nuReal2Int*np.logical_xor(correctValBoolean12Int,bothBools2Int) + nuReal22Int*np.logical_xor(correctValBoolean22Int,bothBools2Int) + nuReal2Int*bothBools2Int #these are the nus where intersections occur
+    del nuReal2Int, nuReal22Int
     #Combine and verify the two sets of dmags resulting from the solutions
     gdmagsCombined2Int = np.zeros(gdmags2Int.shape)
     gdmagsCombined2Int = gdmags2Int*np.logical_xor(correctValBoolean12Int,bothBools2Int) + gdmags22Int*np.logical_xor(correctValBoolean22Int,bothBools2Int) + gdmags2Int*bothBools2Int
+    del gdmags2Int, gdmags22Int, correctValBoolean12Int, correctValBoolean22Int
     numSolsPer2Int = np.sum((~np.isnan(gdmagsCombined2Int)).astype('int'),axis=1)
     #DELETEnumSolsHist2Int = np.histogram(numSolsPer2Int,bins=[-0.1,0.9,1.9,2.9,3.9,4.9,5.9,6.9,7.9,8.9,9.9])
     assert np.all(numSolsPer2Int == 2) #All 2 int must have 2 solutions
+    del numSolsPer2Int
     #Now that all 2Int only have 2 solutions
     nus2IntSol0 = np.nanargmin(nusCombined2Int,axis=1)
     nus2IntSol1 = np.nanargmax(nusCombined2Int,axis=1)
@@ -3123,12 +3137,10 @@ def calc_planetnu_from_dmag(dmag,e,inc,w,a,p,Rp,mindmag, maxdmag, indsWith2Int, 
     #Combine the 2 individual intersection solutions
     nus2Int = np.stack((nusCombined2Int[np.arange(nusCombined2Int.shape[0]),nus2IntSol0],nusCombined2Int[np.arange(nusCombined2Int.shape[0]),nus2IntSol1])).T
     dmag2Int = np.stack((gdmagsCombined2Int[np.arange(nusCombined2Int.shape[0]),nus2IntSol0],gdmagsCombined2Int[np.arange(nusCombined2Int.shape[0]),nus2IntSol1])).T
-
+    del gdmagsCombined2Int, nus2IntSol0, nus2IntSol1, nusCombined2Int
 
     assert ~np.any(np.equal(nus2Int[:,0],nus2Int[:,1])), 'one of the 2 extrema nus are identical'
-    #DELETEindsWherenusCombined2IntNotNan = np.tile(np.arange(8),(nusCombined2Int.shape[0],1))[~np.isnan(nusCombined2Int)]
-    #DELETEnus2Int = nusCombined2Int[np.arange(nusCombined2Int.shape[0]),indsWherenusCombined2IntNotNan]
-    #delete unnececssary things
+
 
     if ~(indsWith4Int.size == 0):
         #4 Int
@@ -3139,6 +3151,7 @@ def calc_planetnu_from_dmag(dmag,e,inc,w,a,p,Rp,mindmag, maxdmag, indsWith2Int, 
         outReal4Int = np.zeros(out4Int.shape) #just getting something with the right shape
         outReal4Int[outBoundsBools4Int] = out4Int[outBoundsBools4Int]*np.nan
         outReal4Int[inBoundsBools4Int] = out4Int[inBoundsBools4Int]
+        del out4Int
         outReal4Int = np.real(outReal4Int)
         #For arccos in 0-pi
         nuReal4Int = np.ones(outReal4Int.shape)*np.nan
