@@ -1,3 +1,5 @@
+#DELETE THIS FILE
+
 #3D ellipse to 2D ellipse
 
 import sympy as sp
