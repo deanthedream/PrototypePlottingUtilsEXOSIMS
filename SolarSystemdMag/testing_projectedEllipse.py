@@ -265,7 +265,7 @@ if plotBool == True:
 
 #### s_inner, s_upper 
 def calc_t_sInnersOuter(sma,e,W,w,inc,s_inner,s_outer,starMass,plotBool):
-    """
+    """ Collates the times where each planet crosses s_inner and s_outer
     Args:
     Returns:
         times (numpy array):
@@ -324,52 +324,75 @@ def calc_t_sInnersOuter(sma,e,W,w,inc,s_inner,s_outer,starMass,plotBool):
 
     times = np.concatenate((times_o,times_i),axis=1)
     return times
-
-
-#### Time from dMagLim ################################################
-
-#1 define dmaglim
-#2 calculate dmagMax and dmagMin for all planets
-#3 where dmagMin < dmaglim < dmagMax, calculate Phase angle (beta) producing this
-#use beta(x,y,z) or beta(s,r_z) to solve for nu producing the intersection
-
-#DELETE???? Equations from "Solar System Phase Angles" Section in paper
-# tmp1 = np.arcsin(np.cos(beta)/np.sin(inc))
-# tmp2 = np.pi*np.ones(len(tmp1)) - tmp1
-# nu1 = tmp1 - w
-# nu2 = tmp2 - w
-
-#######################################################################
+####
 
 
 #### nu From dMag #####################################################
-# # this stuff appears to assume a hyperbolic tangent phase function # need to redo
-# #DELETE ALL THIS AND SEE numericalNuFromDmag
-# def calcNusFromDmag(a,e,p,Rp,dmag):
-#     """ Calculates nu for a given planet at the given dmag
-#     Args:
-#         a (numpy array):
-#             semi-major axis for all planets
-#         e (numpy array):
-#             eccentricty for all planets
-#         Rp (numpy array):
-#             planet radius for all planets
-#         dmag (numpy array):
-#             delta magnitude to calculate nu at for all planets
-#     Returns:
-#         nus_from_dmag (numpy array):
-#             of dimension (nplans,4)
-#         success (numpy array):
-#             an array of booleans with length nplans
-#     """
-#     var = (-(B*C+1.)*np.exp(2.*D/A))/(B*C-1.)
-#     nu0 = -w + np.arcsin(np.cos(A/2.*np.log(var))/np.sin(inc))
-#     nu1 = -w + np.arcsin(np.cos(A*np.log(-np.sqrt(var)))/np.sin(inc))
-#     nu2 = -w - np.arcsin(np.cos(A/2.*np.log(var))/np.sin(inc)) +np.pi
-#     nu3 = -w - np.arcsin(np.cos(A*np.log(-np.sqrt(var)))/np.sin(inc)) + np.pi
+#### Solving for dmag_min and dmag_max for each planet ################
+dmag = 29.0
+mindmag, maxdmag, dmaglminAll, dmaglmaxAll, indsWith2, indsWith4, nuMinDmag, nuMaxDmag, nulminAll, nulmaxAll = calc_planet_dmagmin_dmagmax(e,inc,w,a,p,Rp)
+print('Num Planets with At Least 2 Int given dmag: ' + str(np.sum((mindmag < dmag)*(maxdmag > dmag))))
+print('Num Planets with dmag local extrema: ' + str(len(indsWith4)))
+print('Num Planets with given 4 Int given dmag: ' + str(np.sum((dmaglminAll < dmag)*(dmaglmaxAll > dmag))))
+indsWith4Int = indsWith4[np.where((dmaglminAll < dmag)*(dmaglmaxAll > dmag))[0]]
+indsWith2Int = list(set(np.where((mindmag < dmag)*(maxdmag > dmag))[0]) - set(indsWith4Int))
+######################################################################
 
-#     return nus
-# nus_from_dmag, success = calcNusFromDmag(sma,e,p,Rp,dmag)
+######################################################################
+#### Solving for nu, dmag intersections ##############################
+nus2Int, nus4Int, dmag2Int, dmag4Int = calc_planetnu_from_dmag(dmag,e,inc,w,a,p,Rp,mindmag, maxdmag, indsWith2Int, indsWith4Int)
+dmagInts = np.zeros((len(e),4))*np.nan
+dmagInts[indsWith2Int,0] = timeFromTrueAnomaly(nus2Int[:,0],periods[indsWith2Int],e[indsWith2Int])
+dmagInts[indsWith2Int,1] = timeFromTrueAnomaly(nus2Int[:,1],periods[indsWith2Int],e[indsWith2Int])
+dmagInts[indsWith4Int,0] = timeFromTrueAnomaly(nus4Int[:,0],periods[indsWith4Int],e[indsWith4Int])
+dmagInts[indsWith4Int,1] = timeFromTrueAnomaly(nus4Int[:,1],periods[indsWith4Int],e[indsWith4Int])
+dmagInts[indsWith4Int,2] = timeFromTrueAnomaly(nus4Int[:,2],periods[indsWith4Int],e[indsWith4Int])
+dmagInts[indsWith4Int,3] = timeFromTrueAnomaly(nus4Int[:,3],periods[indsWith4Int],e[indsWith4Int])
+# t2Int = np.zeros((len(indsWith2Int),4))
+# t2Int[:,0] = timeFromTrueAnomaly(nus2Int[:,0],periods[indsWith2Int],e[indsWith2Int])
+# t2Int[:,1] = timeFromTrueAnomaly(nus2Int[:,1],periods[indsWith2Int],e[indsWith2Int])
+# t4Int = np.zeros((len(indsWith4Int),4))
+# t4Int[:,0] = timeFromTrueAnomaly(nus4Int[:,0],periods[indsWith4Int],e[indsWith4Int])
+# t4Int[:,1] = timeFromTrueAnomaly(nus4Int[:,1],periods[indsWith4Int],e[indsWith4Int])
+# t4Int[:,2] = timeFromTrueAnomaly(nus4Int[:,2],periods[indsWith4Int],e[indsWith4Int])
+# t4Int[:,3] = timeFromTrueAnomaly(nus4Int[:,3],periods[indsWith4Int],e[indsWith4Int])
+######################################################################
+
+
+#### dmag vs nu extrema and intersection Verification plot
+num=88833543453218
+plt.figure(num=num)
+plt.rc('axes',linewidth=2)
+plt.rc('lines',linewidth=2)
+plt.rcParams['axes.linewidth']=2
+plt.rc('font',weight='bold')
+ind = indsWith4Int[0]
+nus = np.linspace(start=0,stop=2.*np.pi,num=100)
+phis = (1.+np.sin(inc[ind])*np.sin(nus+w[ind]))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
+ds = a[ind]*(1.-e[ind]**2.)/(e[ind]*np.cos(nus)+1.)
+dmags = deltaMag(p[ind],Rp[ind].to('AU'),ds,phis) #calculate dmag of the specified x-value
+
+plt.plot(nus,dmags,color='black',zorder=10)
+#plt.plot([0.,2.*np.pi],[dmag,dmag],color='blue')
+plt.scatter(nuMinDmag[ind],mindmag[ind],color='cyan',marker='d',zorder=20)
+plt.scatter(nuMaxDmag[ind],maxdmag[ind],color='red',marker='d',zorder=20)
+lind = np.where(ind == indsWith4)[0]
+if  ind in indsWith2Int:
+    mind = np.where(ind == indsWith2Int)[0]
+    plt.scatter(nus2Int[mind],dmag2Int[mind],color='green',marker='o',zorder=20)
+    plt.scatter([0.,2.*np.pi],[dmag,dmag],color='green',zorder=10)
+elif ind in indsWith4Int:
+    nind = np.where(ind == indsWith4Int)[0]
+    plt.scatter(nus4Int[nind],dmag4Int[nind],color='green',marker='o',zorder=20)
+    plt.scatter([0.,2.*np.pi],[dmag,dmag],color='green',zorder=10)
+plt.scatter(nulminAll[lind],dmaglminAll[lind],color='magenta',marker='d',zorder=20)
+plt.scatter(nulmaxAll[lind],dmaglmaxAll[lind],color='gold',marker='d',zorder=20)
+plt.xlim([0.,2.*np.pi])
+plt.ylim([-0.05*(maxdmag[ind]-mindmag[ind])+mindmag[ind],0.05*(maxdmag[ind]-mindmag[ind])+maxdmag[ind]])
+plt.ylabel(r'$\Delta \mathrm{mag}$',weight='bold')
+plt.xlabel(r'$\nu$' + ', in (rad)', weight='bold')
+plt.title('sma: ' + str(np.round(sma[ind],4)) + ' e: ' + str(np.round(e[ind],4)) + ' W: ' + str(np.round(W[ind],4)) + '\nw: ' + str(np.round(w[ind],4)) + ' inc: ' + str(np.round(inc[ind],4)))
+plt.show(block=False)
 #######################################################################
 
 
