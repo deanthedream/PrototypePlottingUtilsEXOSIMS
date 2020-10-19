@@ -358,6 +358,9 @@ dmagInts[indsWith4Int,3] = timeFromTrueAnomaly(nus4Int[:,3],periods[indsWith4Int
 # t4Int[:,3] = timeFromTrueAnomaly(nus4Int[:,3],periods[indsWith4Int],e[indsWith4Int])
 ######################################################################
 
+times_s = calc_t_sInnersOuter(sma,e,W,w,inc,s_inner,s_outer,starMass,plotBool)
+times = sp.stack(times_s,dmagInts)
+
 
 #### dmag vs nu extrema and intersection Verification plot
 num=88833543453218
