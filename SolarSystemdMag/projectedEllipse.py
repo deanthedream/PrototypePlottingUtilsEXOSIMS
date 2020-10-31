@@ -2816,7 +2816,6 @@ def calc_planet_dmagmin_dmagmax(e,inc,w,a,p,Rp):
     inBoundsBools = (np.abs(out.imag) <= 1e-7)*(out.real >= -1.)*(out.real <= 1.) #the out2 solutions that are inside of the desired bounds
     outBoundsBools = np.logical_not(inBoundsBools) # the out2 solutions that are inside the desired bounds
     outReal = np.real(out) #filling in all terms with numbers with the correct shape
-    del out
     outReal[outBoundsBools] = out[outBoundsBools]*np.nan #make all zeros out of legal bounds nan
     #For arccos in 0-pi
     nuReal = np.ones(outReal.shape)*np.nan
@@ -2832,7 +2831,7 @@ def calc_planet_dmagmin_dmagmax(e,inc,w,a,p,Rp):
     gPhi2 = (1.+np.sin(np.tile(inc,(8,1)).T)*np.sin(nuReal2+np.tile(w,(8,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
     gd2 = np.tile(a.to('AU'),(8,1)).T*(1.-np.tile(e,(8,1)).T**2.)/(np.tile(e,(8,1)).T*np.cos(nuReal2)+1.)
     gdmags2 = deltaMag(np.tile(p,(8,1)).T,np.tile(Rp.to('AU'),(8,1)).T,gd2,gPhi2) #calculate dmag of the specified x-value
-    del gPhi2, gd2, inBoundsBools, outBoundsBools
+    del gPhi2, gd2, inBoundsBools, outBoundsBools, out
 
     #### Checking number of solutions. We must determine here what planets have 2 solutions and what planets have 4 solutions. Tightening imag component errors seems to help with this bit
     numSols = np.sum(~np.isnan(gdmags),axis=1) # calculate the total number of solutions available
@@ -2964,13 +2963,14 @@ def calc_planet_dmagmin_dmagmax(e,inc,w,a,p,Rp):
     nuReal2[isNotExtrema2] = np.nan
     gdmags2[isNotExtrema2] = np.nan
     
+    #Looks like offending ind is occuring before here
 
+    #being saved for debuggin purposes
     #create smaller arrays for handling indsWith4 data subsets
-    subdmags = gdmags[indsWith4]
-    subdmags2 = gdmags2[indsWith4]
-    subnuReal = nuReal[indsWith4]
-    subnuReal2 = nuReal2[indsWith4]
-
+    subdmags = gdmags[indsWith4].copy()
+    subdmags2 = gdmags2[indsWith4].copy()
+    subnuReal = nuReal[indsWith4].copy()
+    subnuReal2 = nuReal2[indsWith4].copy()
 
     #Create arrays containing all local min and max nus and dmags
     nulminAll = np.zeros(len(indsWith4))
@@ -2985,9 +2985,11 @@ def calc_planet_dmagmin_dmagmax(e,inc,w,a,p,Rp):
     indsWhere1LocalMinInnuReal2 = np.where(np.sum(real2LocalMinBool[indsWith4].astype('int'),axis=1)==1)[0]
     nulminAll[indsWhere1LocalMinInnuReal] = nuReal[indsWith4[indsWhere1LocalMinInnuReal]][realLocalMinBool[indsWith4[indsWhere1LocalMinInnuReal]]] #THIS SEEMS TO WORK???
     nulminAll[indsWhere1LocalMinInnuReal2] = nuReal2[indsWith4[indsWhere1LocalMinInnuReal2]][real2LocalMinBool[indsWith4[indsWhere1LocalMinInnuReal2]]] #THIS SEEMS TO WORK???
+    dmaglminAll[indsWhere1LocalMinInnuReal] = gdmags[indsWith4[indsWhere1LocalMinInnuReal]][realLocalMinBool[indsWith4[indsWhere1LocalMinInnuReal]]] #THIS SEEMS TO WORK???
+    dmaglminAll[indsWhere1LocalMinInnuReal2] = gdmags2[indsWith4[indsWhere1LocalMinInnuReal2]][real2LocalMinBool[indsWith4[indsWhere1LocalMinInnuReal2]]] #THIS SEEMS TO WORK???
     nuReal[indsWith4[indsWhere1LocalMinInnuReal]][realLocalMinBool[indsWith4[indsWhere1LocalMinInnuReal]]] = np.nan #Set all the nuReal values to nan
-    nuReal[indsWith4[indsWhere1LocalMinInnuReal2]][real2LocalMinBool[indsWith4[indsWhere1LocalMinInnuReal2]]] = np.nan #Set the complement values to nan
-    nuReal2[indsWith4[indsWhere1LocalMinInnuReal]][realLocalMinBool[indsWith4[indsWhere1LocalMinInnuReal]]] = np.nan #Set the complement values to nan
+    #nuReal[indsWith4[indsWhere1LocalMinInnuReal2]][real2LocalMinBool[indsWith4[indsWhere1LocalMinInnuReal2]]] = np.nan #Set the complement values to nan
+    #nuReal2[indsWith4[indsWhere1LocalMinInnuReal]][realLocalMinBool[indsWith4[indsWhere1LocalMinInnuReal]]] = np.nan #Set the complement values to nan
     nuReal2[indsWith4[indsWhere1LocalMinInnuReal2]][real2LocalMinBool[indsWith4[indsWhere1LocalMinInnuReal2]]] = np.nan #Set all the nuReal2 values to nan
 
 
@@ -3005,9 +3007,11 @@ def calc_planet_dmagmin_dmagmax(e,inc,w,a,p,Rp):
     assert np.all(np.sum(realLocalMaxBool[indsWith4[indsWhere1LocalMaxInnuReal]],axis=1)==1), 'whoops it looks like at least 1 planet has 2 local max'
     nulmaxAll[indsWhere1LocalMaxInnuReal] = nuReal[indsWith4[indsWhere1LocalMaxInnuReal]][realLocalMaxBool[indsWith4[indsWhere1LocalMaxInnuReal]]] #THIS SEEMS TO WORK???
     nulmaxAll[indsWhere1LocalMaxInnuReal2] = nuReal2[indsWith4[indsWhere1LocalMaxInnuReal2]][real2LocalMaxBool[indsWith4[indsWhere1LocalMaxInnuReal2]]] #THIS SEEMS TO WORK???
+    dmaglmaxAll[indsWhere1LocalMaxInnuReal] = gdmags[indsWith4[indsWhere1LocalMaxInnuReal]][realLocalMaxBool[indsWith4[indsWhere1LocalMaxInnuReal]]] #THIS SEEMS TO WORK???
+    dmaglmaxAll[indsWhere1LocalMaxInnuReal2] = gdmags2[indsWith4[indsWhere1LocalMaxInnuReal2]][real2LocalMaxBool[indsWith4[indsWhere1LocalMaxInnuReal2]]] #THIS SEEMS TO WORK???
     nuReal[indsWith4[indsWhere1LocalMaxInnuReal]][realLocalMaxBool[indsWith4[indsWhere1LocalMaxInnuReal]]] = np.nan
-    nuReal[indsWith4[indsWhere1LocalMaxInnuReal2]][real2LocalMaxBool[indsWith4[indsWhere1LocalMaxInnuReal2]]] = np.nan
-    nuReal2[indsWith4[indsWhere1LocalMaxInnuReal]][realLocalMaxBool[indsWith4[indsWhere1LocalMaxInnuReal]]] = np.nan
+    #nuReal[indsWith4[indsWhere1LocalMaxInnuReal2]][real2LocalMaxBool[indsWith4[indsWhere1LocalMaxInnuReal2]]] = np.nan
+    #nuReal2[indsWith4[indsWhere1LocalMaxInnuReal]][realLocalMaxBool[indsWith4[indsWhere1LocalMaxInnuReal]]] = np.nan
     nuReal2[indsWith4[indsWhere1LocalMaxInnuReal2]][real2LocalMaxBool[indsWith4[indsWhere1LocalMaxInnuReal2]]] = np.nan
 
     indsWhere1LocalMax = np.where(numLocalMax+numLocalMax2==1)[0]
@@ -3023,9 +3027,9 @@ def calc_planet_dmagmin_dmagmax(e,inc,w,a,p,Rp):
         offendingInd2 = np.where(np.abs(nuReal2[indsWith4[indsWhere2LocalMin[i]]] - nuMinDmag[indsWith4[indsWhere2LocalMin[i]]]) < 2e-3)[0]
         if len(offendingInd) == 1:
             nuReal[indsWith4[indsWhere2LocalMin[i]],offendingInd] = np.nan
-            nuReal2[indsWith4[indsWhere2LocalMin[i]],offendingInd] = np.nan
+            #nuReal2[indsWith4[indsWhere2LocalMin[i]],offendingInd] = np.nan
         if len(offendingInd2) == 1:
-            nuReal[indsWith4[indsWhere2LocalMin[i]],offendingInd2] = np.nan
+            #nuReal[indsWith4[indsWhere2LocalMin[i]],offendingInd2] = np.nan
             nuReal2[indsWith4[indsWhere2LocalMin[i]],offendingInd2] = np.nan
 
     #Here, nuReal[indsWith4[indswhere2LocalMax]] needs to be iterated over and checked against nuMaxDmag if its solutions are within idk 1e-2?
@@ -3037,301 +3041,263 @@ def calc_planet_dmagmin_dmagmax(e,inc,w,a,p,Rp):
         offendingInd2 = np.where(np.abs(nuReal2[indsWith4[indsWhere2LocalMax[i]]] - nuMaxDmag[indsWith4[indsWhere2LocalMax[i]]]) < 2e-3)[0]
         if len(offendingInd) == 1:
             nuReal[indsWith4[indsWhere2LocalMax[i]],offendingInd] = np.nan
-            nuReal2[indsWith4[indsWhere2LocalMax[i]],offendingInd] = np.nan
+            #nuReal2[indsWith4[indsWhere2LocalMax[i]],offendingInd] = np.nan
         if len(offendingInd2) == 1:
-            nuReal[indsWith4[indsWhere2LocalMax[i]],offendingInd2] = np.nan
+            #nuReal[indsWith4[indsWhere2LocalMax[i]],offendingInd2] = np.nan
             nuReal2[indsWith4[indsWhere2LocalMax[i]],offendingInd2] = np.nan
 
+    #DELETE THE FOLLOWING CODE. IT DOES NOT MAKE SENSE
+    #If all the nuReal of a solution are 0, then we just pick the smallest
     indsWhereAllNan0 = np.where(~np.all(np.isnan(nuReal[indsWith4[indsWhere2LocalMin]]),axis=1))[0] #Finds all the inds of indsWhere2LocalMin where nuReal contains solutions
     indsWhereAllNan1 = np.where(np.all(np.isnan(nuReal2[indsWith4[indsWhere2LocalMin]]),axis=1))[0] #Finds all the inds of indsWhere2LocalMin where nuReal2 contains solutions
     indsWhereAllNan2 = np.where(~np.all(np.isnan(nuReal[indsWith4[indsWhere2LocalMax]]),axis=1))[0] #Finds all the inds of indsWhere2LocalMax where nuReal contains solutions
     indsWhereAllNan3 = np.where(np.all(np.isnan(nuReal2[indsWith4[indsWhere2LocalMax]]),axis=1))[0] #Finds all the inds of indsWhere2LocalMax where nuReal2 contains solutions
-
-
+    #Skip if 0 (Note in testing these were all 0. Not sure if this code is actually being executed currently)
     if len(indsWhereAllNan0) > 0:
-        nulminAll[indsWhere2LocalMin[indsWhereAllNan0]] = np.nanmin(nuReal[indsWith4[indsWhere2LocalMin[indsWhereAllNan0]]],axis=1)
+        nulminAll[indsWhere2LocalMax[indsWhereAllNan0]] = nuReal[indsWith4[indsWhere2LocalMax[indsWhereAllNan0]],np.nanargmax(gdmags[indsWith4[indsWhere2LocalMax[indsWhereAllNan0]]],axis=1)]
+        dmaglminAll[indsWhere2LocalMax[indsWhereAllNan0]] = gdmags[indsWith4[indsWhere2LocalMax[indsWhereAllNan0]],np.nanargmax(gdmags[indsWith4[indsWhere2LocalMax[indsWhereAllNan0]]],axis=1)]
+        #nulminAll[indsWhere2LocalMin[indsWhereAllNan0]] = np.nanmin(nuReal[indsWith4[indsWhere2LocalMin[indsWhereAllNan0]]],axis=1)
     if len(indsWhereAllNan1) > 0:
-        nulminAll[indsWhere2LocalMin[indsWhereAllNan1]] = np.nanmin(nuReal2[indsWith4[indsWhere2LocalMin[indsWhereAllNan1]]],axis=1)
+        nulminAll[indsWhere2LocalMin[indsWhereAllNan1]] = nuReal2[indsWith4[indsWhere2LocalMax[indsWhereAllNan1]],np.nanargmax(gdmags2[indsWith4[indsWhere2LocalMax[indsWhereAllNan1]]],axis=1)]
+        dmaglminAll[indsWhere2LocalMin[indsWhereAllNan1]] = gdmags2[indsWith4[indsWhere2LocalMax[indsWhereAllNan1]],np.nanargmax(gdmags2[indsWith4[indsWhere2LocalMax[indsWhereAllNan1]]],axis=1)]
+        #nulminAll[indsWhere2LocalMin[indsWhereAllNan1]] = np.nanmin(nuReal2[indsWith4[indsWhere2LocalMin[indsWhereAllNan1]]],axis=1)
     if len(indsWhereAllNan2) > 0:
-        nulmaxAll[indsWhere2LocalMax[indsWhereAllNan2]] = np.nanmin(nuReal[indsWith4[indsWhere2LocalMax[indsWhereAllNan2]]],axis=1)
+        nulmaxAll[indsWhere2LocalMax[indsWhereAllNan2]] = nuReal[indsWith4[indsWhere2LocalMax[indsWhereAllNan2]],np.nanargmax(gdmags[indsWith4[indsWhere2LocalMax[indsWhereAllNan2]]],axis=1)]
+        dmaglmaxAll[indsWhere2LocalMax[indsWhereAllNan2]] = gdmags[indsWith4[indsWhere2LocalMax[indsWhereAllNan2]],np.nanargmax(gdmags[indsWith4[indsWhere2LocalMax[indsWhereAllNan2]]],axis=1)]
+        #nulmaxAll[indsWhere2LocalMax[indsWhereAllNan2]] = np.nanmin(nuReal[indsWith4[indsWhere2LocalMax[indsWhereAllNan2]]],axis=1)
     if len(indsWhereAllNan3) > 0:
-        nulmaxAll[indsWhere2LocalMax[indsWhereAllNan3]] = np.nanmin(nuReal2[indsWith4[indsWhere2LocalMax[indsWhereAllNan3]]],axis=1)
+        nulmaxAll[indsWhere2LocalMax[indsWhereAllNan3]] = nuReal2[indsWith4[indsWhere2LocalMax[indsWhereAllNan3]],np.nanargmax(gdmags2[indsWith4[indsWhere2LocalMax[indsWhereAllNan3]]],axis=1)]
+        dmaglmaxAll[indsWhere2LocalMax[indsWhereAllNan3]] = nuReal2[indsWith4[indsWhere2LocalMax[indsWhereAllNan3]],np.nanargmax(gdmags2[indsWith4[indsWhere2LocalMax[indsWhereAllNan3]]],axis=1)]
+        #nulmaxAll[indsWhere2LocalMax[indsWhereAllNan3]] = np.nanmin(nuReal2[indsWith4[indsWhere2LocalMax[indsWhereAllNan3]]],axis=1)
 
-    #DELETE ALL THIS debugging stuff
-    # #The inds of planets where one claims to have a local min and the other doesn't
-    # xorArray = np.logical_xor(np.isnan(nulmaxAll),np.isnan(nulminAll))  
-    # indsOfXORarray = np.where(xorArray)[0]
-    # myInds = indsWith4[indsOfXORarray]
+    #### Remove any planets from indsWith4 if they have 0 at this point, also add the to indsWith2. Screw it
+    indsWhere0dmaglmin = np.where(dmaglminAll==0.)[0]
+    for ind in -np.sort(-indsWhere0dmaglmin):
+        dmaglminAll = np.delete(dmaglminAll, ind)
+        dmaglmaxAll = np.delete(dmaglmaxAll, ind)
+        indsWith2 = np.append(indsWith2,ind)
+        indsWith4 = np.delete(indsWith4, ind)
+    indsWhere0dmaglmax = np.where(dmaglmaxAll==0.)[0]
+    for ind in -np.sort(-indsWhere0dmaglmax):
+        dmaglminAll = np.delete(dmaglminAll, ind)
+        dmaglmaxAll = np.delete(dmaglmaxAll, ind)
+        indsWith2 = np.append(indsWith2,ind)
+        indsWith4 = np.delete(indsWith4, ind)
 
-    # #The inds of planets that have no lmin lmax
-    # andArray = np.logical_and(np.isnan(nulmaxAll),np.isnan(nulminAll))
-    # indsOfANDarray = np.where(andArray)[0]
-    # myInds = indsWith4[indsOfANDarray[:20]]
 
-    # import matplotlib.pyplot as plt
-    # for i in np.arange(len(myInds)):
-    #     ind = myInds[i]
-    #     num=myInds[i]
-    #     plt.figure(num=num)
-    #     plt.rc('axes',linewidth=2)
-    #     plt.rc('lines',linewidth=2)
-    #     plt.rcParams['axes.linewidth']=2
-    #     plt.rc('font',weight='bold')
 
-    #     nus = np.linspace(start=0,stop=2.*np.pi,num=300)
-    #     phis = (1.+np.sin(inc[ind])*np.sin(nus+w[ind]))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
-    #     ds = a[ind]*(1.-e[ind]**2.)/(e[ind]*np.cos(nus)+1.)
-    #     dmags = deltaMag(p[ind],Rp[ind].to('AU'),ds,phis) #calculate dmag of the specified x-value
+    # tmpInds = np.where(numLocalMin+numLocalMin2==3)[0]
+    # #dmagpABIT[indsWith4[39]]-gdmags[indsWith4[39]]
 
-    #     plt.plot(nus,dmags,color='black',zorder=10)
-    #     #plt.plot([0.,2.*np.pi],[dmag,dmag],color='blue')
-    #     #plt.scatter(nuMinDmag[ind],mindmag[ind],color='cyan',marker='d',zorder=20)
-    #     #plt.scatter(nuMaxDmag[ind],maxdmag[ind],color='red',marker='d',zorder=20)
-    #     # lind = np.where(ind == indsWith4)[0]
-    #     # if  ind in indsWith2Int:
-    #     #     mind = np.where(ind == indsWith2Int)[0]
-    #     #     plt.scatter(nus2Int[mind],dmag2Int[mind],color='green',marker='o',zorder=20)
-    #     #     plt.scatter([0.,2.*np.pi],[dmag,dmag],color='green',zorder=10)
-    #     # elif ind in indsWith4Int:
-    #     #     nind = np.where(ind == indsWith4Int)[0]
-    #     #     plt.scatter(nus4Int[nind],dmag4Int[nind],color='green',marker='o',zorder=20)
-    #     #     plt.scatter([0.,2.*np.pi],[dmag,dmag],color='green',zorder=10)
-    #     # plt.scatter(nulminAll[lind],dmaglminAll[lind],color='magenta',marker='d',zorder=20)
-    #     # plt.scatter(nulmaxAll[lind],dmaglmaxAll[lind],color='gold',marker='d',zorder=20)
-    #     # plt.xlim([0.,2.*np.pi])
-    #     # plt.ylim([-0.05*(maxdmag[ind]-mindmag[ind])+mindmag[ind],0.05*(maxdmag[ind]-mindmag[ind])+maxdmag[ind]])
-    #     plt.ylabel(r'$\Delta \mathrm{mag}$',weight='bold')
-    #     plt.xlabel(r'$\nu$' + ', in (rad)', weight='bold')
-    #     plt.title('sma: ' + str(np.round(a[ind],4)) + ' e: ' + str(np.round(e[ind],4)) + '\nw: ' + str(np.round(w[ind],4)) + ' inc: ' + str(np.round(inc[ind],4)))
-    #     plt.show(block=False)
-    #     plt.gcf().canvas.draw()
+
+    # #RUNNING A CHECK ON THE SOLUTIONS TO SEE IF ITS WHAT I WANT
+    # numSol0 = np.sum((~np.isnan(subdmags)).astype('int'),axis=1)
+    # numSol1 = np.sum((~np.isnan(subdmags)).astype('int'),axis=1)
+    # numSol0_2 = np.sum((~np.isnan(subnuReal)).astype('int'),axis=1)
+    # numSol1_2 = np.sum((~np.isnan(subnuReal2)).astype('int'),axis=1)
+    # assert np.all(numSol0+numSol1==1)
+    # assert np.all(numSol0_2+numSol1_2==1)
+
+
+
+
+
+    # #Check if any have multiple within their own array
+    # numlmin = np.sum(realLocalMinBool.astype('int'),axis=1) #these are all true, there is only 1 solution that is true in each one
+    # numlmax = np.sum(realLocalMaxBool.astype('int'),axis=1) #these are all 2 for some reason
+    # numlmin2 = np.sum(real2LocalMinBool.astype('int'),axis=1)
+    # numlmax2 = np.sum(real2LocalMaxBool.astype('int'),axis=1)
+
+    # #DELETE?
+    # # if ~np.all(numlmin+numlmin2==1): #There are any that are not all 1
+    # #     afflictedInds = np.where(~(numlmin+numlmin2 == 1))[0]
+    # #     for i in afflictedInds:
+    # #         #Remove duplicates
+    # assert np.all(numlmin+numlmin2==1) #if these are all true, there is only 1 solution that is true in each one
+    # assert np.all(numlmax+numlmax2==1) #if these are all true, there is only 1 solution that is true in each one
+
+    # print(saltyburrito)
+
+    # #DELETE
+    # # #mindmag solutions are saved, find which indicies I should set to nan
+    # # mindmagsIdenticalBoolean = np.abs(subdmags - mindmag2[indsWith4,None]) < 1e-4
+    # # mindmags2IdenticalBoolean = np.abs(subdmags2 - mindmag2[indsWith4,None]) < 1e-4
+
+    # #DELETEassert np.all(maxdmag2 == maxdmag) #I removed maxdmag
+    # #maxdmag solutions are saved, find which indicies I should set to 0 nan.set associated gdmags, gdmags2, nuReal, and nuReal2 to zero
+    # #maxdmagsIdenticalBoolean = np.abs(subdmags - maxdmag2[indsWith4,None]) < 1e-4
+    # #maxdmags2IdenticalBoolean = np.abs(subdmags2 - maxdmag2[indsWith4,None]) < 1e-4
+
+    # #Set dmag extrema identical to min or max to 0
+    # extremadmagsBooleans = np.logical_or(mindmagsIdenticalBoolean,maxdmagsIdenticalBoolean)
+    # extremadmags2Booleans = np.logical_or(mindmags2IdenticalBoolean,maxdmags2IdenticalBoolean)
+    # subdmags[extremadmagsBooleans] = np.nan #np.ones(extremadmagsBooleans.shape)[extremadmagsBooleans]*np.nan
+    # subdmags2[extremadmags2Booleans] = np.nan #np.ones(extremadmags2Booleans.shape)[extremadmags2Booleans]*np.nan
+    # subnuReal[extremadmagsBooleans] = np.nan #np.ones(extremadmagsBooleans.shape)[extremadmagsBooleans]*np.nan
+    # subnuReal2[extremadmags2Booleans] = np.nan #np.ones(extremadmags2Booleans.shape)[extremadmags2Booleans]*np.nan
     
+    # #The following does not return an nx16 frame of the inds that are duplicates or whatever, it only returns a 1x16 array... grrr
+    # #DELETE[unvals, unvalInds] = np.unique(np.round(subnuRealComb,4).T,axis=0,return_index=True) #Creates the set of unique solutions with size indsWith4, 16
 
-    print(saltyburrito)
-    # nuReal[indsWith4[indsWhere2LocalMin]] #[realLocalMinBool[indsWith4[indsWhere1LocalMinInnuReal]]]
-    # nuReal2[indsWith4[indsWhere2LocalMin]] #[realLocalMinBool[indsWith4[indsWhere1LocalMinInnuReal]]]
-
-
-    assert np.all(numLocalMin+numLocalMin2 == 1)
-    assert np.all(numLocalMax+numLocalMax2 == 1)
-    #So long as at least one localmin exists between the two and one local max exists between the two, we're good
-
-    #For inds with only 1 local min, make that local min the local min and remove that value from local max solution set
+    # # Check how many nans are in each row
+    # # Remove values from arrays
+    # # vals, valInds = np.unique(np.round(nuReal2[indsWith4],4),return_index=True) #We now have the arrays containing the unique values for each row and the indicies those values occur in
+    # # Now we need to know how many nans there are to verify if something has been removed (there msut be a better way than this)
+    # # Investigate the smaller problem: Only look at rows where the number of nans increased (duplicates exist)
+    # # Of this subset, find where the 0 index occurs in valInds (this location will be where the first nan occurs nanInd in the returned list), we can then use from index 0 to nanInd-1 as valid solutions and turn all others to nan. Do the same for the complement 
 
 
+    # # gdmags[indsWith4][extremadmagsBooleans] = np.ones(extremadmagsBooleans.shape)[extremadmagsBooleans]*np.nan
+    # # gdmags2[indsWith4][extremadmags2Booleans] = np.ones(extremadmags2Booleans.shape)[extremadmags2Booleans]*np.nan
+    # # nuReal[indsWith4][extremadmagsBooleans] = np.ones(extremadmagsBooleans.shape)[extremadmagsBooleans]*np.nan
+    # # nuReal2[indsWith4][extremadmags2Booleans] = np.ones(extremadmags2Booleans.shape)[extremadmags2Booleans]*np.nan
+    # # tmp = gdmags[indsWith4]
+    # # tmp[extremadmagsBooleans] = np.ones(extremadmagsBooleans.shape)[extremadmagsBooleans]*np.nan
+    # # gdmags[indsWith4] = tmp
 
-    tmpInds = np.where(numLocalMin+numLocalMin2==3)[0]
-    #dmagpABIT[indsWith4[39]]-gdmags[indsWith4[39]]
+    # # gdmags[indsWith4][extremadmagsBooleans] = np.ones(extremadmagsBooleans.shape)[extremadmagsBooleans]*np.nan
+    # # gdmags2[indsWith4][extremadmags2Booleans] = np.ones(extremadmags2Booleans.shape)[extremadmags2Booleans]*np.nan
+    # # nuReal[indsWith4][extremadmagsBooleans] = np.ones(extremadmagsBooleans.shape)[extremadmagsBooleans]*np.nan
+    # # nuReal2[indsWith4][extremadmags2Booleans] = np.ones(extremadmags2Booleans.shape)[extremadmags2Booleans]*np.nan
 
+    # #DELETE
+    # # inds_fordmag = np.where(mindmags2 == 0)[0]
+    # # gdmags[inds_fordmag,argmindmags[inds_fordmag]] = np.ones(len(inds_fordmag))*np.nan
+    # # gdmags2[inds_fordmag,argmindmags[inds_fordmag]] = np.ones(len(inds_fordmag))*np.nan
+    # # nuReal[inds_fordmag,argmindmags[inds_fordmag]] = np.ones(len(inds_fordmag))*np.nan
+    # # nuReal2[inds_fordmag,argmindmags[inds_fordmag]] = np.ones(len(inds_fordmag))*np.nan
+    # # inds_fordmag2 = np.where(mindmags2 == 1)[0]
+    # # gdmags[inds_fordmag2,argmindmags2[inds_fordmag2]] = np.ones(len(inds_fordmag2))*np.nan
+    # # gdmags2[inds_fordmag2,argmindmags2[inds_fordmag2]] = np.ones(len(inds_fordmag2))*np.nan
+    # # nuReal[inds_fordmag2,argmindmags2[inds_fordmag2]] = np.ones(len(inds_fordmag2))*np.nan
+    # # nuReal2[inds_fordmag2,argmindmags2[inds_fordmag2]] = np.ones(len(inds_fordmag2))*np.nan
 
-    #RUNNING A CHECK ON THE SOLUTIONS TO SEE IF ITS WHAT I WANT
-    numSol0 = np.sum((~np.isnan(subdmags)).astype('int'),axis=1)
-    numSol1 = np.sum((~np.isnan(subdmags)).astype('int'),axis=1)
-    numSol0_2 = np.sum((~np.isnan(subnuReal)).astype('int'),axis=1)
-    numSol1_2 = np.sum((~np.isnan(subnuReal2)).astype('int'),axis=1)
-    assert np.all(numSol0+numSol1==1)
-    assert np.all(numSol0_2+numSol1_2==1)
-
-
-
-
-
-    #Check if any have multiple within their own array
-    numlmin = np.sum(realLocalMinBool.astype('int'),axis=1) #these are all true, there is only 1 solution that is true in each one
-    numlmax = np.sum(realLocalMaxBool.astype('int'),axis=1) #these are all 2 for some reason
-    numlmin2 = np.sum(real2LocalMinBool.astype('int'),axis=1)
-    numlmax2 = np.sum(real2LocalMaxBool.astype('int'),axis=1)
-
-    #DELETE?
-    # if ~np.all(numlmin+numlmin2==1): #There are any that are not all 1
-    #     afflictedInds = np.where(~(numlmin+numlmin2 == 1))[0]
-    #     for i in afflictedInds:
-    #         #Remove duplicates
-    assert np.all(numlmin+numlmin2==1) #if these are all true, there is only 1 solution that is true in each one
-    assert np.all(numlmax+numlmax2==1) #if these are all true, there is only 1 solution that is true in each one
-
-    print(saltyburrito)
-
-    #DELETE
-    # #mindmag solutions are saved, find which indicies I should set to nan
-    # mindmagsIdenticalBoolean = np.abs(subdmags - mindmag2[indsWith4,None]) < 1e-4
-    # mindmags2IdenticalBoolean = np.abs(subdmags2 - mindmag2[indsWith4,None]) < 1e-4
-
-    #DELETEassert np.all(maxdmag2 == maxdmag) #I removed maxdmag
-    #maxdmag solutions are saved, find which indicies I should set to 0 nan.set associated gdmags, gdmags2, nuReal, and nuReal2 to zero
-    #maxdmagsIdenticalBoolean = np.abs(subdmags - maxdmag2[indsWith4,None]) < 1e-4
-    #maxdmags2IdenticalBoolean = np.abs(subdmags2 - maxdmag2[indsWith4,None]) < 1e-4
-
-    #Set dmag extrema identical to min or max to 0
-    extremadmagsBooleans = np.logical_or(mindmagsIdenticalBoolean,maxdmagsIdenticalBoolean)
-    extremadmags2Booleans = np.logical_or(mindmags2IdenticalBoolean,maxdmags2IdenticalBoolean)
-    subdmags[extremadmagsBooleans] = np.nan #np.ones(extremadmagsBooleans.shape)[extremadmagsBooleans]*np.nan
-    subdmags2[extremadmags2Booleans] = np.nan #np.ones(extremadmags2Booleans.shape)[extremadmags2Booleans]*np.nan
-    subnuReal[extremadmagsBooleans] = np.nan #np.ones(extremadmagsBooleans.shape)[extremadmagsBooleans]*np.nan
-    subnuReal2[extremadmags2Booleans] = np.nan #np.ones(extremadmags2Booleans.shape)[extremadmags2Booleans]*np.nan
-    
-    #The following does not return an nx16 frame of the inds that are duplicates or whatever, it only returns a 1x16 array... grrr
-    #DELETE[unvals, unvalInds] = np.unique(np.round(subnuRealComb,4).T,axis=0,return_index=True) #Creates the set of unique solutions with size indsWith4, 16
-
-    # Check how many nans are in each row
-    # Remove values from arrays
-    # vals, valInds = np.unique(np.round(nuReal2[indsWith4],4),return_index=True) #We now have the arrays containing the unique values for each row and the indicies those values occur in
-    # Now we need to know how many nans there are to verify if something has been removed (there msut be a better way than this)
-    # Investigate the smaller problem: Only look at rows where the number of nans increased (duplicates exist)
-    # Of this subset, find where the 0 index occurs in valInds (this location will be where the first nan occurs nanInd in the returned list), we can then use from index 0 to nanInd-1 as valid solutions and turn all others to nan. Do the same for the complement 
-
-
-    # gdmags[indsWith4][extremadmagsBooleans] = np.ones(extremadmagsBooleans.shape)[extremadmagsBooleans]*np.nan
-    # gdmags2[indsWith4][extremadmags2Booleans] = np.ones(extremadmags2Booleans.shape)[extremadmags2Booleans]*np.nan
-    # nuReal[indsWith4][extremadmagsBooleans] = np.ones(extremadmagsBooleans.shape)[extremadmagsBooleans]*np.nan
-    # nuReal2[indsWith4][extremadmags2Booleans] = np.ones(extremadmags2Booleans.shape)[extremadmags2Booleans]*np.nan
-    # tmp = gdmags[indsWith4]
-    # tmp[extremadmagsBooleans] = np.ones(extremadmagsBooleans.shape)[extremadmagsBooleans]*np.nan
-    # gdmags[indsWith4] = tmp
-
-    # gdmags[indsWith4][extremadmagsBooleans] = np.ones(extremadmagsBooleans.shape)[extremadmagsBooleans]*np.nan
-    # gdmags2[indsWith4][extremadmags2Booleans] = np.ones(extremadmags2Booleans.shape)[extremadmags2Booleans]*np.nan
-    # nuReal[indsWith4][extremadmagsBooleans] = np.ones(extremadmagsBooleans.shape)[extremadmagsBooleans]*np.nan
-    # nuReal2[indsWith4][extremadmags2Booleans] = np.ones(extremadmags2Booleans.shape)[extremadmags2Booleans]*np.nan
-
-    #DELETE
-    # inds_fordmag = np.where(mindmags2 == 0)[0]
-    # gdmags[inds_fordmag,argmindmags[inds_fordmag]] = np.ones(len(inds_fordmag))*np.nan
-    # gdmags2[inds_fordmag,argmindmags[inds_fordmag]] = np.ones(len(inds_fordmag))*np.nan
-    # nuReal[inds_fordmag,argmindmags[inds_fordmag]] = np.ones(len(inds_fordmag))*np.nan
-    # nuReal2[inds_fordmag,argmindmags[inds_fordmag]] = np.ones(len(inds_fordmag))*np.nan
-    # inds_fordmag2 = np.where(mindmags2 == 1)[0]
-    # gdmags[inds_fordmag2,argmindmags2[inds_fordmag2]] = np.ones(len(inds_fordmag2))*np.nan
-    # gdmags2[inds_fordmag2,argmindmags2[inds_fordmag2]] = np.ones(len(inds_fordmag2))*np.nan
-    # nuReal[inds_fordmag2,argmindmags2[inds_fordmag2]] = np.ones(len(inds_fordmag2))*np.nan
-    # nuReal2[inds_fordmag2,argmindmags2[inds_fordmag2]] = np.ones(len(inds_fordmag2))*np.nan
-
-    #DELETE
-    # inds_fordmag = np.where(maxdmags2 == 0)[0]
-    # gdmags[inds_fordmag,argmaxdmags[inds_fordmag]] = np.ones(len(inds_fordmag))*np.nan
-    # gdmags2[inds_fordmag,argmaxdmags[inds_fordmag]] = np.ones(len(inds_fordmag))*np.nan
-    # nuReal[inds_fordmag,argmaxdmags[inds_fordmag]] = np.ones(len(inds_fordmag))*np.nan
-    # nuReal2[inds_fordmag,argmaxdmags[inds_fordmag]] = np.ones(len(inds_fordmag))*np.nan
-    # inds_fordmag2 = np.where(maxdmags2 == 1)[0]
-    # gdmags[inds_fordmag2,argmaxdmags2[inds_fordmag2]] = np.ones(len(inds_fordmag2))*np.nan
-    # gdmags2[inds_fordmag2,argmaxdmags2[inds_fordmag2]] = np.ones(len(inds_fordmag2))*np.nan
-    # nuReal[inds_fordmag2,argmaxdmags2[inds_fordmag2]] = np.ones(len(inds_fordmag2))*np.nan
-    # nuReal2[inds_fordmag2,argmaxdmags2[inds_fordmag2]] = np.ones(len(inds_fordmag2))*np.nan
+    # #DELETE
+    # # inds_fordmag = np.where(maxdmags2 == 0)[0]
+    # # gdmags[inds_fordmag,argmaxdmags[inds_fordmag]] = np.ones(len(inds_fordmag))*np.nan
+    # # gdmags2[inds_fordmag,argmaxdmags[inds_fordmag]] = np.ones(len(inds_fordmag))*np.nan
+    # # nuReal[inds_fordmag,argmaxdmags[inds_fordmag]] = np.ones(len(inds_fordmag))*np.nan
+    # # nuReal2[inds_fordmag,argmaxdmags[inds_fordmag]] = np.ones(len(inds_fordmag))*np.nan
+    # # inds_fordmag2 = np.where(maxdmags2 == 1)[0]
+    # # gdmags[inds_fordmag2,argmaxdmags2[inds_fordmag2]] = np.ones(len(inds_fordmag2))*np.nan
+    # # gdmags2[inds_fordmag2,argmaxdmags2[inds_fordmag2]] = np.ones(len(inds_fordmag2))*np.nan
+    # # nuReal[inds_fordmag2,argmaxdmags2[inds_fordmag2]] = np.ones(len(inds_fordmag2))*np.nan
+    # # nuReal2[inds_fordmag2,argmaxdmags2[inds_fordmag2]] = np.ones(len(inds_fordmag2))*np.nan
 
 
 
 
 
 
-    #Of the remaining 4 possible values that local min and local max could take, we will need to manually verify whether each point is a local minimum or local maximum by 
-    #taking the original solution and adding/subtracting dnu (nu+dnu)
-    nuRealpABIT = subnuReal + 1e-8
-    nuRealmABIT = subnuReal - 1e-8
-    nuReal2pABIT = subnuReal2 + 1e-8
-    nuReal2mABIT = subnuReal2 - 1e-8
+    # #Of the remaining 4 possible values that local min and local max could take, we will need to manually verify whether each point is a local minimum or local maximum by 
+    # #taking the original solution and adding/subtracting dnu (nu+dnu)
+    # nuRealpABIT = subnuReal + 1e-8
+    # nuRealmABIT = subnuReal - 1e-8
+    # nuReal2pABIT = subnuReal2 + 1e-8
+    # nuReal2mABIT = subnuReal2 - 1e-8
 
-    #Calculate the associated dmags
-    phi = (1.+np.sin(np.tile(inc[indsWith4],(8,1)).T)*np.sin(nuRealpABIT+np.tile(w[indsWith4],(8,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
-    d = np.tile(a[indsWith4].to('AU'),(8,1)).T*(1.-np.tile(e[indsWith4],(8,1)).T**2.)/(np.tile(e[indsWith4],(8,1)).T*np.cos(nuRealpABIT)+1.)
-    dmagpABIT = deltaMag(np.tile(p[indsWith4],(8,1)).T,np.tile(Rp[indsWith4].to('AU'),(8,1)).T,d,phi) #calculate dmag of the specified x-value
-    phi = (1.+np.sin(np.tile(inc[indsWith4],(8,1)).T)*np.sin(nuRealmABIT+np.tile(w[indsWith4],(8,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
-    d = np.tile(a[indsWith4].to('AU'),(8,1)).T*(1.-np.tile(e[indsWith4],(8,1)).T**2.)/(np.tile(e[indsWith4],(8,1)).T*np.cos(nuRealmABIT)+1.)
-    dmagmABIT = deltaMag(np.tile(p[indsWith4],(8,1)).T,np.tile(Rp[indsWith4].to('AU'),(8,1)).T,d,phi) #calculate dmag of the specified x-value
-    phi = (1.+np.sin(np.tile(inc[indsWith4],(8,1)).T)*np.sin(nuReal2pABIT+np.tile(w[indsWith4],(8,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
-    d = np.tile(a[indsWith4].to('AU'),(8,1)).T*(1.-np.tile(e[indsWith4],(8,1)).T**2.)/(np.tile(e[indsWith4],(8,1)).T*np.cos(nuReal2pABIT)+1.)
-    dmag2pABIT = deltaMag(np.tile(p[indsWith4],(8,1)).T,np.tile(Rp[indsWith4].to('AU'),(8,1)).T,d,phi) #calculate dmag of the specified x-value
-    phi = (1.+np.sin(np.tile(inc[indsWith4],(8,1)).T)*np.sin(nuReal2mABIT+np.tile(w[indsWith4],(8,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
-    d = np.tile(a[indsWith4].to('AU'),(8,1)).T*(1.-np.tile(e[indsWith4],(8,1)).T**2.)/(np.tile(e[indsWith4],(8,1)).T*np.cos(nuReal2mABIT)+1.)
-    dmag2mABIT = deltaMag(np.tile(p[indsWith4],(8,1)).T,np.tile(Rp[indsWith4].to('AU'),(8,1)).T,d,phi) #calculate dmag of the specified x-value
+    # #Calculate the associated dmags
+    # phi = (1.+np.sin(np.tile(inc[indsWith4],(8,1)).T)*np.sin(nuRealpABIT+np.tile(w[indsWith4],(8,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
+    # d = np.tile(a[indsWith4].to('AU'),(8,1)).T*(1.-np.tile(e[indsWith4],(8,1)).T**2.)/(np.tile(e[indsWith4],(8,1)).T*np.cos(nuRealpABIT)+1.)
+    # dmagpABIT = deltaMag(np.tile(p[indsWith4],(8,1)).T,np.tile(Rp[indsWith4].to('AU'),(8,1)).T,d,phi) #calculate dmag of the specified x-value
+    # phi = (1.+np.sin(np.tile(inc[indsWith4],(8,1)).T)*np.sin(nuRealmABIT+np.tile(w[indsWith4],(8,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
+    # d = np.tile(a[indsWith4].to('AU'),(8,1)).T*(1.-np.tile(e[indsWith4],(8,1)).T**2.)/(np.tile(e[indsWith4],(8,1)).T*np.cos(nuRealmABIT)+1.)
+    # dmagmABIT = deltaMag(np.tile(p[indsWith4],(8,1)).T,np.tile(Rp[indsWith4].to('AU'),(8,1)).T,d,phi) #calculate dmag of the specified x-value
+    # phi = (1.+np.sin(np.tile(inc[indsWith4],(8,1)).T)*np.sin(nuReal2pABIT+np.tile(w[indsWith4],(8,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
+    # d = np.tile(a[indsWith4].to('AU'),(8,1)).T*(1.-np.tile(e[indsWith4],(8,1)).T**2.)/(np.tile(e[indsWith4],(8,1)).T*np.cos(nuReal2pABIT)+1.)
+    # dmag2pABIT = deltaMag(np.tile(p[indsWith4],(8,1)).T,np.tile(Rp[indsWith4].to('AU'),(8,1)).T,d,phi) #calculate dmag of the specified x-value
+    # phi = (1.+np.sin(np.tile(inc[indsWith4],(8,1)).T)*np.sin(nuReal2mABIT+np.tile(w[indsWith4],(8,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
+    # d = np.tile(a[indsWith4].to('AU'),(8,1)).T*(1.-np.tile(e[indsWith4],(8,1)).T**2.)/(np.tile(e[indsWith4],(8,1)).T*np.cos(nuReal2mABIT)+1.)
+    # dmag2mABIT = deltaMag(np.tile(p[indsWith4],(8,1)).T,np.tile(Rp[indsWith4].to('AU'),(8,1)).T,d,phi) #calculate dmag of the specified x-value
 
-    #Now do the boolean Comparisons. Can this point be a local min or local max
-    realLocalMinBool = (dmagpABIT > subdmags)*(dmagmABIT > subdmags)#*~np.isnan(gdmags[indsWith4])
-    realLocalMaxBool = (dmagpABIT < subdmags)*(dmagmABIT < subdmags)#*~np.isnan(gdmags[indsWith4])
-    real2LocalMinBool = (dmag2pABIT > subdmags2)*(dmag2mABIT > subdmags2)#*~np.isnan(gdmags[indsWith4])
-    real2LocalMaxBool = (dmag2pABIT < subdmags2)*(dmag2mABIT < subdmags2)#*~np.isnan(gdmags[indsWith4])
+    # #Now do the boolean Comparisons. Can this point be a local min or local max
+    # realLocalMinBool = (dmagpABIT > subdmags)*(dmagmABIT > subdmags)#*~np.isnan(gdmags[indsWith4])
+    # realLocalMaxBool = (dmagpABIT < subdmags)*(dmagmABIT < subdmags)#*~np.isnan(gdmags[indsWith4])
+    # real2LocalMinBool = (dmag2pABIT > subdmags2)*(dmag2mABIT > subdmags2)#*~np.isnan(gdmags[indsWith4])
+    # real2LocalMaxBool = (dmag2pABIT < subdmags2)*(dmag2mABIT < subdmags2)#*~np.isnan(gdmags[indsWith4])
 
-    #Booleans where solutions are equal to mindmag2 or maxdmag2
-    equalToMinDmagBooleans = subdmags == np.tile(mindmag2[indsWith4],(8,1)).T
-    equalToMaxDmagBooleans = subdmags == np.tile(maxdmag2[indsWith4],(8,1)).T
-    equal2ToMinDmagBooleans = subdmags2 == np.tile(mindmag2[indsWith4],(8,1)).T
-    equal2ToMaxDmagBooleans = subdmags2 == np.tile(maxdmag2[indsWith4],(8,1)).T
+    # #Booleans where solutions are equal to mindmag2 or maxdmag2
+    # equalToMinDmagBooleans = subdmags == np.tile(mindmag2[indsWith4],(8,1)).T
+    # equalToMaxDmagBooleans = subdmags == np.tile(maxdmag2[indsWith4],(8,1)).T
+    # equal2ToMinDmagBooleans = subdmags2 == np.tile(mindmag2[indsWith4],(8,1)).T
+    # equal2ToMaxDmagBooleans = subdmags2 == np.tile(maxdmag2[indsWith4],(8,1)).T
 
-    #Add additional solution restrictions because they are equal to the min or max
-    realLocalMinBool = np.logical_not(equalToMinDmagBooleans)*realLocalMinBool
-    realLocalMaxBool = np.logical_not(equalToMaxDmagBooleans)*realLocalMaxBool
-    real2LocalMinBool = np.logical_not(equal2ToMinDmagBooleans)*real2LocalMinBool
-    real2LocalMaxBool = np.logical_not(equal2ToMaxDmagBooleans)*real2LocalMaxBool
+    # #Add additional solution restrictions because they are equal to the min or max
+    # realLocalMinBool = np.logical_not(equalToMinDmagBooleans)*realLocalMinBool
+    # realLocalMaxBool = np.logical_not(equalToMaxDmagBooleans)*realLocalMaxBool
+    # real2LocalMinBool = np.logical_not(equal2ToMinDmagBooleans)*real2LocalMinBool
+    # real2LocalMaxBool = np.logical_not(equal2ToMaxDmagBooleans)*real2LocalMaxBool
 
-    #Check if any have multiple within their own array
-    numlmin = np.sum(realLocalMinBool.astype('int'),axis=1) #these are all true, there is only 1 solution that is true in each one
-    numlmax = np.sum(realLocalMaxBool.astype('int'),axis=1) #these are all 2 for some reason
-    numlmin2 = np.sum(real2LocalMinBool.astype('int'),axis=1)
-    numlmax2 = np.sum(real2LocalMaxBool.astype('int'),axis=1)
+    # #Check if any have multiple within their own array
+    # numlmin = np.sum(realLocalMinBool.astype('int'),axis=1) #these are all true, there is only 1 solution that is true in each one
+    # numlmax = np.sum(realLocalMaxBool.astype('int'),axis=1) #these are all 2 for some reason
+    # numlmin2 = np.sum(real2LocalMinBool.astype('int'),axis=1)
+    # numlmax2 = np.sum(real2LocalMaxBool.astype('int'),axis=1)
 
-    #DELETE?
-    # if ~np.all(numlmin+numlmin2==1): #There are any that are not all 1
-    #     afflictedInds = np.where(~(numlmin+numlmin2 == 1))[0]
-    #     for i in afflictedInds:
-    #         #Remove duplicates
-    assert np.all(numlmin+numlmin2==1) #if these are all true, there is only 1 solution that is true in each one
-    assert np.all(numlmax+numlmax2==1) #if these are all true, there is only 1 solution that is true in each one
-    #buggyInds = np.where(~(numlmax+numlmax2==1))[0]
+    # #DELETE?
+    # # if ~np.all(numlmin+numlmin2==1): #There are any that are not all 1
+    # #     afflictedInds = np.where(~(numlmin+numlmin2 == 1))[0]
+    # #     for i in afflictedInds:
+    # #         #Remove duplicates
+    # assert np.all(numlmin+numlmin2==1) #if these are all true, there is only 1 solution that is true in each one
+    # assert np.all(numlmax+numlmax2==1) #if these are all true, there is only 1 solution that is true in each one
+    # #buggyInds = np.where(~(numlmax+numlmax2==1))[0]
 
-    #DELETEnulmin = nuReal[indsWith4][realLocalMinBool]
-    nulmin = subnuReal[realLocalMinBool]
-    nulminAll[np.where(numlmin==1)[0]] = nulmin
-    nulminInds = np.tile(np.arange(8),(len(indsWith4),1))[realLocalMinBool] #Get inds of each potential solution
-    #DELETEdmaglminAll[np.where(numlmin==1)[0]] = gdmags[indsWith4][realLocalMinBool]
-    dmaglminAll[np.where(numlmin==1)[0]] = subdmags[realLocalMinBool]
-    #DELETEassert np.all(numlmax==1) #if these are all true, there is only 1 solution that is true in each one 
-    #DELETEnulmax = nuReal[indsWith4][realLocalMaxBool]
-    nulmax = subnuReal[realLocalMaxBool]
-    nulmaxAll[np.where(numlmax==1)[0]] = nulmax
-    nulmaxInds = np.tile(np.arange(8),(len(indsWith4),1))[realLocalMaxBool] #Get inds of each potential solution
-    #DELETE    dmaglmaxAll[np.where(numlmax==1)[0]] = gdmags[indsWith4][realLocalMaxBool]
-    dmaglmaxAll[np.where(numlmax==1)[0]] = subdmags[realLocalMaxBool]
-    #DELETEassert np.all(numlmin2==1)
-    #DELETE    nu2lmin = nuReal2[indsWith4][real2LocalMinBool]
-    nu2lmin = subnuReal2[real2LocalMinBool]
-    nulminAll[np.where(numlmin2==1)[0]] = nu2lmin
-    nu2lminInds = np.tile(np.arange(8),(len(indsWith4),1))[real2LocalMinBool] #Get inds of each potential solution
-    #DELETEdmaglminAll[np.where(numlmin2==1)[0]] = gdmags2[indsWith4][real2LocalMinBool]
-    dmaglminAll[np.where(numlmin2==1)[0]] = subdmags2[real2LocalMinBool]
-    #DELETEassert np.all(numlmax2==1)
-    #DELETE    nu2lmax = nuReal2[indsWith4][real2LocalMaxBool]
-    nu2lmax = subnuReal2[real2LocalMaxBool]
-    nulmaxAll[np.where(numlmax2==1)[0]] = nu2lmax
-    nu2lmaxInds = np.tile(np.arange(8),(len(indsWith4),1))[real2LocalMinBool] #Get inds of each potential solution
-    #DELETEdmaglmaxAll[np.where(numlmax2==1)[0]] = gdmags2[indsWith4][real2LocalMaxBool]
-    dmaglmaxAll[np.where(numlmax2==1)[0]] = subdmags2[real2LocalMaxBool]
-
-
-    assert np.all(np.sum(realLocalMinBool*real2LocalMinBool,axis=1) < 2) #only one or other or both are local min
+    # #DELETEnulmin = nuReal[indsWith4][realLocalMinBool]
+    # nulmin = subnuReal[realLocalMinBool]
+    # nulminAll[np.where(numlmin==1)[0]] = nulmin
+    # nulminInds = np.tile(np.arange(8),(len(indsWith4),1))[realLocalMinBool] #Get inds of each potential solution
+    # #DELETEdmaglminAll[np.where(numlmin==1)[0]] = gdmags[indsWith4][realLocalMinBool]
+    # dmaglminAll[np.where(numlmin==1)[0]] = subdmags[realLocalMinBool]
+    # #DELETEassert np.all(numlmax==1) #if these are all true, there is only 1 solution that is true in each one 
+    # #DELETEnulmax = nuReal[indsWith4][realLocalMaxBool]
+    # nulmax = subnuReal[realLocalMaxBool]
+    # nulmaxAll[np.where(numlmax==1)[0]] = nulmax
+    # nulmaxInds = np.tile(np.arange(8),(len(indsWith4),1))[realLocalMaxBool] #Get inds of each potential solution
+    # #DELETE    dmaglmaxAll[np.where(numlmax==1)[0]] = gdmags[indsWith4][realLocalMaxBool]
+    # dmaglmaxAll[np.where(numlmax==1)[0]] = subdmags[realLocalMaxBool]
+    # #DELETEassert np.all(numlmin2==1)
+    # #DELETE    nu2lmin = nuReal2[indsWith4][real2LocalMinBool]
+    # nu2lmin = subnuReal2[real2LocalMinBool]
+    # nulminAll[np.where(numlmin2==1)[0]] = nu2lmin
+    # nu2lminInds = np.tile(np.arange(8),(len(indsWith4),1))[real2LocalMinBool] #Get inds of each potential solution
+    # #DELETEdmaglminAll[np.where(numlmin2==1)[0]] = gdmags2[indsWith4][real2LocalMinBool]
+    # dmaglminAll[np.where(numlmin2==1)[0]] = subdmags2[real2LocalMinBool]
+    # #DELETEassert np.all(numlmax2==1)
+    # #DELETE    nu2lmax = nuReal2[indsWith4][real2LocalMaxBool]
+    # nu2lmax = subnuReal2[real2LocalMaxBool]
+    # nulmaxAll[np.where(numlmax2==1)[0]] = nu2lmax
+    # nu2lmaxInds = np.tile(np.arange(8),(len(indsWith4),1))[real2LocalMinBool] #Get inds of each potential solution
+    # #DELETEdmaglmaxAll[np.where(numlmax2==1)[0]] = gdmags2[indsWith4][real2LocalMaxBool]
+    # dmaglmaxAll[np.where(numlmax2==1)[0]] = subdmags2[real2LocalMaxBool]
 
 
-    assert ~np.any(realLocalMinBool + real2LocalMinBool == 2), 'local min could occur for both potential solutions so I need a better solution'
-    assert ~np.any(realLocalMaxBool + real2LocalMaxBool == 2), 'local max could occur for both potential solutions so I need a better solution' 
+    # assert np.all(np.sum(realLocalMinBool*real2LocalMinBool,axis=1) < 2) #only one or other or both are local min
 
-    # #Repeat the above procdess for indsWith4 solutions
-    # #Find the localmindmag (it must be the smallest dmag producing solution of all possible solutions)
-    # argmindmags = np.nanargmin(gdmags[indsWith4],axis=1)
-    # argmindmags2 = np.nanargmin(gdmags2[indsWith4],axis=1)
-    # mindmags2 = np.stack((gdmags[indsWith4,argmindmags],gdmags2[indsWith4,argmindmags2]),axis=1)
-    # argmindmag2 = np.argmin(mindmags2,axis=1) #
-    # localmindmag = mindmags2[np.arange(mindmags2.shape[0]),argmindmag2]
 
-    # #Find the localmaxdmag (it must be the largest dmag producing solution of all possible solutions)
-    # argmaxdmags = np.nanargmax(gdmags[indsWith4],axis=1)
-    # argmaxdmags2 = np.nanargmax(gdmags2[indsWith4],axis=1)
-    # maxdmags2 = np.stack((gdmags[indsWith4,argmaxdmags],gdmags2[indsWith4,argmaxdmags2]),axis=1)
-    # argmaxdmag2 = np.argmax(maxdmags2,axis=1) #
-    # localmaxdmag = maxdmags2[np.arange(maxdmags2.shape[0]),argmaxdmag2]
+    # assert ~np.any(realLocalMinBool + real2LocalMinBool == 2), 'local min could occur for both potential solutions so I need a better solution'
+    # assert ~np.any(realLocalMaxBool + real2LocalMaxBool == 2), 'local max could occur for both potential solutions so I need a better solution' 
+
+    # # #Repeat the above procdess for indsWith4 solutions
+    # # #Find the localmindmag (it must be the smallest dmag producing solution of all possible solutions)
+    # # argmindmags = np.nanargmin(gdmags[indsWith4],axis=1)
+    # # argmindmags2 = np.nanargmin(gdmags2[indsWith4],axis=1)
+    # # mindmags2 = np.stack((gdmags[indsWith4,argmindmags],gdmags2[indsWith4,argmindmags2]),axis=1)
+    # # argmindmag2 = np.argmin(mindmags2,axis=1) #
+    # # localmindmag = mindmags2[np.arange(mindmags2.shape[0]),argmindmag2]
+
+    # # #Find the localmaxdmag (it must be the largest dmag producing solution of all possible solutions)
+    # # argmaxdmags = np.nanargmax(gdmags[indsWith4],axis=1)
+    # # argmaxdmags2 = np.nanargmax(gdmags2[indsWith4],axis=1)
+    # # maxdmags2 = np.stack((gdmags[indsWith4,argmaxdmags],gdmags2[indsWith4,argmaxdmags2]),axis=1)
+    # # argmaxdmag2 = np.argmax(maxdmags2,axis=1) #
+    # # localmaxdmag = maxdmags2[np.arange(maxdmags2.shape[0]),argmaxdmag2]
     
 
 
-    #hmmmm.. we must test all scenarios to determine what localmindmag and localmaxdmag are.
-    #It must be true that localmindmag < localmaxdmag
-    #However, it is distinctly possible that dmag_0 < dmag_1 
+    # #hmmmm.. we must test all scenarios to determine what localmindmag and localmaxdmag are.
+    # #It must be true that localmindmag < localmaxdmag
+    # #However, it is distinctly possible that dmag_0 < dmag_1 
 
     #Simple Quality Checks
     assert np.all(dmaglmaxAll >= dmaglminAll)
@@ -3339,7 +3305,7 @@ def calc_planet_dmagmin_dmagmax(e,inc,w,a,p,Rp):
     assert np.all(dmaglminAll > mindmag2[indsWith4]) #this must be true
     ###################################################################################################
     #print(saltyburrito)
-    return mindmag, maxdmag, dmaglminAll, dmaglmaxAll, indsWith2, indsWith4, nuMinDmag, nuMaxDmag, nulminAll, nulmaxAll
+    return mindmag2, maxdmag2, dmaglminAll, dmaglmaxAll, indsWith2, indsWith4, nuMinDmag, nuMaxDmag, nulminAll, nulmaxAll
 #################################################################################################################
 
 
