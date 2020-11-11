@@ -21,6 +21,8 @@ import time
 from projectedEllipse import calc_planet_dmagmin_dmagmax
 from projectedEllipse import calc_planetnu_from_dmag
 
+from scipy.interpolate import UnivariateSpline
+
 #### PLOT BOOL
 plotBool = True
 if plotBool == True:
@@ -36,7 +38,7 @@ sim = EXOSIMS.MissionSim.MissionSim(scriptfile=scriptfile,nopar=True)
 PPop = sim.PlanetPopulation
 comp = sim.Completeness
 TL = sim.TargetList
-n = 10**5. #Dean's nice computer can go up to 10**8 what can atuin go up to?
+n = 10**6. #Dean's nice computer can go up to 10**8 what can atuin go up to?
 inc, W, w = PPop.gen_angles(n,None)
 W = W.to('rad').value
 w = w.to('rad').value
@@ -60,64 +62,86 @@ mindmag, maxdmag, dmaglminAll, dmaglmaxAll, indsWith2, indsWith4, nuMinDmag, nuM
 print('Num Planets with At Least 2 Int given dmag: ' + str(np.sum((mindmag < dmag)*(maxdmag > dmag))))
 print('Num Planets with dmag local extrema: ' + str(len(indsWith4)))
 print('Num Planets with given 4 Int given dmag: ' + str(np.sum((dmaglminAll < dmag)*(dmaglmaxAll > dmag))))
-indsWith4Int = indsWith4[np.where((dmaglminAll < dmag)*(dmaglmaxAll > dmag))[0]]
-indsWith2Int = list(set(np.where((mindmag < dmag)*(maxdmag > dmag))[0]) - set(indsWith4Int))
+indsWith4Int = indsWith4[np.where((dmaglminAll < dmag)*(dmaglmaxAll > dmag))[0]] #These are inds of n
+indsWith2Int = list(set(np.where((mindmag < dmag)*(maxdmag > dmag))[0]) - set(indsWith4Int)) #These are inds of n
 
 #A subsequent check to see if the the mindmag or maxdmag are close to the dmaglmaxAll or dmaglminAll
 #DELETEerrormin = mindmag[indsWith4] - dmaglminAll
 #DELETEerrormax = maxdmag[indsWith4] - dmaglmaxAll
 ######################################################################
 
-######################################################################
-#### Solving for nu, dmag intersections
+# ######################################################################
+# #### Solving for nu, dmag intersections
 nus2Int, nus4Int, dmag2Int, dmag4Int = calc_planetnu_from_dmag(dmag,e,inc,w,a,p,Rp,mindmag, maxdmag, indsWith2Int, indsWith4Int)
-t2Int = np.zeros((len(e),2))
-t2Int[:,0] = timeFromTrueAnomaly(nus2Int[:,0],periods[indsWith2Int],e[indsWith2Int])
-t2Int[:,1] = timeFromTrueAnomaly(nus2Int[:,1],periods[indsWith2Int],e[indsWith2Int])
-t4Int = np.zeros((len(e),4))
-t4Int[:,0] = timeFromTrueAnomaly(nus4Int[:,0],periods[indsWith4Int],e[indsWith4Int])
-t4Int[:,1] = timeFromTrueAnomaly(nus4Int[:,1],periods[indsWith4Int],e[indsWith4Int])
-t4Int[:,2] = timeFromTrueAnomaly(nus4Int[:,2],periods[indsWith4Int],e[indsWith4Int])
-t4Int[:,3] = timeFromTrueAnomaly(nus4Int[:,3],periods[indsWith4Int],e[indsWith4Int])
-######################################################################
+# t2Int = np.zeros((len(e),2))
+# t2Int[:,0] = timeFromTrueAnomaly(nus2Int[:,0],periods[indsWith2Int],e[indsWith2Int])
+# t2Int[:,1] = timeFromTrueAnomaly(nus2Int[:,1],periods[indsWith2Int],e[indsWith2Int])
+# t4Int = np.zeros((len(e),4))
+# t4Int[:,0] = timeFromTrueAnomaly(nus4Int[:,0],periods[indsWith4Int],e[indsWith4Int])
+# t4Int[:,1] = timeFromTrueAnomaly(nus4Int[:,1],periods[indsWith4Int],e[indsWith4Int])
+# t4Int[:,2] = timeFromTrueAnomaly(nus4Int[:,2],periods[indsWith4Int],e[indsWith4Int])
+# t4Int[:,3] = timeFromTrueAnomaly(nus4Int[:,3],periods[indsWith4Int],e[indsWith4Int])
+# ######################################################################
 
 
 #### dmag vs nu extrema and intersection Verification plot
-num=88833543453218
-plt.figure(num=num)
-plt.rc('axes',linewidth=2)
-plt.rc('lines',linewidth=2)
-plt.rcParams['axes.linewidth']=2
-plt.rc('font',weight='bold')
+#ind = indsWith4Int[0]
+for ind in indsWith4Int:
+    num=ind
+    plt.figure(num=num)
+    plt.rc('axes',linewidth=2)
+    plt.rc('lines',linewidth=2)
+    plt.rcParams['axes.linewidth']=2
+    plt.rc('font',weight='bold')
+
+    nus = np.linspace(start=0,stop=2.*np.pi,num=300)
+    phis = (1.+np.sin(inc[ind])*np.sin(nus+w[ind]))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
+    ds = a[ind]*(1.-e[ind]**2.)/(e[ind]*np.cos(nus)+1.)
+    dmags = deltaMag(p[ind],Rp[ind].to('AU'),ds,phis) #calculate dmag of the specified x-value
+
+    plt.plot(nus,dmags,color='black',zorder=10)
+    #plt.plot([0.,2.*np.pi],[dmag,dmag],color='blue')
+    plt.scatter(nuMinDmag[ind],mindmag[ind],color='cyan',marker='d',zorder=20)
+    plt.scatter(nuMaxDmag[ind],maxdmag[ind],color='red',marker='d',zorder=20)
+    lind = np.where(ind == indsWith4)[0]
+    if  ind in indsWith2Int:
+        mind = np.where(ind == indsWith2Int)[0]
+        plt.scatter(nus2Int[mind],dmag2Int[mind],color='green',marker='o',zorder=20)
+        plt.plot([0.,2.*np.pi],[dmag,dmag],color='green',zorder=10)
+    elif ind in indsWith4Int:
+        nind = np.where(ind == indsWith4Int)[0]
+        plt.scatter(nus4Int[nind],dmag4Int[nind],color='green',marker='o',zorder=20)
+        plt.plot([0.,2.*np.pi],[dmag,dmag],color='green',zorder=10)
+    plt.scatter(nulminAll[lind],dmaglminAll[lind],color='magenta',marker='d',zorder=20)
+    plt.scatter(nulmaxAll[lind],dmaglmaxAll[lind],color='gold',marker='d',zorder=20)
+    plt.xlim([0.,2.*np.pi])
+    plt.ylim([-0.05*(maxdmag[ind]-mindmag[ind])+mindmag[ind],0.05*(maxdmag[ind]-mindmag[ind])+maxdmag[ind]])
+    plt.ylabel(r'$\Delta \mathrm{mag}$',weight='bold')
+    plt.xlabel(r'$\nu$' + ', in (rad)', weight='bold')
+    plt.title('sma: ' + str(np.round(sma[ind],4)) + ' e: ' + str(np.round(e[ind],4)) + ' W: ' + str(np.round(W[ind],4)) + '\nw: ' + str(np.round(w[ind],4)) + ' inc: ' + str(np.round(inc[ind],4)))
+    plt.show(block=False)
+
+#####################################################################
+
+
+
+import matplotlib.pyplot as plt
 ind = indsWith4Int[0]
-nus = np.linspace(start=0,stop=2.*np.pi,num=100)
+plt.figure(num=ind)
+nus = np.linspace(start=0,stop=2.*np.pi,num=300)
 phis = (1.+np.sin(inc[ind])*np.sin(nus+w[ind]))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
 ds = a[ind]*(1.-e[ind]**2.)/(e[ind]*np.cos(nus)+1.)
 dmags = deltaMag(p[ind],Rp[ind].to('AU'),ds,phis) #calculate dmag of the specified x-value
-
 plt.plot(nus,dmags,color='black',zorder=10)
-#plt.plot([0.,2.*np.pi],[dmag,dmag],color='blue')
-plt.scatter(nuMinDmag[ind],mindmag[ind],color='cyan',marker='d',zorder=20)
-plt.scatter(nuMaxDmag[ind],maxdmag[ind],color='red',marker='d',zorder=20)
+plt.scatter(nuMinDmag[ind],mindmag2[ind],color='cyan',marker='d',zorder=20)
+plt.scatter(nuMaxDmag[ind],maxdmag2[ind],color='red',marker='d',zorder=20)
 lind = np.where(ind == indsWith4)[0]
-if  ind in indsWith2Int:
-    mind = np.where(ind == indsWith2Int)[0]
-    plt.scatter(nus2Int[mind],dmag2Int[mind],color='green',marker='o',zorder=20)
-    plt.scatter([0.,2.*np.pi],[dmag,dmag],color='green',zorder=10)
-elif ind in indsWith4Int:
-    nind = np.where(ind == indsWith4Int)[0]
-    plt.scatter(nus4Int[nind],dmag4Int[nind],color='green',marker='o',zorder=20)
-    plt.scatter([0.,2.*np.pi],[dmag,dmag],color='green',zorder=10)
 plt.scatter(nulminAll[lind],dmaglminAll[lind],color='magenta',marker='d',zorder=20)
 plt.scatter(nulmaxAll[lind],dmaglmaxAll[lind],color='gold',marker='d',zorder=20)
-plt.xlim([0.,2.*np.pi])
-plt.ylim([-0.05*(maxdmag[ind]-mindmag[ind])+mindmag[ind],0.05*(maxdmag[ind]-mindmag[ind])+maxdmag[ind]])
-plt.ylabel(r'$\Delta \mathrm{mag}$',weight='bold')
-plt.xlabel(r'$\nu$' + ', in (rad)', weight='bold')
-plt.title('sma: ' + str(np.round(sma[ind],4)) + ' e: ' + str(np.round(e[ind],4)) + ' W: ' + str(np.round(W[ind],4)) + '\nw: ' + str(np.round(w[ind],4)) + ' inc: ' + str(np.round(inc[ind],4)))
 plt.show(block=False)
+plt.gcf().canvas.draw()
 
-#####################################################################
+
 
 #### Plot histogram of dmagmin and dmagmax
 num=6798
@@ -151,6 +175,56 @@ plt.gcf().canvas.draw()
 # afflictedInds_max = np.where(dmags_iw2maxs >= maxdmag[indsWith2])[0]
 # errors_max = dmags_iw2maxs[afflictedInds_max] - maxdmag[indsWith2[afflictedInds_max]]
 #################################################################################################################
+
+#### Generate Dmitry's BS 2 #####################################################################################
+from scipy.interpolate import PPoly, splrep
+from scipy.interpolate import CubicSpline
+#Confirm the intersections work
+tmpnus = np.linspace(start=0.,stop=2.*np.pi,num=300)
+#phi_iw2 = (1.+np.sin(inc[indsWith2])*np.sin(tmpnus+w[indsWith2]))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
+#r_iw2 = a.to('AU')*(1.-e**2.)/(e*np.cos(tmpnus)+1.)
+#DELETEdmags_iw2 = list()
+phi_iw2 = (1.+np.sin(np.tile(inc[indsWith2Int],(len(tmpnus),1)).T)*np.sin(np.tile(tmpnus,(len(indsWith2Int),1))+np.tile(w[indsWith2Int],(len(tmpnus),1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
+r_iw2 = np.tile(a[indsWith2Int].to('AU'),(len(tmpnus),1)).T*(1.-np.tile(e[indsWith2Int],(len(tmpnus),1)).T**2.)/(np.tile(e[indsWith2Int],(len(tmpnus),1)).T*np.cos(np.tile(tmpnus,(len(indsWith2Int),1)))+1.)
+dmags_iw2 = deltaMag(np.tile(p[indsWith2Int],(len(tmpnus),1)).T,np.tile(Rp[indsWith2Int].to('AU'),(len(tmpnus),1)).T,r_iw2,phi_iw2)
+howManyIntsBool = np.abs(dmags_iw2-dmag) < 1e-2
+np.sum(howManyIntsBool,axis=1)
+#univSplines = [UnivariateSpline(tmpnus,dmags_iw2[i]-dmag,bbox=[0.,2.*np.pi],k=3) for i in np.arange(dmags_iw2.shape[0])]
+univSplines = [CubicSpline(tmpnus,dmags_iw2[i]-dmag) for i in np.arange(dmags_iw2.shape[0])]
+univSplinesRoots = [univSplines[i].roots() for i in np.arange(dmags_iw2.shape[0])]
+tmpArr = np.asarray([np.sum((univSplinesRoots[i] > 0.)*(univSplinesRoots[i] < 2.*np.pi)) for i in np.arange(dmags_iw2.shape[0])])
+# indsWith0 = np.where(tmpArr == 0)[0]
+# indsWith1 = np.where(tmpArr == 1)[0]
+univSplinesRootsValid = np.asarray([univSplinesRoots[i][(univSplinesRoots[i] > 0.)*(univSplinesRoots[i] < 2.*np.pi)] for i in np.arange(dmags_iw2.shape[0])])
+univSplinesRootsValid = np.sort(univSplinesRootsValid,axis=1) #sort them so I can get this right
+
+errorSplinesRoots = np.sort(nus2Int,axis=1)-univSplinesRootsValid
+#np.histogram(errorSplinesRoots) #this indicates the errors are all less than 1e-4 at the extremes and 99.9% less than 1e-5
+rowsWithBigError = np.where(np.abs(errorSplinesRoots) > 1e-1)[0]
+ind = np.argmax(np.max(np.abs(errorSplinesRoots),axis=1))
+#DELETE nus2Int[rowsWithBigError[0]]
+#DELETE univSplinesRootsValid[rowsWithBigError[0]]
+
+#DELETEind = rowsWithBigError[1]
+plt.figure(num=772)
+plt.plot(tmpnus,dmags_iw2[ind]-dmag,color='blue')
+plt.plot(tmpnus,univSplines[ind](tmpnus),color='red')
+plt.scatter(nus2Int[ind],[0.,0.],color='green',marker='o',zorder=20)
+plt.show(block=False)
+
+# slpReps = [splrep(tmpnus,dmags_iw2[i], s=0) for i in np.arange(dmags_iw2.shape[0])]
+# slpPolys = [PPoly.from_spline(slpReps[i]) for i in np.arange(dmags_iw2.shape[0])]
+# slpRoots = [slpPolys[i].roots() for i in np.arange(dmags_iw2.shape[0])]
+#array([0.93579688, 2.        , 3.68389014])
+
+# #assert np.all(dmags_iw2mins >= mindmag[indsWith2])
+# afflictedInds_min = np.where(dmags_iw2mins <= mindmag[indsWith2])[0] #find the indicies of planets which have at least one dmag less than mindmag
+# errors_min = dmags_iw2mins[afflictedInds_min] - mindmag[indsWith2[afflictedInds_min]] #finds the indicies of planets which have at least one dmag greater than maxdmag
+# #assert np.all(dmags_iw2maxs <= maxdmag[indsWith2])
+# afflictedInds_max = np.where(dmags_iw2maxs >= maxdmag[indsWith2])[0]
+# errors_max = dmags_iw2maxs[afflictedInds_max] - maxdmag[indsWith2[afflictedInds_max]]
+#################################################################################################################
+
 
 
 
@@ -195,7 +269,8 @@ plt.gcf().canvas.draw()
 ############################################################################
 
 
-
+print(saltyburrito)
+#Nothing below this should be executed
 
 
 
