@@ -2761,6 +2761,30 @@ def calcMasterIntersections(sma,e,W,w,inc,s_circle,starMass,plotBool):
             twoIntOppositeX_y,xIntersectionsOnly2,yIntersectionsOnly2,typeInds0,typeInds1,typeInds2,typeInds3, periods
 
 
+def calc_planet_dmagSecondDerivative(e,inc,w,v):
+    """ Calculates the second derivative of the dmag function assuming the quasi-lambert phase function
+    From AnalyticalNuFromDmag3.ipynb under Second Derivative of RHS
+    Args:
+        e (numpy array):
+        inc (numpy array):
+        w (numpy array):
+        v (numpy array):
+    Returns:
+        secondDerivatives (numpy array):
+    """
+    e = np.tile(e,(16,1)).T
+    w = np.tile(w,(16,1)).T
+    inc = np.tile(inc,(16,1)).T
+
+    secondDerivatives = -8.*e**2.*np.sin(inc)**2.*np.sin(v)**4.*np.sin(w)**2. + 4.*e**2.*np.sin(inc)**2.*np.sin(v)**4. + 3.*e**2.*np.sin(inc)**2.*np.sin(v)**3.*np.sin(w)*np.cos(v)*np.cos(w) +\
+        9.*e**2.*np.sin(inc)**2.*np.sin(v)**2.*np.sin(w)**2. - 4.*e**2.*np.sin(inc)**2.*np.sin(v)**2. - 5.*e**2.*np.sin(inc)**2.*np.sin(v)*np.sin(w)*np.cos(v)**3.*np.cos(w) - 3.*e**2.*np.sin(inc)**2.*np.sin(w)**2./2. +\
+        e**2.*np.sin(inc)**2./2. + 9.*e**2.*np.sin(inc)*np.sin(v)**3.*np.cos(w)/2. + 3.*e**2.*np.sin(inc)*np.sin(v)**2.*np.sin(w)*np.cos(v) - 7.*e**2.*np.sin(inc)*np.sin(v)*np.cos(w)/2. -\
+        3.*e**2.*np.sin(inc)*np.sin(w)*np.cos(v)**3./2. + e**2.*np.sin(v)**2. - e**2./2. + 9.*e*np.sin(inc)**2.*np.sin(v)**3.*np.sin(w)*np.cos(w) + 13.*e*np.sin(inc)**2.*np.sin(v)**2.*np.sin(w)**2.*np.cos(v)/2. -\
+        7.*e*np.sin(inc)**2.*np.sin(v)**2.*np.cos(v)/2. - 7.*e*np.sin(inc)**2.*np.sin(v)*np.sin(w)*np.cos(w) - 5.*e*np.sin(inc)**2.*np.sin(w)**2.*np.cos(v)**3./2. + e*np.sin(inc)**2.*np.cos(v)**3. -\
+        4.*e*np.sin(inc)*np.sin(v)*np.cos(v + w) - 2.*e*np.sin(inc)*np.sin(w) - e*np.cos(v)/2. - np.sin(inc)**2.*np.sin(v)**2. - 2.*np.sin(inc)**2.*np.sin(v)*np.sin(w)*np.cos(v + w) -\
+        np.sin(inc)**2.*np.sin(w)**2. + np.sin(inc)**2./2. - np.sin(inc)*np.sin(v + w)/2.
+    return secondDerivatives
+
 #### nu from dmag functions ##############################################################################
 def calc_planet_dmagmin_dmagmax(e,inc,w,a,p,Rp):
     """ A method for calculating the minimum and maximum dmag of any given planet
@@ -2805,7 +2829,7 @@ def calc_planet_dmagmin_dmagmax(e,inc,w,a,p,Rp):
     out = np.asarray(out)
     del coeffs #delete the coefficients. They are no longer needed
 
-    #Saving out. DELETE LATER
+    # Saving out (necessary in case all sols in a row are filtered out)
     outSaved = out.copy()
 
     #### Minor correction for inds marginally outside the valid bounds (the error is nominally 1e-6 so if a solution is greater than 1 by 1e-6, then correct it to 1.
@@ -2817,6 +2841,12 @@ def calc_planet_dmagmin_dmagmax(e,inc,w,a,p,Rp):
     outBoundsBools = np.logical_not(inBoundsBools) # the out2 solutions that are inside the desired bounds
     outReal = np.real(out) #filling in all terms with numbers with the correct shape
     outReal[outBoundsBools] = out[outBoundsBools]*np.nan #make all zeros out of legal bounds nan
+
+    #If there are any all nan rows
+    allNanInds = np.where(np.all(np.isnan(out),axis=1))[0]
+    outReal[allNanInds] = outSaved[allNanInds].real
+    outReal[allNanInds][np.logical_not((np.abs(outSaved[allNanInds].imag) <= 1e-3)*(outSaved[allNanInds].real >= -1.)*(outSaved[allNanInds].real <= 1.))] = np.nan
+
     #For arccos in 0-pi
     nuReal = np.ones(outReal.shape)*np.nan
     nuReal[inBoundsBools] = np.arccos(outReal[inBoundsBools]) #calculate arccos, there are 2 potential solutions... need to calculate both
@@ -2831,83 +2861,106 @@ def calc_planet_dmagmin_dmagmax(e,inc,w,a,p,Rp):
     gPhi2 = (1.+np.sin(np.tile(inc,(8,1)).T)*np.sin(nuReal2+np.tile(w,(8,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
     gd2 = np.tile(a.to('AU'),(8,1)).T*(1.-np.tile(e,(8,1)).T**2.)/(np.tile(e,(8,1)).T*np.cos(nuReal2)+1.)
     gdmags2 = deltaMag(np.tile(p,(8,1)).T,np.tile(Rp.to('AU'),(8,1)).T,gd2,gPhi2) #calculate dmag of the specified x-value
-    del gPhi2, gd2, inBoundsBools, outBoundsBools, out
+    #del gPhi2, gd2, inBoundsBools, outBoundsBools, out
 
-    #### Checking number of solutions. We must determine here what planets have 2 solutions and what planets have 4 solutions. Tightening imag component errors seems to help with this bit
-    numSols = np.sum(~np.isnan(gdmags),axis=1) # calculate the total number of solutions available
-    numSols2 = np.sum(~np.isnan(gdmags2),axis=1)
-    #THIS ISNT CURRENTLY VALIDassert np.histogram(np.sum(~np.isnan(gdmags),axis=1)) == np.histogram(np.sum(~np.isnan(gdmags2),axis=1)), 'Not same number of solutions in gdmags and gdmags2'
-    if np.any(numSols == 0): #Its looks like there are cases where the planets aren't producing solutions with these criteria
-        print('Some planets are producing 0 solutions and therefore have a no minimum or maximum')
-        print(np.histogram(numSols))
-    if np.any(numSols == 1): #Its looks like there are cases where the planets aren't producing solutions with these criteria
-        print('Some planets are producing 1 solutions and therefore have an insufficuient number of minimum or maximum')
-        print(np.histogram(numSols))
-        oneInd = np.where(numSols==1)[0][0]
-    if np.any(numSols == 3): #Its looks like there are cases where the planets aren't producing solutions with these criteria
-        print('Some planets are producing 3 solutionsinsufficuient number of minimum or maximum')
-        print(np.histogram(numSols))
-        threeInd = np.where(numSols==3)[0][0]
-    assert not np.any(numSols == 0), 'Not all planets have a minimum and maximum' # SERIOUS. FIX THE ISSUE Its looks like there are cases where the planets aren't producing solutions with these criteria
-    assert not np.any(numSols == 1), 'Some Planets Only Have 1 solution somehow' # SERIOUS. FIX THE ISSUE
-    assert not np.any(numSols > 4), 'looks like some planets are trying to have more than 4 solutions' #FIX THIS ISSUE
-    indsWith2 = np.where(numSols == 2)[0] #finds planet indicies with min, max
-    indsWith4 = np.where(numSols == 4)[0] #finds planet indicies with min, max, local min, local max
-    del numSols, numSols2
-    assert len(indsWith2) + len(indsWith4) == e.shape[0], 'indsWith2 and indsWith4 doesnt sum to e'
+    # Combining two solution arrays
+    nuRealComb = np.concatenate((nuReal,nuReal2),axis=1) #combines the two arrays
+    dmagsComb = np.concatenate((gdmags,gdmags2),axis=1) #combines the two arrays
 
-    #### Extracting All Extrema
+    #Saving some stuff for debugging
+    nuRealCombSaved = np.concatenate((nuReal,nuReal2),axis=1) #combines the two arrays
+    dmagsCombSaved = np.concatenate((gdmags,gdmags2),axis=1) #combines the two arrays
+
+    #### Extracting All Extrema ####################################################
     #This section belongs here before we being checking for duplicates for the very simple reason that all the solutions we have come from the function provided.
     #By this logic, the largest value must be the maximum and the smallest value must be the minimum
     #Step 1: Find the mindmag (it must be the smallest dmag producing solution of all possible solutions)
-    #Find the inds that have all nan
-    indsNotAllNan_forminmax = np.where(np.logical_not(np.sum(np.isnan(gdmags),axis=1)==8))[0] #Finds all the inds in 0..n that have all nans (throws an error in nanargmin)
-    indsNotAllNan_forminmax2 = np.where(np.logical_not(np.sum(np.isnan(gdmags2),axis=1)==8))[0] #Finds all the inds in 0..n that have all nans (throws an error in nanargmin)
-    argmindmags = np.zeros(gdmags.shape[0]).astype('int') #instantiate empty arrays
-    argmindmags2 = np.zeros(gdmags2.shape[0]).astype('int') #instantiate empty arrays
-    argmindmags[indsNotAllNan_forminmax] = np.nanargmin(gdmags[indsNotAllNan_forminmax],axis=1).astype('int')
-    argmindmags2[indsNotAllNan_forminmax2] = np.nanargmin(gdmags2[indsNotAllNan_forminmax2],axis=1).astype('int')
-    #DELETEmindmags2 = np.concatenate((gdmags[np.arange(len(a)),argmindmags],gdmags2[np.arange(len(a)),argmindmags2]),axis=1)
-    mindmags2 = np.stack((gdmags[np.arange(len(a)),argmindmags],gdmags2[np.arange(len(a)),argmindmags2]),axis=1)
-    nu_mindmags2 = np.stack((nuReal[np.arange(len(a)),argmindmags],nuReal2[np.arange(len(a)),argmindmags2]),axis=1)
-    argmindmag2 = np.nanargmin(mindmags2,axis=1) #
-    mindmag2 = mindmags2[np.arange(mindmags2.shape[0]),argmindmag2]
-    nuMinDmag = nu_mindmags2[np.arange(mindmags2.shape[0]),argmindmag2] #the saved true anomalies of the minimum dmags
-    #DELETEassert np.all(mindmag2 == mindmag) #I REMOVED mindmag
-    assert np.all(~np.isnan(nuMinDmag))
-
+    indsOfMin = np.nanargmin(dmagsComb,axis=1) #Find the index of the 16 that is the absolute minimum
+    mindmag = dmagsComb[np.arange(len(a)),indsOfMin].copy() #Assign the minimum to mindmag
+    nuMinDmag = nuRealComb[np.arange(len(a)),indsOfMin].copy() #Assign nu of the minimum to nuMinDmag
+    indsOfMin = np.mod(indsOfMin,8) #Find the indicies of the minimum and complements in 0-7
+    indsOfMin2 = indsOfMin+8 #Find the indicies of the minimum and the complements in 8-15
+    indsWhereMinCloseTo0 = np.where(np.abs(nuMinDmag) < 0.1)[0]
+    indsWhereMinCloseTo2pi = np.where(np.abs(nuMinDmag - 2.*np.pi) < 0.1)[0]
     #Step 2: Find the maxdmag (it must be the largest dmag producing solution of all possible solutions)
-    argmaxdmags = np.zeros(gdmags.shape[0]).astype('int') #instantiate empty arrays
-    argmaxdmags2 = np.zeros(gdmags2.shape[0]).astype('int') #instantiate empty arrays
-    argmaxdmags[indsNotAllNan_forminmax] = np.nanargmax(gdmags[indsNotAllNan_forminmax],axis=1).astype('int')
-    argmaxdmags2[indsNotAllNan_forminmax2] = np.nanargmax(gdmags2[[indsNotAllNan_forminmax]],axis=1).astype('int')
-    maxdmags2 = np.stack((gdmags[np.arange(len(a)),argmaxdmags],gdmags2[np.arange(len(a)),argmaxdmags2]),axis=1)
-    nu_maxdmags2 = np.stack((nuReal[np.arange(len(a)),argmaxdmags],nuReal2[np.arange(len(a)),argmaxdmags2]),axis=1)
-    argmaxdmag2 = np.nanargmax(maxdmags2,axis=1) 
-    maxdmag2 = maxdmags2[np.arange(maxdmags2.shape[0]),argmaxdmag2]
-    nuMaxDmag = nu_maxdmags2[np.arange(maxdmags2.shape[0]),argmaxdmag2] #the saved true anomalies of the maximum dmags
-    assert np.all(~np.isnan(nuMaxDmag))
+    indsOfMax = np.nanargmax(dmagsComb,axis=1) #Find the index of the 16 that is the absolute maximum
+    maxdmag = dmagsComb[np.arange(len(a)),indsOfMax].copy() #Assign the maximum to maxdmag
+    nuMaxDmag = nuRealComb[np.arange(len(a)),indsOfMax].copy() #Assign nu of the maximum to nuMaxDmag
+    indsOfMax = np.mod(indsOfMax,8) #Find the indicies of the minimum and complements in 0-7
+    indsOfMax2 = indsOfMax+8 #Find the indicies of the minimum and the complements in 8-15
+    indsWhereMaxCloseTo0 = np.where(np.abs(nuMaxDmag) < 0.1)[0]
+    indsWhereMaxCloseTo2pi = np.where(np.abs(nuMaxDmag - 2.*np.pi) < 0.1)[0]
+    #Step 3: Nan minimum and maximum extrema values
+    dmagsComb[np.arange(len(a)),indsOfMin] = np.nan
+    dmagsComb[np.arange(len(a)),indsOfMin2] = np.nan
+    nuRealComb[np.arange(len(a)),indsOfMin] = np.nan
+    nuRealComb[np.arange(len(a)),indsOfMin2] = np.nan
+    dmagsComb[np.arange(len(a)),indsOfMax] = np.nan
+    dmagsComb[np.arange(len(a)),indsOfMax2] = np.nan
+    nuRealComb[np.arange(len(a)),indsOfMax] = np.nan
+    nuRealComb[np.arange(len(a)),indsOfMax2] = np.nan
+    ###############################################################################
 
+    #### Number of Solutions NEW METHOD ###########################################
+    numSols = np.sum((~np.isnan(dmagsComb)).astype('int'),axis=1) # calculate the total number of solutions available
+    #1 numSols must be even
+    assert np.all(np.logical_not(np.mod(numSols,1).astype('bool'))), 'Uneven number of solutions grrr'
+    #2 numSols 
+    indsWith2 = np.where(np.logical_or(numSols == 0,numSols == 2))[0]
+    indsWith4 = np.where(numSols == 4)[0]
+    assert len(indsWith2) + len(indsWith4) == len(a), 'number of inds does not sum to number of planets'
+    indsWith4Saved = indsWith4
+    ###############################################################################
+
+    #### Remove All Duplicate min or max
+    #nuMinError = np.abs(nuRealComb - np.tile(nuMinDmag,16))
+    #nuMaxError = np.abs(nuRealComb - np.tile(nuMaxDmag,16))
+    nuMinDeltaBools = np.abs(nuRealComb - np.tile(nuMinDmag,(16,1)).T) < 0.1 #This is the allowable difference between local minimum and minimum
+    nuMaxDeltaBools = np.abs(nuRealComb - np.tile(nuMaxDmag,(16,1)).T) < 0.1 #This is the allowable difference between local maximum and maximum 
+    #0.03 should be fine but I really want to nuke this thing so I am using 0.1
+    nuRealComb[nuMinDeltaBools] = np.nan
+    dmagsComb[nuMinDeltaBools] = np.nan
+    nuRealComb[nuMaxDeltaBools] = np.nan
+    dmagsComb[nuMaxDeltaBools] = np.nan
+    # Remove Duplicate Min or Max close to 0 or 2pi
+    dmagsComb[indsWhereMinCloseTo0][nuRealComb[indsWhereMinCloseTo0] > 2.*np.pi - 0.1] = np.nan
+    dmagsComb[indsWhereMinCloseTo2pi][nuRealComb[indsWhereMinCloseTo2pi] < 0.1] = np.nan
+    dmagsComb[indsWhereMaxCloseTo0][nuRealComb[indsWhereMaxCloseTo0] > 2.*np.pi - 0.1] = np.nan
+    dmagsComb[indsWhereMaxCloseTo2pi][nuRealComb[indsWhereMaxCloseTo2pi] < 0.1] = np.nan
+    nuRealComb[indsWhereMinCloseTo0][nuRealComb[indsWhereMinCloseTo0] > 2.*np.pi - 0.1] = np.nan
+    nuRealComb[indsWhereMinCloseTo2pi][nuRealComb[indsWhereMinCloseTo2pi] < 0.1] = np.nan
+    nuRealComb[indsWhereMaxCloseTo0][nuRealComb[indsWhereMaxCloseTo0] > 2.*np.pi - 0.1] = np.nan
+    nuRealComb[indsWhereMaxCloseTo2pi][nuRealComb[indsWhereMaxCloseTo2pi] < 0.1] = np.nan
+    ####
 
     #### Remove All Duplicates
-    nuRealComb = np.concatenate((nuReal,nuReal2),axis=1) #combines the two arrays
-    dmagsComb = np.concatenate((gdmags,gdmags2),axis=1) #combines the two arrays
+    # nuRealComb = np.concatenate((nuReal,nuReal2),axis=1) #combines the two arrays
+    # dmagsComb = np.concatenate((gdmags,gdmags2),axis=1) #combines the two arrays
     #Yes we need to do it this way
     for i in np.arange(nuRealComb.shape[0]):
         rounded = np.round(nuRealComb[i],4) #Note: the highest accuracy is +/-0.0014
         tmpdmags = dmagsComb[i]
         theSet = set() #Create an empty set
         theSet.add(np.round(nuMaxDmag[i],4)) #will nan all max values
-        if np.round(nuMaxDmag[i],2) == 0.: #Add complement at 2pi
+        if np.abs(nuMaxDmag[i]) <= 0.015: #Add complement at 2pi
             theSet.add(np.round(2.*np.pi,4))
-        elif np.round(nuMaxDmag[i],2) == np.round(2.*np.pi,2): #Add complement at 0
+            theSet.add(np.round(2.*np.pi-nuMaxDmag[i],4))
+        elif np.abs(nuMaxDmag[i] - 2.*np.pi) <= 0.015: #Add complement at 0
             theSet.add(0.)
+            theSet.add(np.round(np.abs(nuMaxDmag[i]),4))
         theSet.add(np.round(nuMinDmag[i],4)) #will nan all min values
-        if np.round(nuMinDmag[i],2) == 0.: #Add complement at 0
+        if np.abs(nuMinDmag[i]) <= 0.015: #Add complement at 0
             theSet.add(np.round(2.*np.pi,4))
-        elif np.round(nuMinDmag[i],2) == np.round(2.*np.pi,2): #Add complement at 2pi
+            theSet.add(np.round(2.*np.pi-nuMinDmag[i],4))
+        elif np.abs(2.*np.pi - nuMinDmag[i]) <= 0.015: #Add complement at 2pi
             theSet.add(0.)
+            theSet.add(np.round(np.abs(nuMinDmag[i]),4))
+            
         for j in np.arange(len(rounded)): #Iterate through each value in the array
+            # if np.abs(nuRealComb[i,j] - nuMinDmag[j]) <= 0.03 or np.abs(nuRealComb[i,j] - nuMaxDmag[j]) <= 0.03:
+            #     rounded[j] = np.nan #Replace the value with nan
+            #     tmpdmags[j] = np.nan
+            #     #print('Naning ind: ' + str(i) + ' nuRealComb:' + str(nuRealComb[i]))
             if not (rounded[j] in theSet) and not np.isnan(rounded[j]): #Check if it does not occur in the set of occurrences
                 theSet.add(rounded[j]) #If it doesn't exist, add it
                 #Keep the value the same
@@ -2921,6 +2974,14 @@ def calc_planet_dmagmin_dmagmax(e,inc,w,a,p,Rp):
     gdmags = dmagsComb[:,0:8]
     gdmags2 = dmagsComb[:,8:16]
 
+    # #Just checking if second derivatives can be used (result they can't)
+    # secondDerivatives = calc_planet_dmagSecondDerivative(e[indsWith4],inc[indsWith4],w[indsWith4],nuRealComb[indsWith4])
+    # realLocalMinBool5 = (secondDerivatives > 0)*np.logical_not(np.isnan(secondDerivatives))
+    # realLocalMaxBool5 = (secondDerivatives < 0)*np.logical_not(np.isnan(secondDerivatives))
+    # numLocalMin = np.sum(realLocalMinBool5.astype('int'),axis=1)
+    # numLocalMax = np.sum(realLocalMaxBool5.astype('int'),axis=1)
+
+    #MIGHT BE ABLE TO SPEED THIS UP BY USING THE 2ND DERIVATIVE OF DMAG(NU) BUT THERE IS INHERENT RISK IN DOING SO BECAUSE THE SOLUTIONS THEMSELVES MIGHT NEED CODDLING
     #### Check if the solution is a local extrema a potential saddle-point
     #Of the remaining 4 possible values that local min and local max could take, we will need to manually verify whether each point is a local minimum or local maximum by 
     #taking the original solution and adding/subtracting dnu (nu+dnu)
@@ -2947,22 +3008,17 @@ def calc_planet_dmagmin_dmagmax(e,inc,w,a,p,Rp):
     real2LocalMinBool = (dmag2pABIT > gdmags2)*(dmag2mABIT > gdmags2)#*~np.isnan(gdmags[indsWith4])
     real2LocalMaxBool = (dmag2pABIT < gdmags2)*(dmag2mABIT < gdmags2)#*~np.isnan(gdmags[indsWith4])
 
-    ####NAN solutions that are not a min or max extrema
+    ####NAN solutions that are not a min or max extrema (there are many solutions that are not extrema)
     isNotExtrema = np.logical_not(np.logical_or(realLocalMinBool,realLocalMaxBool)) #value is either local minimum or local maximum
     isNotExtrema2 = np.logical_not(np.logical_or(real2LocalMinBool,real2LocalMaxBool)) #value is either local minimum or local maximum
     nuReal[isNotExtrema] = np.nan
     gdmags[isNotExtrema] = np.nan
     nuReal2[isNotExtrema2] = np.nan
     gdmags2[isNotExtrema2] = np.nan
-    
-    #Looks like offending ind is occuring before here
 
-    #being saved for debuggin purposes
-    #create smaller arrays for handling indsWith4 data subsets
-    subdmags = gdmags[indsWith4].copy()
-    subdmags2 = gdmags2[indsWith4].copy()
-    subnuReal = nuReal[indsWith4].copy()
-    subnuReal2 = nuReal2[indsWith4].copy()
+    # Why second derivatives can't be used
+    # #Need to do a quick check: Is does the naning of isNotExtrema do anything?
+    # assert np.isnan(nuRealComb) == np.logical_not(np.logical_or(realLocalMinBool5,realLocalMaxBool5)), 'not equivalent methods, extrema sorting necessary'
 
     #Create arrays containing all local min and max nus and dmags
     nulminAll = np.zeros(len(indsWith4))
@@ -2981,16 +3037,18 @@ def calc_planet_dmagmin_dmagmax(e,inc,w,a,p,Rp):
     dmaglminAll[indsWhere1LocalMinInnuReal2] = gdmags2[indsWith4[indsWhere1LocalMinInnuReal2]][real2LocalMinBool[indsWith4[indsWhere1LocalMinInnuReal2]]] #THIS SEEMS TO WORK???
     nuReal[indsWith4[indsWhere1LocalMinInnuReal]][realLocalMinBool[indsWith4[indsWhere1LocalMinInnuReal]]] = np.nan #Set all the nuReal values to nan
     nuReal2[indsWith4[indsWhere1LocalMinInnuReal2]][real2LocalMinBool[indsWith4[indsWhere1LocalMinInnuReal2]]] = np.nan #Set all the nuReal2 values to nan
+    gdmags[indsWith4[indsWhere1LocalMinInnuReal]][realLocalMinBool[indsWith4[indsWhere1LocalMinInnuReal]]] = np.nan #Set all the nuReal values to nan
+    gdmags2[indsWith4[indsWhere1LocalMinInnuReal2]][real2LocalMinBool[indsWith4[indsWhere1LocalMinInnuReal2]]] = np.nan #Set all the nuReal2 values to nan
 
     indsWhere1LocalMin = np.where(numLocalMin+numLocalMin2==1)[0]
     indsWhere2LocalMin = np.where(numLocalMin+numLocalMin2==2)[0]
+    indsWhere3LocalMin = np.where(numLocalMin+numLocalMin2==3)[0]
     assert np.all(np.isnan(nuReal2[indsWith4[indsWhere1LocalMin]][realLocalMinBool[indsWith4[indsWhere1LocalMin]]])) #solong as this is true, the immediately above works
 
     numLocalMax = np.sum(realLocalMaxBool[indsWith4].astype('int'),axis=1)
     numLocalMax2 = np.sum(real2LocalMaxBool[indsWith4].astype('int'),axis=1)
     indsWhere1LocalMaxInnuReal = np.where(np.sum(realLocalMaxBool[indsWith4].astype('int'),axis=1)==1)[0]
     indsWhere1LocalMaxInnuReal2 = np.where(np.sum(real2LocalMaxBool[indsWith4].astype('int'),axis=1)==1)[0]
-    #Can delete following line later
     assert np.all(np.sum(realLocalMaxBool[indsWith4[indsWhere1LocalMaxInnuReal]],axis=1)==1), 'whoops it looks like at least 1 planet has 2 local max'
     nulmaxAll[indsWhere1LocalMaxInnuReal] = nuReal[indsWith4[indsWhere1LocalMaxInnuReal]][realLocalMaxBool[indsWith4[indsWhere1LocalMaxInnuReal]]] #THIS SEEMS TO WORK???
     nulmaxAll[indsWhere1LocalMaxInnuReal2] = nuReal2[indsWith4[indsWhere1LocalMaxInnuReal2]][real2LocalMaxBool[indsWith4[indsWhere1LocalMaxInnuReal2]]] #THIS SEEMS TO WORK???
@@ -2998,73 +3056,240 @@ def calc_planet_dmagmin_dmagmax(e,inc,w,a,p,Rp):
     dmaglmaxAll[indsWhere1LocalMaxInnuReal2] = gdmags2[indsWith4[indsWhere1LocalMaxInnuReal2]][real2LocalMaxBool[indsWith4[indsWhere1LocalMaxInnuReal2]]] #THIS SEEMS TO WORK???
     nuReal[indsWith4[indsWhere1LocalMaxInnuReal]][realLocalMaxBool[indsWith4[indsWhere1LocalMaxInnuReal]]] = np.nan
     nuReal2[indsWith4[indsWhere1LocalMaxInnuReal2]][real2LocalMaxBool[indsWith4[indsWhere1LocalMaxInnuReal2]]] = np.nan
+    gdmags[indsWith4[indsWhere1LocalMaxInnuReal]][realLocalMaxBool[indsWith4[indsWhere1LocalMaxInnuReal]]] = np.nan
+    gdmags2[indsWith4[indsWhere1LocalMaxInnuReal2]][real2LocalMaxBool[indsWith4[indsWhere1LocalMaxInnuReal2]]] = np.nan
 
     indsWhere1LocalMax = np.where(numLocalMax+numLocalMax2==1)[0]
     indsWhere2LocalMax = np.where(numLocalMax+numLocalMax2==2)[0]
+    indsWhere3LocalMax = np.where(numLocalMax+numLocalMax2==3)[0]
 
-    #Here, nuReal[indsWith4[indswhere2LocalMin]] needs to be iterated over and checked against nuMinDmag if its solutions are within idk 1e-2?
-    #Nuke the ones that are close and their complements
-    for i in np.arange(len(indsWhere2LocalMin)):
-        offendingInd = np.where(np.abs(nuReal[indsWith4[indsWhere2LocalMin[i]]] - nuMinDmag[indsWith4[indsWhere2LocalMin[i]]]) < 2e-3)[0]
-        offendingInd2 = np.where(np.abs(nuReal2[indsWith4[indsWhere2LocalMin[i]]] - nuMinDmag[indsWith4[indsWhere2LocalMin[i]]]) < 2e-3)[0]
-        if len(offendingInd) == 1:
-            nuReal[indsWith4[indsWhere2LocalMin[i]],offendingInd] = np.nan
-        if len(offendingInd2) == 1:
-            nuReal2[indsWith4[indsWhere2LocalMin[i]],offendingInd2] = np.nan
+    # #Here, nuReal[indsWith4[indswhere2LocalMin]] needs to be iterated over and checked against nuMinDmag if its solutions are within idk 1e-2?
+    # #Nuke the ones that are close and their complements
+    # nuRealComb = np.concatenate((nuReal,nuReal2),axis=1) #combines the two arrays
+    # dmagsComb = np.concatenate((gdmags,gdmags2),axis=1) #combines the two arrays
+    # for i in np.arange(len(indsWhere2LocalMin)):
+    #     offendingInd = np.where(np.abs(nuRealComb[indsWith4[indsWhere2LocalMin[i]]] - nuMinDmag[indsWith4[indsWhere2LocalMin[i]]]) < 2e-3)[0]
+    #     for j in np.arange(len(offendingInd)):
+    #         nuRealComb[indsWith4[indsWhere2LocalMin[i]],offendingInd[j]] = np.nan
+    #         dmagsComb[indsWith4[indsWhere2LocalMin[i]],offendingInd[j]] = np.nan
 
-    #Here, nuReal[indsWith4[indswhere2LocalMax]] needs to be iterated over and checked against nuMaxDmag if its solutions are within idk 1e-2?
-    #Nuke the ones that are close and their complements
-    for i in np.arange(len(indsWhere2LocalMax)):
-        offendingInd = np.where(np.abs(nuReal[indsWith4[indsWhere2LocalMax[i]]] - nuMaxDmag[indsWith4[indsWhere2LocalMax[i]]]) < 2e-3)[0]
-        offendingInd2 = np.where(np.abs(nuReal2[indsWith4[indsWhere2LocalMax[i]]] - nuMaxDmag[indsWith4[indsWhere2LocalMax[i]]]) < 2e-3)[0]
-        if len(offendingInd) == 1:
-            nuReal[indsWith4[indsWhere2LocalMax[i]],offendingInd] = np.nan
-        if len(offendingInd2) == 1:
-            nuReal2[indsWith4[indsWhere2LocalMax[i]],offendingInd2] = np.nan
+    #     if np.abs(nuMinDmag[indsWith4[indsWhere2LocalMin[i]]]) <= 0.015: #Add complement at 2pi
+    #         offendingInd3 = np.where(np.abs(2.*np.pi - nuRealComb[indsWith4[indsWhere2LocalMin[i]]]) < 0.015)[0]
+    #         for j in np.arange(len(offendingInd3)):
+    #             nuRealComb[indsWith4[indsWhere2LocalMin[i]],offendingInd3[j]] = np.nan
+    #             dmagsComb[indsWith4[indsWhere2LocalMin[i]],offendingInd3[j]] = np.nan
+    #     if np.abs(2.*np.pi - nuMinDmag[indsWith4[indsWhere2LocalMin[i]]]) <= 0.015: #Add complement at 2pi
+    #         offendingInd4 = np.where(np.abs(nuRealComb[indsWith4[indsWhere2LocalMin[i]]]) < 0.015)[0]
+    #         for j in np.arange(len(offendingInd4)):
+    #             nuRealComb[indsWith4[indsWhere2LocalMin[i]],offendingInd4[j]] = np.nan
+    #             dmagsComb[indsWith4[indsWhere2LocalMin[i]],offendingInd4[j]] = np.nan
+    #     #offendingInd2 = np.where(np.abs(nuReal2[indsWith4[indsWhere2LocalMin[i]]] - nuMinDmag[indsWith4[indsWhere2LocalMin[i]]]) < 2e-3)[0]
+    #     # for j in np.arange(len(offendingInd)):
+    #     #     nuReal[indsWith4[indsWhere2LocalMin[i]],offendingInd[j]] = np.nan
+    #     # for j in np.arange(len(offendingInd2)):
+    #     #     nuReal2[indsWith4[indsWhere2LocalMin[i]],offendingInd2[j]] = np.nan
+    #     #DELETE
+    #     # if len(offendingInd) == 1:
+    #     #     nuReal[indsWith4[indsWhere2LocalMin[i]],offendingInd] = np.nan
+    #     # if len(offendingInd2) == 1:
+    #     #     nuReal2[indsWith4[indsWhere2LocalMin[i]],offendingInd2] = np.nan
+
+    # #Here, nuReal[indsWith4[indswhere2LocalMax]] needs to be iterated over and checked against nuMaxDmag if its solutions are within idk 1e-2?
+    # #Nuke the ones that are close and their complements
+    # for i in np.arange(len(indsWhere2LocalMax)):
+    #     offendingInd = np.where(np.abs(nuRealComb[indsWith4[indsWhere2LocalMax[i]]] - nuMaxDmag[indsWith4[indsWhere2LocalMax[i]]]) < 2e-3)[0]
+    #     #offendingInd2 = np.where(np.abs(nuReal2[indsWith4[indsWhere2LocalMax[i]]] - nuMaxDmag[indsWith4[indsWhere2LocalMax[i]]]) < 2e-3)[0]
+    #     for j in np.arange(len(offendingInd)):
+    #         nuRealComb[indsWith4[indsWhere2LocalMax[i]],offendingInd[j]] = np.nan
+    #         dmagsComb[indsWith4[indsWhere2LocalMax[i]],offendingInd[j]] = np.nan
+    #     # for j in np.arange(len(offendingInd2)):
+    #     #     nuReal2[indsWith4[indsWhere2LocalMax[i]],offendingInd2[j]] = np.nan
+
+    #     if np.abs(nuMaxDmag[indsWith4[indsWhere2LocalMax[i]]]) <= 0.015: #Add complement at 2pi
+    #         offendingInd3 = np.where(np.abs(2.*np.pi - nuRealComb[indsWith4[indsWhere2LocalMax[i]]]) < 0.015)[0]
+    #         for j in np.arange(len(offendingInd3)):
+    #             nuRealComb[indsWith4[indsWhere2LocalMax[i]],offendingInd3[j]] = np.nan
+    #             dmagsComb[indsWith4[indsWhere2LocalMax[i]],offendingInd3[j]] = np.nan
+    #     if np.abs(2.*np.pi - nuMaxDmag[indsWith4[indsWhere2LocalMax[i]]]) <= 0.015: #Add complement at 2pi
+    #         offendingInd4 = np.where(np.abs(nuRealComb[indsWith4[indsWhere2LocalMax[i]]]) < 0.015)[0]
+    #         for j in np.arange(len(offendingInd4)):
+    #             nuRealComb[indsWith4[indsWhere2LocalMax[i]],offendingInd4[j]] = np.nan
+    #             dmagsComb[indsWith4[indsWhere2LocalMax[i]],offendingInd4[j]] = np.nan
+    #     #DELETE
+    #     # if len(offendingInd) == 1:
+    #     #     nuReal[indsWith4[indsWhere2LocalMax[i]],offendingInd] = np.nan
+    #     # if len(offendingInd2) == 1:
+    #     #     nuReal2[indsWith4[indsWhere2LocalMax[i]],offendingInd2] = np.nan
+    # nuReal = nuRealComb[:,0:8]
+    # nuReal2 = nuRealComb[:,8:16]
+    # gdmags = dmagsComb[:,0:8]
+    # gdmags2 = dmagsComb[:,8:16]
+
+
+
+    #### Remove Residual Duplicates from indsWhere3LocalMin
+    nuRealComb = np.concatenate((nuReal,nuReal2),axis=1) #combines the two arrays
+    dmagsComb = np.concatenate((gdmags,gdmags2),axis=1) #combines the two arrays
+    #Yes we need to do it this way
+    for i in np.arange(indsWhere3LocalMin.shape[0]):
+        rounded = np.round(nuRealComb[indsWith4[indsWhere3LocalMin[i]]],2) #Note: the highest accuracy is +/-0.0014
+        tmpdmags = dmagsComb[indsWith4[indsWhere3LocalMin[i]]]
+        theSet = set() #Create an empty set
+        theSet.add(np.round(nuMaxDmag[indsWith4[indsWhere3LocalMin[i]]],2)) #will nan all max values
+        if np.abs(nuMaxDmag[indsWith4[indsWhere3LocalMin[i]]]) <= 0.015: #Add complement at 2pi
+            theSet.add(np.round(2.*np.pi,2))
+            theSet.add(np.round(2.*np.pi-nuMaxDmag[indsWith4[indsWhere3LocalMin[i]]],2))
+        elif np.abs(2.*np.pi - nuMaxDmag[indsWith4[indsWhere3LocalMin[i]]]) <= 0.015: #Add complement at 0
+            theSet.add(0.)
+            theSet.add(np.round(nuMaxDmag[indsWith4[indsWhere3LocalMin[i]]],2))
+        theSet.add(np.round(nuMinDmag[indsWith4[indsWhere3LocalMin[i]]],2)) #will nan all min values
+        if np.abs(nuMinDmag[indsWith4[indsWhere3LocalMin[i]]]) <= 0.015: #Add complement at 0
+            theSet.add(np.round(2.*np.pi,2))
+            theSet.add(np.round(2.*np.pi-nuMinDmag[indsWith4[indsWhere3LocalMin[i]]],2))
+        elif np.abs(2.*np.pi - nuMinDmag[indsWith4[indsWhere3LocalMin[i]]]) <= 0.015: #Add complement at 2pi
+            theSet.add(0.)
+            theSet.add(np.round(nuMinDmag[indsWith4[indsWhere3LocalMin[i]]],2))
+        for j in np.arange(len(rounded)): #Iterate through each value in the array
+            if not (rounded[j] in theSet) and not np.isnan(rounded[j]): #Check if it does not occur in the set of occurrences
+                theSet.add(rounded[j]) #If it doesn't exist, add it
+            else:
+                rounded[j] = np.nan #Replace the value with nan
+                tmpdmags[j] = np.nan
+        nuRealComb[indsWith4[indsWhere3LocalMin[i]]] = rounded
+        dmagsComb[indsWith4[indsWhere3LocalMin[i]]] = tmpdmags
+
+    #### Remove Residual Duplicates from indsWhere3LocalMax
+    # nuRealComb = np.concatenate((nuReal,nuReal2),axis=1) #combines the two arrays
+    # dmagsComb = np.concatenate((gdmags,gdmags2),axis=1) #combines the two arrays
+    #Yes we need to do it this way
+    for i in np.arange(indsWhere3LocalMax.shape[0]):
+        rounded = np.round(nuRealComb[indsWith4[indsWhere3LocalMax[i]]],2) #Note: the highest accuracy is +/-0.0014
+        tmpdmags = dmagsComb[indsWith4[indsWhere3LocalMax[i]]]
+        theSet = set() #Create an empty set
+        theSet.add(np.round(nuMaxDmag[indsWith4[indsWhere3LocalMax[i]]],2)) #will nan all max values
+        if np.abs(nuMaxDmag[indsWith4[indsWhere3LocalMax[i]]]) <= 0.015: #Add complement at 2pi
+            theSet.add(np.round(2.*np.pi,2))
+            theSet.add(np.round(2.*np.pi-nuMaxDmag[indsWith4[indsWhere3LocalMax[i]]],2))
+        elif np.abs(2.*np.pi - nuMaxDmag[indsWith4[indsWhere3LocalMax[i]]]) <= 0.015: #Add complement at 0
+            theSet.add(0.)
+            theSet.add(np.round(nuMaxDmag[indsWith4[indsWhere3LocalMax[i]]],2))
+        theSet.add(np.round(nuMinDmag[indsWith4[indsWhere3LocalMax[i]]],2)) #will nan all min values
+        if np.abs(nuMinDmag[indsWith4[indsWhere3LocalMax[i]]]) <= 0.015: #Add complement at 0
+            theSet.add(np.round(2.*np.pi,2))
+            theSet.add(np.round(2.*np.pi-nuMinDmag[indsWith4[indsWhere3LocalMax[i]]],2))
+        elif np.abs(2.*np.pi - nuMinDmag[indsWith4[indsWhere3LocalMax[i]]]) <= 0.015: #Add complement at 2pi
+            theSet.add(0.)
+            theSet.add(np.round(nuMinDmag[indsWith4[indsWhere3LocalMax[i]]],2))
+        for j in np.arange(len(rounded)): #Iterate through each value in the array
+            if not (rounded[j] in theSet) and not np.isnan(rounded[j]): #Check if it does not occur in the set of occurrences
+                theSet.add(rounded[j]) #If it doesn't exist, add it
+            else:
+                rounded[j] = np.nan #Replace the value with nan
+                tmpdmags[j] = np.nan
+        nuRealComb[indsWith4[indsWhere3LocalMax[i]]] = rounded
+        dmagsComb[indsWith4[indsWhere3LocalMax[i]]] = tmpdmags
+    nuReal = nuRealComb[:,0:8]
+    nuReal2 = nuRealComb[:,8:16]
+    gdmags = dmagsComb[:,0:8]
+    gdmags2 = dmagsComb[:,8:16]
+
 
     #DELETE THE FOLLOWING CODE. IT DOES NOT MAKE SENSE
     #If all the nuReal of a solution are 0, then we just pick the smallest
-    indsWhereAllNan0 = np.where(~np.all(np.isnan(nuReal[indsWith4[indsWhere2LocalMin]]),axis=1))[0] #Finds all the inds of indsWhere2LocalMin where nuReal contains solutions
-    indsWhereAllNan1 = np.where(np.all(np.isnan(nuReal2[indsWith4[indsWhere2LocalMin]]),axis=1))[0] #Finds all the inds of indsWhere2LocalMin where nuReal2 contains solutions
-    indsWhereAllNan2 = np.where(~np.all(np.isnan(nuReal[indsWith4[indsWhere2LocalMax]]),axis=1))[0] #Finds all the inds of indsWhere2LocalMax where nuReal contains solutions
-    indsWhereAllNan3 = np.where(np.all(np.isnan(nuReal2[indsWith4[indsWhere2LocalMax]]),axis=1))[0] #Finds all the inds of indsWhere2LocalMax where nuReal2 contains solutions
+    indsWhereAllNan0 = np.where(~np.all(np.isnan(nuReal[indsWith4[indsWhere2LocalMin]]),axis=1))[0] #Finds all the inds of indsWhere2LocalMin where nuReal contains at least 1 solution
+    indsWhereAllNan1 = np.where(np.all(np.isnan(nuReal2[indsWith4[indsWhere2LocalMin]]),axis=1))[0] #Finds all the inds of indsWhere2LocalMin where nuReal2 contains no solutions
+    indsWhereAllNan2 = np.where(~np.all(np.isnan(nuReal[indsWith4[indsWhere2LocalMax]]),axis=1))[0] #Finds all the inds of indsWhere2LocalMax where nuReal contains at least 1 solution
+    indsWhereAllNan3 = np.where(np.all(np.isnan(nuReal2[indsWith4[indsWhere2LocalMax]]),axis=1))[0] #Finds all the inds of indsWhere2LocalMax where nuReal2 contains no solutions
     #Skip if 0 (Note in testing these were all 0. Not sure if this code is actually being executed currently)
     if len(indsWhereAllNan0) > 0:
-        nulminAll[indsWhere2LocalMax[indsWhereAllNan0]] = nuReal[indsWith4[indsWhere2LocalMax[indsWhereAllNan0]],np.nanargmax(gdmags[indsWith4[indsWhere2LocalMax[indsWhereAllNan0]]],axis=1)]
-        dmaglminAll[indsWhere2LocalMax[indsWhereAllNan0]] = gdmags[indsWith4[indsWhere2LocalMax[indsWhereAllNan0]],np.nanargmax(gdmags[indsWith4[indsWhere2LocalMax[indsWhereAllNan0]]],axis=1)]
+        nulminAll[indsWhere2LocalMin[indsWhereAllNan0]] = nuReal[indsWith4[indsWhere2LocalMin[indsWhereAllNan0]],np.nanargmin(gdmags[indsWith4[indsWhere2LocalMin[indsWhereAllNan0]]],axis=1)]
+        dmaglminAll[indsWhere2LocalMin[indsWhereAllNan0]] = gdmags[indsWith4[indsWhere2LocalMin[indsWhereAllNan0]],np.nanargmin(gdmags[indsWith4[indsWhere2LocalMin[indsWhereAllNan0]]],axis=1)]
     if len(indsWhereAllNan1) > 0:
-        nulminAll[indsWhere2LocalMin[indsWhereAllNan1]] = nuReal2[indsWith4[indsWhere2LocalMax[indsWhereAllNan1]],np.nanargmax(gdmags2[indsWith4[indsWhere2LocalMax[indsWhereAllNan1]]],axis=1)]
-        dmaglminAll[indsWhere2LocalMin[indsWhereAllNan1]] = gdmags2[indsWith4[indsWhere2LocalMax[indsWhereAllNan1]],np.nanargmax(gdmags2[indsWith4[indsWhere2LocalMax[indsWhereAllNan1]]],axis=1)]
+        nulminAll[indsWhere2LocalMin[indsWhereAllNan1]] = np.nan #nuReal2[indsWith4[indsWhere2LocalMin[indsWhereAllNan1]],np.nanargmin(gdmags2[indsWith4[indsWhere2LocalMax[indsWhereAllNan1]]],axis=1)]
+        dmaglminAll[indsWhere2LocalMin[indsWhereAllNan1]] = np.nan #gdmags2[indsWith4[indsWhere2LocalMin[indsWhereAllNan1]],np.nanargmin(gdmags2[indsWith4[indsWhere2LocalMax[indsWhereAllNan1]]],axis=1)]
     if len(indsWhereAllNan2) > 0:
         nulmaxAll[indsWhere2LocalMax[indsWhereAllNan2]] = nuReal[indsWith4[indsWhere2LocalMax[indsWhereAllNan2]],np.nanargmax(gdmags[indsWith4[indsWhere2LocalMax[indsWhereAllNan2]]],axis=1)]
         dmaglmaxAll[indsWhere2LocalMax[indsWhereAllNan2]] = gdmags[indsWith4[indsWhere2LocalMax[indsWhereAllNan2]],np.nanargmax(gdmags[indsWith4[indsWhere2LocalMax[indsWhereAllNan2]]],axis=1)]
     if len(indsWhereAllNan3) > 0:
-        nulmaxAll[indsWhere2LocalMax[indsWhereAllNan3]] = nuReal2[indsWith4[indsWhere2LocalMax[indsWhereAllNan3]],np.nanargmax(gdmags2[indsWith4[indsWhere2LocalMax[indsWhereAllNan3]]],axis=1)]
-        dmaglmaxAll[indsWhere2LocalMax[indsWhereAllNan3]] = nuReal2[indsWith4[indsWhere2LocalMax[indsWhereAllNan3]],np.nanargmax(gdmags2[indsWith4[indsWhere2LocalMax[indsWhereAllNan3]]],axis=1)]
+        nulmaxAll[indsWhere2LocalMax[indsWhereAllNan3]] = np.nan #nuReal2[indsWith4[indsWhere2LocalMax[indsWhereAllNan3]],np.nanargmax(gdmags2[indsWith4[indsWhere2LocalMax[indsWhereAllNan3]]],axis=1)]
+        dmaglmaxAll[indsWhere2LocalMax[indsWhereAllNan3]] = np.nan #nuReal2[indsWith4[indsWhere2LocalMax[indsWhereAllNan3]],np.nanargmax(gdmags2[indsWith4[indsWhere2LocalMax[indsWhereAllNan3]]],axis=1)]
 
+    #CAN SIMPLIFY THIS BIT HERE
     #### Remove any planets from indsWith4 if they have 0 at this point, also add the to indsWith2. Screw it
     indsWhere0dmaglmin = np.where(dmaglminAll==0.)[0]
     for ind in -np.sort(-indsWhere0dmaglmin):
         dmaglminAll = np.delete(dmaglminAll, ind)
         dmaglmaxAll = np.delete(dmaglmaxAll, ind)
-        indsWith2 = np.append(indsWith2,ind)
+        nulminAll = np.delete(nulminAll, ind)
+        nulmaxAll = np.delete(nulmaxAll, ind)
+        indsWith2 = np.append(indsWith2, ind)
         indsWith4 = np.delete(indsWith4, ind)
     indsWhere0dmaglmax = np.where(dmaglmaxAll==0.)[0]
     for ind in -np.sort(-indsWhere0dmaglmax):
         dmaglminAll = np.delete(dmaglminAll, ind)
         dmaglmaxAll = np.delete(dmaglmaxAll, ind)
-        indsWith2 = np.append(indsWith2,ind)
+        nulminAll = np.delete(nulminAll, ind)
+        nulmaxAll = np.delete(nulmaxAll, ind)
+        indsWith2 = np.append(indsWith2, ind)
         indsWith4 = np.delete(indsWith4, ind)
+    #### Remove any planets from indsWith4 if they are nan at this point, also add the to indsWith2. Screw it
+    indsWhere0dmaglmin = np.where(np.isnan(dmaglminAll))[0]
+    for ind in -np.sort(-indsWhere0dmaglmin):
+        dmaglminAll = np.delete(dmaglminAll, ind)
+        dmaglmaxAll = np.delete(dmaglmaxAll, ind)
+        nulminAll = np.delete(nulminAll, ind)
+        nulmaxAll = np.delete(nulmaxAll, ind)
+        indsWith2 = np.append(indsWith2, ind)
+        indsWith4 = np.delete(indsWith4, ind)
+    indsWhere0dmaglmax = np.where(np.isnan(dmaglmaxAll))[0]
+    for ind in -np.sort(-indsWhere0dmaglmax):
+        dmaglminAll = np.delete(dmaglminAll, ind)
+        dmaglmaxAll = np.delete(dmaglmaxAll, ind)
+        nulminAll = np.delete(nulminAll, ind)
+        nulmaxAll = np.delete(nulmaxAll, ind)
+        indsWith2 = np.append(indsWith2, ind)
+        indsWith4 = np.delete(indsWith4, ind)
+
+    #Checking number of solutions is correct
+    assert len(indsWith4) == len(dmaglmaxAll), 'number of solutions in dmaglmaxAll does not match number of indicies in indsWith4'
+    assert len(indsWith4) == len(dmaglminAll), 'number of solutions in dmaglminAll does not match number of indicies in indsWith4'
+    assert len(indsWith4) == len(nulmaxAll), 'number of solutions in dmaglmaxAll does not match number of indicies in indsWith4'
+    assert len(indsWith4) == len(nulminAll), 'number of solutions in dmaglminAll does not match number of indicies in indsWith4'
+    assert len(indsWith2)+len(indsWith4) == e.shape[0], 'length of indicies does not properly match'
 
     # #hmmmm.. we must test all scenarios to determine what localmindmag and localmaxdmag are.
     # #It must be true that localmindmag < localmaxdmag
 
+    # count = 0
+    # if np.any((dmaglmaxAll > 29.)*(dmaglminAll < 29.)):
+    #     inds = np.where((dmaglmaxAll > 29.)*(dmaglminAll < 29.))[0]
+    #     import matplotlib.pyplot as plt
+    #     for ind in indsWith4[inds]:
+    #         plt.figure(num=ind)
+    #         nus = np.linspace(start=0,stop=2.*np.pi,num=300)
+    #         phis = (1.+np.sin(inc[ind])*np.sin(nus+w[ind]))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
+    #         ds = a[ind]*(1.-e[ind]**2.)/(e[ind]*np.cos(nus)+1.)
+    #         dmags = deltaMag(p[ind],Rp[ind].to('AU'),ds,phis) #calculate dmag of the specified x-value
+    #         plt.plot(nus,dmags,color='black',zorder=10)
+    #         plt.scatter(nuMinDmag[ind],mindmag[ind],color='cyan',marker='d',zorder=20)
+    #         plt.scatter(nuMaxDmag[ind],maxdmag[ind],color='red',marker='d',zorder=20)
+    #         lind = np.where(ind == indsWith4)[0]
+    #         plt.scatter(nulminAll[lind],dmaglminAll[lind],color='magenta',marker='d',zorder=20)
+    #         plt.scatter(nulmaxAll[lind],dmaglmaxAll[lind],color='gold',marker='d',zorder=20)
+    #         plt.show(block=False)
+    #         plt.gcf().canvas.draw()
+    #         count = count+1
+    #         if count > 60:
+    #             print(saltyburrito)
+
     #Simple Quality Checks
     assert np.all(dmaglmaxAll >= dmaglminAll)
-    assert np.all(dmaglmaxAll < maxdmag2[indsWith4]) #this must be true
-    assert np.all(dmaglminAll > mindmag2[indsWith4]) #this must be true
-    
-    return mindmag2, maxdmag2, dmaglminAll, dmaglmaxAll, indsWith2, indsWith4, nuMinDmag, nuMaxDmag, nulminAll, nulmaxAll
+    assert np.all(dmaglmaxAll < maxdmag[indsWith4]) #this must be true
+    assert np.all(dmaglminAll > mindmag[indsWith4]) #this must be true    
+
+    # print(saltyburrito)
+
+    return mindmag, maxdmag, dmaglminAll, dmaglmaxAll, indsWith2, indsWith4, nuMinDmag, nuMaxDmag, nulminAll, nulmaxAll
 #################################################################################################################
 
 
@@ -3108,8 +3333,11 @@ def calc_planetnu_from_dmag(dmag,e,inc,w,a,p,Rp,mindmag, maxdmag, indsWith2Int, 
     """
     tstart_cos = time.time()
     out2Int = solve_dmag_Poly(dmag,e[indsWith2Int],inc[indsWith2Int],w[indsWith2Int],a[indsWith2Int],p[indsWith2Int],Rp[indsWith2Int])
+
+    #Move the vvalues that are slightly above or below -1 back into -1 to 1 range
     out2Int[(out2Int.real < -1.)*(out2Int.real >= -1.-1e-7)] = -np.ones(out2Int.shape)[(out2Int.real < -1.)*(out2Int.real >= -1.-1e-7)] #move those solutions that might be oh so slightly out of bounds back in bounds
     out2Int[(out2Int.real > 1.)*(out2Int.real <= 1.+1e-7)] = np.ones(out2Int.shape)[(out2Int.real > 1.)*(out2Int.real <= 1.+1e-7)] #move those solutions that might be oh so slightly out of bounds back in bounds
+    
     #Throw out roots not in correct bounds
     inBoundsBools2Int = (np.abs(out2Int.imag) <= 1e-7)*(out2Int.real >= -1.)*(out2Int.real <= 1.) #the out2 solutions that are inside of the desired bounds #adding 1e-9 bc a solution that was 1. was filtered out once
     outBoundsBools2Int = np.logical_not(inBoundsBools2Int) # the out2 solutions that are inside the desired bounds
@@ -3119,66 +3347,124 @@ def calc_planetnu_from_dmag(dmag,e,inc,w,a,p,Rp,mindmag, maxdmag, indsWith2Int, 
     outReal2Int[inBoundsBools2Int] = out2Int[inBoundsBools2Int]
     #del out2Int
     outReal2Int = np.real(outReal2Int)
-    #For arccos in 0-pi
+
+    #Calculate nus
     nuReal2Int = np.ones(outReal2Int.shape)*np.nan
     nuReal2Int[inBoundsBools2Int] = np.arccos(outReal2Int[inBoundsBools2Int]) #calculate arccos, there are 2 potential solutions... need to calculate both
-    gPhi2Int = (1.+np.sin(np.tile(inc[indsWith2Int],(8,1)).T)*np.sin(nuReal2Int+np.tile(w[indsWith2Int],(8,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
-    gd2Int = np.tile(a[indsWith2Int].to('AU'),(8,1)).T*(1.-np.tile(e[indsWith2Int],(8,1)).T**2.)/(np.tile(e[indsWith2Int],(8,1)).T*np.cos(nuReal2Int)+1.)
-    gdmags2Int = deltaMag(np.tile(p[indsWith2Int],(8,1)).T,np.tile(Rp[indsWith2Int].to('AU'),(8,1)).T,gd2Int,gPhi2Int) #calculate dmag of the specified x-value
-    #del gPhi2Int, gd2Int
-    #For arccos in pi-2pi
     nuReal22Int = np.ones(outReal2Int.shape)*np.nan
     nuReal22Int[inBoundsBools2Int] = 2.*np.pi - np.arccos(outReal2Int[inBoundsBools2Int])
-    #del inBoundsBools2Int, outReal2Int
-    gPhi22Int = (1.+np.sin(np.tile(inc[indsWith2Int],(8,1)).T)*np.sin(nuReal22Int+np.tile(w[indsWith2Int],(8,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
-    gd22Int = np.tile(a[indsWith2Int].to('AU'),(8,1)).T*(1.-np.tile(e[indsWith2Int],(8,1)).T**2.)/(np.tile(e[indsWith2Int],(8,1)).T*np.cos(nuReal22Int)+1.)
-    gdmags22Int = deltaMag(np.tile(p[indsWith2Int],(8,1)).T,np.tile(Rp[indsWith2Int].to('AU'),(8,1)).T,gd22Int,gPhi22Int) #calculate dmag of the specified x-value
-    #del gPhi22Int, gd22Int
+    nuRealComb2Int = np.concatenate((nuReal2Int,nuReal22Int),axis=1) #combines the two arrays
+
+    #Remove duplicates for inds that have more than 4 real solutions
+    #DELETEindsWithMoreThan4RealSols = np.where(np.sum(np.isnan(nuRealComb).astype('int'),axis=1) >= 4)[0]
+    #Yes we need to do it this way
+    for i in np.arange(nuRealComb2Int.shape[0]):
+        rounded = np.round(nuRealComb2Int[i],4) #Note: the highest accuracy is +/-0.0014
+        # tmpdmags = dmagsComb[i]
+        theSet = set() #Create an empty set
+        for j in np.arange(len(rounded)): #Iterate through each value in the array
+            if not (rounded[j] in theSet) and not np.isnan(rounded[j]): #Check if it does not occur in the set of occurrences
+                theSet.add(rounded[j]) #If it doesn't exist, add it
+                if rounded[j] == 0.:
+                    theSet.add(np.round(2.*np.pi,4))
+                elif rounded[j] == np.round(2.*np.pi,4):
+                    theSet.add(0.)
+                #Keep the value the same
+            else:
+                rounded[j] = np.nan #Replace the value with nan
+                # tmpdmags[j] = np.nan
+        nuRealComb2Int[i] = rounded
+        # dmagsComb[i] = tmpdmags
+    #nuReal2Int = nuRealComb2Int[:,0:8]
+    #nuReal22Int = nuRealComb2Int[:,8:16]
+    # gdmags4Int = dmagsComb[:,0:8]
+    # gdmags24Int = dmagsComb[:,8:16]
+    #Differentiate between inds with 4 non-nans (in combined) and inds with 6 non-nans in combined
+    #HEY I DON'T THINK THIS REALLY MATTERS
+    indsWith4NonNan = np.where(np.sum(np.isnan(nuRealComb2Int).astype('int'),axis=1) == 12)[0]
+    indsWith3NonNan = np.where(np.sum(np.isnan(nuRealComb2Int).astype('int'),axis=1) == 13)[0]
+    assert nuRealComb2Int.shape[0] == len(indsWith4NonNan) + len(indsWith3NonNan), 'The number of 3 real and 4 real does not sum to the number of nuRealCombs with 2 Intersections'
+
+    #For arccos in 0-pi (indicies 0-7) and pi-2pi (indicies 8-15)
+    gPhi2Int = (1.+np.sin(np.tile(inc[indsWith2Int],(16,1)).T)*np.sin(nuRealComb2Int+np.tile(w[indsWith2Int],(16,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
+    gd2Int = np.tile(a[indsWith2Int].to('AU'),(16,1)).T*(1.-np.tile(e[indsWith2Int],(16,1)).T**2.)/(np.tile(e[indsWith2Int],(16,1)).T*np.cos(nuRealComb2Int)+1.)
+    gdmags2IntComb = deltaMag(np.tile(p[indsWith2Int],(16,1)).T,np.tile(Rp[indsWith2Int].to('AU'),(16,1)).T,gd2Int,gPhi2Int) #calculate dmag of the specified x-value
+    #del gPhi2Int, gd2Int
+    #For arccos in pi-2pi
+
+    # #For arccos in 0-pi
+    # gPhi2Int = (1.+np.sin(np.tile(inc[indsWith2Int],(8,1)).T)*np.sin(nuReal2Int+np.tile(w[indsWith2Int],(8,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
+    # gd2Int = np.tile(a[indsWith2Int].to('AU'),(8,1)).T*(1.-np.tile(e[indsWith2Int],(8,1)).T**2.)/(np.tile(e[indsWith2Int],(8,1)).T*np.cos(nuReal2Int)+1.)
+    # gdmags2Int = deltaMag(np.tile(p[indsWith2Int],(8,1)).T,np.tile(Rp[indsWith2Int].to('AU'),(8,1)).T,gd2Int,gPhi2Int) #calculate dmag of the specified x-value
+    # #del gPhi2Int, gd2Int
+    # #For arccos in pi-2pi
+
+    # #del inBoundsBools2Int, outReal2Int
+    # gPhi22Int = (1.+np.sin(np.tile(inc[indsWith2Int],(8,1)).T)*np.sin(nuReal22Int+np.tile(w[indsWith2Int],(8,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
+    # gd22Int = np.tile(a[indsWith2Int].to('AU'),(8,1)).T*(1.-np.tile(e[indsWith2Int],(8,1)).T**2.)/(np.tile(e[indsWith2Int],(8,1)).T*np.cos(nuReal22Int)+1.)
+    # gdmags22Int = deltaMag(np.tile(p[indsWith2Int],(8,1)).T,np.tile(Rp[indsWith2Int].to('AU'),(8,1)).T,gd22Int,gPhi22Int) #calculate dmag of the specified x-value
+    # #del gPhi22Int, gd22Int
+
+    #
+    #DELETEdmag2IntComb = np.concatenate((nuReal4Int,nuReal24Int),axis=1) #combines the two arrays
+    #DELETEnuReal2IntComb = np.concatenate((nuReal4Int,nuReal24Int),axis=1) #combines the two arrays
+    dmags2IntErrorComb = np.abs(gdmags2IntComb - dmag)
+    mindmag2IntErrorInds = np.argsort(dmags2IntErrorComb,axis=1)
+    sortedNuReal2IntComb = nuRealComb2Int[np.tile(np.arange(dmags2IntErrorComb.shape[0]),(mindmag2IntErrorInds.shape[1],1)).T,mindmag2IntErrorInds[np.arange(dmags2IntErrorComb.shape[0])]]
+    sortedgdmags2IntComb = gdmags2IntComb[np.tile(np.arange(dmags2IntErrorComb.shape[0]),(mindmag2IntErrorInds.shape[1],1)).T,mindmag2IntErrorInds[np.arange(dmags2IntErrorComb.shape[0])]]
 
     #Create Output Arrays
-    nus2Int = np.zeros((nuReal2Int.shape[0],2)) #The output Arrays for only 2 Intersections
-    dmag2Int = np.zeros((nuReal2Int.shape[0],2)) #The output Arrays for only 2 Intersections
-    #Evaluate which solutions are good and which aren't
-    #1 What is the smallest in 1 Int and what is the smallest in 2 Int
-    assert np.all(np.sum(~np.isnan(gdmags2Int),axis=1)==2), 'There are more or less than 2 solutions for 2 Int for gdmags2Int'
-    assert np.all(np.sum(~np.isnan(gdmags22Int),axis=1)==2), 'There are more or less than 2 solutions for 2 Int for gdmags22Int'
-    error1Int = np.abs(gdmags2Int - dmag)
-    error2Int = np.abs(gdmags22Int - dmag)
-    minerror1IntInds = np.nanargmin(error1Int,axis=1) #Finds the minimum error of 1
-    minerror2IntInds = np.nanargmin(error2Int,axis=1) #Finds the minimum error of 2
-    maxerror1IntInds = np.nanargmax(error1Int,axis=1) #Finds the maximum error of 1
-    maxerror2IntInds = np.nanargmax(error2Int,axis=1) #Finds the maximum error of 2
-    minerror1Int = np.nanmin(error1Int,axis=1) #Finds the minimum error of 1
-    minerror2Int = np.nanmin(error2Int,axis=1) #Finds the minimum error of 2
-    maxerror1Int = np.nanmax(error1Int,axis=1) #Finds the maximum error of 1
-    maxerror2Int = np.nanmax(error2Int,axis=1) #Finds the maximum error of 2
-    #Case 1, the maximum error in 1 are all less than the minimum error in 2, so gdmags2Int contains all valid solutions
-    indsCase1 = np.where(maxerror1Int <= minerror2Int)[0]
-    nus2Int[indsCase1,0] = nuReal2Int[indsCase1,minerror1IntInds[indsCase1]]
-    nus2Int[indsCase1,1] = nuReal2Int[indsCase1,maxerror1IntInds[indsCase1]]
-    dmag2Int[indsCase1,0] = gdmags2Int[indsCase1,minerror1IntInds[indsCase1]]
-    dmag2Int[indsCase1,1] = gdmags2Int[indsCase1,maxerror1IntInds[indsCase1]]
-    #Do a check if both nu values are identical
-    #Case 2, the maximum error in 2 are all less than the minimum error in 1, so gdmags22Int contains all valid solutions
-    indsCase2 = np.where(maxerror2Int < minerror1Int)[0]
-    nus2Int[indsCase2,0] = nuReal22Int[indsCase2,minerror2IntInds[indsCase2]]
-    nus2Int[indsCase2,1] = nuReal22Int[indsCase2,maxerror2IntInds[indsCase2]]
-    dmag2Int[indsCase2,0] = gdmags22Int[indsCase2,minerror2IntInds[indsCase2]]
-    dmag2Int[indsCase2,1] = gdmags22Int[indsCase2,maxerror2IntInds[indsCase2]]
-    #Case 3, the smallest exists in gdmags2Int, the second smallest exists in gdmags22Int
-    indsCase3 = np.where((minerror1Int <= minerror2Int)*(maxerror1Int > minerror2Int))[0]
-    nus2Int[indsCase3,0] = nuReal2Int[indsCase3,minerror1IntInds[indsCase3]]
-    nus2Int[indsCase3,1] = nuReal22Int[indsCase3,minerror2IntInds[indsCase3]]
-    dmag2Int[indsCase3,0] = gdmags2Int[indsCase3,minerror1IntInds[indsCase3]]
-    dmag2Int[indsCase3,1] = gdmags22Int[indsCase3,minerror2IntInds[indsCase3]]
-    #Case 4, the smallest exists in gdmags22Int, the second smallest exists in gdmags2Int
-    indsCase4 = np.where((minerror2Int < minerror1Int)*(maxerror2Int > minerror1Int))[0]
-    nus2Int[indsCase4,0] = nuReal22Int[indsCase4,minerror2IntInds[indsCase4]]
-    nus2Int[indsCase4,1] = nuReal2Int[indsCase4,minerror1IntInds[indsCase4]]
-    dmag2Int[indsCase4,0] = gdmags22Int[indsCase4,minerror2IntInds[indsCase4]]
-    dmag2Int[indsCase4,1] = gdmags2Int[indsCase4,minerror1IntInds[indsCase4]]
-    #Check indsCase1+indsCase2+indsCase3+indsCase3 encompases all inds
-    assert indsCase1.shape[0]+indsCase2.shape[0]+indsCase3.shape[0]+indsCase4.shape[0] == gdmags2Int.shape[0], 'solutions number dont fit'
+    #DELETEnus2Int = np.zeros((nuRealComb2Int.shape[0],2)) #The output Arrays for only 2 Intersections
+    #DELETEdmag2Int = np.zeros((gdmags2IntComb.shape[0],2)) #The output Arrays for only 2 Intersections
+    nus2Int = np.asarray([sortedNuReal2IntComb[:,0],sortedNuReal2IntComb[:,1]]).T
+    dmag2Int = np.asarray([sortedgdmags2IntComb[:,0],sortedgdmags2IntComb[:,1]]).T
+
+    # #Evaluate which solutions are good and which aren't
+    # #1 What is the smallest in 1 Int and what is the smallest in 2 Int
+    # assert np.all(np.sum(~np.isnan(gdmags2Int),axis=1)==2), 'There are more or less than 2 solutions for 2 Int for gdmags2Int'
+    # assert np.all(np.sum(~np.isnan(gdmags22Int),axis=1)==2), 'There are more or less than 2 solutions for 2 Int for gdmags22Int'
+    # error1Int = np.abs(gdmags2Int - dmag)
+    # error2Int = np.abs(gdmags22Int - dmag)
+    # minerror1IntInds = np.nanargmin(error1Int,axis=1) #Finds the minimum error of 1
+    # minerror2IntInds = np.nanargmin(error2Int,axis=1) #Finds the minimum error of 2
+    # maxerror1IntInds = np.nanargmax(error1Int,axis=1) #Finds the maximum error of 1
+    # maxerror2IntInds = np.nanargmax(error2Int,axis=1) #Finds the maximum error of 2
+    # minerror1Int = np.nanmin(error1Int,axis=1) #Finds the minimum error of 1
+    # minerror2Int = np.nanmin(error2Int,axis=1) #Finds the minimum error of 2
+    # maxerror1Int = np.nanmax(error1Int,axis=1) #Finds the maximum error of 1
+    # maxerror2Int = np.nanmax(error2Int,axis=1) #Finds the maximum error of 2
+    # #Case 1, the maximum error in 1 are all less than the minimum error in 2, so gdmags2Int contains all valid solutions
+    # indsCase1 = np.where(maxerror1Int <= minerror2Int)[0]
+    # nus2Int[indsCase1,0] = nuReal2Int[indsCase1,minerror1IntInds[indsCase1]]
+    # nus2Int[indsCase1,1] = nuReal2Int[indsCase1,maxerror1IntInds[indsCase1]]
+    # dmag2Int[indsCase1,0] = gdmags2Int[indsCase1,minerror1IntInds[indsCase1]]
+    # dmag2Int[indsCase1,1] = gdmags2Int[indsCase1,maxerror1IntInds[indsCase1]]
+    # #Do a check if both nu values are identical
+    # #Case 2, the maximum error in 2 are all less than the minimum error in 1, so gdmags22Int contains all valid solutions
+    # indsCase2 = np.where(maxerror2Int < minerror1Int)[0]
+    # nus2Int[indsCase2,0] = nuReal22Int[indsCase2,minerror2IntInds[indsCase2]]
+    # nus2Int[indsCase2,1] = nuReal22Int[indsCase2,maxerror2IntInds[indsCase2]]
+    # dmag2Int[indsCase2,0] = gdmags22Int[indsCase2,minerror2IntInds[indsCase2]]
+    # dmag2Int[indsCase2,1] = gdmags22Int[indsCase2,maxerror2IntInds[indsCase2]]
+    # #Case 3, the smallest exists in gdmags2Int, the second smallest exists in gdmags22Int
+    # indsCase3 = np.where((minerror1Int <= minerror2Int)*(maxerror1Int > minerror2Int))[0]
+    # nus2Int[indsCase3,0] = nuReal2Int[indsCase3,minerror1IntInds[indsCase3]]
+    # nus2Int[indsCase3,1] = nuReal22Int[indsCase3,minerror2IntInds[indsCase3]]
+    # dmag2Int[indsCase3,0] = gdmags2Int[indsCase3,minerror1IntInds[indsCase3]]
+    # dmag2Int[indsCase3,1] = gdmags22Int[indsCase3,minerror2IntInds[indsCase3]]
+    # #Case 4, the smallest exists in gdmags22Int, the second smallest exists in gdmags2Int
+    # indsCase4 = np.where((minerror2Int < minerror1Int)*(maxerror2Int > minerror1Int))[0]
+    # nus2Int[indsCase4,0] = nuReal22Int[indsCase4,minerror2IntInds[indsCase4]]
+    # nus2Int[indsCase4,1] = nuReal2Int[indsCase4,minerror1IntInds[indsCase4]]
+    # dmag2Int[indsCase4,0] = gdmags22Int[indsCase4,minerror2IntInds[indsCase4]]
+    # dmag2Int[indsCase4,1] = gdmags2Int[indsCase4,minerror1IntInds[indsCase4]]
+    # #Check indsCase1+indsCase2+indsCase3+indsCase3 encompases all inds
+    # assert indsCase1.shape[0]+indsCase2.shape[0]+indsCase3.shape[0]+indsCase4.shape[0] == gdmags2Int.shape[0], 'solutions number dont fit'
+
+
+    # #Checking nus2Int identical-ness
+    # errornus2Int = np.abs(nus2Int[:,0]-nus2Int[:,1])
+
 
     #DELETE THIS CHUNK
     # print(saltyburrito)
@@ -3234,25 +3520,68 @@ def calc_planetnu_from_dmag(dmag,e,inc,w,a,p,Rp,mindmag, maxdmag, indsWith2Int, 
         outReal4Int = np.zeros(out4Int.shape) #just getting something with the right shape
         outReal4Int[outBoundsBools4Int] = out4Int[outBoundsBools4Int]*np.nan
         outReal4Int[inBoundsBools4Int] = out4Int[inBoundsBools4Int]
-        del out4Int
+        #del out4Int
         outReal4Int = np.real(outReal4Int)
-        #For arccos in 0-pi
+
+        #### Calculate nu from out (both 0-pi and pi-2pi)
         nuReal4Int = np.ones(outReal4Int.shape)*np.nan
         nuReal4Int[inBoundsBools4Int] = np.arccos(outReal4Int[inBoundsBools4Int]) #calculate arccos, there are 2 potential solutions... need to calculate both
+        nuReal24Int = np.ones(outReal4Int.shape)*np.nan
+        nuReal24Int[inBoundsBools4Int] = 2.*np.pi - np.arccos(outReal4Int[inBoundsBools4Int])
+        nuRealComb = np.concatenate((nuReal4Int,nuReal24Int),axis=1) #combines the two arrays
+
+        #Remove duplicates for inds that have more than 4 real solutions
+        #DELETEindsWithMoreThan4RealSols = np.where(np.sum(np.isnan(nuRealComb).astype('int'),axis=1) >= 4)[0]
+        #Yes we need to do it this way
+        for i in np.arange(nuRealComb.shape[0]):
+            rounded = np.round(nuRealComb[i],4) #Note: the highest accuracy is +/-0.0014
+            # tmpdmags = dmagsComb[i]
+            theSet = set() #Create an empty set
+            for j in np.arange(len(rounded)): #Iterate through each value in the array
+                if not (rounded[j] in theSet) and not np.isnan(rounded[j]): #Check if it does not occur in the set of occurrences
+                    theSet.add(rounded[j]) #If it doesn't exist, add it
+                    #Keep the value the same
+                else:
+                    rounded[j] = np.nan #Replace the value with nan
+                    # tmpdmags[j] = np.nan
+            nuRealComb[i] = rounded
+            # dmagsComb[i] = tmpdmags
+        nuReal4Int = nuRealComb[:,0:8]
+        nuReal24Int = nuRealComb[:,8:16]
+        # gdmags4Int = dmagsComb[:,0:8]
+        # gdmags24Int = dmagsComb[:,8:16]
+
+        #For arccos in 0-pi
         gPhi4Int = (1.+np.sin(np.tile(inc[indsWith4Int],(8,1)).T)*np.sin(nuReal4Int+np.tile(w[indsWith4Int],(8,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
         gd4Int = np.tile(a[indsWith4Int].to('AU'),(8,1)).T*(1.-np.tile(e[indsWith4Int],(8,1)).T**2.)/(np.tile(e[indsWith4Int],(8,1)).T*np.cos(nuReal4Int)+1.)
         gdmags4Int = deltaMag(np.tile(p[indsWith4Int],(8,1)).T,np.tile(Rp[indsWith4Int].to('AU'),(8,1)).T,gd4Int,gPhi4Int) #calculate dmag of the specified x-value
         #For arccos in pi-2pi 
-        nuReal24Int = np.ones(outReal4Int.shape)*np.nan
-        nuReal24Int[inBoundsBools4Int] = 2.*np.pi - np.arccos(outReal4Int[inBoundsBools4Int])
         gPhi24Int = (1.+np.sin(np.tile(inc[indsWith4Int],(8,1)).T)*np.sin(nuReal24Int+np.tile(w[indsWith4Int],(8,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
         gd24Int = np.tile(a[indsWith4Int].to('AU'),(8,1)).T*(1.-np.tile(e[indsWith4Int],(8,1)).T**2.)/(np.tile(e[indsWith4Int],(8,1)).T*np.cos(nuReal24Int)+1.)
         gdmags24Int = deltaMag(np.tile(p[indsWith4Int],(8,1)).T,np.tile(Rp[indsWith4Int].to('AU'),(8,1)).T,gd24Int,gPhi24Int) #calculate dmag of the specified x-value
     
-        tmpdmags = np.dstack((gdmags4Int,gdmags24Int))
-        tmpdmagError = np.dstack((np.abs(gdmags4Int-dmag),np.abs(gdmags24Int-dmag)))
-        mindmagIndsAxis2 = np.nanargmin(tmpdmagError,axis=2)
-        dmagMinErrorArray = tmpdmags[np.arange(tmpdmagError.shape[0]),:,mindmagIndsAxis2[np.arange(tmpdmagError.shape[0])]]
+
+        #HERE REPLACE THIS TMPDMAGS WITH THE NX16 ARRAY LIKE IN THE PREVIOUS. THEN DO A NU IDENTICALNESS SWEEP
+        dmagsComb = np.concatenate((gdmags4Int,gdmags24Int),axis=1) #combines the two arrays
+        dmagsErrorComb = np.abs(dmagsComb-dmag) #KEEP, OLD WORKS np.concatenate((np.abs(gdmags4Int-dmag),np.abs(gdmags24Int-dmag)),axis=1) #combines the two arrays
+        mindmagIndsAxis2 = np.nanargmin(dmagsErrorComb,axis=1)
+        #TRY ARGSORT INSTEAD
+        mindmagErrorInds = np.argsort(dmagsErrorComb,axis=1)
+        sortedNuRealComb = nuRealComb[np.tile(np.arange(dmagsErrorComb.shape[0]),(mindmagErrorInds.shape[1],1)).T,mindmagErrorInds[np.arange(dmagsErrorComb.shape[0])]]
+        #DELETE sortedNuRealComb = nuRealComb[np.arange(dmagsErrorComb.shape[0])][:,mindmagErrorInds[np.arange(dmagsErrorComb.shape[0])]]
+        sorteddmagsComb = dmagsComb[np.tile(np.arange(dmagsErrorComb.shape[0]),(mindmagErrorInds.shape[1],1)).T,mindmagErrorInds[np.arange(dmagsErrorComb.shape[0])]]
+        #DELETE sorteddmagsComb = dmagsComb[np.arange(dmagsErrorComb.shape[0])][:,mindmagErrorInds[np.arange(dmagsErrorComb.shape[0])]]
+        #DELETE sortedNuRealComb = nuRealComb[np.arange(dmagsErrorComb.shape[0]),mindmagErrorInds[np.arange(dmagsErrorComb.shape[0])]]
+
+        nus4Int = np.asarray([sortedNuRealComb[:,0],sortedNuRealComb[:,1],sortedNuRealComb[:,2],sortedNuRealComb[:,3]]).T
+        dmag4Int = np.asarray([sorteddmagsComb[:,0],sorteddmagsComb[:,1],sorteddmagsComb[:,2],sorteddmagsComb[:,3]]).T
+        
+        #DELETEprint(saltyburrito)
+
+        #DELETEtmpdmags = np.dstack((gdmags4Int,gdmags24Int))
+        #DELETEtmpdmagError = np.dstack((np.abs(gdmags4Int-dmag),np.abs(gdmags24Int-dmag)))
+        #DELETEmindmagIndsAxis2 = np.nanargmin(tmpdmagError,axis=2)
+        #DELETEdmagMinErrorArray = tmpdmags[np.arange(tmpdmagError.shape[0]),:,mindmagIndsAxis2[np.arange(tmpdmagError.shape[0])]]
 
         # #Create Output Arrays
         # nus4Int = np.zeros((nuReal4Int.shape[0],4)) #The output Arrays for 4 Intersections
