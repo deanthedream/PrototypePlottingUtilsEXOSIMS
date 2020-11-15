@@ -762,6 +762,7 @@ plt.rc('font',weight='bold')
 for i in np.arange(len(planets)):
     plt.plot(np.linspace(start=0.,stop=180.,num=180),planProp[planets[i]]['phaseFuncMelded'](np.linspace(start=0.,stop=180.,num=180)),color=planProp[planets[i]]['planet_labelcolors'],label=planProp[planets[i]]['planet_name'].capitalize())
 plt.plot(np.linspace(start=0.,stop=180.,num=180),phi_lambert(np.linspace(start=0.,stop=180.,num=180)*np.pi/180.),color='black',label='Lambert',linestyle='--')
+plt.plot(np.linspace(start=0.,stop=180.,num=180),quasiLambertPhaseFunction(np.linspace(start=0.,stop=180.,num=180)*u.deg),color='Green',label='Quasi-Lambert',linestyle='-.')
 # Add Hyperbolic Earth Tangent Phase Function
 plt.plot(np.linspace(start=0.,stop=180.,num=180),hyperbolicTangentPhaseFunc(np.linspace(start=0.,stop=180.,num=180)*u.deg,A=0.78415,B=1.86891455,C=0.5295894,D=1.07587213), color='purple', linestyle=':', label=r'$\Phi_{H,\oplus}$')
 # Add Hyperbolic Earth Tangent Phase Function
