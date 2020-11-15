@@ -28,35 +28,6 @@ planProp['saturn'] = {'R':58232.*1000.,'a':1433.53*10.**9.,'p':0.499}
 planProp['uranus'] = {'R':25362.*1000.,'a':2872.46*10.**9.,'p':0.488}
 planProp['neptune'] = {'R':24622.*1000.,'a':4495.*10.**9.,'p':0.442}
 
-def phi_lambert(alpha):
-    """ Lambert phase function as presented in Garrett2016
-    Args:
-        alpha (float) - phase angle in radians
-    Returns:
-        Phi (float) - phase function value between 0 and 1
-    """
-    phi = (np.sin(alpha) + (np.pi-alpha)*np.cos(alpha))/np.pi
-    return phi
-
-def transitionStart(x,a,b):
-    """ Smoothly transition from one 0 to 1
-    Args:
-        x (float) - in deg input value in deg
-        a (float) - transition midpoint in deg
-    """
-    s = 0.5+0.5*np.tanh((x-a)/b)
-    return s
-def transitionEnd(x,a,b):
-    """ Smoothly transition from one 1 to 0
-    Smaller b is sharper step
-    a is midpoint, s(a)=0.5
-    Args:
-        x (float) - in deg input value in deg
-        a (float) - transition midpoint in deg
-    """
-    s = 0.5-0.5*np.tanh((x-a)/b)
-    return s
-
 #### Planet Visual Magnitudes From Mallama 2018 #################################################################################
 #Mercury
 #r distance of planet from sun
