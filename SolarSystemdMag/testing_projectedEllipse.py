@@ -9,6 +9,7 @@ from astropy import constants as const
 import astropy.units as u
 from EXOSIMS.util.deltaMag import deltaMag
 from EXOSIMS.util.planet_star_separation import planet_star_separation
+import itertools
 
 #### PLOT BOOL
 plotBool = False
@@ -47,12 +48,13 @@ sma = sma.to('AU').value
 
 #Separations
 s_circle = np.ones(len(sma))
-dmag = 29.0
-dmag_upper = 29.0
+dmag = 25. #29.0
+dmag_upper = 25. #29.0
 IWA_HabEx = 0.045*u.arcsec #taken from a Habex Script in units of mas
 IWA2=0.150*u.arcsec #Suggested by dmitry as analahous to WFIRST
-s_inner = np.ones(len(sma))*10.*u.pc.to('AU')*IWA_HabEx.to('rad').value
-s_outer = np.ones(len(sma))*10.*u.pc.to('AU')*3.*IWA_HabEx.to('rad').value #RANDOMLY MULTIPLY BY 3 HERE
+OWA_HabEx = 6*u.arcsec #from the HabEx Standards Team Final Report
+s_inner = 10.*u.pc.to('AU')*IWA_HabEx.to('rad').value
+s_outer = 10.*u.pc.to('AU')*OWA_HabEx.to('rad').value #RANDOMLY MULTIPLY BY 3 HERE
 
 #starMass
 starMass = const.M_sun
@@ -300,7 +302,7 @@ def calc_t_sInnersOuter(sma,e,W,w,inc,s_inner,s_outer,starMass,plotBool):
         _,_,_,_,_,_,\
         _,_,_,_,_,_,_,_,_,_,_,_,\
         _,_,_,_,_,_,_,_,_,_,_,_,\
-        _,_,_,_,_,_,_, _ = calcMasterIntersections(sma,e,W,w,inc,s_inner,starMass,False)
+        _,_,_,_,_,_,_, _ = calcMasterIntersections(sma,e,W,w,inc,s_inner*np.ones(len(sma)),starMass,False)
 
     #Combine them all into one storage array
     times_o[yrealAllRealInds_o[fourIntInds_o],0] = t_fourInt0_o
@@ -324,7 +326,7 @@ def calc_t_sInnersOuter(sma,e,W,w,inc,s_inner,s_outer,starMass,plotBool):
         _,_,_,_,_,_,\
         _,_,_,_,_,_,_,_,_,_,_,_,\
         _,_,_,_,_,_,_,_,_,_,_,_,\
-        _,_,_,_,_,_,_, _ = calcMasterIntersections(sma,e,W,w,inc,s_outer,starMass,False)
+        _,_,_,_,_,_,_, _ = calcMasterIntersections(sma,e,W,w,inc,s_outer*np.ones(len(sma)),starMass,False)
 
     #Combine them all into one storage array
     times_i[yrealAllRealInds_i[fourIntInds_i],0] = t_fourInt0_i
@@ -350,7 +352,7 @@ print('Num Planets with At Least 2 Int given dmag: ' + str(np.sum((mindmag < dma
 print('Num Planets with dmag local extrema: ' + str(len(indsWith4)))
 print('Num Planets with given 4 Int given dmag: ' + str(np.sum((dmaglminAll < dmag)*(dmaglmaxAll > dmag))))
 indsWith4Int = indsWith4[np.where((dmaglminAll < dmag)*(dmaglmaxAll > dmag))[0]]
-indsWith2Int = list(set(np.where((mindmag < dmag)*(maxdmag > dmag))[0]) - set(indsWith4Int))
+indsWith2Int = np.asarray(list(set(np.where((mindmag < dmag)*(maxdmag > dmag))[0]) - set(indsWith4Int)))
 ######################################################################
 
 #### Dmag Extrema Times ##############################################
@@ -381,7 +383,7 @@ time_dmagInts[indsWith4Int,3] = timeFromTrueAnomaly(nus4Int[:,3],periods[indsWit
 ######################################################################
 
 #### Bulking all Times Together ######################################
-times_s = calc_t_sInnersOuter(sma,e,W,w,inc,s_inner,s_outer,starMass,plotBool)
+times_s = calc_t_sInnersOuter(sma,e,W,w,inc,s_inner*np.ones(len(sma)),s_outer*np.ones(len(sma)),starMass,plotBool)
 times = np.concatenate((np.zeros((len(e),1)),times_s,time_dmagInts,np.reshape(periods,(len(periods),1))),axis=1)
 timesSortInds = np.argsort(times,axis=1)
 times2 = np.sort(times,axis=1) #sorted from smallest to largest
@@ -416,7 +418,7 @@ plt.scatter(nuMaxDmag[ind],maxdmag[ind],color='red',marker='d',zorder=20)
 plt.plot([0.,2.*np.pi],[maxdmag[ind],maxdmag[ind]],color='red',zorder=20)
 lind = np.where(ind == indsWith4)[0]
 if  ind in indsWith2Int:
-    mind = np.where(ind == indsWith2Int)[0]
+    mind = np.where(ind == indsWith2Int)[0][0]
     plt.scatter(nus2Int[mind],dmag2Int[mind],color='green',marker='o',zorder=20)
     plt.plot([0.,2.*np.pi],[dmag,dmag],color='green',zorder=10)
 elif ind in indsWith4Int:
@@ -456,11 +458,11 @@ plt.scatter(time_dmagmax[ind],maxdmag[ind],color='red',marker='d',zorder=20)
 plt.plot([0.,periods[ind]],[maxdmag[ind],maxdmag[ind]],color='red',zorder=20)
 lind = np.where(ind == indsWith4)[0]
 if  ind in indsWith2Int:
-    mind = np.where(ind == indsWith2Int)[0]
-    plt.scatter(time_dmagInts[indsWith4Int[mind]],dmag2Int[mind],color='green',marker='o',zorder=20)
+    mind = np.where(ind == indsWith2Int)[0][0]
+    plt.scatter(time_dmagInts[indsWith2Int[mind],:2],dmag2Int[mind],color='green',marker='o',zorder=20)
     plt.plot([0.,periods[ind]],[dmag,dmag],color='green',zorder=10)
 elif ind in indsWith4Int:
-    nind = np.where(ind == indsWith4Int)[0]
+    nind = np.where(ind == indsWith4Int)[0][0]
     plt.scatter(time_dmagInts[indsWith4Int[nind]],dmag4Int[nind],color='green',marker='o',zorder=20)
     plt.plot([0.,periods[ind]],[dmag,dmag],color='green',zorder=10)
 plt.scatter(time_dmaglmin[lind],dmaglminAll[lind],color='magenta',marker='d',zorder=20)
@@ -495,11 +497,11 @@ def planetVisibilityBounds(sma,e,W,w,inc,p,Rp,starMass,plotBool, s_inner, s_oute
         errors_twoIntSameY1,errors_twoIntOppositeX0,errors_twoIntOppositeX1,errors_IntersectionsOnly2X0,errors_IntersectionsOnly2X1,type0_0Inds,\
         type0_1Inds,type0_2Inds,type0_3Inds,type0_4Inds,type1_0Inds,type1_1Inds,type1_2Inds,type1_3Inds,type1_4Inds,type2_0Inds,type2_1Inds,type2_2Inds,\
         type2_3Inds,type2_4Inds,type3_0Inds,type3_1Inds,type3_2Inds,type3_3Inds,type3_4Inds,fourInt_x,fourInt_y,twoIntSameY_x,twoIntSameY_y,twoIntOppositeX_x,\
-        twoIntOppositeX_y,xIntersectionsOnly2,yIntersectionsOnly2,typeInds0,typeInds1,typeInds2,typeInds3, periods = calcMasterIntersections(sma,e,W,w,inc,s_inner,starMass,plotBool)
+        twoIntOppositeX_y,xIntersectionsOnly2,yIntersectionsOnly2,typeInds0,typeInds1,typeInds2,typeInds3, periods = calcMasterIntersections(sma,e,W,w,inc,s_inner*np.ones(len(sma)),starMass,plotBool)
     nus[only2RealInds,0:2] = nu_IntersectionsOnly2
-    nus[yrealAllRealInds[fourIntInds],[0:4]] = nu_fourInt
-    nus[yrealAllRealInds[twoIntOppositeXInds],[0:2]] = nu_twoIntOppositeX
-    nus[yrealAllRealInds[twoIntSameYInds],[0:2]] = nu_twoIntSameY
+    nus[yrealAllRealInds[fourIntInds],0:4] = nu_fourInt
+    nus[yrealAllRealInds[twoIntOppositeXInds],0:2] = nu_twoIntOppositeX
+    nus[yrealAllRealInds[twoIntSameYInds],0:2] = nu_twoIntSameY
     #### nu from s_outer
     dmajorp,dminorp,theta_OpQ_X,theta_OpQp_X,Op,x,y,Phi,xreal,only2RealInds,yrealAllRealInds,\
         fourIntInds,twoIntOppositeXInds,twoIntSameYInds,nu_minSepPoints,nu_maxSepPoints,nu_lminSepPoints,nu_lmaxSepPoints,nu_fourInt,\
@@ -511,11 +513,11 @@ def planetVisibilityBounds(sma,e,W,w,inc,p,Rp,starMass,plotBool, s_inner, s_oute
         errors_twoIntSameY1,errors_twoIntOppositeX0,errors_twoIntOppositeX1,errors_IntersectionsOnly2X0,errors_IntersectionsOnly2X1,type0_0Inds,\
         type0_1Inds,type0_2Inds,type0_3Inds,type0_4Inds,type1_0Inds,type1_1Inds,type1_2Inds,type1_3Inds,type1_4Inds,type2_0Inds,type2_1Inds,type2_2Inds,\
         type2_3Inds,type2_4Inds,type3_0Inds,type3_1Inds,type3_2Inds,type3_3Inds,type3_4Inds,fourInt_x,fourInt_y,twoIntSameY_x,twoIntSameY_y,twoIntOppositeX_x,\
-        twoIntOppositeX_y,xIntersectionsOnly2,yIntersectionsOnly2,typeInds0,typeInds1,typeInds2,typeInds3, periods = calcMasterIntersections(sma,e,W,w,inc,s_outer,starMass,plotBool)
+        twoIntOppositeX_y,xIntersectionsOnly2,yIntersectionsOnly2,typeInds0,typeInds1,typeInds2,typeInds3, periods = calcMasterIntersections(sma,e,W,w,inc,s_outer*np.ones(len(sma)),starMass,plotBool)
     nus[only2RealInds,4:6] = nu_IntersectionsOnly2
-    nus[yrealAllRealInds[fourIntInds],[4:8]] = nu_fourInt
-    nus[yrealAllRealInds[twoIntOppositeXInds],[4:6]] = nu_twoIntOppositeX
-    nus[yrealAllRealInds[twoIntSameYInds],[4:6]] = nu_twoIntSameY
+    nus[yrealAllRealInds[fourIntInds],4:8] = nu_fourInt
+    nus[yrealAllRealInds[twoIntOppositeXInds],4:6] = nu_twoIntOppositeX
+    nus[yrealAllRealInds[twoIntSameYInds],4:6] = nu_twoIntSameY
     #### Solving for dmag_min and dmag_max for each planet ################
     mindmag, maxdmag, dmaglminAll, dmaglmaxAll, indsWith2, indsWith4, nuMinDmag, nuMaxDmag, nulminAll, nulmaxAll = calc_planet_dmagmin_dmagmax(e,inc,w,sma*u.AU,p,Rp)
     #### nu From dmag_upper
@@ -544,33 +546,138 @@ def planetVisibilityBounds(sma,e,W,w,inc,p,Rp,starMass,plotBool, s_inner, s_oute
     
     #Finding which planets are all nan for efficiency
     nanbool = np.isnan(nus)
-    indsNotAllNan = np.where(np.logical_not(np.all(nus,axis=1)))[0]
+    indsNotAllNan = np.where(np.logical_not(np.all(nanbool,axis=1)))[0] #Get the inds of planets where not all nus are nan
 
     #Aded ranges above or below each nan (so I can simply do a midpoint evaluation with no fancy indexing)
     nus_min = np.nanmin(nus[indsNotAllNan],axis=1)
     nus_max = np.nanmax(nus[indsNotAllNan],axis=1)
-    nus[indsNotAllNan,16] = 2.*np.pi + nus_min #append the next orbit to this bit
-    nus[indsNotAllNan,17] = nus_max - 2.*np.pi #append the previous orbit intersection
+    nus[indsNotAllNan,16] = 2.*np.pi #2.*np.pi + nus_min #append the next orbit to this bit
+    nus[indsNotAllNan,17] = 0. #nus_max - 2.*np.pi #append the previous orbit intersection
 
-    #sort
+    #sort the nus from smallest to largest
     nus[indsNotAllNan] = np.sort(nus[indsNotAllNan],axis=1)
+    for i in np.arange(len(indsNotAllNan)):
+        nus[indsNotAllNan[i]] = np.sort(nus[indsNotAllNan[i]])
 
     #calculate nus midpoints (for evaluating whether planets are visible within the range specified)
     nus_midpoints = nus[:,1:] - nus[:,:-1]
 
     #Calculate dmag and s for all midpoints
-    Phi = (1.+np.sin(np.tile(inc,(18,1)).T)*np.sin(nus_midpoints+np.tile(w,(18,1)).T))**2./4.
-    d = np.tile(sma.to('AU'),(18,1)).T*(1.-np.tile(e,(18,1)).T**2.)/(np.tile(e,(18,1)).T*np.cos(nus_midpoints)+1.)
-    dmags = deltaMag(np.tile(p,(18,1)).T,np.tile(Rp.to('AU'),(18,1)).T,d,Phi) #calculate dmag of the specified x-value
-    ss = planet_star_separation(np.tile(sma,(18,1)).T,np.tile(e,(18,1)).T,nus_midpoints,np.tile(w,(18,1)).T,np.tile(inc,(18,1)).T)
+    Phi = (1.+np.sin(np.tile(inc,(17,1)).T)*np.sin(nus_midpoints+np.tile(w,(17,1)).T))**2./4.
+    d = np.tile(sma*u.AU,(17,1)).T*(1.-np.tile(e,(17,1)).T**2.)/(np.tile(e,(17,1)).T*np.cos(nus_midpoints)+1.)
+    dmags = deltaMag(np.tile(p,(17,1)).T,np.tile(Rp.to('AU'),(17,1)).T,d,Phi) #calculate dmag of the specified x-value
+    ss = planet_star_separation(np.tile(sma,(17,1)).T,np.tile(e,(17,1)).T,nus_midpoints,np.tile(w,(17,1)).T,np.tile(inc,(17,1)).T)
 
     #Determine ranges where the planet is visible
-    planetIsVisibleBool = (ss < s_outer)*(ss > s_inner)*(dmags < dmag_upper)*(dmags > dmag_lower)
+    planetIsVisibleBool = (ss < np.ones((len(sma),17))*s_outer)*(ss > np.ones((len(sma),17))*s_inner)*(dmags < np.ones((len(sma),17))*dmag_upper)*(dmags > np.ones((len(sma),17))*dmag_lower)
+
+
 
     return nus, planetIsVisibleBool
 
-nus, planetIsVisibleBool = planetVisibilityBounds(sma,e,W,w,inc,p,Rp,starMass,plotBool, s_inner, s_outer, dmag_upper, dmag_lower=None)
-ts = timeFromTrueAnomaly(nus,np.tile(periods,(18,1)).T,np.tile(e,(18,1)).T)
+nus, planetIsVisibleBool = planetVisibilityBounds(sma,e,W,w,inc,p,Rp,starMass,plotBool, s_inner, s_outer, dmag_upper, dmag_lower=None) #Calculate planet-star nu edges and visible regions
+ts = timeFromTrueAnomaly(nus,np.tile(periods,(18,1)).T*u.year.to('day'),np.tile(e,(18,1)).T) #Calculate the planet-star intersection edges
+dt = ts[:,1:] - ts[:,:-1] #Calculate time region widths
+maxIntTime = 30.
+gtIntLimit = dt > maxIntTime #Create boolean array for inds
+totalVisibleTimePerTarget = np.nansum(np.multiply(np.multiply(dt-maxIntTime,planetIsVisibleBool.astype('int')),gtIntLimit),axis=1) #We subtract the int time from the fraction of observable time
+totalCompleteness = np.divide(totalVisibleTimePerTarget,periods*u.year.to('day')) # Fraction of time each planet is visible of its period
+
+
+#### Data Struct of Completeness
+compDict = dict()
+maxIntTimes = [0.,30.,60.,90.] #in days
+starDistances = [5.,10.,15.] #in pc
+for i in np.arange(len(starDistances)):
+    starDistance = starDistances[i]
+    s_inner = starDistance*u.pc.to('AU')*IWA_HabEx.to('rad').value
+    s_outer = starDistance*u.pc.to('AU')*OWA_HabEx.to('rad').value #RANDOMLY MULTIPLY BY 3 HERE
+    #will need to recalculate separations
+    for j in np.arange(len(maxIntTimes)):
+        maxIntTime = maxIntTimes[j]
+        compDict[(i,j)] = dict()
+        compDict[(i,j)]['maxIntTime'] = maxIntTime
+        compDict[(i,j)]['stardistance'] = starDistance
+        compDict[(i,j)]['s_inner'] = s_inner
+        compDict[(i,j)]['s_outer'] = s_outer
+        nus, planetIsVisibleBool = planetVisibilityBounds(sma,e,W,w,inc,p,Rp,starMass,plotBool, s_inner, s_outer, dmag_upper, dmag_lower=None) #Calculate planet-star nu edges and visible regions
+        ts = timeFromTrueAnomaly(nus,np.tile(periods,(18,1)).T*u.year.to('day'),np.tile(e,(18,1)).T) #Calculate the planet-star intersection edges
+        dt = ts[:,1:] - ts[:,:-1] #Calculate time region widths
+        # Completeness Calculated Based On Planets In the instrument's visibility limits
+        compDict[(i,j)]['totalVisibleTimePerTarget'] = np.nansum(np.multiply(dt,planetIsVisibleBool.astype('int')),axis=1) #The traditional calculation, accounting for how long the planet is in the visible region
+        compDict[(i,j)]['totalCompletenessPerTarget'] = np.divide(compDict[(i,j)]['totalVisibleTimePerTarget'],periods*u.year.to('day')) # Fraction of time each planet is visible of its period
+        compDict[(i,j)]['totalCompleteness'] = np.sum(compDict[(i,j)]['totalCompletenessPerTarget'])/len(compDict[(i,j)]['totalCompletenessPerTarget']) #Calculates the total completenss by summing all the fractions and normalize by number of targets
+        assert np.all(compDict[(i,j)]['totalCompletenessPerTarget'] >= 0), 'Not all positive comp'
+        assert compDict[(i,j)]['totalCompleteness'] >= 0, 'Not positive comp'
+        # Completeness 
+        gtIntLimit = dt > maxIntTime #Create boolean array for inds
+        compDict[(i,j)]['totalVisibleTimePerTarget_maxIntTimeCorrected'] = np.nansum(np.multiply(np.multiply(dt-maxIntTime,planetIsVisibleBool.astype('int')),gtIntLimit.astype('int')),axis=1) #We subtract the int time from the fraction of observable time
+        compDict[(i,j)]['totalCompletenessPerTarget_maxIntTimeCorrected'] = np.divide(compDict[(i,j)]['totalVisibleTimePerTarget_maxIntTimeCorrected'],periods*u.year.to('day')) # Fraction of time each planet is visible of its period
+        compDict[(i,j)]['totalCompleteness_maxIntTimeCorrected'] = np.sum(compDict[(i,j)]['totalCompletenessPerTarget_maxIntTimeCorrected'])/len(compDict[(i,j)]['totalCompletenessPerTarget_maxIntTimeCorrected']) #Calculates the total completenss by summing all the fractions and normalize by number of targets
+        compDict[(i,j)]['SubTypeCompPerTarget'] = dict()
+        compDict[(i,j)]['SubTypeCompPerTarget_maxIntTimeCorrected'] = dict()
+        compDict[(i,j)]['SubTypeComp'] = dict()
+        compDict[(i,j)]['SubTypeComp_maxIntTimeCorrected'] = dict()
+        for overi, overj in itertools.product(np.arange(len(comp.Rp_hi)),np.arange(len(comp.L_lo[0,:]))):
+            compDict[(i,j)]['SubTypeCompPerTarget'][(overi,overj)] = np.multiply(compDict[(i,j)]['totalCompletenessPerTarget'],((bini==overi)*(binj==overj)).astype('int'))/np.sum(np.multiply(periods*u.year.to('day'),((bini==overi)*(binj==overj)).astype('int'))) #Calculate completeness for this specific planet subtype
+            compDict[(i,j)]['SubTypeCompPerTarget_maxIntTimeCorrected'][(overi,overj)] = np.multiply(compDict[(i,j)]['totalCompletenessPerTarget_maxIntTimeCorrected'],((bini==overi)*(binj==overj)).astype('int'))/np.sum(np.multiply(periods*u.year.to('day'),((bini==overi)*(binj==overj)).astype('int'))) #Calculate completeness for this specific planet subtype
+            compDict[(i,j)]['SubTypeComp'][(overi,overj)] = np.sum(compDict[(i,j)]['SubTypeCompPerTarget'][(overi,overj)])
+        compDict[(i,j)]['SubTypeComp_maxIntTimeCorrected'][(overi,overj)] = np.sum(compDict[(i,j)]['SubTypeCompPerTarget_maxIntTimeCorrected'][(overi,overj)])
+        
+        #Earth-Like Completeness, The probability of the detected planet being Earth-Like
+        compDict[(i,j)]['EarthlikeCompPerTarget'] = np.multiply(compDict[(i,j)]['totalCompletenessPerTarget'],(earthLike).astype('int')) #/np.sum(np.multiply(periods*u.year.to('day'),(earthLike).astype('int'))) #Calculates the completeness for Earth-Like Planets
+        compDict[(i,j)]['EarthlikeCompPerTarget_maxIntTimeCorrected'] = np.multiply(compDict[(i,j)]['totalCompletenessPerTarget_maxIntTimeCorrected'],(earthLike).astype('int')) #/np.sum(np.multiply(periods*u.year.to('day'),(earthLike).astype('int'))) #Calculates the completeness for Earth-Like Planets
+        compDict[(i,j)]['EarthlikeComp'] = np.sum(compDict[(i,j)]['EarthlikeCompPerTarget'])/len(earthLike) #np.sum(earthLike.astype('int'))
+        compDict[(i,j)]['EarthlikeComp_maxIntTimeCorrected'] = np.sum(compDict[(i,j)]['EarthlikeCompPerTarget_maxIntTimeCorrected'])/len(earthLike) #np.sum(earthLike.astype('int'))
+
+        #Earth-Like Completeness
+        compDict[(i,j)]['EarthlikeComp2'] = np.sum(compDict[(i,j)]['EarthlikeCompPerTarget'])/np.sum(earthLike.astype('int'))
+        compDict[(i,j)]['EarthlikeComp2_maxIntTimeCorrected'] = np.sum(compDict[(i,j)]['EarthlikeCompPerTarget_maxIntTimeCorrected'])/np.sum(earthLike.astype('int'))
+
+maxIntTime = 30. #days
+gtIntLimit = dt > maxIntTime #Create boolean array for inds
+totalCompletenessIntLimit = np.nansum(np.multiply(np.multiply(dt-maxIntTime,planetIsVisibleBool.astype('int')),gtIntLimit),axis=1) #We subtract the int time from the fraction of observable time
+totalCompletenessIntLimit = np.divide(totalVisibleTimePerTarget,periods*u.year.to('day')) # Fraction of time each planet is visible of its period
+
+num=979087987234
+plt.figure(num=num)
+#plt.hist(totalVisibleTimePerTarget)
+plt.hist(totalCompleteness[np.where(np.logical_not(totalCompleteness == 0))[0]])
+plt.yscale('log')
+plt.show(block=False)
+
+
+print('TotalCompleteness:')
+for i in np.arange(len(starDistances)):
+    for j in np.arange(len(maxIntTimes)):
+        print('(' + str(i) + ',' + str(j) + '): ' + str(compDict[(i,j)]['totalCompleteness']))
+
+print('TotalCompleteness Max Int Time Corrected:')
+for i in np.arange(len(starDistances)):
+    for j in np.arange(len(maxIntTimes)):
+        print('(' + str(i) + ',' + str(j) + '): ' + str(compDict[(i,j)]['totalCompleteness_maxIntTimeCorrected']))
+
+print('Earth-Like Completeness:')
+for i in np.arange(len(starDistances)):
+    for j in np.arange(len(maxIntTimes)):
+        print('(' + str(i) + ',' + str(j) + '): ' + str(compDict[(i,j)]['EarthlikeComp']))
+
+print('Earth-Like Completeness Max Int Time Corrected:')
+for i in np.arange(len(starDistances)):
+    for j in np.arange(len(maxIntTimes)):
+        print('(' + str(i) + ',' + str(j) + '): ' + str(compDict[(i,j)]['EarthlikeComp_maxIntTimeCorrected']))
+
+print('Earth-Like Completeness2:')
+for i in np.arange(len(starDistances)):
+    for j in np.arange(len(maxIntTimes)):
+        print('(' + str(i) + ',' + str(j) + '): ' + str(compDict[(i,j)]['EarthlikeComp2']))
+
+print('Earth-Like Completeness 2 Max Int Time Corrected:')
+for i in np.arange(len(starDistances)):
+    for j in np.arange(len(maxIntTimes)):
+        print('(' + str(i) + ',' + str(j) + '): ' + str(compDict[(i,j)]['EarthlikeComp2_maxIntTimeCorrected']))
+
+
 
 #### Dynamic Completeness Calculations ################################
 #######################################################################
