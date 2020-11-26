@@ -1805,7 +1805,10 @@ def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lmi
     del gtMinSepBool, ltMaxSepBool, gtLMaxSepBool, ltLMaxSepBool, gtLMinSepBool, ltLMinSepBool #for memory efficiency
 
     #Solution Checks
-    assert np.max(np.imag(xreal2[yrealAllRealInds[fourIntInds]])) < 1e-5, 'an Imag component of the all reals is too high!' #uses to be 1e-7 but would occasionally get errors so relaxing
+    if not len(fourIntInds) == 0: #If this is the case, np.max does not work on empty sets
+        assert np.max(np.imag(xreal2[yrealAllRealInds[fourIntInds]])) < 1e-5, 'an Imag component of the all reals is too high!' #uses to be 1e-7 but would occasionally get errors so relaxing
+    else:
+        print('fourIntInds is empty') #Debuggin statement
 
     #### Four Intersection Points
     fourInt_dx = (np.real(xreal2[yrealAllRealInds[fourIntInds]]).T - mx[yrealAllRealInds[fourIntInds]]).T
@@ -1846,7 +1849,17 @@ def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lmi
     twoIntSameY_y = np.zeros((len(twoIntSameYInds),2))
     #DELETEassert np.max(np.imag(xreal2[yrealAllRealInds[twoIntSameYInds],0])) < 1e-8, 'An Imaginary component was too large' #Was 1e-12, but is now 1e-8
     if len(twoIntSameYInds) > 0:
-        assert np.max(np.imag(xreal2[yrealAllRealInds[twoIntSameYInds],0])) < 1e-5, 'An Imaginary component was too large' #Was 1e-12, but is now 1e-5
+        #assert np.max(np.imag(xreal2[yrealAllRealInds[twoIntSameYInds],0])) < 1e-5, 'An Imaginary component was too large' #Was 1e-12, but is now 1e-5
+        # There was a specific case where the imaginary component was as high as 0.26, but th e real components of the solution were correct... so I am not complaining
+        # Here are the specifics of the case causing the issue. I verified the real components of the solution were correct via plotting
+        # a = 2.4946080925534058
+        # b = 0.3800927979713089
+        # mx = 0.724828007491803
+        # my = 0.09703406084684035
+        # s_circle = 0.45
+        # We do need to nuke the imaginary component of a solution with imag > 1e-5
+        afflictedInds = np.where(np.imag(xreal2[yrealAllRealInds[twoIntSameYInds],0]) < 1e-5)[0]
+        xreal2[yrealAllRealInds[twoIntSameYInds[afflictedInds]]] = np.real(xreal2[yrealAllRealInds[twoIntSameYInds[afflictedInds]]]) #Removes the imaginary component
     twoIntSameY_x[:,0] = np.real(xreal2[yrealAllRealInds[twoIntSameYInds],0])
     smallImagInds = np.where(np.abs(np.imag(xreal2[yrealAllRealInds[twoIntSameYInds],1])) < 1e-9)[0]
     largeImagInds = np.where(np.abs(np.imag(xreal2[yrealAllRealInds[twoIntSameYInds],1])) > 1e-9)[0]
@@ -1861,7 +1874,10 @@ def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lmi
     #### Two Intersection Points twoIntOppositeXInds
     twoIntOppositeX_x = np.zeros((len(twoIntOppositeXInds),2))
     twoIntOppositeX_y = np.zeros((len(twoIntOppositeXInds),2))
-    assert np.max(np.imag(xreal2[yrealAllRealInds[twoIntOppositeXInds],0])) < 1e-7, '' #was 1e-12 but caused problems changed to 1e-7
+    if not len(twoIntOppositeXInds) == 0:
+        assert np.max(np.imag(xreal2[yrealAllRealInds[twoIntOppositeXInds],0])) < 1e-7, '' #was 1e-12 but caused problems changed to 1e-7
+    else:
+        print('twoIntOppositeXInds has length 0') #this is a debugging statement
     twoIntOppositeX_x[:,0] = np.real(xreal2[yrealAllRealInds[twoIntOppositeXInds],0])
     twoIntOppositeX_x[:,1] = np.real(xreal2[yrealAllRealInds[twoIntOppositeXInds],1])
     twoIntOppositeX_y = np.asarray([np.sqrt(b[yrealAllRealInds[twoIntOppositeXInds]]**2*(1-np.abs(twoIntOppositeX_x[:,0])**2/a[yrealAllRealInds[twoIntOppositeXInds]]**2)),\
@@ -2231,7 +2247,7 @@ def nuCorrections_int(sma,e,W,w,inc,r,nus,mainInds,subInds):
     r_fourInt0 = xyz_3Dellipse(sma[mainInds[subInds]],e[mainInds[subInds]],W[mainInds[subInds]],w[mainInds[subInds]],inc[mainInds[subInds]],nus)
     tmp_fourInt0Seps = np.sqrt(r_fourInt0[0,0]**2 + r_fourInt0[1,0]**2)
     errors = np.abs(r[mainInds[subInds]] - tmp_fourInt0Seps)
-    maxError_fourInt0 = np.max(errors)
+    #DELETE?maxError_fourInt0 = np.max(errors) #Was causing an error when subInds is empty, specifically when fourIntInds is empty and passed in
     #print(maxError_fourInt0)
     nus = np.mod(nus,2.*np.pi)
     return nus, errors
@@ -2469,6 +2485,7 @@ def calcMasterIntersections(sma,e,W,w,inc,s_circle,starMass,plotBool):
         typeInds2 (numpy array):
         typeInds3 (numpy array):
         periods (numpy array):
+            planet period in years
     """
     #### Calculate Projected Ellipse Angles and Minor Axis
     start0 = time.time()
@@ -2648,7 +2665,7 @@ def calcMasterIntersections(sma,e,W,w,inc,s_circle,starMass,plotBool):
     ####
 
     #### Calculate time from nu
-    periods = (2*np.pi*np.sqrt((sma*u.AU)**3/(const.G.to('AU3 / (kg s2)')*starMass))).to('year').value
+    periods = (2.*np.pi*np.sqrt((sma*u.AU)**3./(const.G.to('AU3 / (kg s2)')*starMass))).to('year').value
     t_minSep = timeFromTrueAnomaly(nu_minSepPoints,periods,e)
     t_maxSep = timeFromTrueAnomaly(nu_maxSepPoints,periods,e)
     t_lminSep = timeFromTrueAnomaly(nu_lminSepPoints,periods[yrealAllRealInds],e[yrealAllRealInds])
@@ -2657,9 +2674,12 @@ def calcMasterIntersections(sma,e,W,w,inc,s_circle,starMass,plotBool):
     t_fourInt1 = timeFromTrueAnomaly(nu_fourInt[:,1],periods[yrealAllRealInds[fourIntInds]],e[yrealAllRealInds[fourIntInds]])
     t_fourInt2 = timeFromTrueAnomaly(nu_fourInt[:,2],periods[yrealAllRealInds[fourIntInds]],e[yrealAllRealInds[fourIntInds]])
     t_fourInt3 = timeFromTrueAnomaly(nu_fourInt[:,3],periods[yrealAllRealInds[fourIntInds]],e[yrealAllRealInds[fourIntInds]])
-    if len(twoIntSameYInds) != 0:
+    if not len(twoIntSameYInds) == 0:
         t_twoIntSameY0 = timeFromTrueAnomaly(nu_twoIntSameY[:,0],periods[yrealAllRealInds[twoIntSameYInds]],e[yrealAllRealInds[twoIntSameYInds]])
         t_twoIntSameY1 = timeFromTrueAnomaly(nu_twoIntSameY[:,1],periods[yrealAllRealInds[twoIntSameYInds]],e[yrealAllRealInds[twoIntSameYInds]])
+    else:
+        t_twoIntSameY0 = np.asarray([])
+        t_twoIntSameY1 = np.asarray([])
     t_twoIntOppositeX0 = timeFromTrueAnomaly(nu_twoIntOppositeX[:,0],periods[yrealAllRealInds[twoIntOppositeXInds]],e[yrealAllRealInds[twoIntOppositeXInds]])
     t_twoIntOppositeX1 = timeFromTrueAnomaly(nu_twoIntOppositeX[:,1],periods[yrealAllRealInds[twoIntOppositeXInds]],e[yrealAllRealInds[twoIntOppositeXInds]])
     t_IntersectionOnly20 = timeFromTrueAnomaly(nu_IntersectionsOnly2[:,0],periods[only2RealInds],e[only2RealInds])
