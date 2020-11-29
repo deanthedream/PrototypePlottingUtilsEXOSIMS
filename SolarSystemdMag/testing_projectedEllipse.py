@@ -21,7 +21,7 @@ folder = os.path.normpath(os.path.expandvars('$HOME/Documents/exosims/Scripts'))
 filename = 'HabEx_CKL2_PPKL2.json'
 filename = 'WFIRSTcycle6core.json'
 filename = 'HabEx_CSAG13_PPSAG13_compSubtype.json'
-filename = 'HabEx_CSAG13_PPSAG13_compSubtypeHighEccen.json'
+#filename = 'HabEx_CSAG13_PPSAG13_compSubtypeHighEccen.json'
 scriptfile = os.path.join(folder,filename)
 sim = EXOSIMS.MissionSim.MissionSim(scriptfile=scriptfile,nopar=True)
 PPop = sim.PlanetPopulation
@@ -52,9 +52,9 @@ dmag = 25. #29.0
 dmag_upper = 25. #29.0
 IWA_HabEx = 0.045*u.arcsec #taken from a Habex Script in units of mas
 IWA2=0.150*u.arcsec #Suggested by dmitry as analahous to WFIRST
-OWA_HabEx = 6*u.arcsec #from the HabEx Standards Team Final Report
+OWA_HabEx = 6.*u.arcsec #from the HabEx Standards Team Final Report
 s_inner = 10.*u.pc.to('AU')*IWA_HabEx.to('rad').value
-s_outer = 10.*u.pc.to('AU')*OWA_HabEx.to('rad').value #RANDOMLY MULTIPLY BY 3 HERE
+s_outer = 10.*u.pc.to('AU')*OWA_HabEx.to('rad').value
 
 #starMass
 starMass = const.M_sun
@@ -368,10 +368,11 @@ nus2Int, nus4Int, dmag2Int, dmag4Int = calc_planetnu_from_dmag(dmag,e,inc,w,sma*
 time_dmagInts = np.zeros((len(e),4))*np.nan
 time_dmagInts[indsWith2Int,0] = timeFromTrueAnomaly(nus2Int[:,0],periods[indsWith2Int],e[indsWith2Int])
 time_dmagInts[indsWith2Int,1] = timeFromTrueAnomaly(nus2Int[:,1],periods[indsWith2Int],e[indsWith2Int])
-time_dmagInts[indsWith4Int,0] = timeFromTrueAnomaly(nus4Int[:,0],periods[indsWith4Int],e[indsWith4Int])
-time_dmagInts[indsWith4Int,1] = timeFromTrueAnomaly(nus4Int[:,1],periods[indsWith4Int],e[indsWith4Int])
-time_dmagInts[indsWith4Int,2] = timeFromTrueAnomaly(nus4Int[:,2],periods[indsWith4Int],e[indsWith4Int])
-time_dmagInts[indsWith4Int,3] = timeFromTrueAnomaly(nus4Int[:,3],periods[indsWith4Int],e[indsWith4Int])
+if not indsWith4Int is None:
+    time_dmagInts[indsWith4Int,0] = timeFromTrueAnomaly(nus4Int[:,0],periods[indsWith4Int],e[indsWith4Int])
+    time_dmagInts[indsWith4Int,1] = timeFromTrueAnomaly(nus4Int[:,1],periods[indsWith4Int],e[indsWith4Int])
+    time_dmagInts[indsWith4Int,2] = timeFromTrueAnomaly(nus4Int[:,2],periods[indsWith4Int],e[indsWith4Int])
+    time_dmagInts[indsWith4Int,3] = timeFromTrueAnomaly(nus4Int[:,3],periods[indsWith4Int],e[indsWith4Int])
 # t2Int = np.zeros((len(indsWith2Int),4))
 # t2Int[:,0] = timeFromTrueAnomaly(nus2Int[:,0],periods[indsWith2Int],e[indsWith2Int])
 # t2Int[:,1] = timeFromTrueAnomaly(nus2Int[:,1],periods[indsWith2Int],e[indsWith2Int])
@@ -551,13 +552,18 @@ def planetVisibilityBounds(sma,e,W,w,inc,p,Rp,starMass,plotBool, s_inner, s_oute
     #Aded ranges above or below each nan (so I can simply do a midpoint evaluation with no fancy indexing)
     nus_min = np.nanmin(nus[indsNotAllNan],axis=1)
     nus_max = np.nanmax(nus[indsNotAllNan],axis=1)
-    nus[indsNotAllNan,16] = 2.*np.pi #2.*np.pi + nus_min #append the next orbit to this bit
-    nus[indsNotAllNan,17] = 0. #nus_max - 2.*np.pi #append the previous orbit intersection
+    #nus[indsNotAllNan,16] = 2.*np.pi #2.*np.pi + nus_min #append the next orbit to this bit
+    #nus[indsNotAllNan,17] = 0. #nus_max - 2.*np.pi #append the previous orbit intersection
+    nus[:,16] = 2.*np.pi #2.*np.pi + nus_min #append the next orbit to this bit
+    nus[:,17] = 0. #nus_max - 2.*np.pi #append the previous orbit intersection
 
     #sort the nus from smallest to largest
-    nus[indsNotAllNan] = np.sort(nus[indsNotAllNan],axis=1)
-    for i in np.arange(len(indsNotAllNan)):
-        nus[indsNotAllNan[i]] = np.sort(nus[indsNotAllNan[i]])
+    # nus[indsNotAllNan] = np.sort(nus[indsNotAllNan],axis=1)
+    # for i in np.arange(len(indsNotAllNan)):
+    #     nus[indsNotAllNan[i]] = np.sort(nus[indsNotAllNan[i]])
+    #nus = np.sort(nus,axis=1)
+    for i in np.arange(nus.shape[0]):
+        nus[i] = np.sort(nus[i])
 
     #calculate nus midpoints (for evaluating whether planets are visible within the range specified)
     nus_midpoints = nus[:,1:] - nus[:,:-1]
