@@ -885,10 +885,18 @@ def plotErrorHistogram(errors_fourInt0,errors_fourInt1,errors_fourInt2,errors_fo
     plt.yscale('log')
     plt.xscale('log')
 
+    MIN = np.min(np.concatenate((np.abs(errors_fourInt0)+1e-17, np.abs(errors_fourInt1)+1e-17,np.abs(errors_fourInt2)+1e-17,np.abs(errors_fourInt3)+1e-17,\
+            np.abs(errors_twoIntSameY0)+1e-17, np.abs(errors_twoIntSameY1)+1e-17,np.abs(errors_twoIntOppositeX0)+1e-17,\
+            np.abs(errors_twoIntOppositeX1)+1e-17,np.abs(errors_IntersectionsOnly2X0)+1e-17,np.abs(errors_IntersectionsOnly2X1)+1e-17)))
+    MAX = np.max(np.concatenate((np.abs(errors_fourInt0)+1e-17, np.abs(errors_fourInt1)+1e-17,np.abs(errors_fourInt2)+1e-17,np.abs(errors_fourInt3)+1e-17,\
+            np.abs(errors_twoIntSameY0)+1e-17, np.abs(errors_twoIntSameY1)+1e-17,np.abs(errors_twoIntOppositeX0)+1e-17,\
+            np.abs(errors_twoIntOppositeX1)+1e-17,np.abs(errors_IntersectionsOnly2X0)+1e-17,np.abs(errors_IntersectionsOnly2X1)+1e-17)))
+    numBins = int(np.ceil(np.log10(MAX))) - int(np.floor(np.log10(MIN))) - 1
+    bins = 10 ** np.linspace(np.floor(np.log10(MIN)), np.ceil(np.log10(MAX)), numBins)
     plt.hist(np.concatenate((np.abs(errors_fourInt0)+1e-17, np.abs(errors_fourInt1)+1e-17,np.abs(errors_fourInt2)+1e-17,np.abs(errors_fourInt3)+1e-17,\
             np.abs(errors_twoIntSameY0)+1e-17, np.abs(errors_twoIntSameY1)+1e-17,np.abs(errors_twoIntOppositeX0)+1e-17,\
-            np.abs(errors_twoIntOppositeX1)+1e-17,np.abs(errors_IntersectionsOnly2X0)+1e-17,np.abs(errors_IntersectionsOnly2X1)+1e-17)), bins=np.logspace(start=-17.,stop=-1,num=17),color='purple')
-    plt.xlabel('Absolute Error (AU)', weight='bold')
+            np.abs(errors_twoIntOppositeX1)+1e-17,np.abs(errors_IntersectionsOnly2X0)+1e-17,np.abs(errors_IntersectionsOnly2X1)+1e-17)), color='purple', bins=bins)# bins=np.logspace(start=-17.,stop=-1,num=17))
+    plt.xlabel('Planet-Star Separation Error in (AU)', weight='bold')
     plt.ylabel('Number of Planets', weight='bold') #Switch to fraction
     plt.show(block=False)
 
