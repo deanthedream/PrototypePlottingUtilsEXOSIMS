@@ -12,7 +12,7 @@ from EXOSIMS.util.planet_star_separation import planet_star_separation
 import itertools
 
 #### PLOT BOOL
-plotBool = False
+plotBool = True
 if plotBool == True:
     from plotProjectedEllipse import *
 
@@ -368,7 +368,7 @@ nus2Int, nus4Int, dmag2Int, dmag4Int = calc_planetnu_from_dmag(dmag,e,inc,w,sma*
 time_dmagInts = np.zeros((len(e),4))*np.nan
 time_dmagInts[indsWith2Int,0] = timeFromTrueAnomaly(nus2Int[:,0],periods[indsWith2Int],e[indsWith2Int])
 time_dmagInts[indsWith2Int,1] = timeFromTrueAnomaly(nus2Int[:,1],periods[indsWith2Int],e[indsWith2Int])
-if not indsWith4Int is None:
+if not indsWith4Int is None and not nus4Int is None:
     time_dmagInts[indsWith4Int,0] = timeFromTrueAnomaly(nus4Int[:,0],periods[indsWith4Int],e[indsWith4Int])
     time_dmagInts[indsWith4Int,1] = timeFromTrueAnomaly(nus4Int[:,1],periods[indsWith4Int],e[indsWith4Int])
     time_dmagInts[indsWith4Int,2] = timeFromTrueAnomaly(nus4Int[:,2],periods[indsWith4Int],e[indsWith4Int])
@@ -580,6 +580,11 @@ def planetVisibilityBounds(sma,e,W,w,inc,p,Rp,starMass,plotBool, s_inner, s_oute
 
 
     return nus, planetIsVisibleBool
+
+
+#### Verifying Planet Visibility Windows #################################
+##########################################################################
+
 
 nus, planetIsVisibleBool = planetVisibilityBounds(sma,e,W,w,inc,p,Rp,starMass,plotBool, s_inner, s_outer, dmag_upper, dmag_lower=None) #Calculate planet-star nu edges and visible regions
 ts = timeFromTrueAnomaly(nus,np.tile(periods,(18,1)).T*u.year.to('day'),np.tile(e,(18,1)).T) #Calculate the planet-star intersection edges
