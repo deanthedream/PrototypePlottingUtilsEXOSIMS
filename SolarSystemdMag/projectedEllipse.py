@@ -131,7 +131,7 @@ def xyz_3Dellipse(a,e,W,w,inc,v):
         r (numpy array):
             x, y, z by n
     """
-    eqnr = a*(1-e**2)/(1+e*np.cos(v))
+    eqnr = a*(1.-e**2.)/(1.+e*np.cos(v))
     eqnX = eqnr*(np.cos(W)*np.cos(w+v) - np.sin(W)*np.sin(w+v)*np.cos(inc))
     eqnY = eqnr*(np.sin(W)*np.cos(w+v) + np.cos(W)*np.sin(w+v)*np.cos(inc))
     eqnZ = eqnr*(np.sin(inc)*np.sin(w+v))
@@ -1568,21 +1568,19 @@ def smin_smax_slmin_slmax(n, xreal, yreal, mx, my, x, y):
     #spm = spm.T #removed for efficiency
     spp = spp.T
 
-    #KEEP
     #### minSep
     minSep[yrealAllRealInds] = smm[:,1]
     minSepPoints_x[yrealAllRealInds] = xreal[yrealAllRealInds,1]
     minSepPoints_y[yrealAllRealInds] = yreal[yrealAllRealInds,1]
     ####
 
-    #KEEP
     #### maxSep
     maxSep[yrealAllRealInds] = spp[:,0]
     maxSepPoints_x[yrealAllRealInds] = xreal[yrealAllRealInds,0]
     maxSepPoints_y[yrealAllRealInds] = yreal[yrealAllRealInds,0]
     ####
 
-    #KEEP
+    #Calcs for local extrema
     smp2 = np.sqrt((np.real(xreal[yrealAllRealInds,2])-mx[yrealAllRealInds])**2 + (np.abs(np.real(yreal[yrealAllRealInds,2]))+my[yrealAllRealInds])**2)
     smp3 = np.sqrt((np.real(xreal[yrealAllRealInds,3])-mx[yrealAllRealInds])**2 + (np.abs(np.real(yreal[yrealAllRealInds,3]))+my[yrealAllRealInds])**2)
     smp = np.asarray([smp2,smp3]).T
@@ -1673,9 +1671,9 @@ def timeFromTrueAnomaly(nu,T,e):
             time past periastron corresponding to the input true anomaly 
     """
 
-    E = np.arctan2(np.sqrt(1-e**2)*np.sin(nu),e+np.cos(nu))
-    E = np.mod(E,2*np.pi)
-    t = (E-e*np.sin(E))/(2*np.pi/T)
+    E = np.arctan2(np.sqrt(1.-e**2.)*np.sin(nu),e+np.cos(nu))
+    E = np.mod(E,2.*np.pi)
+    t = (E-e*np.sin(E))/(2.*np.pi/T)
     return t
 
 def printKOE(ind,a,e,W,w,inc):
@@ -1687,7 +1685,7 @@ def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lmi
     """ Calculates the intersections between a circle centered at x,y with radius s_circle and an ellipse centered at x=0, y=0 with semi-major axis aligned with x-axis
     Args:
         s_circle (float):
-            the circle radius in AU
+            the circle radius in AU PASSING IN S_CIRCLE AS AN ARRAY IS DUMB
         a (numpy array):
             semi-major axis of the projected ellipse
         b (numpy array):
@@ -1774,6 +1772,16 @@ def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lmi
         allIndsUsed (numpy array):
             contains all typeA_BInds concatenated. typeA_BInds can be deleted once everything works 100%
     """
+
+    #### Quadrant Star Belongs to #######
+    bool1 = x > 0
+    bool2 = y > 0
+    #Quadrant 1 if T,T
+    #Quadrant 2 if F,T
+    #Quadrant 3 if F,F
+    #Quadrant 4 if T,F
+    ####################################
+
     #### Testing ellipse_to_Quartic solution
     #DELETEif r == None:
     #DELETEr = np.ones(len(a),dtype='complex128')
@@ -1783,12 +1791,12 @@ def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lmi
     #DELETEamx.astype('complex128')
     #DELETEamy.astype('complex128')
     #DELETEas_circle.astype('complex128')
-    A, B, C, D = quarticCoefficients_ellipse_to_Quarticipynb(a, b, mx, my, s_circle)
-    xreal2, delta, P, D2, R, delta_0 = quarticSolutions_ellipse_to_Quarticipynb(A.astype('complex128'), B, C, D)
-    yreal2 = ellipseYFromX(xreal2.astype('complex128'), a, b)
+    A, B, C, D = quarticCoefficients_ellipse_to_Quarticipynb(a, b, mx, my, s_circle) #extract quartic coefficients from the given star location, ellipse, and circle radius
+    xreal2, delta, P, D2, R, delta_0 = quarticSolutions_ellipse_to_Quarticipynb(A.astype('complex128'), B, C, D) #Solve the quartic expression
+    yreal2 = ellipseYFromX(xreal2.astype('complex128'), a, b) #Calculate Y components of intersection x solutions
 
-    #### All Real Inds
-    #Where r is...
+    #### Of All Real Inds (yrealAllRealInds) find bool array where r is... ################
+    #Output bool arrays are used in the next section
     gtMinSepBool = (minSep[yrealAllRealInds] < s_circle[yrealAllRealInds])
     ltMaxSepBool = (maxSep[yrealAllRealInds] >= s_circle[yrealAllRealInds])
     gtLMaxSepBool = (lmaxSep < s_circle[yrealAllRealInds])
@@ -1809,6 +1817,7 @@ def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lmi
         assert np.max(np.imag(xreal2[yrealAllRealInds[fourIntInds]])) < 1e-5, 'an Imag component of the all reals is too high!' #uses to be 1e-7 but would occasionally get errors so relaxing
     else:
         print('fourIntInds is empty') #Debuggin statement
+    ########################################################################################
 
     #### Four Intersection Points
     fourInt_dx = (np.real(xreal2[yrealAllRealInds[fourIntInds]]).T - mx[yrealAllRealInds[fourIntInds]]).T
@@ -1833,17 +1842,11 @@ def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lmi
     fourInt_y = ellipseYFromX(np.abs(fourInt_x), a[yrealAllRealInds[fourIntInds]], b[yrealAllRealInds[fourIntInds]])
     fourInt_y[:,2] = -fourInt_y[:,2]
     fourInt_y[:,3] = -fourInt_y[:,3]
-    #Quadrant Star Belongs to
-    bool1 = x > 0
-    bool2 = y > 0
-    #Quadrant 1 if T,T
-    #Quadrant 2 if F,T
-    #Quadrant 3 if F,F
-    #Quadrant 4 if T,F
     #### Four Intercept Points
     fourInt_x = (fourInt_x.T*(2*bool1[yrealAllRealInds[fourIntInds]]-1)).T
     fourInt_y = (fourInt_y.T*(2*bool2[yrealAllRealInds[fourIntInds]]-1)).T
     ####
+
     #### Two Intersection Points twoIntSameYInds
     twoIntSameY_x = np.zeros((len(twoIntSameYInds),2))
     twoIntSameY_y = np.zeros((len(twoIntSameYInds),2))
@@ -1870,7 +1873,169 @@ def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lmi
     #Adjust for Quadrant Star Belongs to
     twoIntSameY_x = (twoIntSameY_x.T*(2*bool1[yrealAllRealInds[twoIntSameYInds]]-1)).T
     twoIntSameY_y = (twoIntSameY_y.T*(2*bool2[yrealAllRealInds[twoIntSameYInds]]-1)).T
-    ####
+    #### Checking for Duplicates
+    twoIntSameY_s = np.sqrt(twoIntSameY_x**2. + twoIntSameY_y**2.)
+
+
+    #Doing some error checking stuffs.....
+    #Pull out the 4 x sols
+    x0 = np.real(xreal2[yrealAllRealInds[twoIntSameYInds],0])
+    x1 = np.real(xreal2[yrealAllRealInds[twoIntSameYInds],1])
+    x2 = np.real(xreal2[yrealAllRealInds[twoIntSameYInds],2])
+    x3 = np.real(xreal2[yrealAllRealInds[twoIntSameYInds],3])
+    xarray = np.asarray([x0,x0,-x0,-x0,x1,x1,-x1,-x1,x2,x2,-x2,-x2,x3,x3,-x3,-x3]).T
+    #Calculate the 4 associated y sols
+    y0 = np.sqrt(b[yrealAllRealInds[twoIntSameYInds]]**2*(1-x0**2/a[yrealAllRealInds[twoIntSameYInds]]**2))   
+    y1 = np.sqrt(b[yrealAllRealInds[twoIntSameYInds]]**2*(1-x1**2/a[yrealAllRealInds[twoIntSameYInds]]**2))
+    y2 = np.sqrt(b[yrealAllRealInds[twoIntSameYInds]]**2*(1-x2**2/a[yrealAllRealInds[twoIntSameYInds]]**2))
+    y3 = np.sqrt(b[yrealAllRealInds[twoIntSameYInds]]**2*(1-x3**2/a[yrealAllRealInds[twoIntSameYInds]]**2))
+    yarray = np.asarray([y0,-y0,y0,-y0,y1,-y1,y1,-y1,y2,-y2,y2,-y2,y3,-y3,y3,-y3]).T
+    #Calculate Sep array
+    separray = np.sqrt((xarray-np.tile(x[yrealAllRealInds[twoIntSameYInds]],(16,1)).T)**2.+(yarray-np.tile(y[yrealAllRealInds[twoIntSameYInds]],(16,1)).T)**2.)
+    #Calculate Error Array
+    errorarray = np.abs(separray - np.tile(s_circle[yrealAllRealInds[twoIntSameYInds]],(16,1)).T)
+    #np.histogram(np.sum(errorarray < 1e-5,axis=1))
+    errorarraybools = errorarray < 1e-4 #Tells me where the errors are small
+    twoIntSameY_x = np.zeros((len(twoIntSameYInds),2)) #Construct the output arrays
+    twoIntSameY_y = np.zeros((len(twoIntSameYInds),2))
+    summedSolErrors = np.sum(errorarraybools,axis=1) #Find the numbers of errors that are small for the given star
+    indsWith0 = np.where(summedSolErrors == 0)[0] #just relax the errors a bit
+    indsWith2 = np.where(summedSolErrors == 2)[0] #exactly the number of solutions we're looking for (HOPE THEYRE UNIQUE)
+    indsWith3 = np.where(summedSolErrors == 3)[0] #exactly the number of solutions we're looking for (HOPE THEYRE UNIQUE)
+    indsWith4 = np.where(summedSolErrors == 4)[0] #Need to parse out the two different low error solutions
+    indsWith7 = np.where(summedSolErrors == 7)[0] #WTF
+    indsWith5 = np.where(summedSolErrors == 5)[0] #WTF
+    assert len(indsWith0) + len(indsWith2) + len(indsWith3) + len(indsWith4) + len(indsWith7) + len(indsWith5) == xarray.shape[0], "All the solutions don't add correctly"
+    
+    #### For inds with 2
+    #pull out 4 smallest solutions
+    indsOfMin = np.nanargmin(errorarray[indsWith2],axis=1) #finds the ind of the minimum
+    twoIntSameY_x[indsWith2,0] = xarray[indsWith2,indsOfMin]
+    twoIntSameY_y[indsWith2,0] = yarray[indsWith2,indsOfMin]
+    #Nan the absolute minimum in the error array and sep array
+    errorarray[indsWith2,indsOfMin] = np.nan
+    separray[indsWith2,indsOfMin] = np.nan
+    #Find the ind of the second smallest
+    indsOfMin2 = np.nanargmin(errorarray[indsWith2],axis=1) #Finds the ind of the second minimum
+    twoIntSameY_x[indsWith2,1] = xarray[indsWith2,indsOfMin2]
+    twoIntSameY_y[indsWith2,1] = yarray[indsWith2,indsOfMin2]
+    
+    #### For inds with 4
+    if len(indsWith4) > 0:
+        #pull out 4 smallest solutions
+        indsOfMin = np.nanargmin(errorarray[indsWith4],axis=1) #finds the ind of the minimum
+        twoIntSameY_x[indsWith4,0] = xarray[indsWith4,indsOfMin]
+        twoIntSameY_y[indsWith4,0] = yarray[indsWith4,indsOfMin]
+        #Nan the absolute minimum in the error array and sep array
+        errorarray[indsWith4,indsOfMin] = np.nan
+        separray[indsWith4,indsOfMin] = np.nan
+        #Find the ind of the second smallest
+        indsOfMin2 = np.nanargmin(errorarray[indsWith4],axis=1) #Finds the ind of the second minimum
+        #Calculate distance between x_min,y_min and x_2min,y_2min Ensure it is sufficiently large
+        xarrayIndsOfMin = xarray[indsWith4,indsOfMin]
+        yarrayIndsOfMin = yarray[indsWith4,indsOfMin]
+        xarrayIndsOfMin2 = xarray[indsWith4,indsOfMin2]
+        yarrayIndsOfMin2 = yarray[indsWith4,indsOfMin2]
+        ptptSeps = np.sqrt((xarrayIndsOfMin - xarrayIndsOfMin2)**2. + (yarrayIndsOfMin - yarrayIndsOfMin2)**2.) #Calculate the distance between the two points
+        assert np.all(ptptSeps > 1e-5), 'The points selected are too close to one another'
+        #If the points are all far apart, then
+        twoIntSameY_x[indsWith4,1] = xarray[indsWith4,indsOfMin2]
+        twoIntSameY_y[indsWith4,1] = yarray[indsWith4,indsOfMin2]
+
+    #### For Inds With 3
+    if len(indsWith3) > 0:
+        #Select the two smallest seems to be the correct solution
+        indsOfMin = np.nanargmin(errorarray[indsWith3],axis=1) #finds the ind of the minimum
+        twoIntSameY_x[indsWith3,0] = xarray[indsWith3,indsOfMin]
+        twoIntSameY_y[indsWith3,0] = yarray[indsWith3,indsOfMin]
+        #Nan the absolute minimum in the error array and sep array
+        errorarray[indsWith3,indsOfMin] = np.nan
+        separray[indsWith3,indsOfMin] = np.nan
+        #Find the ind of the second smallest
+        indsOfMin2 = np.nanargmin(errorarray[indsWith3],axis=1) #Finds the ind of the second minimum
+        #Calculate distance between x_min,y_min and x_2min,y_2min Ensure it is sufficiently large
+        xarrayIndsOfMin = xarray[indsWith3,indsOfMin]
+        yarrayIndsOfMin = yarray[indsWith3,indsOfMin]
+        xarrayIndsOfMin2 = xarray[indsWith3,indsOfMin2]
+        yarrayIndsOfMin2 = yarray[indsWith3,indsOfMin2]
+        ptptSeps = np.sqrt((xarrayIndsOfMin - xarrayIndsOfMin2)**2. + (yarrayIndsOfMin - yarrayIndsOfMin2)**2.) #Calculate the distance between the two points
+        assert np.all(ptptSeps > 1e-5), 'The points selected are too close to one another'
+        #If the points are all far apart, then
+        twoIntSameY_x[indsWith3,1] = xarray[indsWith3,indsOfMin2]
+        twoIntSameY_y[indsWith3,1] = yarray[indsWith3,indsOfMin2]
+
+    #### For Inds With 0
+    if len(indsWith0) > 0:
+        #Select the two smallest seems to be the correct solution
+        indsOfMin = np.nanargmin(errorarray[indsWith0],axis=1) #finds the ind of the minimum
+        twoIntSameY_x[indsWith0,0] = xarray[indsWith0,indsOfMin]
+        twoIntSameY_y[indsWith0,0] = yarray[indsWith0,indsOfMin]
+        #Nan the absolute minimum in the error array and sep array
+        errorarray[indsWith0,indsOfMin] = np.nan
+        separray[indsWith0,indsOfMin] = np.nan
+        #Find the ind of the second smallest
+        indsOfMin2 = np.nanargmin(errorarray[indsWith0],axis=1) #Finds the ind of the second minimum
+        #Calculate distance between x_min,y_min and x_2min,y_2min Ensure it is sufficiently large
+        xarrayIndsOfMin = xarray[indsWith0,indsOfMin]
+        yarrayIndsOfMin = yarray[indsWith0,indsOfMin]
+        xarrayIndsOfMin2 = xarray[indsWith0,indsOfMin2]
+        yarrayIndsOfMin2 = yarray[indsWith0,indsOfMin2]
+        ptptSeps = np.sqrt((xarrayIndsOfMin - xarrayIndsOfMin2)**2. + (yarrayIndsOfMin - yarrayIndsOfMin2)**2.) #Calculate the distance between the two points
+        assert np.all(ptptSeps > 1e-5), 'The points selected are too close to one another'
+        #If the points are all far apart, then
+        twoIntSameY_x[indsWith0,1] = xarray[indsWith0,indsOfMin2]
+        twoIntSameY_y[indsWith0,1] = yarray[indsWith0,indsOfMin2]
+
+    #### For Inds With 5
+    if len(indsWith5) > 0:
+        #Select the two smallest seems to be the correct solution
+        indsOfMin = np.nanargmin(errorarray[indsWith5],axis=1) #finds the ind of the minimum
+        twoIntSameY_x[indsWith5,0] = xarray[indsWith5,indsOfMin]
+        twoIntSameY_y[indsWith5,0] = yarray[indsWith5,indsOfMin]
+        #Nan the absolute minimum in the error array and sep array
+        errorarray[indsWith5,indsOfMin] = np.nan
+        separray[indsWith5,indsOfMin] = np.nan
+        #Find the ind of the second smallest
+        indsOfMin2 = np.nanargmin(errorarray[indsWith5],axis=1) #Finds the ind of the second minimum
+        #Calculate distance between x_min,y_min and x_2min,y_2min Ensure it is sufficiently large
+        xarrayIndsOfMin = xarray[indsWith5,indsOfMin]
+        yarrayIndsOfMin = yarray[indsWith5,indsOfMin]
+        xarrayIndsOfMin2 = xarray[indsWith5,indsOfMin2]
+        yarrayIndsOfMin2 = yarray[indsWith5,indsOfMin2]
+        ptptSeps = np.sqrt((xarrayIndsOfMin - xarrayIndsOfMin2)**2. + (yarrayIndsOfMin - yarrayIndsOfMin2)**2.) #Calculate the distance between the two points
+        assert np.all(ptptSeps > 1e-5), 'The points selected are too close to one another'
+        #If the points are all far apart, then
+        twoIntSameY_x[indsWith5,1] = xarray[indsWith5,indsOfMin2]
+        twoIntSameY_y[indsWith5,1] = yarray[indsWith5,indsOfMin2]
+
+    #### For Inds With 7
+    if len(indsWith7) > 0:
+        #Select the two smallest seems to be the correct solution
+        indsOfMin = np.nanargmin(errorarray[indsWith7],axis=1) #finds the ind of the minimum
+        twoIntSameY_x[indsWith7,0] = xarray[indsWith7,indsOfMin]
+        twoIntSameY_y[indsWith7,0] = yarray[indsWith7,indsOfMin]
+        #Nan the absolute minimum in the error array and sep array
+        errorarray[indsWith7,indsOfMin] = np.nan
+        separray[indsWith7,indsOfMin] = np.nan
+        #Find the ind of the second smallest
+        indsOfMin2 = np.nanargmin(errorarray[indsWith7],axis=1) #Finds the ind of the second minimum
+        #Calculate distance between x_min,y_min and x_2min,y_2min Ensure it is sufficiently large
+        xarrayIndsOfMin = xarray[indsWith7,indsOfMin]
+        yarrayIndsOfMin = yarray[indsWith7,indsOfMin]
+        xarrayIndsOfMin2 = xarray[indsWith7,indsOfMin2]
+        yarrayIndsOfMin2 = yarray[indsWith7,indsOfMin2]
+        ptptSeps = np.sqrt((xarrayIndsOfMin - xarrayIndsOfMin2)**2. + (yarrayIndsOfMin - yarrayIndsOfMin2)**2.) #Calculate the distance between the two points
+        assert np.all(ptptSeps > 1e-5), 'The points selected are too close to one another'
+        #If the points are all far apart, then
+        twoIntSameY_x[indsWith7,1] = xarray[indsWith7,indsOfMin2]
+        twoIntSameY_y[indsWith7,1] = yarray[indsWith7,indsOfMin2]
+
+    #Double Verification
+    ptptSeps = np.sqrt((twoIntSameY_x[np.arange(twoIntSameY_x.shape[0]),1] - twoIntSameY_x[np.arange(twoIntSameY_x.shape[0]),0])**2. + (twoIntSameY_y[np.arange(twoIntSameY_x.shape[0]),1] - twoIntSameY_y[np.arange(twoIntSameY_x.shape[0]),0])**2.) #Calculate the distance between the two points
+    assert np.all(ptptSeps > 1e-5), 'The points selected are too close to one another' #If this is triggered, find the culprit ind, find the number of low error solutions it is producing, check and see if the errorarray has >2 low error solutions (this is likely the cause).
+    #Will likely need to add in a check that removes solutions by clusters. Currently we only nan indsOfMin, but we technically need to nan all indsOfMin in that set of 4 (since we did x0 y0,x0 -y0,-x0 y0,-x0 -y0)
+
+
     #### Two Intersection Points twoIntOppositeXInds
     twoIntOppositeX_x = np.zeros((len(twoIntOppositeXInds),2))
     twoIntOppositeX_y = np.zeros((len(twoIntOppositeXInds),2))

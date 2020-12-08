@@ -12,7 +12,7 @@ from EXOSIMS.util.planet_star_separation import planet_star_separation
 import itertools
 
 #### PLOT BOOL
-plotBool = True
+plotBool = False
 if plotBool == True:
     from plotProjectedEllipse import *
 
@@ -217,6 +217,21 @@ if plotBool == True:
     plotRerotatedFromNus(tmpind, sma[tmpind], e[tmpind], W[tmpind], w[tmpind], inc[tmpind], Op[:,tmpind], yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds,\
         nu_minSepPoints, nu_maxSepPoints, nu_lminSepPoints, nu_lmaxSepPoints, nu_fourInt, nu_twoIntSameY, nu_twoIntOppositeX, nu_IntersectionsOnly2,\
         twoIntSameY_x, twoIntSameY_y, num=8001)
+
+    #Check If Nus of Intersection are too close
+    errornu_twoIntSameY = np.abs(nu_twoIntSameY[np.arange(nu_twoIntSameY.shape[0]),0] - nu_twoIntSameY[np.arange(nu_twoIntSameY.shape[0]),1])
+    assert np.all(errornu_twoIntSameY>1e-5), 'nu differences are too small'
+    errornu_twoIntOppositeX = np.abs(nu_twoIntOppositeX[np.arange(nu_twoIntOppositeX.shape[0]),0] - nu_twoIntOppositeX[np.arange(nu_twoIntOppositeX.shape[0]),1])
+    assert np.all(errornu_twoIntOppositeX>1e-5), 'nu differences are too small'
+    errornu_IntersectionsOnly2 = np.abs(nu_IntersectionsOnly2[np.arange(nu_IntersectionsOnly2.shape[0]),0] - nu_IntersectionsOnly2[np.arange(nu_IntersectionsOnly2.shape[0]),1])
+    assert np.all(errornu_IntersectionsOnly2>1e-5), 'nu differences are too small'
+    #nu_fourInt
+    errornu_fourInt0 = np.abs(nu_fourInt[np.arange(nu_fourInt.shape[0]),0] - nu_fourInt[np.arange(nu_fourInt.shape[0]),1])
+    errornu_fourInt1 = np.abs(nu_fourInt[np.arange(nu_fourInt.shape[0]),0] - nu_fourInt[np.arange(nu_fourInt.shape[0]),2])
+    errornu_fourInt2 = np.abs(nu_fourInt[np.arange(nu_fourInt.shape[0]),0] - nu_fourInt[np.arange(nu_fourInt.shape[0]),3])
+    assert np.all(errornu_fourInt0>1e-5), 'nu differences are too small'
+    assert np.all(errornu_fourInt1>1e-5), 'nu differences are too small'
+    assert np.all(errornu_fourInt2>1e-5), 'nu differences are too small'
 
     # ind = only2RealInds[np.argsort(-errors_IntersectionsOnly2X0)[0]]
     # plotRerotatedFromNus(ind, sma[ind], e[ind], W[ind], w[ind], inc[ind], Op[:,ind], yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds,\
@@ -566,7 +581,7 @@ def planetVisibilityBounds(sma,e,W,w,inc,p,Rp,starMass,plotBool, s_inner, s_oute
         nus[i] = np.sort(nus[i])
 
     #calculate nus midpoints (for evaluating whether planets are visible within the range specified)
-    nus_midpoints = nus[:,1:] - nus[:,:-1]
+    nus_midpoints = (nus[:,1:] + nus[:,:-1])/2.
 
     #Calculate dmag and s for all midpoints
     Phi = (1.+np.sin(np.tile(inc,(17,1)).T)*np.sin(nus_midpoints+np.tile(w,(17,1)).T))**2./4.
