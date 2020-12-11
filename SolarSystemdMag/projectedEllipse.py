@@ -4,6 +4,7 @@ import time
 from astropy import constants as const
 import astropy.units as u
 from EXOSIMS.util.deltaMag import deltaMag
+from EXOSIMS.util.planet_star_separation import planet_star_separation
 #from numba import jit, cuda
 #pip3 install numba
 #https://developer.nvidia.com/cuda-downloads?target_os=Linux&target_arch=x86_64&target_distro=Ubuntu&target_version=1804&target_type=debnetwork
@@ -1900,13 +1901,49 @@ def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lmi
     twoIntSameY_y = np.zeros((len(twoIntSameYInds),2))
     summedSolErrors = np.sum(errorarraybools,axis=1) #Find the numbers of errors that are small for the given star
     indsWith0 = np.where(summedSolErrors == 0)[0] #just relax the errors a bit
+    indsWith1 = np.where(summedSolErrors == 1)[0] #just relax the errors a bit
     indsWith2 = np.where(summedSolErrors == 2)[0] #exactly the number of solutions we're looking for (HOPE THEYRE UNIQUE)
     indsWith3 = np.where(summedSolErrors == 3)[0] #exactly the number of solutions we're looking for (HOPE THEYRE UNIQUE)
     indsWith4 = np.where(summedSolErrors == 4)[0] #Need to parse out the two different low error solutions
     indsWith7 = np.where(summedSolErrors == 7)[0] #WTF
     indsWith5 = np.where(summedSolErrors == 5)[0] #WTF
-    assert len(indsWith0) + len(indsWith2) + len(indsWith3) + len(indsWith4) + len(indsWith7) + len(indsWith5) == xarray.shape[0], "All the solutions don't add correctly"
-    
+    indsWith6 = np.where(summedSolErrors == 6)[0] #WTF
+    indsWith8 = np.where(summedSolErrors == 8)[0] #WTF
+    #assert len(indsWith0) + len(indsWith1) + len(indsWith2) + len(indsWith3) + len(indsWith4) + len(indsWith7) + len(indsWith5) + len(indsWith6) + len(indsWith8) == xarray.shape[0], "All the solutions don't add correctly"
+   
+    #### For inds with 9, 10, 11, 12, 13, 14, ....
+    if not len(indsWith0) + len(indsWith1) + len(indsWith2) + len(indsWith3) + len(indsWith4) + len(indsWith7) + len(indsWith5) + len(indsWith6) + len(indsWith8) == xarray.shape[0]:
+        mySet = set(np.arange(xarray.shape[0])) - (set(indsWith0) | set(indsWith1) | set(indsWith2) | set(indsWith3) | set(indsWith4) | set(indsWith7) | set(indsWith5) | set(indsWith6) | set(indsWith8))
+        indsWith = list(mySet)
+        indsOfMin = np.nanargmin(errorarray[indsWith],axis=1) #finds the ind of the minimum
+        twoIntSameY_x[indsWith,0] = xarray[indsWith,indsOfMin]
+        twoIntSameY_y[indsWith,0] = yarray[indsWith,indsOfMin]
+        #Nan the absolute minimum in the error array and sep array
+        errorarray[indsWith,indsOfMin] = np.nan
+        separray[indsWith,indsOfMin] = np.nan
+        #Find the ind of the second smallest
+        indsOfMin2 = np.nanargmin(errorarray[indsWith],axis=1) #Finds the ind of the second minimum
+        #Calculate distance between x_min,y_min and x_2min,y_2min Ensure it is sufficiently large
+        xarrayIndsOfMin = xarray[indsWith,indsOfMin]
+        yarrayIndsOfMin = yarray[indsWith,indsOfMin]
+        xarrayIndsOfMin2 = xarray[indsWith,indsOfMin2]
+        yarrayIndsOfMin2 = yarray[indsWith,indsOfMin2]
+        ptptSeps = np.sqrt((xarrayIndsOfMin - xarrayIndsOfMin2)**2. + (yarrayIndsOfMin - yarrayIndsOfMin2)**2.) #Calculate the distance between the two points
+        #assert np.all(ptptSeps > 1e-5), 'The points selected are too close to one another'
+        #Iterete over ptptSeps, nan the solution that is too close, select another
+        if np.any(ptptSeps < 1e-5):
+            for i in np.where(ptptSeps < 1e-5)[0]: #iterate over all the violating stars
+                while ptptSeps[i] < 1e-5 and not np.all(np.isnan(errorarray[indsWith[i]])):
+                    errorarray[indsWith[i],indsOfMin2[i]] = np.nan
+                    indsOfMin2[i] = np.nanargmin(errorarray[indsWith[i]]) #Finds the ind of the second minimum
+                    ptptSeps[i] = np.sqrt((xarray[indsWith[i],indsOfMin[i]] - xarray[indsWith[i],indsOfMin2[i]])**2. + (yarray[indsWith[i],indsOfMin[i]] - yarray[indsWith[i],indsOfMin2[i]])**2.)
+                assert not np.all(np.isnan(errorarray[indsWith[i]])), 'Looks like all points were too close for a planet'
+
+        #If the points are all far apart, then
+        twoIntSameY_x[indsWith,1] = xarray[indsWith,indsOfMin2]
+        twoIntSameY_y[indsWith,1] = yarray[indsWith,indsOfMin2]
+
+
     #### For inds with 2
     #pull out 4 smallest solutions
     indsOfMin = np.nanargmin(errorarray[indsWith2],axis=1) #finds the ind of the minimum
@@ -1937,7 +1974,16 @@ def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lmi
         xarrayIndsOfMin2 = xarray[indsWith4,indsOfMin2]
         yarrayIndsOfMin2 = yarray[indsWith4,indsOfMin2]
         ptptSeps = np.sqrt((xarrayIndsOfMin - xarrayIndsOfMin2)**2. + (yarrayIndsOfMin - yarrayIndsOfMin2)**2.) #Calculate the distance between the two points
-        assert np.all(ptptSeps > 1e-5), 'The points selected are too close to one another'
+        #assert np.all(ptptSeps > 1e-5), 'The points selected are too close to one another'
+        #Iterete over ptptSeps, nan the solution that is too close, select another
+        if np.any(ptptSeps < 1e-5):
+            for i in np.where(ptptSeps < 1e-5)[0]: #iterate over all the violating stars
+                while ptptSeps[i] < 1e-5 and not np.all(np.isnan(errorarray[indsWith4[i]])):
+                    errorarray[indsWith4[i],indsOfMin2[i]] = np.nan
+                    indsOfMin2[i] = np.nanargmin(errorarray[indsWith4[i]]) #Finds the ind of the second minimum
+                    ptptSeps[i] = np.sqrt((xarray[indsWith4[i],indsOfMin[i]] - xarray[indsWith4[i],indsOfMin2[i]])**2. + (yarray[indsWith4[i],indsOfMin[i]] - yarray[indsWith4[i],indsOfMin2[i]])**2.)
+                assert not np.all(np.isnan(errorarray[indsWith4[i]])), 'Looks like all points were too close for a planet'
+
         #If the points are all far apart, then
         twoIntSameY_x[indsWith4,1] = xarray[indsWith4,indsOfMin2]
         twoIntSameY_y[indsWith4,1] = yarray[indsWith4,indsOfMin2]
@@ -1964,15 +2010,81 @@ def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lmi
         twoIntSameY_x[indsWith3,1] = xarray[indsWith3,indsOfMin2]
         twoIntSameY_y[indsWith3,1] = yarray[indsWith3,indsOfMin2]
 
+    #### For Inds With 1
+    if len(indsWith1) > 0:
+        #The only solution I can come up with is to preemtively filter planets like this whenever they are encountered
+        #Select the two smallest seems to be the correct solution. yrealAllRealInds[twoIntSameYInds[indsWith0]]
+        #Find the relevant planet index with 
+        indsOfMin = np.nanargmin(errorarray[indsWith1],axis=1) #finds the ind of the minimum
+        twoIntSameY_x[indsWith1,0] = xarray[indsWith1,indsOfMin]
+        twoIntSameY_y[indsWith1,0] = yarray[indsWith1,indsOfMin]
+        #Nan the 4 absolute minimum solutions in the error array and sep array
+        for i in np.arange(len(indsWith1)):
+            indWith = indsWith1[i]
+            indOfMin = indsOfMin[i]
+            if indOfMin in [0,1,2,3]:
+                for ind in [0,1,2,3]:
+                    errorarray[indWith,ind] = np.nan
+                    separray[indWith,ind] = np.nan
+            if indOfMin in [4,5,6,7]:
+                for ind in [4,5,6,7]:
+                    errorarray[indWith,ind] = np.nan
+                    separray[indWith,ind] = np.nan
+            if indOfMin in [8,9,10,11]:
+                for ind in [8,9,10,11]:
+                    errorarray[indWith,ind] = np.nan
+                    separray[indWith,ind] = np.nan
+            if indOfMin in [12,13,14,15]:
+                for ind in [12,13,14,15]:
+                    errorarray[indWith,ind] = np.nan
+                    separray[indWith,ind] = np.nan
+        #Find the ind of the second smallest
+        indsOfMin2 = np.nanargmin(errorarray[indsWith1],axis=1) #Finds the ind of the second minimum
+        #Calculate distance between x_min,y_min and x_2min,y_2min Ensure it is sufficiently large
+        xarrayIndsOfMin = xarray[indsWith1,indsOfMin]
+        yarrayIndsOfMin = yarray[indsWith1,indsOfMin]
+        xarrayIndsOfMin2 = xarray[indsWith1,indsOfMin2]
+        yarrayIndsOfMin2 = yarray[indsWith1,indsOfMin2]
+        ptptSeps = np.sqrt((xarrayIndsOfMin - xarrayIndsOfMin2)**2. + (yarrayIndsOfMin - yarrayIndsOfMin2)**2.) #Calculate the distance between the two points
+        assert np.all(ptptSeps > 1e-5), 'The points selected are too close to one another'
+        #If the points are all far apart, then
+        twoIntSameY_x[indsWith1,1] = xarray[indsWith1,indsOfMin2]
+        twoIntSameY_y[indsWith1,1] = yarray[indsWith1,indsOfMin2]
+
     #### For Inds With 0
     if len(indsWith0) > 0:
-        #Select the two smallest seems to be the correct solution
+        assert not np.any(np.all(np.isnan(xarray[indsWith0]),axis=1)), 'Looks like one of the solutions is all NAN' #when this case was investigated, where xarray had all nans, it was caused by the quartic solver itself
+        #The only solution I can come up with is to preemtively filter planets like this whenever they are encountered
+        #Select the two smallest seems to be the correct solution. 
+        # np.where(np.all(np.isnan(xarray[indsWith0]),axis=1))[0]
+        # yrealAllRealInds[twoIntSameYInds[indsWith0]]
+        #Find the relevant planet index with 
         indsOfMin = np.nanargmin(errorarray[indsWith0],axis=1) #finds the ind of the minimum
         twoIntSameY_x[indsWith0,0] = xarray[indsWith0,indsOfMin]
         twoIntSameY_y[indsWith0,0] = yarray[indsWith0,indsOfMin]
         #Nan the absolute minimum in the error array and sep array
-        errorarray[indsWith0,indsOfMin] = np.nan
-        separray[indsWith0,indsOfMin] = np.nan
+        # errorarray[indsWith0,indsOfMin] = np.nan
+        # separray[indsWith0,indsOfMin] = np.nan
+        #Nan the 4 absolute minimum solutions in the error array and sep array
+        for i in np.arange(len(indsWith0)):
+            indWith = indsWith0[i]
+            indOfMin = indsOfMin[i]
+            if indOfMin in [0,1,2,3]:
+                for ind in [0,1,2,3]:
+                    errorarray[indWith,ind] = np.nan
+                    separray[indWith,ind] = np.nan
+            if indOfMin in [4,5,6,7]:
+                for ind in [4,5,6,7]:
+                    errorarray[indWith,ind] = np.nan
+                    separray[indWith,ind] = np.nan
+            if indOfMin in [8,9,10,11]:
+                for ind in [8,9,10,11]:
+                    errorarray[indWith,ind] = np.nan
+                    separray[indWith,ind] = np.nan
+            if indOfMin in [12,13,14,15]:
+                for ind in [12,13,14,15]:
+                    errorarray[indWith,ind] = np.nan
+                    separray[indWith,ind] = np.nan
         #Find the ind of the second smallest
         indsOfMin2 = np.nanargmin(errorarray[indsWith0],axis=1) #Finds the ind of the second minimum
         #Calculate distance between x_min,y_min and x_2min,y_2min Ensure it is sufficiently large
@@ -1981,7 +2093,16 @@ def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lmi
         xarrayIndsOfMin2 = xarray[indsWith0,indsOfMin2]
         yarrayIndsOfMin2 = yarray[indsWith0,indsOfMin2]
         ptptSeps = np.sqrt((xarrayIndsOfMin - xarrayIndsOfMin2)**2. + (yarrayIndsOfMin - yarrayIndsOfMin2)**2.) #Calculate the distance between the two points
-        assert np.all(ptptSeps > 1e-5), 'The points selected are too close to one another'
+        #assert np.all(ptptSeps > 1e-5), 'The points selected are too close to one another'
+        #Iterete over ptptSeps, nan the solution that is too close, select another
+        if np.any(ptptSeps < 1e-5):
+            for i in np.where(ptptSeps < 1e-5)[0]: #iterate over all the violating stars
+                while ptptSeps[i] < 1e-5 and not np.all(np.isnan(errorarray[indsWith0[i]])):
+                    errorarray[indsWith0[i],indsOfMin2[i]] = np.nan
+                    indsOfMin2[i] = np.nanargmin(errorarray[indsWith0[i]]) #Finds the ind of the second minimum
+                    ptptSeps[i] = np.sqrt((xarray[indsWith0[i],indsOfMin[i]] - xarray[indsWith0[i],indsOfMin2[i]])**2. + (yarray[indsWith0[i],indsOfMin[i]] - yarray[indsWith0[i],indsOfMin2[i]])**2.)
+                assert not np.all(np.isnan(errorarray[indsWith0[i]])), 'Looks like all points were too close for a planet'
+
         #If the points are all far apart, then
         twoIntSameY_x[indsWith0,1] = xarray[indsWith0,indsOfMin2]
         twoIntSameY_y[indsWith0,1] = yarray[indsWith0,indsOfMin2]
@@ -2008,6 +2129,28 @@ def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lmi
         twoIntSameY_x[indsWith5,1] = xarray[indsWith5,indsOfMin2]
         twoIntSameY_y[indsWith5,1] = yarray[indsWith5,indsOfMin2]
 
+    #### For Inds With 6
+    if len(indsWith6) > 0:
+        #Select the two smallest seems to be the correct solution
+        indsOfMin = np.nanargmin(errorarray[indsWith6],axis=1) #finds the ind of the minimum
+        twoIntSameY_x[indsWith6,0] = xarray[indsWith6,indsOfMin]
+        twoIntSameY_y[indsWith6,0] = yarray[indsWith6,indsOfMin]
+        #Nan the absolute minimum in the error array and sep array
+        errorarray[indsWith6,indsOfMin] = np.nan
+        separray[indsWith6,indsOfMin] = np.nan
+        #Find the ind of the second smallest
+        indsOfMin2 = np.nanargmin(errorarray[indsWith6],axis=1) #Finds the ind of the second minimum
+        #Calculate distance between x_min,y_min and x_2min,y_2min Ensure it is sufficiently large
+        xarrayIndsOfMin = xarray[indsWith6,indsOfMin]
+        yarrayIndsOfMin = yarray[indsWith6,indsOfMin]
+        xarrayIndsOfMin2 = xarray[indsWith6,indsOfMin2]
+        yarrayIndsOfMin2 = yarray[indsWith6,indsOfMin2]
+        ptptSeps = np.sqrt((xarrayIndsOfMin - xarrayIndsOfMin2)**2. + (yarrayIndsOfMin - yarrayIndsOfMin2)**2.) #Calculate the distance between the two points
+        assert np.all(ptptSeps > 1e-5), 'The points selected are too close to one another'
+        #If the points are all far apart, then
+        twoIntSameY_x[indsWith6,1] = xarray[indsWith6,indsOfMin2]
+        twoIntSameY_y[indsWith6,1] = yarray[indsWith6,indsOfMin2]
+
     #### For Inds With 7
     if len(indsWith7) > 0:
         #Select the two smallest seems to be the correct solution
@@ -2029,6 +2172,29 @@ def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lmi
         #If the points are all far apart, then
         twoIntSameY_x[indsWith7,1] = xarray[indsWith7,indsOfMin2]
         twoIntSameY_y[indsWith7,1] = yarray[indsWith7,indsOfMin2]
+
+    #### For Inds With 8
+    if len(indsWith8) > 0:
+        #Select the two smallest seems to be the correct solution
+        indsOfMin = np.nanargmin(errorarray[indsWith8],axis=1) #finds the ind of the minimum
+        twoIntSameY_x[indsWith8,0] = xarray[indsWith8,indsOfMin]
+        twoIntSameY_y[indsWith8,0] = yarray[indsWith8,indsOfMin]
+        #Nan the absolute minimum in the error array and sep array
+        errorarray[indsWith8,indsOfMin] = np.nan
+        separray[indsWith8,indsOfMin] = np.nan
+        #Find the ind of the second smallest
+        indsOfMin2 = np.nanargmin(errorarray[indsWith8],axis=1) #Finds the ind of the second minimum
+        #Calculate distance between x_min,y_min and x_2min,y_2min Ensure it is sufficiently large
+        xarrayIndsOfMin = xarray[indsWith8,indsOfMin]
+        yarrayIndsOfMin = yarray[indsWith8,indsOfMin]
+        xarrayIndsOfMin2 = xarray[indsWith8,indsOfMin2]
+        yarrayIndsOfMin2 = yarray[indsWith8,indsOfMin2]
+        ptptSeps = np.sqrt((xarrayIndsOfMin - xarrayIndsOfMin2)**2. + (yarrayIndsOfMin - yarrayIndsOfMin2)**2.) #Calculate the distance between the two points
+        assert np.all(ptptSeps > 1e-5), 'The points selected are too close to one another'
+        #If the points are all far apart, then
+        twoIntSameY_x[indsWith8,1] = xarray[indsWith8,indsOfMin2]
+        twoIntSameY_y[indsWith8,1] = yarray[indsWith8,indsOfMin2]
+
 
     #Double Verification
     ptptSeps = np.sqrt((twoIntSameY_x[np.arange(twoIntSameY_x.shape[0]),1] - twoIntSameY_x[np.arange(twoIntSameY_x.shape[0]),0])**2. + (twoIntSameY_y[np.arange(twoIntSameY_x.shape[0]),1] - twoIntSameY_y[np.arange(twoIntSameY_x.shape[0]),0])**2.) #Calculate the distance between the two points
@@ -2653,16 +2819,16 @@ def calcMasterIntersections(sma,e,W,w,inc,s_circle,starMass,plotBool):
             planet period in years
     """
     #### Calculate Projected Ellipse Angles and Minor Axis
-    start0 = time.time()
+    # start0 = time.time()
     dmajorp, dminorp, theta_OpQ_X, theta_OpQp_X = projected_apbpPsipsi(sma,e,W,w,inc)#dmajorp_v2, dminorp_v2, Psi_v2, psi_v2, Psi, psi,
-    stop0 = time.time()
-    print('stop0: ' + str(stop0-start0))
+    # stop0 = time.time()
+    # print('stop0: ' + str(stop0-start0))
     #3D Ellipse Center
-    start1 = time.time()
+    # start1 = time.time()
     Op = projected_Op(sma,e,W,w,inc)
-    stop1 = time.time()
-    print('stop1: ' + str(stop1-start1))
-    del start1, stop1
+    # stop1 = time.time()
+    # print('stop1: ' + str(stop1-start1))
+    # del start1, stop1
 
     # Checks
     if not np.all(dmajorp < sma):
@@ -2671,20 +2837,20 @@ def calcMasterIntersections(sma,e,W,w,inc,s_circle,starMass,plotBool):
     assert np.all(dminorp < dmajorp), "All projected Semi-minor axes are less than all projected semi-major axes"
 
     #### Derotate Ellipse Calculations
-    start5 = time.time()
+    # start5 = time.time()
     x, y, Phi = derotatedEllipse(theta_OpQ_X, theta_OpQp_X, Op)
     #x- x coordinates of host star relative to projected ellipse center
     #y- y coordinates of host star relative to projected ellipse center
     #Phi- Angle of projected ellipse semi-major axis from x-axis
     if plotBool == False: #deletes these angles because they are no longer necessary
         del theta_OpQ_X, theta_OpQp_X
-    stop5 = time.time()
-    print('stop5: ' + str(stop5-start5))
-    del start5, stop5
+    # stop5 = time.time()
+    # print('stop5: ' + str(stop5-start5))
+    # del start5, stop5
     ####
 
     #### Calculate X,Y Position of Minimum and Maximums with Quartic
-    start7 = time.time()
+    # start7 = time.time()
     A, B, C, D = quarticCoefficients_smin_smax_lmin_lmax(dmajorp.astype('complex128'), dminorp, np.abs(x), np.abs(y)) #calculate the quartic solutions to the min-max separation problem
     #xreal, delta, P, D2, R, delta_0 = quarticSolutions_ellipse_to_Quarticipynb(A.astype('complex128'), B, C, D)
     xreal, _, _, _, _, _ = quarticSolutions_ellipse_to_Quarticipynb(A.astype('complex128'), B, C, D)
@@ -2697,33 +2863,33 @@ def calcMasterIntersections(sma,e,W,w,inc,s_circle,starMass,plotBool):
     #DELETEtinds = np.argsort(np.nanmin(np.abs(np.imag(xreal)),axis=1)) #DELETE
     #DELETEdel tind, tinds #DELETE
     xreal.real = np.abs(xreal) #all solutions should be positive
-    stop7 = time.time()
-    print('stop7: ' + str(stop7-start7))
-    del stop7, start7
+    # stop7 = time.time()
+    # print('stop7: ' + str(stop7-start7))
+    # del stop7, start7
     #DELETEprintKOE(ind,a,e,W,w,inc)
 
     #### Technically, each row must have at least 2 solutions, but whatever
-    start8 = time.time()
+    # start8 = time.time()
     yreal = ellipseYFromX(xreal.astype('complex128'), dmajorp, dminorp) #Calculates the y values corresponding to the x values in the first quadrant of an ellipse
-    stop8 = time.time()
-    print('stop8: ' + str(stop8-start8))
-    del start8, stop8
+    # stop8 = time.time()
+    # print('stop8: ' + str(stop8-start8))
+    # del start8, stop8
     ####
 
     #### Calculate Minimum, Maximum, Local Minimum, Local Maximum Separations
-    start9 = time.time()
+    # start9 = time.time()
     minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y, minSep, maxSep, lminSep, lmaxSep, yrealAllRealInds, yrealImagInds = smin_smax_slmin_slmax(len(x), xreal, yreal, np.abs(x), np.abs(y), x, y)
     lminSepPoints_x = np.real(lminSepPoints_x)
     lminSepPoints_y = np.real(lminSepPoints_y)
     lmaxSepPoints_x = np.real(lmaxSepPoints_x)
     lmaxSepPoints_y = np.real(lmaxSepPoints_y)
-    stop9 = time.time()
-    print('stop9: ' + str(stop9-start9))
-    del start9, stop9
+    # stop9 = time.time()
+    # print('stop9: ' + str(stop9-start9))
+    # del start9, stop9
     ####
 
     #### Ellipse Circle Intersection #######################################################################
-    start11 = time.time()
+    # start11 = time.time()
     only2RealInds, typeInds0, typeInds1, typeInds2, typeInds3,\
             fourIntInds, fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y,\
             twoIntOppositeXInds, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2, twoIntSameYInds,\
@@ -2734,9 +2900,9 @@ def calcMasterIntersections(sma,e,W,w,inc,s_circle,starMass,plotBool):
         del typeInds0, typeInds1, typeInds2, typeInds3
         del type0_0Inds,type0_1Inds,type0_2Inds,type0_3Inds,type0_4Inds,type1_0Inds,type1_1Inds,type1_2Inds,type1_3Inds,type1_4Inds
         del type2_0Inds,type2_1Inds,type2_2Inds,type2_3Inds,type2_4Inds,type3_0Inds,type3_1Inds,type3_2Inds,type3_3Inds,type3_4Inds
-    stop11 = time.time()
-    print('stop11: ' + str(stop11-start11))
-    del start11, stop11
+    # stop11 = time.time()
+    # print('stop11: ' + str(stop11-start11))
+    # del start11, stop11
     ####
 
 
@@ -2756,7 +2922,7 @@ def calcMasterIntersections(sma,e,W,w,inc,s_circle,starMass,plotBool):
     #### COULD RUN ON OTHER CASES #########################################################
 
     #### Rerotate Extrema and Intersection Points
-    start13 = time.time()
+    # start13 = time.time()
     minSepPoints_x_dr, minSepPoints_y_dr, maxSepPoints_x_dr, maxSepPoints_y_dr, lminSepPoints_x_dr, lminSepPoints_y_dr, lmaxSepPoints_x_dr, lmaxSepPoints_y_dr,\
         fourInt_x_dr, fourInt_y_dr, twoIntSameY_x_dr, twoIntSameY_y_dr, twoIntOppositeX_x_dr, twoIntOppositeX_y_dr, xIntersectionsOnly2_dr, yIntersectionsOnly2_dr = \
         rerotateExtremaAndIntersectionPoints(minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y,\
@@ -2765,13 +2931,13 @@ def calcMasterIntersections(sma,e,W,w,inc,s_circle,starMass,plotBool):
     if plotBool == False:
         del minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y
         del fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2
-    stop13 = time.time()
-    print('stop13: ' + str(stop13-start13))
-    del start13, stop13
+    # stop13 = time.time()
+    # print('stop13: ' + str(stop13-start13))
+    # del start13, stop13
     ####
 
     #### Calculate True Anomalies of Points
-    start14 = time.time()
+    # start14 = time.time()
 
     nu_minSepPoints, nu_maxSepPoints, nu_lminSepPoints, nu_lmaxSepPoints, nu_fourInt, nu_twoIntSameY, nu_twoIntOppositeX, nu_IntersectionsOnly2\
          = trueAnomaliesOfPoints(minSepPoints_x_dr, minSepPoints_y_dr, maxSepPoints_x_dr, maxSepPoints_y_dr, lminSepPoints_x_dr, lminSepPoints_y_dr, lmaxSepPoints_x_dr, lmaxSepPoints_y_dr,\
@@ -2779,9 +2945,9 @@ def calcMasterIntersections(sma,e,W,w,inc,s_circle,starMass,plotBool):
         yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds, W, w, inc)
     del minSepPoints_x_dr, minSepPoints_y_dr, maxSepPoints_x_dr, maxSepPoints_y_dr, lminSepPoints_x_dr, lminSepPoints_y_dr, lmaxSepPoints_x_dr, lmaxSepPoints_y_dr
     del fourInt_x_dr, fourInt_y_dr, twoIntSameY_x_dr, twoIntSameY_y_dr, twoIntOppositeX_x_dr, twoIntOppositeX_y_dr, xIntersectionsOnly2_dr, yIntersectionsOnly2_dr
-    stop14 = time.time()
-    print('stop14: ' + str(stop14-start14))
-    del start14, stop14
+    # stop14 = time.time()
+    # print('stop14: ' + str(stop14-start14))
+    # del start14, stop14
     #Now can I delete the x,y points?
     #del minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y, fourInt_x, fourInt_y
     #del twoIntSameY_x, twoIntSameY_y, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2
@@ -2870,14 +3036,14 @@ def calcMasterIntersections(sma,e,W,w,inc,s_circle,starMass,plotBool):
 
     # Vestigal Variables
     #TODO a and b are duplicates of dmajorp and dminorp
-    memory_vestigal = [0]
+    # memory_vestigal = [0]
     #theta_OpQ_X.nbytes,theta_OpQp_X.nbytes
     #a.nbytes,b.nbytes,
     #error_numinSep.nbytes,error_numaxSep.nbytes,error_nulminSep.nbytes,error_nulmaxSep.nbytes,
     #dmajorp_v2.nbytes,dminorp_v2.nbytes,Psi_v2.nbytes,psi_v2.nbytes,Psi.nbytes,psi.nbytes,
     #delta.nbytes,delta_0.nbytes,P.nbytes, #not 100% sureD2.nbytes,R.nbytes,
     #allIndsUsed.nbytes
-    print('memory_vestigal Used: ' + str(np.sum(memory_vestigal)/10**9) + ' GB')
+    # print('memory_vestigal Used: ' + str(np.sum(memory_vestigal)/10**9) + ' GB')
 
     # Variables Only For Plotting
     if plotBool == True:
@@ -3093,7 +3259,13 @@ def calc_planet_dmagmin_dmagmax(e,inc,w,a,p,Rp):
     #2 numSols 
     indsWith2 = np.where(np.logical_or(numSols == 0,numSols == 2))[0]
     indsWith4 = np.where(numSols == 4)[0]
-    assert len(indsWith2) + len(indsWith4) == len(a), 'number of inds does not sum to number of planets'
+    #assert len(indsWith2) + len(indsWith4) == len(a), 'number of inds does not sum to number of planets'
+    if not len(indsWith2) + len(indsWith4) == len(a): #Need to Cleanse the solutions with too many potential solutions
+        offendingInds = np.where(np.logical_not(np.logical_or(np.logical_or(numSols == 0,numSols == 2),numSols==4)))[0]
+        if np.all(numSols[offendingInds] > 2): #All of these planets have more than 2 offending inds
+            #add to indsWith2
+            indsWith2 = np.append(indsWith2,offendingInds)
+            indsWith2 = np.sort(indsWith2)
     indsWith4Saved = indsWith4
     ###############################################################################
 
@@ -3566,9 +3738,11 @@ def calc_planetnu_from_dmag(dmag,e,inc,w,a,p,Rp,mindmag, maxdmag, indsWith2Int, 
     # gdmags24Int = dmagsComb[:,8:16]
     #Differentiate between inds with 4 non-nans (in combined) and inds with 6 non-nans in combined
     #HEY I DON'T THINK THIS REALLY MATTERS
+    indsWith5NonNan = np.where(np.sum(np.isnan(nuRealComb2Int).astype('int'),axis=1) == 11)[0] #a very rare case
     indsWith4NonNan = np.where(np.sum(np.isnan(nuRealComb2Int).astype('int'),axis=1) == 12)[0]
     indsWith3NonNan = np.where(np.sum(np.isnan(nuRealComb2Int).astype('int'),axis=1) == 13)[0]
-    assert nuRealComb2Int.shape[0] == len(indsWith4NonNan) + len(indsWith3NonNan), 'The number of 3 real and 4 real does not sum to the number of nuRealCombs with 2 Intersections'
+    indsWith2NonNan = np.where(np.sum(np.isnan(nuRealComb2Int).astype('int'),axis=1) == 14)[0] # a very rare case
+    assert nuRealComb2Int.shape[0] == len(indsWith4NonNan) + len(indsWith3NonNan) + len(indsWith5NonNan) + len(indsWith2NonNan), 'The number of 3 real and 4 real does not sum to the number of nuRealCombs with 2 Intersections'
 
     #For arccos in 0-pi (indicies 0-7) and pi-2pi (indicies 8-15)
     gPhi2Int = (1.+np.sin(np.tile(inc[indsWith2Int],(16,1)).T)*np.sin(nuRealComb2Int+np.tile(w[indsWith2Int],(16,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
@@ -3940,5 +4114,181 @@ def calc_planetnu_from_dmag(dmag,e,inc,w,a,p,Rp,mindmag, maxdmag, indsWith2Int, 
     # assert np.all(numSols[indsWith4Int]==4)
 
     return nus2Int, nus4Int, dmag2Int, dmag4Int #nusCombined, gdmagsCombined, sumNumSol, numSols, numSolHist 
+
+def calc_t_sInnersOuter(sma,e,W,w,inc,s_inner,s_outer,starMass,plotBool):
+    """ Collates the times where each planet crosses s_inner and s_outer
+    Args:
+        sma,e,W,w,inc,s_inner,s_outer,starMass,plotBool
+    Returns:
+        times (numpy array):
+            the collective array of times when the planet crosses the separation circle size (n x 8)
+    """
+    times_o = np.zeros((sma.shape[0],4))*np.nan
+    times_i = np.zeros((sma.shape[0],4))*np.nan
+
+    _,_,_,_,_,_,_,_,_,only2RealInds_o,yrealAllRealInds_o,\
+        fourIntInds_o,twoIntOppositeXInds_o,twoIntSameYInds_o,_,_,_,_,_,\
+        _,_,_, yrealImagInds_o,\
+        _,_,_,_,t_fourInt0_o,t_fourInt1_o,t_fourInt2_o,t_fourInt3_o,t_twoIntSameY0_o,\
+        t_twoIntSameY1_o,t_twoIntOppositeX0_o,t_twoIntOppositeX1_o,t_IntersectionOnly20_o,t_IntersectionOnly21_o,\
+        _, _, _, _, _, _, _, _, _, _, _, _,\
+        _,_,_,_,_,\
+        _,_,_,_,_,_,\
+        _,_,_,_,_,_,_,_,_,_,_,_,\
+        _,_,_,_,_,_,_,_,_,_,_,_,\
+        _,_,_,_,_,_,_, _ = calcMasterIntersections(sma,e,W,w,inc,s_inner*np.ones(len(sma)),starMass,False)
+
+    #Combine them all into one storage array
+    times_o[yrealAllRealInds_o[fourIntInds_o],0] = t_fourInt0_o
+    times_o[yrealAllRealInds_o[fourIntInds_o],1] = t_fourInt1_o
+    times_o[yrealAllRealInds_o[fourIntInds_o],2] = t_fourInt2_o
+    times_o[yrealAllRealInds_o[fourIntInds_o],3] = t_fourInt3_o
+    times_o[yrealAllRealInds_o[twoIntSameYInds_o],0] = t_twoIntSameY0_o
+    times_o[yrealAllRealInds_o[twoIntSameYInds_o],1] = t_twoIntSameY1_o
+    times_o[yrealAllRealInds_o[twoIntOppositeXInds_o],0] = t_twoIntOppositeX0_o
+    times_o[yrealAllRealInds_o[twoIntOppositeXInds_o],1] = t_twoIntOppositeX1_o
+    times_o[only2RealInds_o,0] = t_IntersectionOnly20_o
+    times_o[only2RealInds_o,1] = t_IntersectionOnly21_o
+
+    _,_,_,_,_,_,_,_,_,only2RealInds_i,yrealAllRealInds_i,\
+        fourIntInds_i,twoIntOppositeXInds_i,twoIntSameYInds_i,_,_,_,_,_,\
+        _,_,_, yrealImagInds_i,\
+        _,_,_,_,t_fourInt0_i,t_fourInt1_i,t_fourInt2_i,t_fourInt3_i,t_twoIntSameY0_i,\
+        t_twoIntSameY1_i,t_twoIntOppositeX0_i,t_twoIntOppositeX1_i,t_IntersectionOnly20_i,t_IntersectionOnly21_i,\
+        _, _, _, _, _, _, _, _, _, _, _, _,\
+        _,_,_,_,_,\
+        _,_,_,_,_,_,\
+        _,_,_,_,_,_,_,_,_,_,_,_,\
+        _,_,_,_,_,_,_,_,_,_,_,_,\
+        _,_,_,_,_,_,_, _ = calcMasterIntersections(sma,e,W,w,inc,s_outer*np.ones(len(sma)),starMass,False)
+
+    #Combine them all into one storage array
+    times_i[yrealAllRealInds_i[fourIntInds_i],0] = t_fourInt0_i
+    times_i[yrealAllRealInds_i[fourIntInds_i],1] = t_fourInt1_i
+    times_i[yrealAllRealInds_i[fourIntInds_i],2] = t_fourInt2_i
+    times_i[yrealAllRealInds_i[fourIntInds_i],3] = t_fourInt3_i
+    times_i[yrealAllRealInds_i[twoIntSameYInds_i],0] = t_twoIntSameY0_i
+    times_i[yrealAllRealInds_i[twoIntSameYInds_i],1] = t_twoIntSameY1_i
+    times_i[yrealAllRealInds_i[twoIntOppositeXInds_i],0] = t_twoIntOppositeX0_i
+    times_i[yrealAllRealInds_i[twoIntOppositeXInds_i],1] = t_twoIntOppositeX1_i
+    times_i[only2RealInds_i,0] = t_IntersectionOnly20_i
+    times_i[only2RealInds_i,1] = t_IntersectionOnly21_i
+
+    times = np.concatenate((times_o,times_i),axis=1)
+    return times
+
+
+def planetVisibilityBounds(sma,e,W,w,inc,p,Rp,starMass,plotBool, s_inner, s_outer, dmag_upper, dmag_lower=None):
+    """ Finds the nu values where the planet intersects the separations or dmags, subsequently checks whether the planet is visible in the specified time ranges
+    Args:
+    sma,e,W,w,inc,p,Rp,starMass,plotBool, s_inner, s_outer, dmag_upper, dmag_lower
+    Returns:
+    nus, planetIsVisibleBool
+    """
+    nus = np.zeros((len(sma),18))*np.nan #4 from s_inner, 4 from s_outer, 4 from dmag_upper, 4 from dmag_lower, 2 for previous orbit intersection and next orbit intersection
+    #### nu from s_inner
+    dmajorp,dminorp,theta_OpQ_X,theta_OpQp_X,Op,x,y,Phi,xreal,only2RealInds,yrealAllRealInds,\
+        fourIntInds,twoIntOppositeXInds,twoIntSameYInds,nu_minSepPoints,nu_maxSepPoints,nu_lminSepPoints,nu_lmaxSepPoints,nu_fourInt,\
+        nu_twoIntSameY,nu_twoIntOppositeX,nu_IntersectionsOnly2, yrealImagInds,\
+        t_minSep,t_maxSep,t_lminSep,t_lmaxSep,t_fourInt0,t_fourInt1,t_fourInt2,t_fourInt3,t_twoIntSameY0,\
+        t_twoIntSameY1,t_twoIntOppositeX0,t_twoIntOppositeX1,t_IntersectionOnly20,t_IntersectionOnly21,\
+        minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y, minSep, maxSep, lminSep, lmaxSep,\
+        errors_fourInt0,errors_fourInt1,errors_fourInt2,errors_fourInt3,errors_twoIntSameY0,\
+        errors_twoIntSameY1,errors_twoIntOppositeX0,errors_twoIntOppositeX1,errors_IntersectionsOnly2X0,errors_IntersectionsOnly2X1,type0_0Inds,\
+        type0_1Inds,type0_2Inds,type0_3Inds,type0_4Inds,type1_0Inds,type1_1Inds,type1_2Inds,type1_3Inds,type1_4Inds,type2_0Inds,type2_1Inds,type2_2Inds,\
+        type2_3Inds,type2_4Inds,type3_0Inds,type3_1Inds,type3_2Inds,type3_3Inds,type3_4Inds,fourInt_x,fourInt_y,twoIntSameY_x,twoIntSameY_y,twoIntOppositeX_x,\
+        twoIntOppositeX_y,xIntersectionsOnly2,yIntersectionsOnly2,typeInds0,typeInds1,typeInds2,typeInds3, periods = calcMasterIntersections(sma,e,W,w,inc,s_inner*np.ones(len(sma)),starMass,plotBool)
+    nus[only2RealInds,0:2] = nu_IntersectionsOnly2
+    nus[yrealAllRealInds[fourIntInds],0:4] = nu_fourInt
+    nus[yrealAllRealInds[twoIntOppositeXInds],0:2] = nu_twoIntOppositeX
+    nus[yrealAllRealInds[twoIntSameYInds],0:2] = nu_twoIntSameY
+    #### nu from s_outer
+    dmajorp,dminorp,theta_OpQ_X,theta_OpQp_X,Op,x,y,Phi,xreal,only2RealInds,yrealAllRealInds,\
+        fourIntInds,twoIntOppositeXInds,twoIntSameYInds,nu_minSepPoints,nu_maxSepPoints,nu_lminSepPoints,nu_lmaxSepPoints,nu_fourInt,\
+        nu_twoIntSameY,nu_twoIntOppositeX,nu_IntersectionsOnly2, yrealImagInds,\
+        t_minSep,t_maxSep,t_lminSep,t_lmaxSep,t_fourInt0,t_fourInt1,t_fourInt2,t_fourInt3,t_twoIntSameY0,\
+        t_twoIntSameY1,t_twoIntOppositeX0,t_twoIntOppositeX1,t_IntersectionOnly20,t_IntersectionOnly21,\
+        minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y, minSep, maxSep, lminSep, lmaxSep,\
+        errors_fourInt0,errors_fourInt1,errors_fourInt2,errors_fourInt3,errors_twoIntSameY0,\
+        errors_twoIntSameY1,errors_twoIntOppositeX0,errors_twoIntOppositeX1,errors_IntersectionsOnly2X0,errors_IntersectionsOnly2X1,type0_0Inds,\
+        type0_1Inds,type0_2Inds,type0_3Inds,type0_4Inds,type1_0Inds,type1_1Inds,type1_2Inds,type1_3Inds,type1_4Inds,type2_0Inds,type2_1Inds,type2_2Inds,\
+        type2_3Inds,type2_4Inds,type3_0Inds,type3_1Inds,type3_2Inds,type3_3Inds,type3_4Inds,fourInt_x,fourInt_y,twoIntSameY_x,twoIntSameY_y,twoIntOppositeX_x,\
+        twoIntOppositeX_y,xIntersectionsOnly2,yIntersectionsOnly2,typeInds0,typeInds1,typeInds2,typeInds3, periods = calcMasterIntersections(sma,e,W,w,inc,s_outer*np.ones(len(sma)),starMass,plotBool)
+    nus[only2RealInds,4:6] = nu_IntersectionsOnly2
+    nus[yrealAllRealInds[fourIntInds],4:8] = nu_fourInt
+    nus[yrealAllRealInds[twoIntOppositeXInds],4:6] = nu_twoIntOppositeX
+    nus[yrealAllRealInds[twoIntSameYInds],4:6] = nu_twoIntSameY
+    #### Solving for dmag_min and dmag_max for each planet ################
+    mindmag, maxdmag, dmaglminAll, dmaglmaxAll, indsWith2, indsWith4, nuMinDmag, nuMaxDmag, nulminAll, nulmaxAll = calc_planet_dmagmin_dmagmax(e,inc,w,sma*u.AU,p,Rp)
+    #### nu From dmag_upper
+    print('Num Planets with At Least 2 Int given dmag: ' + str(np.sum((mindmag < dmag_upper)*(maxdmag > dmag_upper))))
+    print('Num Planets with dmag local extrema: ' + str(len(indsWith4)))
+    print('Num Planets with given 4 Int given dmag: ' + str(np.sum((dmaglminAll < dmag_upper)*(dmaglmaxAll > dmag_upper))))
+    indsWith4Int = indsWith4[np.where((dmaglminAll < dmag_upper)*(dmaglmaxAll > dmag_upper))[0]]
+    indsWith2Int = list(set(np.where((mindmag < dmag_upper)*(maxdmag > dmag_upper))[0]) - set(indsWith4Int))
+    nus2Int, nus4Int, dmag2Int, dmag4Int = calc_planetnu_from_dmag(dmag_upper,e,inc,w,sma*u.AU,p,Rp,mindmag, maxdmag, indsWith2Int, indsWith4Int)
+    nus[indsWith2Int,8:10] = nus2Int
+    nus[indsWith4Int,8:12] = nus4Int
+    #### nu From dmag_lower
+    if dmag_lower == None:
+        #default case? 0s maybe idk empty stuff
+        dmag_lower = 0.
+    else:
+        print('Num Planets with At Least 2 Int given dmag: ' + str(np.sum((mindmag < dmag_lower)*(maxdmag > dmag_lower))))
+        print('Num Planets with dmag local extrema: ' + str(len(indsWith4)))
+        print('Num Planets with given 4 Int given dmag: ' + str(np.sum((dmaglminAll < dmag_lower)*(dmaglmaxAll > dmag_lower))))
+        indsWith4Int = indsWith4[np.where((dmaglminAll < dmag_lower)*(dmaglmaxAll > dmag_lower))[0]]
+        indsWith2Int = list(set(np.where((mindmag < dmag_lower)*(maxdmag > dmag_lower))[0]) - set(indsWith4Int))
+        nus2Int, nus4Int, dmag2Int, dmag4Int = calc_planetnu_from_dmag(dmag_lower,e,inc,w,sma*u.AU,p,Rp,mindmag, maxdmag, indsWith2Int, indsWith4Int)
+        nus[indsWith2Int,12:14] = nus2Int
+        nus[indsWith4Int,12:16] = nus4Int
+    ########################################################################
+    
+    #Finding which planets are all nan for efficiency
+    nanbool = np.isnan(nus)
+    indsNotAllNan = np.where(np.logical_not(np.all(nanbool,axis=1)))[0] #Get the inds of planets where not all nus are nan
+
+    #Aded ranges above or below each nan (so I can simply do a midpoint evaluation with no fancy indexing)
+    nus_min = np.nanmin(nus[indsNotAllNan],axis=1)
+    nus_max = np.nanmax(nus[indsNotAllNan],axis=1)
+    #nus[indsNotAllNan,16] = 2.*np.pi #2.*np.pi + nus_min #append the next orbit to this bit
+    #nus[indsNotAllNan,17] = 0. #nus_max - 2.*np.pi #append the previous orbit intersection
+    nus[:,16] = 2.*np.pi #2.*np.pi + nus_min #append the next orbit to this bit
+    nus[:,17] = 0. #nus_max - 2.*np.pi #append the previous orbit intersection
+
+    #sort the nus from smallest to largest
+    # nus[indsNotAllNan] = np.sort(nus[indsNotAllNan],axis=1)
+    # for i in np.arange(len(indsNotAllNan)):
+    #     nus[indsNotAllNan[i]] = np.sort(nus[indsNotAllNan[i]])
+    #nus = np.sort(nus,axis=1)
+    for i in np.arange(nus.shape[0]):
+        nus[i] = np.sort(nus[i])
+
+    #calculate nus midpoints (for evaluating whether planets are visible within the range specified)
+    nus_midpoints = (nus[:,1:] + nus[:,:-1])/2.
+
+    #Calculate dmag and s for all midpoints
+    Phi = (1.+np.sin(np.tile(inc,(17,1)).T)*np.sin(nus_midpoints+np.tile(w,(17,1)).T))**2./4.
+    d = np.tile(sma*u.AU,(17,1)).T*(1.-np.tile(e,(17,1)).T**2.)/(np.tile(e,(17,1)).T*np.cos(nus_midpoints)+1.)
+    dmags = deltaMag(np.tile(p,(17,1)).T,np.tile(Rp.to('AU'),(17,1)).T,d,Phi) #calculate dmag of the specified x-value
+    ss = planet_star_separation(np.tile(sma,(17,1)).T,np.tile(e,(17,1)).T,nus_midpoints,np.tile(w,(17,1)).T,np.tile(inc,(17,1)).T)
+
+    #Determine ranges where the planet is visible
+    planetIsVisibleBool = (ss < np.ones((len(sma),17))*s_outer)*(ss > np.ones((len(sma),17))*s_inner)*(dmags < np.ones((len(sma),17))*dmag_upper)*(dmags > np.ones((len(sma),17))*dmag_lower)
+
+
+
+    return nus, planetIsVisibleBool
+
+def nukeKOE(sma,e,W,w,inc,ar,er,Wr,wr,incr):
+    """ Rounds the planet KOE because the KOE producee errors in the quartic solver
+    """
+    indsToNuke = np.where(np.abs(sma-ar).value + np.abs(e-er) + np.abs(W-Wr) + np.abs(w-wr) + np.abs(inc-incr) < 1e-5)[0]
+    sma[indsToNuke] = np.round(sma[indsToNuke],4)
+    e[indsToNuke] = np.round(e[indsToNuke],4)
+    W[indsToNuke] = np.round(W[indsToNuke],4)
+    w[indsToNuke] = np.round(w[indsToNuke],4)
+    inc[indsToNuke] = np.round(inc[indsToNuke],4)
+    return sma,e,W,w,inc
 
 
