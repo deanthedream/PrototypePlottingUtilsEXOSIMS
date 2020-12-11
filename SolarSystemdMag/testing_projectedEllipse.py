@@ -41,6 +41,23 @@ inc = inc.to('rad').value
 inc[np.where(inc>np.pi/2)[0]] = np.pi - inc[np.where(inc>np.pi/2)[0]]
 sma, e, p, Rp = PPop.gen_plan_params(n)
 
+#### Adjustment for Planets Causing Errors
+#Planet to be removed
+ar = 0.6840751713914676*u.AU #sma
+er = 0.12443160036480415 #e
+Wr = 6.1198652952593 #W
+wr = 2.661645323283813 #w
+incr = 0.8803680245150818 #inc
+sma,e,W,w,inc = nukeKOE(sma,e,W,w,inc,ar,er,Wr,wr,incr)
+ar = 1.1300859542315127*u.AU
+er = 0.23306811746716588
+Wr = 5.480292250277455
+wr = 2.4440871464730183
+incr = 1.197618937201339
+sma,e,W,w,inc = nukeKOE(sma,e,W,w,inc,ar,er,Wr,wr,incr)
+
+
+
 #### Classify Planets
 bini, binj, earthLike = comp.classifyPlanets(Rp, TL, np.arange(len(sma)), sma, e)
 sma = sma.to('AU').value
@@ -296,68 +313,7 @@ if plotBool == True:
     plotSepsHistogram(minSep,maxSep,lminSep,lmaxSep,sma,yrealAllRealInds,num)
 
 
-#### s_inner, s_upper 
-def calc_t_sInnersOuter(sma,e,W,w,inc,s_inner,s_outer,starMass,plotBool):
-    """ Collates the times where each planet crosses s_inner and s_outer
-    Args:
-    Returns:
-        times (numpy array):
-            the collective array of times when the planet crosses the separation circle size (n x 8)
-    """
-    times_o = np.zeros((sma.shape[0],4))*np.nan
-    times_i = np.zeros((sma.shape[0],4))*np.nan
 
-    _,_,_,_,_,_,_,_,_,only2RealInds_o,yrealAllRealInds_o,\
-        fourIntInds_o,twoIntOppositeXInds_o,twoIntSameYInds_o,_,_,_,_,_,\
-        _,_,_, yrealImagInds_o,\
-        _,_,_,_,t_fourInt0_o,t_fourInt1_o,t_fourInt2_o,t_fourInt3_o,t_twoIntSameY0_o,\
-        t_twoIntSameY1_o,t_twoIntOppositeX0_o,t_twoIntOppositeX1_o,t_IntersectionOnly20_o,t_IntersectionOnly21_o,\
-        _, _, _, _, _, _, _, _, _, _, _, _,\
-        _,_,_,_,_,\
-        _,_,_,_,_,_,\
-        _,_,_,_,_,_,_,_,_,_,_,_,\
-        _,_,_,_,_,_,_,_,_,_,_,_,\
-        _,_,_,_,_,_,_, _ = calcMasterIntersections(sma,e,W,w,inc,s_inner*np.ones(len(sma)),starMass,False)
-
-    #Combine them all into one storage array
-    times_o[yrealAllRealInds_o[fourIntInds_o],0] = t_fourInt0_o
-    times_o[yrealAllRealInds_o[fourIntInds_o],1] = t_fourInt1_o
-    times_o[yrealAllRealInds_o[fourIntInds_o],2] = t_fourInt2_o
-    times_o[yrealAllRealInds_o[fourIntInds_o],3] = t_fourInt3_o
-    times_o[yrealAllRealInds_o[twoIntSameYInds_o],0] = t_twoIntSameY0_o
-    times_o[yrealAllRealInds_o[twoIntSameYInds_o],1] = t_twoIntSameY1_o
-    times_o[yrealAllRealInds_o[twoIntOppositeXInds_o],0] = t_twoIntOppositeX0_o
-    times_o[yrealAllRealInds_o[twoIntOppositeXInds_o],1] = t_twoIntOppositeX1_o
-    times_o[only2RealInds_o,0] = t_IntersectionOnly20_o
-    times_o[only2RealInds_o,1] = t_IntersectionOnly21_o
-
-    _,_,_,_,_,_,_,_,_,only2RealInds_i,yrealAllRealInds_i,\
-        fourIntInds_i,twoIntOppositeXInds_i,twoIntSameYInds_i,_,_,_,_,_,\
-        _,_,_, yrealImagInds_i,\
-        _,_,_,_,t_fourInt0_i,t_fourInt1_i,t_fourInt2_i,t_fourInt3_i,t_twoIntSameY0_i,\
-        t_twoIntSameY1_i,t_twoIntOppositeX0_i,t_twoIntOppositeX1_i,t_IntersectionOnly20_i,t_IntersectionOnly21_i,\
-        _, _, _, _, _, _, _, _, _, _, _, _,\
-        _,_,_,_,_,\
-        _,_,_,_,_,_,\
-        _,_,_,_,_,_,_,_,_,_,_,_,\
-        _,_,_,_,_,_,_,_,_,_,_,_,\
-        _,_,_,_,_,_,_, _ = calcMasterIntersections(sma,e,W,w,inc,s_outer*np.ones(len(sma)),starMass,False)
-
-    #Combine them all into one storage array
-    times_i[yrealAllRealInds_i[fourIntInds_i],0] = t_fourInt0_i
-    times_i[yrealAllRealInds_i[fourIntInds_i],1] = t_fourInt1_i
-    times_i[yrealAllRealInds_i[fourIntInds_i],2] = t_fourInt2_i
-    times_i[yrealAllRealInds_i[fourIntInds_i],3] = t_fourInt3_i
-    times_i[yrealAllRealInds_i[twoIntSameYInds_i],0] = t_twoIntSameY0_i
-    times_i[yrealAllRealInds_i[twoIntSameYInds_i],1] = t_twoIntSameY1_i
-    times_i[yrealAllRealInds_i[twoIntOppositeXInds_i],0] = t_twoIntOppositeX0_i
-    times_i[yrealAllRealInds_i[twoIntOppositeXInds_i],1] = t_twoIntOppositeX1_i
-    times_i[only2RealInds_i,0] = t_IntersectionOnly20_i
-    times_i[only2RealInds_i,1] = t_IntersectionOnly21_i
-
-    times = np.concatenate((times_o,times_i),axis=1)
-    return times
-####
 
 
 #### nu From dMag #####################################################
@@ -492,110 +448,6 @@ plt.xlabel('Time Past Periastron, t, (years)',weight='bold')
 plt.title('sma: ' + str(np.round(sma[ind],4)) + ' e: ' + str(np.round(e[ind],4)) + ' W: ' + str(np.round(W[ind],4)) + '\nw: ' + str(np.round(w[ind],4)) + ' inc: ' + str(np.round(inc[ind],4)))
 plt.show(block=False)
 #######################################################################
-
-#### Calculate Completeness ###########################################
-def planetVisibilityBounds(sma,e,W,w,inc,p,Rp,starMass,plotBool, s_inner, s_outer, dmag_upper, dmag_lower=None):
-    """ Finds the nu values where the planet intersects the separations or dmags, subsequently checks whether the planet is visible in the specified time ranges
-    Args:
-    sma,e,W,w,inc,p,Rp,starMass,plotBool, s_inner, s_outer, dmag_upper, dmag_lower
-    Returns:
-    nus, planetIsVisibleBool
-    """
-    nus = np.zeros((len(sma),18))*np.nan #4 from s_inner, 4 from s_outer, 4 from dmag_upper, 4 from dmag_lower, 2 for previous orbit intersection and next orbit intersection
-    #### nu from s_inner
-    dmajorp,dminorp,theta_OpQ_X,theta_OpQp_X,Op,x,y,Phi,xreal,only2RealInds,yrealAllRealInds,\
-        fourIntInds,twoIntOppositeXInds,twoIntSameYInds,nu_minSepPoints,nu_maxSepPoints,nu_lminSepPoints,nu_lmaxSepPoints,nu_fourInt,\
-        nu_twoIntSameY,nu_twoIntOppositeX,nu_IntersectionsOnly2, yrealImagInds,\
-        t_minSep,t_maxSep,t_lminSep,t_lmaxSep,t_fourInt0,t_fourInt1,t_fourInt2,t_fourInt3,t_twoIntSameY0,\
-        t_twoIntSameY1,t_twoIntOppositeX0,t_twoIntOppositeX1,t_IntersectionOnly20,t_IntersectionOnly21,\
-        minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y, minSep, maxSep, lminSep, lmaxSep,\
-        errors_fourInt0,errors_fourInt1,errors_fourInt2,errors_fourInt3,errors_twoIntSameY0,\
-        errors_twoIntSameY1,errors_twoIntOppositeX0,errors_twoIntOppositeX1,errors_IntersectionsOnly2X0,errors_IntersectionsOnly2X1,type0_0Inds,\
-        type0_1Inds,type0_2Inds,type0_3Inds,type0_4Inds,type1_0Inds,type1_1Inds,type1_2Inds,type1_3Inds,type1_4Inds,type2_0Inds,type2_1Inds,type2_2Inds,\
-        type2_3Inds,type2_4Inds,type3_0Inds,type3_1Inds,type3_2Inds,type3_3Inds,type3_4Inds,fourInt_x,fourInt_y,twoIntSameY_x,twoIntSameY_y,twoIntOppositeX_x,\
-        twoIntOppositeX_y,xIntersectionsOnly2,yIntersectionsOnly2,typeInds0,typeInds1,typeInds2,typeInds3, periods = calcMasterIntersections(sma,e,W,w,inc,s_inner*np.ones(len(sma)),starMass,plotBool)
-    nus[only2RealInds,0:2] = nu_IntersectionsOnly2
-    nus[yrealAllRealInds[fourIntInds],0:4] = nu_fourInt
-    nus[yrealAllRealInds[twoIntOppositeXInds],0:2] = nu_twoIntOppositeX
-    nus[yrealAllRealInds[twoIntSameYInds],0:2] = nu_twoIntSameY
-    #### nu from s_outer
-    dmajorp,dminorp,theta_OpQ_X,theta_OpQp_X,Op,x,y,Phi,xreal,only2RealInds,yrealAllRealInds,\
-        fourIntInds,twoIntOppositeXInds,twoIntSameYInds,nu_minSepPoints,nu_maxSepPoints,nu_lminSepPoints,nu_lmaxSepPoints,nu_fourInt,\
-        nu_twoIntSameY,nu_twoIntOppositeX,nu_IntersectionsOnly2, yrealImagInds,\
-        t_minSep,t_maxSep,t_lminSep,t_lmaxSep,t_fourInt0,t_fourInt1,t_fourInt2,t_fourInt3,t_twoIntSameY0,\
-        t_twoIntSameY1,t_twoIntOppositeX0,t_twoIntOppositeX1,t_IntersectionOnly20,t_IntersectionOnly21,\
-        minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y, minSep, maxSep, lminSep, lmaxSep,\
-        errors_fourInt0,errors_fourInt1,errors_fourInt2,errors_fourInt3,errors_twoIntSameY0,\
-        errors_twoIntSameY1,errors_twoIntOppositeX0,errors_twoIntOppositeX1,errors_IntersectionsOnly2X0,errors_IntersectionsOnly2X1,type0_0Inds,\
-        type0_1Inds,type0_2Inds,type0_3Inds,type0_4Inds,type1_0Inds,type1_1Inds,type1_2Inds,type1_3Inds,type1_4Inds,type2_0Inds,type2_1Inds,type2_2Inds,\
-        type2_3Inds,type2_4Inds,type3_0Inds,type3_1Inds,type3_2Inds,type3_3Inds,type3_4Inds,fourInt_x,fourInt_y,twoIntSameY_x,twoIntSameY_y,twoIntOppositeX_x,\
-        twoIntOppositeX_y,xIntersectionsOnly2,yIntersectionsOnly2,typeInds0,typeInds1,typeInds2,typeInds3, periods = calcMasterIntersections(sma,e,W,w,inc,s_outer*np.ones(len(sma)),starMass,plotBool)
-    nus[only2RealInds,4:6] = nu_IntersectionsOnly2
-    nus[yrealAllRealInds[fourIntInds],4:8] = nu_fourInt
-    nus[yrealAllRealInds[twoIntOppositeXInds],4:6] = nu_twoIntOppositeX
-    nus[yrealAllRealInds[twoIntSameYInds],4:6] = nu_twoIntSameY
-    #### Solving for dmag_min and dmag_max for each planet ################
-    mindmag, maxdmag, dmaglminAll, dmaglmaxAll, indsWith2, indsWith4, nuMinDmag, nuMaxDmag, nulminAll, nulmaxAll = calc_planet_dmagmin_dmagmax(e,inc,w,sma*u.AU,p,Rp)
-    #### nu From dmag_upper
-    print('Num Planets with At Least 2 Int given dmag: ' + str(np.sum((mindmag < dmag_upper)*(maxdmag > dmag_upper))))
-    print('Num Planets with dmag local extrema: ' + str(len(indsWith4)))
-    print('Num Planets with given 4 Int given dmag: ' + str(np.sum((dmaglminAll < dmag_upper)*(dmaglmaxAll > dmag_upper))))
-    indsWith4Int = indsWith4[np.where((dmaglminAll < dmag_upper)*(dmaglmaxAll > dmag_upper))[0]]
-    indsWith2Int = list(set(np.where((mindmag < dmag_upper)*(maxdmag > dmag_upper))[0]) - set(indsWith4Int))
-    nus2Int, nus4Int, dmag2Int, dmag4Int = calc_planetnu_from_dmag(dmag_upper,e,inc,w,sma*u.AU,p,Rp,mindmag, maxdmag, indsWith2Int, indsWith4Int)
-    nus[indsWith2Int,8:10] = nus2Int
-    nus[indsWith4Int,8:12] = nus4Int
-    #### nu From dmag_lower
-    if dmag_lower == None:
-        #default case? 0s maybe idk empty stuff
-        dmag_lower = 0.
-    else:
-        print('Num Planets with At Least 2 Int given dmag: ' + str(np.sum((mindmag < dmag_lower)*(maxdmag > dmag_lower))))
-        print('Num Planets with dmag local extrema: ' + str(len(indsWith4)))
-        print('Num Planets with given 4 Int given dmag: ' + str(np.sum((dmaglminAll < dmag_lower)*(dmaglmaxAll > dmag_lower))))
-        indsWith4Int = indsWith4[np.where((dmaglminAll < dmag_lower)*(dmaglmaxAll > dmag_lower))[0]]
-        indsWith2Int = list(set(np.where((mindmag < dmag_lower)*(maxdmag > dmag_lower))[0]) - set(indsWith4Int))
-        nus2Int, nus4Int, dmag2Int, dmag4Int = calc_planetnu_from_dmag(dmag_lower,e,inc,w,sma*u.AU,p,Rp,mindmag, maxdmag, indsWith2Int, indsWith4Int)
-        nus[indsWith2Int,12:14] = nus2Int
-        nus[indsWith4Int,12:16] = nus4Int
-    ########################################################################
-    
-    #Finding which planets are all nan for efficiency
-    nanbool = np.isnan(nus)
-    indsNotAllNan = np.where(np.logical_not(np.all(nanbool,axis=1)))[0] #Get the inds of planets where not all nus are nan
-
-    #Aded ranges above or below each nan (so I can simply do a midpoint evaluation with no fancy indexing)
-    nus_min = np.nanmin(nus[indsNotAllNan],axis=1)
-    nus_max = np.nanmax(nus[indsNotAllNan],axis=1)
-    #nus[indsNotAllNan,16] = 2.*np.pi #2.*np.pi + nus_min #append the next orbit to this bit
-    #nus[indsNotAllNan,17] = 0. #nus_max - 2.*np.pi #append the previous orbit intersection
-    nus[:,16] = 2.*np.pi #2.*np.pi + nus_min #append the next orbit to this bit
-    nus[:,17] = 0. #nus_max - 2.*np.pi #append the previous orbit intersection
-
-    #sort the nus from smallest to largest
-    # nus[indsNotAllNan] = np.sort(nus[indsNotAllNan],axis=1)
-    # for i in np.arange(len(indsNotAllNan)):
-    #     nus[indsNotAllNan[i]] = np.sort(nus[indsNotAllNan[i]])
-    #nus = np.sort(nus,axis=1)
-    for i in np.arange(nus.shape[0]):
-        nus[i] = np.sort(nus[i])
-
-    #calculate nus midpoints (for evaluating whether planets are visible within the range specified)
-    nus_midpoints = (nus[:,1:] + nus[:,:-1])/2.
-
-    #Calculate dmag and s for all midpoints
-    Phi = (1.+np.sin(np.tile(inc,(17,1)).T)*np.sin(nus_midpoints+np.tile(w,(17,1)).T))**2./4.
-    d = np.tile(sma*u.AU,(17,1)).T*(1.-np.tile(e,(17,1)).T**2.)/(np.tile(e,(17,1)).T*np.cos(nus_midpoints)+1.)
-    dmags = deltaMag(np.tile(p,(17,1)).T,np.tile(Rp.to('AU'),(17,1)).T,d,Phi) #calculate dmag of the specified x-value
-    ss = planet_star_separation(np.tile(sma,(17,1)).T,np.tile(e,(17,1)).T,nus_midpoints,np.tile(w,(17,1)).T,np.tile(inc,(17,1)).T)
-
-    #Determine ranges where the planet is visible
-    planetIsVisibleBool = (ss < np.ones((len(sma),17))*s_outer)*(ss > np.ones((len(sma),17))*s_inner)*(dmags < np.ones((len(sma),17))*dmag_upper)*(dmags > np.ones((len(sma),17))*dmag_lower)
-
-
-
-    return nus, planetIsVisibleBool
-
 
 #### Verifying Planet Visibility Windows #################################
 ##########################################################################
