@@ -3181,7 +3181,7 @@ def calc_planet_dmagmin_dmagmax(e,inc,w,a,p,Rp):
     out = list()
     for i in np.arange(coeffs.shape[1]):
         tmp = np.roots(coeffs[:,i])
-        if not tmp.shape == 8:
+        if not tmp.shape[0] == 8:
             tmp = np.append(tmp[0:2],np.append(np.asarray([1.j,1.j]),np.append(tmp[2:4],np.asarray([1.j,1.j])))) #done because I think order matters
             #tmp = np.append(tmp,np.asarray([1.j,1.j,1.j,1.j]))
         out.append(tmp) # this is x
