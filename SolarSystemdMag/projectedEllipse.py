@@ -2053,6 +2053,10 @@ def ellipseCircleIntersections(s_circle, a, b, mx, my, x, y, minSep, maxSep, lmi
 
     #### For Inds With 0
     if len(indsWith0) > 0:
+        if np.any(np.all(np.isnan(xarray[indsWith0]),axis=1)):
+            tInd = np.where(np.all(np.isnan(xarray[indsWith0]),axis=1))[0]
+            myInd = yrealAllRealInds[twoIntSameYInds[indsWith0[tInd]]]
+            #print('ar = ' + str(sma[myInd]) + '*u.AU\ner = ' + str(e[myInd]) + '\nWr = ' + str(W[myInd]) + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]))
         assert not np.any(np.all(np.isnan(xarray[indsWith0]),axis=1)), 'Looks like one of the solutions is all NAN' #when this case was investigated, where xarray had all nans, it was caused by the quartic solver itself
         #The only solution I can come up with is to preemtively filter planets like this whenever they are encountered
         #Select the two smallest seems to be the correct solution. 
@@ -3176,8 +3180,12 @@ def calc_planet_dmagmin_dmagmax(e,inc,w,a,p,Rp):
     #solve for x in the polynomial (where x=cos(nu))
     out = list()
     for i in np.arange(coeffs.shape[1]):
-        out.append(np.roots(coeffs[:,i])) # this is x
-    out = np.asarray(out)
+        tmp = np.roots(coeffs[:,i])
+        if not tmp.shape == 8:
+            tmp = np.append(tmp[0:2],np.append(np.asarray([1.j,1.j]),np.append(tmp[2:4],np.asarray([1.j,1.j])))) #done because I think order matters
+            #tmp = np.append(tmp,np.asarray([1.j,1.j,1.j,1.j]))
+        out.append(tmp) # this is x
+    out = np.asarray(out,dtype=np.complex128)
     del coeffs #delete the coefficients. They are no longer needed
 
     # Saving out (necessary in case all sols in a row are filtered out)

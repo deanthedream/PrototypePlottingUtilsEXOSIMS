@@ -14,8 +14,8 @@ import itertools
 import csv
 
 
-calcCompBool = False
-plotBool = True
+calcCompBool = True
+plotBool = False
 
 
 #### Randomly Generate Orbits #####################################################
@@ -121,6 +121,24 @@ if calcCompBool == True:
         Wr = 1.0597252167081723
         wr = 4.95574654788906
         incr = 1.2972537064559475e-05
+        sma,e,W,w,inc = nukeKOE(sma,e,W,w,inc,ar,er,Wr,wr,incr)
+        ar = 2.495183375446141*u.AU
+        er = 0.31004037695684444
+        Wr = 1.7283060888056982
+        wr = 4.299935904170587
+        incr = 1.4239980349024444
+        sma,e,W,w,inc = nukeKOE(sma,e,W,w,inc,ar,er,Wr,wr,incr)
+        ar = 1.8228224720144062*u.AU
+        er = 0.13559049816785979
+        Wr = 5.166595438971132
+        wr = 1.5443323432321039
+        incr = 1.3484780997109205
+        sma,e,W,w,inc = nukeKOE(sma,e,W,w,inc,ar,er,Wr,wr,incr)
+        ar = 3.450592571751904*u.AU
+        er = 0.1558952135175637
+        Wr = 4.784618309247885
+        wr = 2.325605078468764
+        incr = 1.4505349452903014
         sma,e,W,w,inc = nukeKOE(sma,e,W,w,inc,ar,er,Wr,wr,incr)
 
         #### Classify Planets
