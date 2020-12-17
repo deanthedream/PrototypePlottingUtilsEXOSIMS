@@ -1323,7 +1323,7 @@ def quarticSolutions_ellipse_to_Quarticipynb(A, B, C, D):
     delta = 256.*D**3. - 192.*A*C*D**2. - 128.*B**2.*D**2. + 144.*B*C**2.*D - 27.*C**4.\
         + 144.*A**2.*B*D**2. - 6.*A**2.*C**2.*D - 80.*A*B**2.*C*D + 18.*A*B*C**3. + 16.*B**4.*D\
         - 4.*B**3.*C**2. - 27.*A**4.*D**2. + 18.*A**3.*B*C*D - 4.*A**3.*C**3. - 4.*A**2.*B**3.*D + A**2.*B**2.*C**2. #verified against wikipedia multiple times
-    assert 0 == np.count_nonzero(np.imag(delta)), 'All delta are real'
+    assert 0 == np.count_nonzero(np.imag(delta)), 'Not all delta are real'
     delta = np.real(delta)
     P = 8.*B - 3.*A**2.
     assert 0 == np.count_nonzero(np.imag(P)), 'Not all P are real'
@@ -1493,8 +1493,12 @@ def smin_smax_slmin_slmax(n, xreal, yreal, mx, my, x, y):
             smm = np.asarray([smm0,smm1])
         smp = np.asarray([smp0,smp1])
         assert np.all(np.argmin(smp,axis=0) == 0), 'mins are not all are smp0'
+        #myInd = yrealImagInds[np.where(np.logical_not(np.argmin(smp,axis=0) == 0))[0]]
+        #print('ar = ' + str(sma[myInd]) + '*u.AU\ner = ' + str(e[myInd]) + '\nWr = ' + str(W[myInd]) + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]))
         spm = np.asarray([spm0,spm1])
         assert np.all(np.argmin(spm,axis=0) == 1), 'mins are not all are spm1'
+        #myInd = yrealImagInds[np.where(np.logical_not(np.argmin(spm,axis=0) == 1))[0]]
+        #print('ar = ' + str(sma[myInd]) + '*u.AU\ner = ' + str(e[myInd]) + '\nWr = ' + str(W[myInd]) + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]))
         spp = np.asarray([spp0,spp1])
         #DELETEassert np.all(np.argmin(spp,axis=0) == 1), 'mins are not all are spp1'
         if not np.all(np.argmin(spp,axis=0) == 1):
@@ -1508,12 +1512,13 @@ def smin_smax_slmin_slmax(n, xreal, yreal, mx, my, x, y):
             spp = np.asarray([spp0,spp1])
         #above says smallest must be one of these: smm1, smp0, spm1, spp1
         #The following are where each of these separations are 0
-        smm1Inds = np.where((smm1 < smp0)*(smm1 < spm1)*(smm1 < spp1))[0]
-        smp0Inds = np.where((smp0 < smm1)*(smp0 < spm1)*(smp0 < spp1))[0]
+        smm1Inds = np.where((smm1 <= smp0)*(smm1 <= spm1)*(smm1 <= spp1))[0]
+        smp0Inds = np.where((smp0 < smm1)*(smp0 <= spm1)*(smp0 <= spp1))[0]
         #spp1Inds = np.where((smp0 < smm1)*(smp0 < spm1)*(smp0 < spp1))[0]
-        spm1Inds = np.where((spm1 < smp0)*(spm1 < smm1)*(spm1 < spp1))[0]
+        spm1Inds = np.where((spm1 < smp0)*(spm1 < smm1)*(spm1 <= spp1))[0]
         spp1Inds = np.where((spp1 < smp0)*(spp1 < spm1)*(spp1 < smm1))[0]
         assert len(yrealImagInds) == len(smm1Inds) + len(smp0Inds) + len(spm1Inds) + len(spp1Inds), 'Have not covered all cases'
+        #set(np.arange(len(yrealImagInds)))^set(smm1Inds).union(set(smp0Inds).union(set(spm1Inds).union(set(spp1Inds))))
         if len(smm1Inds) > 0:
             minSep[yrealImagInds[smm1Inds]] = smm1[smm1Inds]
             minSepPoints_x[yrealImagInds[smm1Inds]] = np.real(xreal[yrealImagInds[smm1Inds],1])
@@ -2835,10 +2840,10 @@ def calcMasterIntersections(sma,e,W,w,inc,s_circle,starMass,plotBool):
     # del start1, stop1
 
     # Checks
-    if not np.all(dmajorp < sma):
+    if not np.all(dmajorp <= sma):
         print("Not all Semi-major axis of the projected ellipse are less than the original 3D ellipse, caused by circular orbits required for circular orbits")
-        assert np.all(sma - dmajorp > -1e-12), "Not all Semi-major axis of the projected ellipse are less than the original 3D ellipse" #required for circular orbits
-    assert np.all(dminorp < dmajorp), "All projected Semi-minor axes are less than all projected semi-major axes"
+        assert np.all(sma - dmajorp >= -1e-12), "Not all Semi-major axis of the projected ellipse are less than the original 3D ellipse" #required for circular orbits
+    assert np.all(dminorp <= dmajorp), "All projected Semi-minor axes are less than all projected semi-major axes"
 
     #### Derotate Ellipse Calculations
     # start5 = time.time()
@@ -2860,6 +2865,8 @@ def calcMasterIntersections(sma,e,W,w,inc,s_circle,starMass,plotBool):
     xreal, _, _, _, _, _ = quarticSolutions_ellipse_to_Quarticipynb(A.astype('complex128'), B, C, D)
     del A, B, C, D #delting for memory efficiency
     assert np.max(np.nanmin(np.abs(np.imag(xreal)),axis=1)) < 1e-5, 'At least one row has min > 1e-5' #this ensures each row has a solution
+    #myInd = np.where(np.nanmin(np.abs(np.imag(xreal)),axis=1) > 1e-5)
+    #print('ar = ' + str(sma[myInd]) + '*u.AU\ner = ' + str(e[myInd]) + '\nWr = ' + str(W[myInd]) + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]))
     #print(w[np.argmax(np.nanmin(np.abs(np.imag(xreal)),axis=1))]) #prints the argument of perigee (assert above fails on 1.57 or 1.5*pi)
     #Failure of the above occured where w=4.712 which is approx 1.5pi
     #NOTE: originally 1e-15 but there were some with x=1e-7 and w=pi/2, 5e-6 from 
@@ -3209,6 +3216,9 @@ def calc_planet_dmagmin_dmagmax(e,inc,w,a,p,Rp):
     #For arccos in 0-pi
     nuReal = np.ones(outReal.shape)*np.nan
     nuReal[inBoundsBools] = np.arccos(outReal[inBoundsBools]) #calculate arccos, there are 2 potential solutions... need to calculate both
+    if np.any(np.all(np.isnan(nuReal),axis=1)): #one of the planets has no solutions... this is a problem
+        myInd = np.where(np.all(np.isnan(nuReal),axis=1))[0]
+        #print('ar = ' + str(sma[myInd]) + '*u.AU\ner = ' + str(e[myInd]) + '\nWr = ' + str(W[myInd]) + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]))
     gPhi = (1.+np.sin(np.tile(inc,(8,1)).T)*np.sin(nuReal+np.tile(w,(8,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
     gd = np.tile(a.to('AU'),(8,1)).T*(1.-np.tile(e,(8,1)).T**2.)/(np.tile(e,(8,1)).T*np.cos(nuReal)+1.)
     gdmags = deltaMag(np.tile(p,(8,1)).T,np.tile(Rp.to('AU'),(8,1)).T,gd,gPhi) #calculate dmag of the specified x-value
@@ -3235,6 +3245,8 @@ def calc_planet_dmagmin_dmagmax(e,inc,w,a,p,Rp):
     #By this logic, the largest value must be the maximum and the smallest value must be the minimum
     #Step 1: Find the mindmag (it must be the smallest dmag producing solution of all possible solutions)
     indsOfMin = np.nanargmin(dmagsComb,axis=1) #Find the index of the 16 that is the absolute minimum
+    #If error, type myInd and 
+    #print('ar = ' + str(sma[myInd]) + '*u.AU\ner = ' + str(e[myInd]) + '\nWr = ' + str(W[myInd]) + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]))
     mindmag = dmagsComb[np.arange(len(a)),indsOfMin].copy() #Assign the minimum to mindmag
     nuMinDmag = nuRealComb[np.arange(len(a)),indsOfMin].copy() #Assign nu of the minimum to nuMinDmag
     indsOfMin = np.mod(indsOfMin,8) #Find the indicies of the minimum and complements in 0-7
@@ -3751,6 +3763,8 @@ def calc_planetnu_from_dmag(dmag,e,inc,w,a,p,Rp,mindmag, maxdmag, indsWith2Int, 
     indsWith3NonNan = np.where(np.sum(np.isnan(nuRealComb2Int).astype('int'),axis=1) == 13)[0]
     indsWith2NonNan = np.where(np.sum(np.isnan(nuRealComb2Int).astype('int'),axis=1) == 14)[0] # a very rare case
     assert nuRealComb2Int.shape[0] == len(indsWith4NonNan) + len(indsWith3NonNan) + len(indsWith5NonNan) + len(indsWith2NonNan), 'The number of 3 real and 4 real does not sum to the number of nuRealCombs with 2 Intersections'
+    #myInd = set(np.arange(len(nuRealComb2Int)))^set(indsWith4NonNan).union(set(indsWith3NonNan).union(set(indsWith5NonNan).union(set(indsWith2NonNan))))
+    #print('ar = ' + str(sma[myInd]) + '*u.AU\ner = ' + str(e[myInd]) + '\nWr = ' + str(W[myInd]) + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]))
 
     #For arccos in 0-pi (indicies 0-7) and pi-2pi (indicies 8-15)
     gPhi2Int = (1.+np.sin(np.tile(inc[indsWith2Int],(16,1)).T)*np.sin(nuRealComb2Int+np.tile(w[indsWith2Int],(16,1)).T))**2./4. #TRYING THIS TO CIRCUMVENT POTENTIAL ARCCOS
