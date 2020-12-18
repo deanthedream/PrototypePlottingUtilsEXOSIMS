@@ -11,9 +11,11 @@ import astropy.units as u
 from EXOSIMS.util.deltaMag import deltaMag
 from EXOSIMS.util.planet_star_separation import planet_star_separation
 import itertools
+from EXOSIMS.util.phaseFunctions import quasiLambertPhaseFunction
+from EXOSIMS.util.phaseFunctions import betaFunc
 
 # #### PLOT BOOL
-# plotBool = False
+plotBool = False
 # if plotBool == True:
 #     from plotProjectedEllipse import *
 
@@ -173,16 +175,6 @@ indsWithAnyInt = np.where(np.sum(~np.isnan(times2),axis=1))[0] #Finds the planet
 #NEED TO BE ABLE TO PUT BOUNDS INTO BOX WITH 4 SIDES
 #AND BOX WITH 3 SIDES
 
-#### Verifying Planet Visibility Windows #################################
-nus_range = np.linspace(start=0,stop=2.*np.pi,num=1000)
-betas = betaFunc(inc,nus_range,w)
-Phis = quasiLambertPhaseFunction(betas)
-rs = sma*(1.-e**2.)/(1.+e*np.cos(nus_range))
-dmags = deltaMag(p,Rp,rs,Phis)
-seps = planet_star_separation(sma,e,nus,w,inc)
-visibileBool = (seps > s_inner)*(seps < s_outer)*(dmags < dmag_upper)
-##########################################################################
-
 
 nus, planetIsVisibleBool = planetVisibilityBounds(sma,e,W,w,inc,p,Rp,starMass,plotBool, s_inner, s_outer, dmag_upper, dmag_lower=None) #Calculate planet-star nu edges and visible regions
 ts = timeFromTrueAnomaly(nus,np.tile(periods,(18,1)).T*u.year.to('day'),np.tile(e,(18,1)).T) #Calculate the planet-star intersection edges
@@ -193,60 +185,83 @@ totalVisibleTimePerTarget = np.nansum(np.multiply(np.multiply(dt-maxIntTime,plan
 totalCompleteness = np.divide(totalVisibleTimePerTarget,periods*u.year.to('day')) # Fraction of time each planet is visible of its period
 
 
-#### Data Struct of Completeness
-compDict = dict()
-maxIntTimes = [0.,30.,60.,90.] #in days
-starDistances = [5.,10.,15.] #in pc
-for i in np.arange(len(starDistances)):
-    starDistance = starDistances[i]
-    s_inner = starDistance*u.pc.to('AU')*IWA_HabEx.to('rad').value
-    s_outer = starDistance*u.pc.to('AU')*OWA_HabEx.to('rad').value #RANDOMLY MULTIPLY BY 3 HERE
-    #will need to recalculate separations
-    for j in np.arange(len(maxIntTimes)):
-        maxIntTime = maxIntTimes[j]
-        compDict[(i,j)] = dict()
-        compDict[(i,j)]['maxIntTime'] = maxIntTime
-        compDict[(i,j)]['stardistance'] = starDistance
-        compDict[(i,j)]['s_inner'] = s_inner
-        compDict[(i,j)]['s_outer'] = s_outer
-        nus, planetIsVisibleBool = planetVisibilityBounds(sma,e,W,w,inc,p,Rp,starMass,plotBool, s_inner, s_outer, dmag_upper, dmag_lower=None) #Calculate planet-star nu edges and visible regions
-        ts = timeFromTrueAnomaly(nus,np.tile(periods,(18,1)).T*u.year.to('day'),np.tile(e,(18,1)).T) #Calculate the planet-star intersection edges
-        dt = ts[:,1:] - ts[:,:-1] #Calculate time region widths
-        # Completeness Calculated Based On Planets In the instrument's visibility limits
-        compDict[(i,j)]['totalVisibleTimePerTarget'] = np.nansum(np.multiply(dt,planetIsVisibleBool.astype('int')),axis=1) #The traditional calculation, accounting for how long the planet is in the visible region
-        compDict[(i,j)]['totalCompletenessPerTarget'] = np.divide(compDict[(i,j)]['totalVisibleTimePerTarget'],periods*u.year.to('day')) # Fraction of time each planet is visible of its period
-        compDict[(i,j)]['totalCompleteness'] = np.sum(compDict[(i,j)]['totalCompletenessPerTarget'])/len(compDict[(i,j)]['totalCompletenessPerTarget']) #Calculates the total completenss by summing all the fractions and normalize by number of targets
-        assert np.all(compDict[(i,j)]['totalCompletenessPerTarget'] >= 0), 'Not all positive comp'
-        assert compDict[(i,j)]['totalCompleteness'] >= 0, 'Not positive comp'
-        # Completeness 
-        gtIntLimit = dt > maxIntTime #Create boolean array for inds
-        compDict[(i,j)]['totalVisibleTimePerTarget_maxIntTimeCorrected'] = np.nansum(np.multiply(np.multiply(dt-maxIntTime,planetIsVisibleBool.astype('int')),gtIntLimit.astype('int')),axis=1) #We subtract the int time from the fraction of observable time
-        compDict[(i,j)]['totalCompletenessPerTarget_maxIntTimeCorrected'] = np.divide(compDict[(i,j)]['totalVisibleTimePerTarget_maxIntTimeCorrected'],periods*u.year.to('day')) # Fraction of time each planet is visible of its period
-        compDict[(i,j)]['totalCompleteness_maxIntTimeCorrected'] = np.sum(compDict[(i,j)]['totalCompletenessPerTarget_maxIntTimeCorrected'])/len(compDict[(i,j)]['totalCompletenessPerTarget_maxIntTimeCorrected']) #Calculates the total completenss by summing all the fractions and normalize by number of targets
-        compDict[(i,j)]['SubTypeCompPerTarget'] = dict()
-        compDict[(i,j)]['SubTypeCompPerTarget_maxIntTimeCorrected'] = dict()
-        compDict[(i,j)]['SubTypeComp'] = dict()
-        compDict[(i,j)]['SubTypeComp_maxIntTimeCorrected'] = dict()
-        for overi, overj in itertools.product(np.arange(len(comp.Rp_hi)),np.arange(len(comp.L_lo[0,:]))):
-            compDict[(i,j)]['SubTypeCompPerTarget'][(overi,overj)] = np.multiply(compDict[(i,j)]['totalCompletenessPerTarget'],((bini==overi)*(binj==overj)).astype('int'))/np.sum(np.multiply(periods*u.year.to('day'),((bini==overi)*(binj==overj)).astype('int'))) #Calculate completeness for this specific planet subtype
-            compDict[(i,j)]['SubTypeCompPerTarget_maxIntTimeCorrected'][(overi,overj)] = np.multiply(compDict[(i,j)]['totalCompletenessPerTarget_maxIntTimeCorrected'],((bini==overi)*(binj==overj)).astype('int'))/np.sum(np.multiply(periods*u.year.to('day'),((bini==overi)*(binj==overj)).astype('int'))) #Calculate completeness for this specific planet subtype
-            compDict[(i,j)]['SubTypeComp'][(overi,overj)] = np.sum(compDict[(i,j)]['SubTypeCompPerTarget'][(overi,overj)])
-        compDict[(i,j)]['SubTypeComp_maxIntTimeCorrected'][(overi,overj)] = np.sum(compDict[(i,j)]['SubTypeCompPerTarget_maxIntTimeCorrected'][(overi,overj)])
+#### Verifying Planet Visibility Windows #################################
+nus_range = np.linspace(start=0,stop=2.*np.pi,num=1000)
+#beta = list()
+#Phis = list()
+visbools = list()
+for i in np.arange(10):#len(inc)):
+    periods
+    betas = append(betaFunc(inc[i],nus_range,w[i]))
+    Phis = quasiLambertPhaseFunction(betas)
+    rs = sma*(1.-e[i]**2.)/(1.+e[i]*np.cos(nus_range))
+    dmags = deltaMag(p[i],Rp[i],rs,Phis)
+    seps = planet_star_separation(sma[i],e[i],nus_range,w[i],inc[i])
+    visibileBool = (seps > s_inner)*(seps < s_outer)*(dmags < dmag_upper)
+    visbools.append(visibileBool)
+
+
+#I THINK I NEED TO CONVERT THIS INTO TIME
+##########################################################################
+
+print(saltyburrito)
+
+
+
+# #### Data Struct of Completeness
+# compDict = dict()
+# maxIntTimes = [0.,30.,60.,90.] #in days
+# starDistances = [5.,10.,15.] #in pc
+# for i in np.arange(len(starDistances)):
+#     starDistance = starDistances[i]
+#     s_inner = starDistance*u.pc.to('AU')*IWA_HabEx.to('rad').value
+#     s_outer = starDistance*u.pc.to('AU')*OWA_HabEx.to('rad').value #RANDOMLY MULTIPLY BY 3 HERE
+#     #will need to recalculate separations
+#     for j in np.arange(len(maxIntTimes)):
+#         maxIntTime = maxIntTimes[j]
+#         compDict[(i,j)] = dict()
+#         compDict[(i,j)]['maxIntTime'] = maxIntTime
+#         compDict[(i,j)]['stardistance'] = starDistance
+#         compDict[(i,j)]['s_inner'] = s_inner
+#         compDict[(i,j)]['s_outer'] = s_outer
+#         nus, planetIsVisibleBool = planetVisibilityBounds(sma,e,W,w,inc,p,Rp,starMass,plotBool, s_inner, s_outer, dmag_upper, dmag_lower=None) #Calculate planet-star nu edges and visible regions
+#         ts = timeFromTrueAnomaly(nus,np.tile(periods,(18,1)).T*u.year.to('day'),np.tile(e,(18,1)).T) #Calculate the planet-star intersection edges
+#         dt = ts[:,1:] - ts[:,:-1] #Calculate time region widths
+#         # Completeness Calculated Based On Planets In the instrument's visibility limits
+#         compDict[(i,j)]['totalVisibleTimePerTarget'] = np.nansum(np.multiply(dt,planetIsVisibleBool.astype('int')),axis=1) #The traditional calculation, accounting for how long the planet is in the visible region
+#         compDict[(i,j)]['totalCompletenessPerTarget'] = np.divide(compDict[(i,j)]['totalVisibleTimePerTarget'],periods*u.year.to('day')) # Fraction of time each planet is visible of its period
+#         compDict[(i,j)]['totalCompleteness'] = np.sum(compDict[(i,j)]['totalCompletenessPerTarget'])/len(compDict[(i,j)]['totalCompletenessPerTarget']) #Calculates the total completenss by summing all the fractions and normalize by number of targets
+#         assert np.all(compDict[(i,j)]['totalCompletenessPerTarget'] >= 0), 'Not all positive comp'
+#         assert compDict[(i,j)]['totalCompleteness'] >= 0, 'Not positive comp'
+#         # Completeness 
+#         gtIntLimit = dt > maxIntTime #Create boolean array for inds
+#         compDict[(i,j)]['totalVisibleTimePerTarget_maxIntTimeCorrected'] = np.nansum(np.multiply(np.multiply(dt-maxIntTime,planetIsVisibleBool.astype('int')),gtIntLimit.astype('int')),axis=1) #We subtract the int time from the fraction of observable time
+#         compDict[(i,j)]['totalCompletenessPerTarget_maxIntTimeCorrected'] = np.divide(compDict[(i,j)]['totalVisibleTimePerTarget_maxIntTimeCorrected'],periods*u.year.to('day')) # Fraction of time each planet is visible of its period
+#         compDict[(i,j)]['totalCompleteness_maxIntTimeCorrected'] = np.sum(compDict[(i,j)]['totalCompletenessPerTarget_maxIntTimeCorrected'])/len(compDict[(i,j)]['totalCompletenessPerTarget_maxIntTimeCorrected']) #Calculates the total completenss by summing all the fractions and normalize by number of targets
+#         compDict[(i,j)]['SubTypeCompPerTarget'] = dict()
+#         compDict[(i,j)]['SubTypeCompPerTarget_maxIntTimeCorrected'] = dict()
+#         compDict[(i,j)]['SubTypeComp'] = dict()
+#         compDict[(i,j)]['SubTypeComp_maxIntTimeCorrected'] = dict()
+#         for overi, overj in itertools.product(np.arange(len(comp.Rp_hi)),np.arange(len(comp.L_lo[0,:]))):
+#             compDict[(i,j)]['SubTypeCompPerTarget'][(overi,overj)] = np.multiply(compDict[(i,j)]['totalCompletenessPerTarget'],((bini==overi)*(binj==overj)).astype('int'))/np.sum(np.multiply(periods*u.year.to('day'),((bini==overi)*(binj==overj)).astype('int'))) #Calculate completeness for this specific planet subtype
+#             compDict[(i,j)]['SubTypeCompPerTarget_maxIntTimeCorrected'][(overi,overj)] = np.multiply(compDict[(i,j)]['totalCompletenessPerTarget_maxIntTimeCorrected'],((bini==overi)*(binj==overj)).astype('int'))/np.sum(np.multiply(periods*u.year.to('day'),((bini==overi)*(binj==overj)).astype('int'))) #Calculate completeness for this specific planet subtype
+#             compDict[(i,j)]['SubTypeComp'][(overi,overj)] = np.sum(compDict[(i,j)]['SubTypeCompPerTarget'][(overi,overj)])
+#         compDict[(i,j)]['SubTypeComp_maxIntTimeCorrected'][(overi,overj)] = np.sum(compDict[(i,j)]['SubTypeCompPerTarget_maxIntTimeCorrected'][(overi,overj)])
         
-        #Earth-Like Completeness, The probability of the detected planet being Earth-Like
-        compDict[(i,j)]['EarthlikeCompPerTarget'] = np.multiply(compDict[(i,j)]['totalCompletenessPerTarget'],(earthLike).astype('int')) #/np.sum(np.multiply(periods*u.year.to('day'),(earthLike).astype('int'))) #Calculates the completeness for Earth-Like Planets
-        compDict[(i,j)]['EarthlikeCompPerTarget_maxIntTimeCorrected'] = np.multiply(compDict[(i,j)]['totalCompletenessPerTarget_maxIntTimeCorrected'],(earthLike).astype('int')) #/np.sum(np.multiply(periods*u.year.to('day'),(earthLike).astype('int'))) #Calculates the completeness for Earth-Like Planets
-        compDict[(i,j)]['EarthlikeComp'] = np.sum(compDict[(i,j)]['EarthlikeCompPerTarget'])/len(earthLike) #np.sum(earthLike.astype('int'))
-        compDict[(i,j)]['EarthlikeComp_maxIntTimeCorrected'] = np.sum(compDict[(i,j)]['EarthlikeCompPerTarget_maxIntTimeCorrected'])/len(earthLike) #np.sum(earthLike.astype('int'))
+#         #Earth-Like Completeness, The probability of the detected planet being Earth-Like
+#         compDict[(i,j)]['EarthlikeCompPerTarget'] = np.multiply(compDict[(i,j)]['totalCompletenessPerTarget'],(earthLike).astype('int')) #/np.sum(np.multiply(periods*u.year.to('day'),(earthLike).astype('int'))) #Calculates the completeness for Earth-Like Planets
+#         compDict[(i,j)]['EarthlikeCompPerTarget_maxIntTimeCorrected'] = np.multiply(compDict[(i,j)]['totalCompletenessPerTarget_maxIntTimeCorrected'],(earthLike).astype('int')) #/np.sum(np.multiply(periods*u.year.to('day'),(earthLike).astype('int'))) #Calculates the completeness for Earth-Like Planets
+#         compDict[(i,j)]['EarthlikeComp'] = np.sum(compDict[(i,j)]['EarthlikeCompPerTarget'])/len(earthLike) #np.sum(earthLike.astype('int'))
+#         compDict[(i,j)]['EarthlikeComp_maxIntTimeCorrected'] = np.sum(compDict[(i,j)]['EarthlikeCompPerTarget_maxIntTimeCorrected'])/len(earthLike) #np.sum(earthLike.astype('int'))
 
-        #Earth-Like Completeness
-        compDict[(i,j)]['EarthlikeComp2'] = np.sum(compDict[(i,j)]['EarthlikeCompPerTarget'])/np.sum(earthLike.astype('int'))
-        compDict[(i,j)]['EarthlikeComp2_maxIntTimeCorrected'] = np.sum(compDict[(i,j)]['EarthlikeCompPerTarget_maxIntTimeCorrected'])/np.sum(earthLike.astype('int'))
+#         #Earth-Like Completeness
+#         compDict[(i,j)]['EarthlikeComp2'] = np.sum(compDict[(i,j)]['EarthlikeCompPerTarget'])/np.sum(earthLike.astype('int'))
+#         compDict[(i,j)]['EarthlikeComp2_maxIntTimeCorrected'] = np.sum(compDict[(i,j)]['EarthlikeCompPerTarget_maxIntTimeCorrected'])/np.sum(earthLike.astype('int'))
 
-maxIntTime = 30. #days
-gtIntLimit = dt > maxIntTime #Create boolean array for inds
-totalCompletenessIntLimit = np.nansum(np.multiply(np.multiply(dt-maxIntTime,planetIsVisibleBool.astype('int')),gtIntLimit),axis=1) #We subtract the int time from the fraction of observable time
-totalCompletenessIntLimit = np.divide(totalVisibleTimePerTarget,periods*u.year.to('day')) # Fraction of time each planet is visible of its period
+# maxIntTime = 30. #days
+# gtIntLimit = dt > maxIntTime #Create boolean array for inds
+# totalCompletenessIntLimit = np.nansum(np.multiply(np.multiply(dt-maxIntTime,planetIsVisibleBool.astype('int')),gtIntLimit),axis=1) #We subtract the int time from the fraction of observable time
+# totalCompletenessIntLimit = np.divide(totalVisibleTimePerTarget,periods*u.year.to('day')) # Fraction of time each planet is visible of its period
 
 
 
