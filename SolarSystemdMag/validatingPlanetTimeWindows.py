@@ -13,11 +13,19 @@ from EXOSIMS.util.planet_star_separation import planet_star_separation
 import itertools
 from EXOSIMS.util.phaseFunctions import quasiLambertPhaseFunction
 from EXOSIMS.util.phaseFunctions import betaFunc
+from keplertools.fun import eccanom
+import datetime
+import re
+try:
+    import cPickle as pickle
+except:
+    import pickle
 
 # #### PLOT BOOL
 plotBool = False
 # if plotBool == True:
 #     from plotProjectedEllipse import *
+PPoutpath = './'
 
 #### Randomly Generate Orbits
 folder = os.path.normpath(os.path.expandvars('$HOME/Documents/exosims/Scripts'))
@@ -30,7 +38,7 @@ sim = EXOSIMS.MissionSim.MissionSim(scriptfile=scriptfile,nopar=True)
 PPop = sim.PlanetPopulation
 comp = sim.Completeness
 TL = sim.TargetList
-n = 10**4 #Dean's nice computer can go up to 10**8 what can atuin go up to?
+n = 5*10**5 #Dean's nice computer can go up to 10**8 what can atuin go up to?
 inc, W, w = PPop.gen_angles(n,None)
 W = W.to('rad').value
 w = w.to('rad').value
@@ -179,10 +187,21 @@ indsWithAnyInt = np.where(np.sum(~np.isnan(times2),axis=1))[0] #Finds the planet
 nus, planetIsVisibleBool = planetVisibilityBounds(sma,e,W,w,inc,p,Rp,starMass,plotBool, s_inner, s_outer, dmag_upper, dmag_lower=None) #Calculate planet-star nu edges and visible regions
 ts = timeFromTrueAnomaly(nus,np.tile(periods,(18,1)).T*u.year.to('day'),np.tile(e,(18,1)).T) #Calculate the planet-star intersection edges
 dt = ts[:,1:] - ts[:,:-1] #Calculate time region widths
-maxIntTime = 30.
+maxIntTime = 0.
 gtIntLimit = dt > maxIntTime #Create boolean array for inds
 totalVisibleTimePerTarget = np.nansum(np.multiply(np.multiply(dt-maxIntTime,planetIsVisibleBool.astype('int')),gtIntLimit),axis=1) #We subtract the int time from the fraction of observable time
 totalCompleteness = np.divide(totalVisibleTimePerTarget,periods*u.year.to('day')) # Fraction of time each planet is visible of its period
+
+def trueAnomalyFromEccentricAnomaly(e,E):
+    """ From https://en.wikipedia.org/wiki/True_anomaly #definitely exists in some other python scripts somewhere
+    Args:
+        e:
+        E:
+    Returns:
+        nu:
+    """
+    nu = 2.*np.arctan2(np.sqrt(1.+e)*np.tan(E/2.),np.sqrt(1.-e))
+    return nu
 
 
 #### Verifying Planet Visibility Windows #################################
@@ -190,21 +209,92 @@ nus_range = np.linspace(start=0,stop=2.*np.pi,num=1000)
 #beta = list()
 #Phis = list()
 visbools = list()
-for i in np.arange(10):#len(inc)):
-    periods
-    betas = append(betaFunc(inc[i],nus_range,w[i]))
-    Phis = quasiLambertPhaseFunction(betas)
-    rs = sma*(1.-e[i]**2.)/(1.+e[i]*np.cos(nus_range))
-    dmags = deltaMag(p[i],Rp[i],rs,Phis)
-    seps = planet_star_separation(sma[i],e[i],nus_range,w[i],inc[i])
-    visibileBool = (seps > s_inner)*(seps < s_outer)*(dmags < dmag_upper)
-    visbools.append(visibileBool)
+compMethod2 = list()
+total_time_visible_error = list()
+numPoints = 10**5 #number of points to evaluate at
+numPlans = 25*1000 #number of planets to iterate over
+path = PPoutpath + 'planetVisibilityWindowsNpts' + str(numPoints) + 'Nplans' + str(numPlans) + '.pkl'
+if os.path.exists(path):
+    try:
+        with open(path, "rb") as ff:
+            rawdata = pickle.load(ff)
+    except UnicodeDecodeError:
+        with open(path, "rb") as ff:
+            rawdata = pickle.load(ff,encoding='latin1')
+    compMethod2 = rawdata['compMethod2']
+    total_time_visible_error = rawdata['total_time_visible_error']
+    visbools = rawdata['visbools']
+else:
+    for i in np.arange(numPlans):#len(inc)):
+        print('Working on: ' + str(i) + '/' + str(numPlans))
+        #period = periods[i]
+        #np.linspace(start=0.,stop=periods[i])
+        M = np.linspace(start=0.,stop=2.*np.pi,num=numPoints) #Even distribution across mean anomaly
+        E = np.asarray([eccanom(M[j],e[i]) for j in np.arange(len(M))])
+        nus_range = trueAnomalyFromEccentricAnomaly(e[i],E)
+        betas = betaFunc(inc[i],nus_range,w[i])
+        Phis = quasiLambertPhaseFunction(betas)
+        rs = sma[i]*u.AU*(1.-e[i]**2.)/(1.+e[i]*np.cos(nus_range))
+        dmags = deltaMag(p[i],Rp[i],rs,Phis)
+        seps = planet_star_separation(sma[i],e[i],nus_range,w[i],inc[i])
+        visibleBool = (seps > s_inner)*(seps < s_outer)*(dmags < dmag_upper)
+        visbools.append(visibleBool)
 
+        compMethod2.append(np.sum(visibleBool.astype('int'))/numPoints)
+
+        total_time_visible_error.append(np.abs(compMethod2[i]-totalCompleteness[i]))
+
+
+    compMethod2 = np.asarray(compMethod2)
+    print(compMethod2)
+    print(totalCompleteness[0:len(compMethod2)])
+    print(total_time_visible_error)
+    print(np.max(total_time_visible_error))
+
+    rawdata = {}
+    rawdata['compMethod2'] = compMethod2
+    rawdata['total_time_visible_error'] = total_time_visible_error
+    rawdata['visbools'] = visbools
+
+
+    # store 2D completeness pdf array as .comp file
+    with open(path, 'wb') as ff:
+        pickle.dump(rawdata, ff)
+
+
+with open("./keithlyCompConvergence.csv", "a") as myfile:
+    myfile.write(str(ns[i]) + "," + str(np.mean(totalCompleteness)) + "," + str(stop-start) + "\n")
+
+num = 1000
+plt.figure(num=num)
+plt.rc('axes',linewidth=2)
+plt.rc('lines',linewidth=2)
+plt.rcParams['axes.linewidth']=2
+plt.rc('font',weight='bold')
+logbins = np.logspace(np.log10(10**-10),np.log10(10**-4),24)
+plt.hist(total_time_visible_error,color='purple',bins=logbins)
+plt.xscale('log')
+plt.yscale('log')
+plt.xlim([10**-10,10**-4])
+plt.xlabel('Completeness Error',weight='bold')
+plt.ylabel('Frequency', weight='bold')
+plt.show(block=False)
+plt.gcf().canvas.draw()
+# Save to a File
+date = str(datetime.datetime.now())
+date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+fname = 'CompletenessErrorHistogram' + folder.split('/')[-1] + '_' + date
+plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
+plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
+plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
+plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
+print('Done plotting Completeness Error Histogram')
+    #check visibility time difference between completeness method and 
 
 #I THINK I NEED TO CONVERT THIS INTO TIME
 ##########################################################################
 
-print(saltyburrito)
+
 
 
 

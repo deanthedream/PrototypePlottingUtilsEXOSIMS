@@ -16,9 +16,9 @@ import corner
 import datetime
 import re
 
-calcCompBool = True#True
-calcBrownComp = False#True
-plotBool = False#True
+calcCompBool = False#True
+calcBrownComp = True#True
+plotBool = True#True
 folder='./'
 PPoutpath='./'
 
@@ -549,7 +549,7 @@ if calcBrownComp == True:
     #     1e6,1e6+1,1e6+2,1e6+3,1e6+4,1e6+5,1e6+6,\
     #     1e7,1e7+1,1e7+2,1e7+3,1e7+4,1e7+5,1e7+6,\
     #     1e8,1e8+1,1e8+2,1e8+3,1e8+4,1e8+5,1e8+6]
-    Ns = np.floor(np.logspace(start=3,stop=9,num=40)).astype('int')
+    Ns = np.floor(np.logspace(start=3,stop=9,num=200)).astype('int')
     comp = list()
     for i in np.arange(len(Ns)):
         start = time.time()
@@ -682,5 +682,26 @@ if plotBool==True:
     plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
     plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
     print('Done plotting Convergence Value')
+
+
+
+    #### Plot 10^5 Keithly Comp histograms and stuffs
+    keithlyComp_sigma1 = data[:,1].std()
+    keithlyComp_mean = data[:,1].mean()
+    keithlyTime_sigma1 = data[:,2].std()
+    keithlyTime_mean = data[:,2].mean()
+    num=124
+    plt.figure(num=num)
+    plt.hist(data[:,1])
+    plt.xlabel('Completeness',weight='bold')
+    plt.ylabel('Frequency',weight='bold')
+    plt.show(block=False)
+
+    num=125
+    plt.figure(num=num)
+    plt.hist(data[:,2])
+    plt.xlabel('Time (in seconds)',weight='bold')
+    plt.ylabel('Frequency',weight='bold')
+    plt.show(block=False)
 
 
