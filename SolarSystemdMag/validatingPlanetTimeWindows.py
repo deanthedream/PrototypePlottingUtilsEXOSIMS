@@ -16,6 +16,7 @@ from EXOSIMS.util.phaseFunctions import betaFunc
 from keplertools.fun import eccanom
 import datetime
 import re
+import time
 try:
     import cPickle as pickle
 except:
@@ -225,6 +226,7 @@ if os.path.exists(path):
     total_time_visible_error = rawdata['total_time_visible_error']
     visbools = rawdata['visbools']
 else:
+    start = time.time()
     for i in np.arange(numPlans):#len(inc)):
         print('Working on: ' + str(i) + '/' + str(numPlans))
         #period = periods[i]
@@ -243,7 +245,8 @@ else:
         compMethod2.append(np.sum(visibleBool.astype('int'))/numPoints)
 
         total_time_visible_error.append(np.abs(compMethod2[i]-totalCompleteness[i]))
-
+    stop = time.time()
+    print('Execution Time (s): ' + str(stop-start))
 
     compMethod2 = np.asarray(compMethod2)
     print(compMethod2)
