@@ -464,8 +464,8 @@ totalCompleteness = np.divide(totalVisibleTimePerTarget,periods*u.year.to('day')
 
 #### Data Struct of Completeness
 compDict = dict()
-maxIntTimes = [0.,30.,60.,90.] #in days
-starDistances = [5.,10.,15.] #in pc
+maxIntTimes = [0.,0.25,0.5,0.75,1.,1.5,2.,2.5,3.,4.,5.,8.,10.,15.,20.,25.,30.,45.,60.,75.,90.] #in days
+starDistances = [5.,10.,15.,20.,25.] #in pc
 for i in np.arange(len(starDistances)):
     starDistance = starDistances[i]
     s_inner = starDistance*u.pc.to('AU')*IWA_HabEx.to('rad').value
@@ -555,6 +555,13 @@ for i in np.arange(len(starDistances)):
     for j in np.arange(len(maxIntTimes)):
         print('(' + str(i) + ',' + str(j) + '): ' + str(compDict[(i,j)]['EarthlikeComp2_maxIntTimeCorrected']))
 
+
+#Printing Table For Paper###########################
+print('Table with Completeness and Earth-Like Completeness')
+for i in np.arange(len(starDistances)):
+    for j in np.arange(len(maxIntTimes)):
+        print(str(starDistances[i]) + ' & ' + str(maxIntTimes[j]) + ' & ' + str(compDict[(i,j)]['totalCompleteness_maxIntTimeCorrected']) + ' & ' + str(compDict[(i,j)]['EarthlikeComp2_maxIntTimeCorrected']))
+############################################
 
 
 #### Dynamic Completeness Calculations ################################
