@@ -222,6 +222,7 @@ if os.path.exists(path):
     except UnicodeDecodeError:
         with open(path, "rb") as ff:
             rawdata = pickle.load(ff,encoding='latin1')
+    print('Loading ' + path + ' from file')
     compMethod2 = rawdata['compMethod2']
     total_time_visible_error = rawdata['total_time_visible_error']
     visbools = rawdata['visbools']
@@ -264,9 +265,9 @@ else:
     with open(path, 'wb') as ff:
         pickle.dump(rawdata, ff)
 
-
-with open("./keithlyCompConvergence.csv", "a") as myfile:
-    myfile.write(str(ns[i]) + "," + str(np.mean(totalCompleteness)) + "," + str(stop-start) + "\n")
+#??? I don't know why this is here. (commented out after not looking at this for like a month)
+# with open("./keithlyCompConvergence.csv", "a") as myfile:
+#     myfile.write(str(ns[i]) + "," + str(np.mean(totalCompleteness)) + "," + str(stop-start) + "\n")
 
 num = 1000
 plt.figure(num=num)

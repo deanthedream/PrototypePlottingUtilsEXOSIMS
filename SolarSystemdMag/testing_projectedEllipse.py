@@ -2,6 +2,7 @@ import os
 from projectedEllipse import *
 import EXOSIMS.MissionSim
 import matplotlib.pyplot as plt
+import matplotlib
 from mpl_toolkits.mplot3d import Axes3D
 import numpy.random as random
 import time
@@ -10,19 +11,23 @@ import astropy.units as u
 from EXOSIMS.util.deltaMag import deltaMag
 from EXOSIMS.util.planet_star_separation import planet_star_separation
 import itertools
+import datetime
+import re
 
 #### PLOT BOOL
 plotBool = False
 if plotBool == True:
     from plotProjectedEllipse import *
+folder = './'
+PPoutpath = './'
 
 #### Randomly Generate Orbits
-folder = os.path.normpath(os.path.expandvars('$HOME/Documents/exosims/Scripts'))
+folder_load = os.path.normpath(os.path.expandvars('$HOME/Documents/exosims/Scripts'))
 filename = 'HabEx_CKL2_PPKL2.json'
 filename = 'WFIRSTcycle6core.json'
 filename = 'HabEx_CSAG13_PPSAG13_compSubtype.json'
 #filename = 'HabEx_CSAG13_PPSAG13_compSubtypeHighEccen.json'
-scriptfile = os.path.join(folder,filename)
+scriptfile = os.path.join(folder_load,filename)
 sim = EXOSIMS.MissionSim.MissionSim(scriptfile=scriptfile,nopar=True)
 PPop = sim.PlanetPopulation
 comp = sim.Completeness
@@ -560,8 +565,79 @@ for i in np.arange(len(starDistances)):
 print('Table with Completeness and Earth-Like Completeness')
 for i in np.arange(len(starDistances)):
     for j in np.arange(len(maxIntTimes)):
-        print(str(starDistances[i]) + ' & ' + str(maxIntTimes[j]) + ' & ' + str(compDict[(i,j)]['totalCompleteness_maxIntTimeCorrected']) + ' & ' + str(compDict[(i,j)]['EarthlikeComp2_maxIntTimeCorrected']))
+        print(str(int(starDistances[i])) + ' & ' + str(maxIntTimes[j]) + ' & ' + str(np.round(compDict[(i,j)]['totalCompleteness_maxIntTimeCorrected'],4)) + ' & ' + str(np.round(compDict[(i,j)]['EarthlikeComp2_maxIntTimeCorrected'],4)))
+
+#getting the colors for the plot
+norm = matplotlib.colors.Normalize(vmin=starDistances[0], vmax=starDistances[-1])
+cmap = matplotlib.cm.get_cmap('viridis')#('Spectral')
+colors = list()
+for i in np.arange(len(starDistances)):
+    colors.append(cmap(norm(starDistances[i])))
+markers = ['s','v','o','+','p']
+plt.figure(num=1010101)
+plt.rc('axes',linewidth=2)
+plt.rc('lines',linewidth=2)
+plt.rcParams['axes.linewidth']=2
+plt.rc('font',weight='bold')
+maxpt = 0
+for i in np.arange(len(starDistances)):
+    ypts = list()
+    for j in np.arange(len(maxIntTimes)):
+        ypts.append(compDict[(i,j)]['totalCompleteness_maxIntTimeCorrected'])
+        if compDict[(i,j)]['totalCompleteness_maxIntTimeCorrected'] > maxpt:
+            maxpt = compDict[(i,j)]['totalCompleteness_maxIntTimeCorrected']
+    plt.plot(maxIntTimes,ypts,color=colors[i],marker=markers[i],label= str(int(starDistances[i])) + ' pc')
+plt.xlabel('Maximum Integration Time (d)',weight='bold')
+plt.ylabel('Integration Time Adjusted Completeness',weight='bold')
+plt.xlim([0.,100.])
+plt.ylim([0.,1.05*np.max(maxpt)])
+plt.legend()
+plt.show(block=False)
+plt.gcf().canvas.draw()
+# Save to a File
+date = str(datetime.datetime.now())
+date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+fname = 'KeithlyCompvsIntTime' + folder.split('/')[-1] + '_' + date
+plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
+plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
+plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
+plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
+print('Done plotting KeithlyCompvsIntTime')
+
+
+#### Integration Time Adjusted Completenes For Earth-Like Planets
+plt.figure(num=1010102)
+plt.rc('axes',linewidth=2)
+plt.rc('lines',linewidth=2)
+plt.rcParams['axes.linewidth']=2
+plt.rc('font',weight='bold')
+maxpt = 0
+for i in np.arange(len(starDistances)):
+    ypts = list()
+    for j in np.arange(len(maxIntTimes)):
+        ypts.append(compDict[(i,j)]['EarthlikeComp2_maxIntTimeCorrected'])
+        if compDict[(i,j)]['EarthlikeComp2_maxIntTimeCorrected'] > maxpt:
+            maxpt = compDict[(i,j)]['EarthlikeComp2_maxIntTimeCorrected']
+    plt.plot(maxIntTimes,ypts,color=colors[i],marker=markers[i],label= str(int(starDistances[i])) + ' pc')
+plt.xlabel('Maximum Integration Time (d)',weight='bold')
+plt.ylabel('Integration Time Adjusted Completeness',weight='bold')
+plt.xlim([0.,100.])
+plt.ylim([0.,1.05*np.max(maxpt)])
+plt.legend()
+plt.show(block=False)
+plt.gcf().canvas.draw()
+# Save to a File
+date = str(datetime.datetime.now())
+date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+fname = 'KeithlyCompvsIntTimeEarthLike' + folder.split('/')[-1] + '_' + date
+plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
+plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
+plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
+plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
+print('Done plotting KeithlyCompvsIntTimeEarthLike2')
 ############################################
+
+
 
 
 #### Dynamic Completeness Calculations ################################
