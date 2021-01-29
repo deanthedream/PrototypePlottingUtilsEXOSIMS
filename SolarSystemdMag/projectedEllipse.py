@@ -54,13 +54,14 @@ def projected_apbpPsipsi(a,e,W,w,inc):
     #DELETE lam1 = np.sin(W)*np.sin(w)*np.cos(inc) - np.cos(W)*np.cos(w)
     lam2 = (-np.sin(W)*np.sin(w)*np.cos(inc) + np.cos(W)*np.cos(w))
     Omicron = (np.sin(W)*np.cos(w + 2.*np.arctan(Phi)) + np.sin(w + 2.*np.arctan(Phi))*np.cos(W)*np.cos(inc))
-    Eeps = (e + 1.)**2.
+    #UNNECESSARY DUE TO SIMPLIFICATIONEeps = (e + 1.)**2.
     Eeps2 = a*(1. - e**2.)
     Gorgon = (-np.sin(W)*np.sin(w + 2.*np.arctan(Phi))*np.cos(inc) + np.cos(W)*np.cos(w + 2.*np.arctan(Phi)))
     Gemini = (e*np.cos(2.*np.arctan(Phi)) + 1.)
 
     #Specific Calc Substitutions to shorten the code
-    Ramgy = ((e + 1.)*np.sqrt(phi*gamma**2./Eeps + phi*(np.sin(W)*np.sin(w)*np.cos(inc) - np.cos(W)*np.cos(w))**2./Eeps + phi*np.sin(inc)**2.*np.sin(w)**2./Eeps))
+    #ORIGINALRamgy = ((e + 1.)*np.sqrt(phi*gamma**2./Eeps + phi*(np.sin(W)*np.sin(w)*np.cos(inc) - np.cos(W)*np.cos(w))**2./Eeps + phi*np.sin(inc)**2.*np.sin(w)**2./Eeps))
+    Ramgy = (np.sqrt(phi*gamma**2. + phi*(np.sin(W)*np.sin(w)*np.cos(inc) - np.cos(W)*np.cos(w))**2. + phi*np.sin(inc)**2.*np.sin(w)**2.))
     Affinity1 = a**2.*Gamma*gamma/Ramgy
     Yolo1 = (np.sin(W)*np.cos(w + np.pi) + np.sin(w + np.pi)*np.cos(W)*np.cos(inc))
     Kolko1 = (-np.sin(W)*np.sin(w + np.pi)*np.cos(inc) + np.cos(W)*np.cos(w + np.pi))
