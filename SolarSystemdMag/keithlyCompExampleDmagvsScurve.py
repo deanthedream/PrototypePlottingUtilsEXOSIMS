@@ -349,6 +349,7 @@ dmags_uranusNotVisible2 = deltaMag(puranus,Rpuranus,rsuranus[0],Phis)
 seps_uranusNotVisible2 = planet_star_separation(smauranus,e,nus_uranus_notVisible2,w,inc)
 
 
+OWA_uranus_edge2 = (uranusOWASep.value/(22.87*u.pc.to('AU')))*(u.rad.to('arcsec')) #The IWA that causes the separation for mars in arcsec
 
 
 miny = 25.
@@ -581,13 +582,14 @@ f3_ax3.xaxis.offsetText.set_visible(False)
 #tx.set_fontsize(7)
 #f3_ax3.text(x=11.83,y=25.,s=r"$\times 10^{-5}+11.83$",backgroundcolor="white",bbox={'xy':(11.83,25.),'width':0.01,'height':1.})
 
+plt.gcf().text(0.005, 0.96, 'a)', fontsize=14)
 
-plt.gcf().text(0.09, 0.35, 'a)', fontsize=14)
-plt.gcf().text(0.49, 0.705, 'b)', fontsize=14)
-plt.gcf().text(0.43, 0.25, 'c)', fontsize=14)
-plt.gcf().text(0.68, 0.95, 'a)', fontsize=14)
-plt.gcf().text(0.68, 0.65, 'b)', fontsize=14)
-plt.gcf().text(0.68, 0.33, 'c)', fontsize=14)
+plt.gcf().text(0.09, 0.35, 'b)', fontsize=14)
+plt.gcf().text(0.49, 0.705, 'c)', fontsize=14)
+plt.gcf().text(0.43, 0.25, 'd)', fontsize=14)
+plt.gcf().text(0.68, 0.95, 'b)', fontsize=14)
+plt.gcf().text(0.68, 0.65, 'c)', fontsize=14)
+plt.gcf().text(0.68, 0.33, 'd)', fontsize=14)
 
 plt.show(block=False)
 plt.gcf().canvas.draw()
