@@ -120,7 +120,10 @@ e[fourIntersectionInd] = 0.557679118292977
 w[fourIntersectionInd] = 5.058312201296985
 W[fourIntersectionInd] = 0.6867396268911974
 inc[fourIntersectionInd] = 0.8122666711110185
+p[fourIntersectionInd] = 0.30
+Rp[fourIntersectionInd] = 4.*u.earthRad
 ####
+
 
 
 dmajorp,dminorp,theta_OpQ_X,theta_OpQp_X,Op,x,y,Phi,xreal,only2RealInds,yrealAllRealInds,\
@@ -145,6 +148,16 @@ if plotBool == True:
     ind = random.randint(low=0,high=n)
     ind = 24 #for testing purposes
     plotProjectedEllipse(ind, sma, e, W, w, inc, Phi, dmajorp, dminorp, Op, num=877)
+    plotSeparationvsnu(ind, sma, e, W, w, inc, minSep, maxSep, lminSep, lmaxSep, \
+    nu_minSepPoints, nu_maxSepPoints, nu_lminSepPoints, nu_lmaxSepPoints,\
+    nu_fourInt, nu_twoIntSameY, nu_twoIntOppositeX, nu_IntersectionsOnly2,\
+    yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds, num=878)
+    plotSeparationVsTime(ind, sma, e, W, w, inc, minSep, maxSep, lminSep, lmaxSep,\
+    t_minSep,t_maxSep,t_lminSep,t_lmaxSep,t_fourInt0,t_fourInt1,t_fourInt2,t_fourInt3,\
+    t_twoIntSameY0,t_twoIntSameY1,t_twoIntOppositeX0,t_twoIntOppositeX1,t_IntersectionOnly20,t_IntersectionOnly21,\
+    nu_fourInt, nu_twoIntSameY, nu_twoIntOppositeX, nu_IntersectionsOnly2,\
+    yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds, periods, num=879)
+    plotSeparationVsTime
     stop2 = time.time()
     print('stop2: ' + str(stop2-start2))
     del start2, stop2
@@ -389,9 +402,9 @@ dmags = deltaMag(p[ind],Rp[ind].to('AU'),ds*u.AU,phis) #calculate dmag of the sp
 
 plt.plot(nus,dmags,color='black',zorder=10)
 #plt.plot([0.,2.*np.pi],[dmag,dmag],color='blue')
-plt.scatter(nuMinDmag[ind],mindmag[ind],color='cyan',marker='d',zorder=20)
-plt.plot([0.,2.*np.pi],[mindmag[ind],mindmag[ind]],color='cyan',zorder=20)
-plt.scatter(nuMaxDmag[ind],maxdmag[ind],color='red',marker='d',zorder=20)
+plt.scatter(nuMinDmag[ind],mindmag[ind],color='teal',marker='D',zorder=20)
+plt.plot([0.,2.*np.pi],[mindmag[ind],mindmag[ind]],color='teal',zorder=20)
+plt.scatter(nuMaxDmag[ind],maxdmag[ind],color='red',marker='D',zorder=20)
 plt.plot([0.,2.*np.pi],[maxdmag[ind],maxdmag[ind]],color='red',zorder=20)
 lind = np.where(ind == indsWith4)[0]
 if  ind in indsWith2Int:
@@ -402,15 +415,25 @@ elif ind in indsWith4Int:
     nind = np.where(ind == indsWith4Int)[0]
     plt.scatter(nus4Int[nind],dmag4Int[nind],color='green',marker='o',zorder=20)
     plt.plot([0.,2.*np.pi],[dmag,dmag],color='green',zorder=10)
-plt.scatter(nulminAll[lind],dmaglminAll[lind],color='magenta',marker='d',zorder=20)
-plt.plot([0.,2.*np.pi],[dmaglminAll[lind],dmaglminAll[lind]],color='magenta',zorder=20)
-plt.scatter(nulmaxAll[lind],dmaglmaxAll[lind],color='gold',marker='d',zorder=20)
-plt.plot([0.,2.*np.pi],[dmaglmaxAll[lind],dmaglmaxAll[lind]],color='gold',zorder=20)
+plt.scatter(nulminAll[lind],dmaglminAll[lind],color='magenta',marker='D',zorder=20)
+#plt.plot([0.,2.*np.pi],[dmaglminAll[lind],dmaglminAll[lind]],color='magenta',zorder=20)
+plt.scatter(nulmaxAll[lind],dmaglmaxAll[lind],color='gold',marker='D',zorder=20)
+#plt.plot([0.,2.*np.pi],[dmaglmaxAll[lind],dmaglmaxAll[lind]],color='gold',zorder=20)
 plt.xlim([0.,2.*np.pi])
 plt.ylim([-0.05*(maxdmag[ind]-mindmag[ind])+mindmag[ind],0.05*(maxdmag[ind]-mindmag[ind])+maxdmag[ind]])
 plt.ylabel(r'$\Delta \mathrm{mag}$',weight='bold')
 plt.xlabel('True Anomaly, ' + r'$\nu$' + ', in (rad)', weight='bold')
-plt.title('sma: ' + str(np.round(sma[ind],4)) + ' e: ' + str(np.round(e[ind],4)) + ' W: ' + str(np.round(W[ind],4)) + '\nw: ' + str(np.round(w[ind],4)) + ' inc: ' + str(np.round(inc[ind],4)))
+plt.title('sma: ' + str(np.round(sma[ind],4)) + ' e: ' + str(np.round(e[ind],4)) + ' W: ' + str(np.round(W[ind],4)) + ' w: ' + str(np.round(w[ind],4)) + '\ninc: ' + str(np.round(inc[ind],4)) + ' p: ' + str(np.round(p[ind],4)) + ' Rp: ' + ' inc: ' + str(np.round(Rp[ind],4)))
+plt.gcf().canvas.draw()
+# Save to a File
+date = str(datetime.datetime.now())
+date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+fname = 'KeithlyDmagvsnuInts' + folder.split('/')[-1] + '_' + date
+plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
+plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
+plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
+plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
+print('Done plotting KeithlyDmagvsnuInts')
 plt.show(block=False)
 
 #### Verification With Time
@@ -429,9 +452,9 @@ dmags = deltaMag(p[ind],Rp[ind].to('AU'),ds*u.AU,phis) #calculate dmag of the sp
 
 plt.plot(tmp_times,dmags,color='black',zorder=10)
 #plt.plot([0.,2.*np.pi],[dmag,dmag],color='blue')
-plt.scatter(time_dmagmin[ind],mindmag[ind],color='cyan',marker='d',zorder=20)
-plt.plot([0.,periods[ind]],[mindmag[ind],mindmag[ind]],color='cyan',zorder=20)
-plt.scatter(time_dmagmax[ind],maxdmag[ind],color='red',marker='d',zorder=20)
+plt.scatter(time_dmagmin[ind],mindmag[ind],color='teal',marker='D',zorder=20)
+plt.plot([0.,periods[ind]],[mindmag[ind],mindmag[ind]],color='teal',zorder=20)
+plt.scatter(time_dmagmax[ind],maxdmag[ind],color='red',marker='D',zorder=20)
 plt.plot([0.,periods[ind]],[maxdmag[ind],maxdmag[ind]],color='red',zorder=20)
 lind = np.where(ind == indsWith4)[0]
 if  ind in indsWith2Int:
@@ -442,17 +465,29 @@ elif ind in indsWith4Int:
     nind = np.where(ind == indsWith4Int)[0][0]
     plt.scatter(time_dmagInts[indsWith4Int[nind]],dmag4Int[nind],color='green',marker='o',zorder=20)
     plt.plot([0.,periods[ind]],[dmag,dmag],color='green',zorder=10)
-plt.scatter(time_dmaglmin[lind],dmaglminAll[lind],color='magenta',marker='d',zorder=20)
-plt.plot([0.,periods[ind]],[dmaglminAll[lind],dmaglminAll[lind]],color='magenta',zorder=20)
-plt.scatter(time_dmaglmax[lind],dmaglmaxAll[lind],color='gold',marker='d',zorder=20)
-plt.plot([0.,periods[ind]],[dmaglmaxAll[lind],dmaglmaxAll[lind]],color='gold',zorder=20)
+plt.scatter(time_dmaglmin[lind],dmaglminAll[lind],color='magenta',marker='D',zorder=20)
+#plt.plot([0.,periods[ind]],[dmaglminAll[lind],dmaglminAll[lind]],color='magenta',zorder=20)
+plt.scatter(time_dmaglmax[lind],dmaglmaxAll[lind],color='gold',marker='D',zorder=20)
+#plt.plot([0.,periods[ind]],[dmaglmaxAll[lind],dmaglmaxAll[lind]],color='gold',zorder=20)
 plt.xlim([0.,periods[ind]])
 plt.ylim([-0.05*(maxdmag[ind]-mindmag[ind])+mindmag[ind],0.05*(maxdmag[ind]-mindmag[ind])+maxdmag[ind]])
 plt.ylabel(r'$\Delta \mathrm{mag}$',weight='bold')
 plt.xlabel('Time Past Periastron, t, (years)',weight='bold')
-plt.title('sma: ' + str(np.round(sma[ind],4)) + ' e: ' + str(np.round(e[ind],4)) + ' W: ' + str(np.round(W[ind],4)) + '\nw: ' + str(np.round(w[ind],4)) + ' inc: ' + str(np.round(inc[ind],4)))
+plt.title('sma: ' + str(np.round(sma[ind],4)) + ' e: ' + str(np.round(e[ind],4)) + ' W: ' + str(np.round(W[ind],4)) + ' w: ' + str(np.round(w[ind],4)) + '\ninc: ' + str(np.round(inc[ind],4)) + ' p: ' + str(np.round(p[ind],4)) + ' Rp: ' + ' inc: ' + str(np.round(Rp[ind],4)))
+plt.gcf().canvas.draw()
+# Save to a File
+date = str(datetime.datetime.now())
+date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+fname = 'KeithlyDmagvstInts' + folder.split('/')[-1] + '_' + date
+plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
+plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
+plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
+plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
+print('Done plotting KeithlyDmagvstInts')
 plt.show(block=False)
 #######################################################################
+
+print(saltyburrito)
 
 #### Verifying Planet Visibility Windows #################################
 ##########################################################################
