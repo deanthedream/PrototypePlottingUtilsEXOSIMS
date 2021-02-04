@@ -4315,3 +4315,15 @@ def nukeKOE(sma,e,W,w,inc,ar,er,Wr,wr,incr):
     return sma,e,W,w,inc
 
 
+def integrationTimeAdjustedCompletness(sma,e,W,w,inc,p,Rp,starMass,plotBool,periods, s_inner, s_outer, dmag_upper, tmax):
+    """ Calculates the Integration Time Adjusted Completeness
+    """
+    nus, planetIsVisibleBool = planetVisibilityBounds(sma,e,W,w,inc,p,Rp,starMass,plotBool, s_inner, s_outer, dmag_upper, dmag_lower=None) #Calculate planet-star nu edges and visible regions
+    ts = timeFromTrueAnomaly(nus,np.tile(periods,(18,1)).T*u.year.to('day'),np.tile(e,(18,1)).T) #Calculate the planet-star intersection edges
+    dt = ts[:,1:] - ts[:,:-1] #Calculate time region widths
+    gtIntLimit = dt > tmax #Create boolean array for inds
+    totalVisibleTimePerTarget_maxIntTimeCorrected = np.nansum(np.multiply(np.multiply(dt-tmax,planetIsVisibleBool.astype('int')),gtIntLimit.astype('int')),axis=1) #We subtract the int time from the fraction of observable time
+    totalCompletenessPerTarget_maxIntTimeCorrected = np.divide(totalVisibleTimePerTarget_maxIntTimeCorrected,periods*u.year.to('day')) # Fraction of time each planet is visible of its period
+    totalCompleteness_maxIntTimeCorrected = np.sum(totalCompletenessPerTarget_maxIntTimeCorrected)/len(totalCompletenessPerTarget_maxIntTimeCorrected) #Calculates the total completenss by summing all the fractions and normalize by number of targets
+    return totalCompleteness_maxIntTimeCorrected
+
