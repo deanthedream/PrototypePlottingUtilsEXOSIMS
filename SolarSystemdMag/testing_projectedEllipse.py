@@ -487,7 +487,6 @@ print('Done plotting KeithlyDmagvstInts')
 plt.show(block=False)
 #######################################################################
 
-print(saltyburrito)
 
 #### Verifying Planet Visibility Windows #################################
 ##########################################################################
