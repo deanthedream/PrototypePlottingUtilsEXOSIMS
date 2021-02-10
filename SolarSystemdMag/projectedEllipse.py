@@ -3808,7 +3808,7 @@ def calc_planet_dmagmin_dmagmax(e,inc,w,a,p,Rp):
     return mindmag, maxdmag, dmaglminAll, dmaglmaxAll, indsWith2, indsWith4, nuMinDmag, nuMaxDmag, nulminAll, nulmaxAll
 #################################################################################################################
 
-def calc_planet_sep_extrema(sma,e,W,w,inc,starMass):
+def calc_planet_sep_extrema(sma,e,W,w,inc):
     """ A method for calculating the separation extrema and nu where these extrema occur
     Args:
         sma (numpy array):
@@ -3821,81 +3821,22 @@ def calc_planet_sep_extrema(sma,e,W,w,inc,starMass):
             Argument of periapsis
         inc (numpy array):
             inclination
-        starMass (astropy quantity):
-            mass of the star
     Returns:
-        dmajorp (numpy array): 
-            the semi-major axis of the projected ellipse
-        dminorp (numpy array):
-            the semi-minor axis of the projected ellipse
-        theta_OpQ_X (numpy array):
-            the angle formed between point Q, the geometric center of
-            the projected ellipse, and the X-axis
-        theta_OpQp_X (numpy array):
-            the angle formed between point Q, the geometric center of
-            the projected ellipse, and the X-axis
-        Op (numpy array):
-            the geometric center of the projected ellipse
-        x (numpy array):
-            the x component of the projected star location
-        y (numpy array):
-            the y component of the projected star location
-        phi (numpy array):
-            angle from X-axis to semi-minor axis of projected ellipse 
-
-        xreal (numpy array):
-        only2RealInds (numpy array):
-        yrealAllRealInds (numpy array):
-        fourIntInds (numpy array):
-        twoIntOppositeXInds (numpy array):
-        twoIntSameYInds (numpy array):
         nu_minSepPoints (numpy array):
         nu_maxSepPoints (numpy array):
         nu_lminSepPoints (numpy array):
         nu_lmaxSepPoints (numpy array):
-        nu_fourInt (numpy array):
-        nu_twoIntSameY (numpy array):
-        nu_twoIntOppositeX (numpy array):
-        nu_IntersectionsOnly2 (numpy array):
-        yrealImagInds (numpy array):
-        t_minSep (numpy array):
-        t_maxSep (numpy array):
-        t_lminSep (numpy array):
-        t_lmaxSep (numpy array):
-        t_fourInt0 (numpy array):
-        t_fourInt1 (numpy array):
-        t_fourInt2 (numpy array):
-        t_fourInt3 (numpy array):
-        t_twoIntSameY0 (numpy array):
-        t_twoIntSameY1 (numpy array):
-        t_twoIntOppositeX0 (numpy array):
-        t_twoIntOppositeX1 (numpy array):
-        t_IntersectionOnly20 (numpy array):
-        t_IntersectionOnly21 (numpy array):
-        minSepPoints_x (numpy array):
-        minSepPoints_y (numpy array):
-        maxSepPoints_x (numpy array):
-        maxSepPoints_y (numpy array):
-        lminSepPoints_x (numpy array):
-        lminSepPoints_y (numpy array):
-        lmaxSepPoints_x (numpy array):
-        lmaxSepPoints_y (numpy array):
         minSep (numpy array):
         maxSep (numpy array):
         lminSep (numpy array):
         lmaxSep (numpy array):
+        yrealAllRealInds (numpy array):
+        yrealImagInds (numpy array):
     """
     #### Calculate Projected Ellipse Angles and Minor Axis
-    # start0 = time.time()
     dmajorp, dminorp, theta_OpQ_X, theta_OpQp_X = projected_apbpPsipsi(sma,e,W,w,inc)#dmajorp_v2, dminorp_v2, Psi_v2, psi_v2, Psi, psi,
-    # stop0 = time.time()
-    # print('stop0: ' + str(stop0-start0))
     #3D Ellipse Center
-    # start1 = time.time()
     Op = projected_Op(sma,e,W,w,inc)
-    # stop1 = time.time()
-    # print('stop1: ' + str(stop1-start1))
-    # del start1, stop1
 
     # Checks
     if not np.all(dmajorp <= sma):
@@ -3904,16 +3845,12 @@ def calc_planet_sep_extrema(sma,e,W,w,inc,starMass):
     assert np.all(dminorp <= dmajorp), "All projected Semi-minor axes are less than all projected semi-major axes"
 
     #### Derotate Ellipse Calculations
-    # start5 = time.time()
     x, y, Phi = derotatedEllipse(theta_OpQ_X, theta_OpQp_X, Op)
     #x- x coordinates of host star relative to projected ellipse center
     #y- y coordinates of host star relative to projected ellipse center
     #Phi- Angle of projected ellipse semi-major axis from x-axis
     if plotBool == False: #deletes these angles because they are no longer necessary
         del theta_OpQ_X, theta_OpQp_X
-    # stop5 = time.time()
-    # print('stop5: ' + str(stop5-start5))
-    # del start5, stop5
     ####
 
     #### Calculate X,Y Position of Minimum and Maximums with Quartic
@@ -3927,9 +3864,6 @@ def calc_planet_sep_extrema(sma,e,W,w,inc,starMass):
     #print(w[np.argmax(np.nanmin(np.abs(np.imag(xreal)),axis=1))]) #prints the argument of perigee (assert above fails on 1.57 or 1.5*pi)
     #Failure of the above occured where w=4.712 which is approx 1.5pi
     #NOTE: originally 1e-15 but there were some with x=1e-7 and w=pi/2, 5e-6 from 
-    #DELETEtind = np.argmax(np.nanmin(np.abs(np.imag(xreal)),axis=1)) #DELETE
-    #DELETEtinds = np.argsort(np.nanmin(np.abs(np.imag(xreal)),axis=1)) #DELETE
-    #DELETEdel tind, tinds #DELETE
     xreal.real = np.abs(xreal) #all solutions should be positive
 
     #### Technically, each row must have at least 2 solutions, but whatever
@@ -3938,7 +3872,7 @@ def calc_planet_sep_extrema(sma,e,W,w,inc,starMass):
 
     #### Calculate Minimum, Maximum, Local Minimum, Local Maximum Separations
     minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y,\
-     minSep, maxSep, lminSep, lmaxSep, yrealAllRealInds, yrealImagInds = smin_smax_slmin_slmax(len(x), xreal, yreal, np.abs(x), np.abs(y), x, y)
+        minSep, maxSep, lminSep, lmaxSep, yrealAllRealInds, yrealImagInds = smin_smax_slmin_slmax(len(x), xreal, yreal, np.abs(x), np.abs(y), x, y)
 
     #### Rerotate Extrema Points
     minSepPoints_x_dr, minSepPoints_y_dr, maxSepPoints_x_dr, maxSepPoints_y_dr,\
@@ -3969,7 +3903,7 @@ def calc_planet_sep_extrema(sma,e,W,w,inc,starMass):
     nu_lmaxSepPoints = nuCorrections_extrema(sma,e,W,w,inc,nu_lmaxSepPoints,yrealAllRealInds,lmaxSep)
     ####
 
-    return minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y, minSep, maxSep, lminSep, lmaxSep, yrealAllRealInds, yrealImagInds
+    return nu_minSepPoints, nu_maxSepPoints, nu_lminSepPoints, nu_lmaxSepPoints, minSep, maxSep, lminSep, lmaxSep, yrealAllRealInds, yrealImagInds
 
 def solve_dmag_Poly(dmag,e,inc,w,a,p,Rp):
     """
