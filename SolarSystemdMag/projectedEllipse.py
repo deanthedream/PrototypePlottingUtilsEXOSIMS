@@ -2596,7 +2596,7 @@ def nuCorrections_int(sma,e,W,w,inc,r,nus,mainInds,subInds):
 def rerotateExtremaAndIntersectionPoints(minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y,\
     fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2,\
     Phi, Op, yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds):
-    """ Rotate the intersection points from (the projected ellipse centered at the origin and x-axis aligned with semi-major axis) to the original projected ellipse
+    """ DEPRECATED. Replaced piecemeal by rerotateExtremaPoints and rerotateIntersectionPoints. Rotate the intersection points from (the projected ellipse centered at the origin and x-axis aligned with semi-major axis) to the original projected ellipse
     Args:
         minSepPoints_x (numpy array):
             the first quadrant x-coordinates of the minimum separations (with length n)
@@ -2715,7 +2715,145 @@ def rerotateExtremaAndIntersectionPoints(minSepPoints_x, minSepPoints_y, maxSepP
     return minSepPoints_x_dr, minSepPoints_y_dr, maxSepPoints_x_dr, maxSepPoints_y_dr, lminSepPoints_x_dr, lminSepPoints_y_dr, lmaxSepPoints_x_dr, lmaxSepPoints_y_dr,\
             fourInt_x_dr, fourInt_y_dr, twoIntSameY_x_dr, twoIntSameY_y_dr, twoIntOppositeX_x_dr, twoIntOppositeX_y_dr, xIntersectionsOnly2_dr, yIntersectionsOnly2_dr
 
+def rerotateExtremaPoints(minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y,\
+    lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y,\
+    Phi, Op, yrealAllRealInds):
+    """ Rotate the extrema points from (the projected ellipse centered at the origin
+    and x-axis aligned with semi-major axis) to the original projected ellipse
+    Args:
+        minSepPoints_x (numpy array):
+            the first quadrant x-coordinates of the minimum separations (with length n)
+        minSepPoints_y (numpy array):
+            the first quadrant y-coordinates of the minimum separations (with length n)
+        maxSepPoints_x (numpy array):
+            the first quadrant x-coordinates of the maximum separations (with length n)
+        maxSepPoints_y (numpy array):
+            the first quadrant y-coordinates of the maximum separations (with length n)
+        lminSepPoints_x (numpy array):
+            the first quadrant x-coordinates of the local minimum separations (with same length as yrealImagInds)
+        lminSepPoints_y (numpy array):
+            the first quadrant y-coordinates of the local minimum separations (with same length as yrealImagInds)
+        lmaxSepPoints_x (numpy array):
+            the first quadrant x-coordinates of the local maximum separations (with same length as yrealImagInds)
+        lmaxSepPoints_y (numpy array):
+            the first quadrant y-coordinates of the local maximum separations (with same length as yrealImagInds)
+        phi (numpy array):
+            angle from X-axis to semi-minor axis of projected ellipse 
+        Op (numpy array):
+            the geometric center of the projected ellipse
+        yrealAllRealInds (numpy array):
+            an array of integers acting as indicies of planets which have min, max, local min, local max
+    Returns:
+        minSepPoints_x_dr (numpy array):
+            derotated minSepPoints_x
+        minSepPoints_y_dr (numpy array):
+            derotated minSepPoints_y
+        maxSepPoints_x_dr (numpy array):
+            derotated maxSepPoints_x
+        maxSepPoints_y_dr (numpy array):
+            derotated maxSepPoints_y
+        lminSepPoints_x_dr (numpy array):
+            derotated lminSepPoints_x
+        lminSepPoints_y_dr (numpy array):
+            derotated lminSepPoints_y
+        lmaxSepPoints_x_dr (numpy array):
+            derotated lmaxSepPoints_x
+        lmaxSepPoints_y_dr (numpy array):
+            derotated lmaxSepPoints_y
+    """
+    minSepPoints_x_dr = np.zeros(len(minSepPoints_x))
+    minSepPoints_y_dr = np.zeros(len(minSepPoints_y))
+    maxSepPoints_x_dr = np.zeros(len(maxSepPoints_x))
+    maxSepPoints_y_dr = np.zeros(len(maxSepPoints_y))
+    lminSepPoints_x_dr = np.zeros(len(lminSepPoints_x))
+    lminSepPoints_y_dr = np.zeros(len(lminSepPoints_y))
+    lmaxSepPoints_x_dr = np.zeros(len(lmaxSepPoints_x))
+    lmaxSepPoints_y_dr = np.zeros(len(lmaxSepPoints_y))
+    
+    minSepPoints_x_dr, minSepPoints_y_dr = rerotateEllipsePoints(minSepPoints_x, minSepPoints_y,Phi,Op[0],Op[1])
+    maxSepPoints_x_dr, maxSepPoints_y_dr = rerotateEllipsePoints(maxSepPoints_x, maxSepPoints_y,Phi,Op[0],Op[1])
+    lminSepPoints_x_dr, lminSepPoints_y_dr = rerotateEllipsePoints(lminSepPoints_x, lminSepPoints_y,Phi[yrealAllRealInds],Op[0][yrealAllRealInds],Op[1][yrealAllRealInds])
+    lmaxSepPoints_x_dr, lmaxSepPoints_y_dr = rerotateEllipsePoints(lmaxSepPoints_x, lmaxSepPoints_y,Phi[yrealAllRealInds],Op[0][yrealAllRealInds],Op[1][yrealAllRealInds])
+    
+    return minSepPoints_x_dr, minSepPoints_y_dr, maxSepPoints_x_dr, maxSepPoints_y_dr,\
+        lminSepPoints_x_dr, lminSepPoints_y_dr, lmaxSepPoints_x_dr, lmaxSepPoints_y_dr
 
+def rerotateIntersectionPoints(minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y,\
+    fourInt_x, fourInt_y, twoIntSameY_x, twoIntSameY_y, twoIntOppositeX_x, twoIntOppositeX_y, xIntersectionsOnly2, yIntersectionsOnly2,\
+    Phi, Op, yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds):
+    """ Rotate the intersection points from (the projected ellipse centered at the origin and x-axis aligned with semi-major axis) to the original projected ellipse
+    Args:
+        fourInt_x (numpy array):
+            x coordinates of fourIntInds
+        fourInt_y (numpy array):
+            y coordinates of fourIntInds
+        twoIntSameY_x (numpy array):
+            x components of intersections which must occur on same Y side of the projected ellipse as the star
+        twoIntSameY_y (numpy array):
+            y components of intersections which must occur on same Y side of the projected ellipse as the star
+        twoIntOppositeX_x (numpy array):
+            x components of intersections which must occur on opposite X side of the projected ellipse as the star
+        twoIntOppositeX_y (numpy array):
+            y components of intersections which must occur on opposite X side of the projected ellipse as the star
+        xIntersectionsOnly2 (numpy array):
+            x components of intersections where there must be only 2 intersections
+        yIntersectionsOnly2 (numpy array):
+            y components of intersections where there must be only 2 intersections
+        phi (numpy array):
+            angle from X-axis to semi-minor axis of projected ellipse 
+        Op (numpy array):
+            the geometric center of the projected ellipse
+        yrealAllRealInds (numpy array):
+            an array of integers acting as indicies of planets which have min, max, local min, local max
+        fourIntInds (numpy array):
+            indicies of yrealAllRealInds which should have 4 intersections
+        twoIntSameYInds (numpy array):
+            indicies of yrealAllRealInds which should have 2 intersections on the 
+            same Y side of the projected ellipse as the star
+        twoIntOppositeXInds (numpy array):
+            indicies of yrealAllRealInds which should have 2 intersections on the 
+            opposite X side of the projected ellipse as the star
+        only2RealInds (numpy array):
+            indicies where there can only ever by 2 circle-ellipse intersections
+    Returns:
+        fourInt_x_dr (numpy array):
+            derotated fourInt_x
+        fourInt_y_dr (numpy array):
+            derotated fourInt_y
+        twoIntSameY_x_dr (numpy array):
+            derotated twoIntSameY_x
+        twoIntSameY_y_dr (numpy array):
+            derotated twoIntSameY_y
+        twoIntOppositeX_x_dr (numpy array):
+            derotated twoIntOppositeX_x
+        twoIntOppositeX_y_dr (numpy array):
+            derotated twoIntOppositeX_y
+        xIntersectionsOnly2_dr (numpy array):
+            derotated xIntersectionsOnly2
+        yIntersectionsOnly2_dr (numpy array):
+            derotated yIntersectionsOnly2
+    """
+    fourInt_x_dr = np.zeros((len(fourInt_x),4))
+    fourInt_y_dr = np.zeros((len(fourInt_y),4))
+    twoIntSameY_x_dr = np.zeros((len(twoIntSameY_x),2))
+    twoIntSameY_y_dr = np.zeros((len(twoIntSameY_y),2))
+    twoIntOppositeX_x_dr = np.zeros((len(twoIntOppositeX_x),2))
+    twoIntOppositeX_y_dr = np.zeros((len(twoIntOppositeX_y),2))
+    xIntersectionsOnly2_dr = np.zeros((len(xIntersectionsOnly2),2))
+    yIntersectionsOnly2_dr = np.zeros((len(yIntersectionsOnly2),2))
+
+    fourInt_x_dr[:,0], fourInt_y_dr[:,0] = rerotateEllipsePoints(fourInt_x[:,0], fourInt_y[:,0],Phi[yrealAllRealInds[fourIntInds]],Op[0][yrealAllRealInds[fourIntInds]],Op[1][yrealAllRealInds[fourIntInds]])
+    fourInt_x_dr[:,1], fourInt_y_dr[:,1] = rerotateEllipsePoints(fourInt_x[:,1], fourInt_y[:,1],Phi[yrealAllRealInds[fourIntInds]],Op[0][yrealAllRealInds[fourIntInds]],Op[1][yrealAllRealInds[fourIntInds]])
+    fourInt_x_dr[:,2], fourInt_y_dr[:,2] = rerotateEllipsePoints(fourInt_x[:,2], fourInt_y[:,2],Phi[yrealAllRealInds[fourIntInds]],Op[0][yrealAllRealInds[fourIntInds]],Op[1][yrealAllRealInds[fourIntInds]])
+    fourInt_x_dr[:,3], fourInt_y_dr[:,3] = rerotateEllipsePoints(fourInt_x[:,3], fourInt_y[:,3],Phi[yrealAllRealInds[fourIntInds]],Op[0][yrealAllRealInds[fourIntInds]],Op[1][yrealAllRealInds[fourIntInds]])
+    twoIntSameY_x_dr[:,0], twoIntSameY_y_dr[:,0] = rerotateEllipsePoints(twoIntSameY_x[:,0], twoIntSameY_y[:,0],Phi[yrealAllRealInds[twoIntSameYInds]],Op[0][yrealAllRealInds[twoIntSameYInds]],Op[1][yrealAllRealInds[twoIntSameYInds]])
+    twoIntSameY_x_dr[:,1], twoIntSameY_y_dr[:,1] = rerotateEllipsePoints(twoIntSameY_x[:,1], twoIntSameY_y[:,1],Phi[yrealAllRealInds[twoIntSameYInds]],Op[0][yrealAllRealInds[twoIntSameYInds]],Op[1][yrealAllRealInds[twoIntSameYInds]])
+    twoIntOppositeX_x_dr[:,0], twoIntOppositeX_y_dr[:,0] = rerotateEllipsePoints(twoIntOppositeX_x[:,0], twoIntOppositeX_y[:,0],Phi[yrealAllRealInds[twoIntOppositeXInds]],Op[0][yrealAllRealInds[twoIntOppositeXInds]],Op[1][yrealAllRealInds[twoIntOppositeXInds]])
+    twoIntOppositeX_x_dr[:,1], twoIntOppositeX_y_dr[:,1] = rerotateEllipsePoints(twoIntOppositeX_x[:,1], twoIntOppositeX_y[:,1],Phi[yrealAllRealInds[twoIntOppositeXInds]],Op[0][yrealAllRealInds[twoIntOppositeXInds]],Op[1][yrealAllRealInds[twoIntOppositeXInds]])
+    xIntersectionsOnly2_dr[:,0], yIntersectionsOnly2_dr[:,0] = rerotateEllipsePoints(xIntersectionsOnly2[:,0], yIntersectionsOnly2[:,0],Phi[only2RealInds],Op[0][only2RealInds],Op[1][only2RealInds])
+    xIntersectionsOnly2_dr[:,1], yIntersectionsOnly2_dr[:,1] = rerotateEllipsePoints(xIntersectionsOnly2[:,1], yIntersectionsOnly2[:,1],Phi[only2RealInds],Op[0][only2RealInds],Op[1][only2RealInds])
+    
+    return fourInt_x_dr, fourInt_y_dr, twoIntSameY_x_dr, twoIntSameY_y_dr, twoIntOppositeX_x_dr, twoIntOppositeX_y_dr, xIntersectionsOnly2_dr, yIntersectionsOnly2_dr
 
 def calcMasterIntersections(sma,e,W,w,inc,s_circle,starMass,plotBool):
     """ A method for calculating the nu and times of orbit and circle intersections as well as extrema
@@ -3123,7 +3261,6 @@ def calcMasterIntersections(sma,e,W,w,inc,s_circle,starMass,plotBool):
             type2_3Inds,type2_4Inds,type3_0Inds,type3_1Inds,type3_2Inds,type3_3Inds,type3_4Inds,fourInt_x,fourInt_y,twoIntSameY_x,twoIntSameY_y,twoIntOppositeX_x,\
             twoIntOppositeX_y,xIntersectionsOnly2,yIntersectionsOnly2,typeInds0,typeInds1,typeInds2,typeInds3, periods
 
-
 def calc_planet_dmagSecondDerivative(e,inc,w,v):
     """ Calculates the second derivative of the dmag function assuming the quasi-lambert phase function
     From AnalyticalNuFromDmag3.ipynb under Second Derivative of RHS
@@ -3150,7 +3287,8 @@ def calc_planet_dmagSecondDerivative(e,inc,w,v):
 
 #### nu from dmag functions ##############################################################################
 def calc_planet_dmagmin_dmagmax(e,inc,w,a,p,Rp):
-    """ A method for calculating the minimum and maximum dmag of any given planet
+    """ TODO: rename to calc_planet_dmag_extrema
+    A method for calculating the minimum and maximum dmag of any given planet
     Assumes the planet has a quasi-lambert phase function (a poor approximation).
     Args:
         e (numpy array):
@@ -3670,6 +3808,168 @@ def calc_planet_dmagmin_dmagmax(e,inc,w,a,p,Rp):
     return mindmag, maxdmag, dmaglminAll, dmaglmaxAll, indsWith2, indsWith4, nuMinDmag, nuMaxDmag, nulminAll, nulmaxAll
 #################################################################################################################
 
+def calc_planet_sep_extrema(sma,e,W,w,inc,starMass):
+    """ A method for calculating the separation extrema and nu where these extrema occur
+    Args:
+        sma (numpy array):
+            semi-major axis
+        e (numpy array):
+            eccentricity
+        W (numpy array):
+            Longitude of the ascending nodes
+        w (numpy array):
+            Argument of periapsis
+        inc (numpy array):
+            inclination
+        starMass (astropy quantity):
+            mass of the star
+    Returns:
+        dmajorp (numpy array): 
+            the semi-major axis of the projected ellipse
+        dminorp (numpy array):
+            the semi-minor axis of the projected ellipse
+        theta_OpQ_X (numpy array):
+            the angle formed between point Q, the geometric center of
+            the projected ellipse, and the X-axis
+        theta_OpQp_X (numpy array):
+            the angle formed between point Q, the geometric center of
+            the projected ellipse, and the X-axis
+        Op (numpy array):
+            the geometric center of the projected ellipse
+        x (numpy array):
+            the x component of the projected star location
+        y (numpy array):
+            the y component of the projected star location
+        phi (numpy array):
+            angle from X-axis to semi-minor axis of projected ellipse 
+
+        xreal (numpy array):
+        only2RealInds (numpy array):
+        yrealAllRealInds (numpy array):
+        fourIntInds (numpy array):
+        twoIntOppositeXInds (numpy array):
+        twoIntSameYInds (numpy array):
+        nu_minSepPoints (numpy array):
+        nu_maxSepPoints (numpy array):
+        nu_lminSepPoints (numpy array):
+        nu_lmaxSepPoints (numpy array):
+        nu_fourInt (numpy array):
+        nu_twoIntSameY (numpy array):
+        nu_twoIntOppositeX (numpy array):
+        nu_IntersectionsOnly2 (numpy array):
+        yrealImagInds (numpy array):
+        t_minSep (numpy array):
+        t_maxSep (numpy array):
+        t_lminSep (numpy array):
+        t_lmaxSep (numpy array):
+        t_fourInt0 (numpy array):
+        t_fourInt1 (numpy array):
+        t_fourInt2 (numpy array):
+        t_fourInt3 (numpy array):
+        t_twoIntSameY0 (numpy array):
+        t_twoIntSameY1 (numpy array):
+        t_twoIntOppositeX0 (numpy array):
+        t_twoIntOppositeX1 (numpy array):
+        t_IntersectionOnly20 (numpy array):
+        t_IntersectionOnly21 (numpy array):
+        minSepPoints_x (numpy array):
+        minSepPoints_y (numpy array):
+        maxSepPoints_x (numpy array):
+        maxSepPoints_y (numpy array):
+        lminSepPoints_x (numpy array):
+        lminSepPoints_y (numpy array):
+        lmaxSepPoints_x (numpy array):
+        lmaxSepPoints_y (numpy array):
+        minSep (numpy array):
+        maxSep (numpy array):
+        lminSep (numpy array):
+        lmaxSep (numpy array):
+    """
+    #### Calculate Projected Ellipse Angles and Minor Axis
+    # start0 = time.time()
+    dmajorp, dminorp, theta_OpQ_X, theta_OpQp_X = projected_apbpPsipsi(sma,e,W,w,inc)#dmajorp_v2, dminorp_v2, Psi_v2, psi_v2, Psi, psi,
+    # stop0 = time.time()
+    # print('stop0: ' + str(stop0-start0))
+    #3D Ellipse Center
+    # start1 = time.time()
+    Op = projected_Op(sma,e,W,w,inc)
+    # stop1 = time.time()
+    # print('stop1: ' + str(stop1-start1))
+    # del start1, stop1
+
+    # Checks
+    if not np.all(dmajorp <= sma):
+        print("Not all Semi-major axis of the projected ellipse are less than the original 3D ellipse, caused by circular orbits required for circular orbits")
+        assert np.all(sma - dmajorp >= -1e-12), "Not all Semi-major axis of the projected ellipse are less than the original 3D ellipse" #required for circular orbits
+    assert np.all(dminorp <= dmajorp), "All projected Semi-minor axes are less than all projected semi-major axes"
+
+    #### Derotate Ellipse Calculations
+    # start5 = time.time()
+    x, y, Phi = derotatedEllipse(theta_OpQ_X, theta_OpQp_X, Op)
+    #x- x coordinates of host star relative to projected ellipse center
+    #y- y coordinates of host star relative to projected ellipse center
+    #Phi- Angle of projected ellipse semi-major axis from x-axis
+    if plotBool == False: #deletes these angles because they are no longer necessary
+        del theta_OpQ_X, theta_OpQp_X
+    # stop5 = time.time()
+    # print('stop5: ' + str(stop5-start5))
+    # del start5, stop5
+    ####
+
+    #### Calculate X,Y Position of Minimum and Maximums with Quartic
+    A, B, C, D = quarticCoefficients_smin_smax_lmin_lmax(dmajorp.astype('complex128'), dminorp, np.abs(x), np.abs(y)) #calculate the quartic solutions to the min-max separation problem
+    #xreal, delta, P, D2, R, delta_0 = quarticSolutions_ellipse_to_Quarticipynb(A.astype('complex128'), B, C, D)
+    xreal, _, _, _, _, _ = quarticSolutions_ellipse_to_Quarticipynb(A.astype('complex128'), B, C, D)
+    del A, B, C, D #delting for memory efficiency
+    assert np.max(np.nanmin(np.abs(np.imag(xreal)),axis=1)) < 1e-5, 'At least one row has min > 1e-5' #this ensures each row has a solution
+    #myInd = np.where(np.nanmin(np.abs(np.imag(xreal)),axis=1) > 1e-5)
+    #print('ar = ' + str(sma[myInd]) + '*u.AU\ner = ' + str(e[myInd]) + '\nWr = ' + str(W[myInd]) + '\nwr = ' + str(w[myInd]) + '\nincr = ' + str(inc[myInd]))
+    #print(w[np.argmax(np.nanmin(np.abs(np.imag(xreal)),axis=1))]) #prints the argument of perigee (assert above fails on 1.57 or 1.5*pi)
+    #Failure of the above occured where w=4.712 which is approx 1.5pi
+    #NOTE: originally 1e-15 but there were some with x=1e-7 and w=pi/2, 5e-6 from 
+    #DELETEtind = np.argmax(np.nanmin(np.abs(np.imag(xreal)),axis=1)) #DELETE
+    #DELETEtinds = np.argsort(np.nanmin(np.abs(np.imag(xreal)),axis=1)) #DELETE
+    #DELETEdel tind, tinds #DELETE
+    xreal.real = np.abs(xreal) #all solutions should be positive
+
+    #### Technically, each row must have at least 2 solutions, but whatever
+    yreal = ellipseYFromX(xreal.astype('complex128'), dmajorp, dminorp) #Calculates the y values corresponding to the x values in the first quadrant of an ellipse
+    ####
+
+    #### Calculate Minimum, Maximum, Local Minimum, Local Maximum Separations
+    minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y,\
+     minSep, maxSep, lminSep, lmaxSep, yrealAllRealInds, yrealImagInds = smin_smax_slmin_slmax(len(x), xreal, yreal, np.abs(x), np.abs(y), x, y)
+
+    #### Rerotate Extrema Points
+    minSepPoints_x_dr, minSepPoints_y_dr, maxSepPoints_x_dr, maxSepPoints_y_dr,\
+        lminSepPoints_x_dr, lminSepPoints_y_dr, lmaxSepPoints_x_dr, lmaxSepPoints_y_dr\
+        = rerotateExtremaPoints(minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y,\
+        lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y,\
+        Phi, Op, yrealAllRealInds)
+
+    #### Calculate True Anomalies of Points
+    nu_minSepPoints, nu_maxSepPoints, nu_lminSepPoints, nu_lmaxSepPoints, nu_fourInt, nu_twoIntSameY, nu_twoIntOppositeX, nu_IntersectionsOnly2\
+         = trueAnomaliesOfPoints(minSepPoints_x_dr, minSepPoints_y_dr, maxSepPoints_x_dr, maxSepPoints_y_dr, lminSepPoints_x_dr, lminSepPoints_y_dr, lmaxSepPoints_x_dr, lmaxSepPoints_y_dr,\
+        fourInt_x_dr, fourInt_y_dr, twoIntSameY_x_dr, twoIntSameY_y_dr, twoIntOppositeX_x_dr, twoIntOppositeX_y_dr, xIntersectionsOnly2_dr, yIntersectionsOnly2_dr,\
+        yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds, W, w, inc)
+    del minSepPoints_x_dr, minSepPoints_y_dr, maxSepPoints_x_dr, maxSepPoints_y_dr, lminSepPoints_x_dr, lminSepPoints_y_dr, lmaxSepPoints_x_dr, lmaxSepPoints_y_dr
+    del fourInt_x_dr, fourInt_y_dr, twoIntSameY_x_dr, twoIntSameY_y_dr, twoIntOppositeX_x_dr, twoIntOppositeX_y_dr, xIntersectionsOnly2_dr, yIntersectionsOnly2_dr
+    ####
+
+    #### Fix minSep True Anomalies
+    nu_minSepPoints = nuCorrections_extrema(sma,e,W,w,inc,nu_minSepPoints,np.arange(len(sma)),minSep)
+    ####
+    #### Fix maxSep True Anomalies
+    nu_maxSepPoints = nuCorrections_extrema(sma,e,W,w,inc,nu_maxSepPoints,np.arange(len(sma)),maxSep)
+    ####
+    #### Fix lminSep True Anomalies
+    nu_lminSepPoints = nuCorrections_extrema(sma,e,W,w,inc,nu_lminSepPoints,yrealAllRealInds,lminSep)
+    ####
+    #### Fix lmaxSep True Anomalies
+    nu_lmaxSepPoints = nuCorrections_extrema(sma,e,W,w,inc,nu_lmaxSepPoints,yrealAllRealInds,lmaxSep)
+    ####
+
+    return minSepPoints_x, minSepPoints_y, maxSepPoints_x, maxSepPoints_y, lminSepPoints_x, lminSepPoints_y, lmaxSepPoints_x, lmaxSepPoints_y, minSep, maxSep, lminSep, lmaxSep, yrealAllRealInds, yrealImagInds
 
 def solve_dmag_Poly(dmag,e,inc,w,a,p,Rp):
     """
