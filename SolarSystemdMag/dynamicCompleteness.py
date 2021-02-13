@@ -110,9 +110,9 @@ def dynamicCompleteness(ts2,planetIsVisibleBool2,tobs1,tpast_startTimes,periods,
     planetNotDetectedBools2 = np.logical_not(planetDetectedBools2) #for dynamic completeness, the planet is not visible in this time segment at time 2
 
     #Revisit Comp.
-    planetDetectedthenDetected = np.nansum(np.multiply(planetDetectedBools,planetDetectedBools2)) #each planet detected at time 1 and time 2 #planets detected and still in visible region    
+    planetDetectedthenDetected = np.multiply(planetDetectedBools,planetDetectedBools2) #each planet detected at time 1 and time 2 #planets detected and still in visible region    
     #Dynamic Comp.
-    planetNotDetectedThenDetected = np.nansum(np.multiply(planetNotDetectedBools,planetDetectedBools2)) #each planet NOT detected at time 1 and detected at time 2 #planet not detected and now in visible region
+    planetNotDetectedThenDetected = np.multiply(planetNotDetectedBools,planetDetectedBools2) #each planet NOT detected at time 1 and detected at time 2 #planet not detected and now in visible region
 
     dynComp = np.sum(planetNotDetectedThenDetected)/len(planetNotDetectedThenDetected) #divide by all planets
     #dynComp = np.sum(planetNotDetectedBools)/np.sum(planetTypeBool) #divide by all planets of type
