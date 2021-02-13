@@ -2496,6 +2496,111 @@ def trueAnomaliesOfPoints(minSepPoints_x_dr, minSepPoints_y_dr, maxSepPoints_x_d
     nu_IntersectionsOnly2[:,1] = trueAnomalyFromXY(xIntersectionsOnly2_dr[:,1], yIntersectionsOnly2_dr[:,1],W[only2RealInds],w[only2RealInds],inc[only2RealInds])
     return nu_minSepPoints, nu_maxSepPoints, nu_lminSepPoints, nu_lmaxSepPoints, nu_fourInt, nu_twoIntSameY, nu_twoIntOppositeX, nu_IntersectionsOnly2
 
+def trueAnomaliesOfIntPoints(fourInt_x_dr, fourInt_y_dr, twoIntSameY_x_dr, twoIntSameY_y_dr, twoIntOppositeX_x_dr, twoIntOppositeX_y_dr, xIntersectionsOnly2_dr, yIntersectionsOnly2_dr,\
+    yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds, W, w, inc):
+    """ Given the location of the points of the intersections between the circle and the derotated ellipse,
+    this method calculates the true anomalies of these intersections
+    Args:
+        fourInt_x_dr (numpy array):
+            derotated fourInt_x
+        fourInt_y_dr (numpy array):
+            derotated fourInt_y
+        twoIntSameY_x_dr (numpy array):
+            derotated twoIntSameY_x
+        twoIntSameY_y_dr (numpy array):
+            derotated twoIntSameY_y
+        twoIntOppositeX_x_dr (numpy array):
+            derotated twoIntOppositeX_x
+        twoIntOppositeX_y_dr (numpy array):
+            derotated twoIntOppositeX_y
+        xIntersectionsOnly2_dr (numpy array):
+            derotated xIntersectionsOnly2
+        yIntersectionsOnly2_dr (numpy array):
+            derotated yIntersectionsOnly2
+        yrealAllRealInds (numpy array):
+            an array of integers acting as indicies of planets which have min, max, local min, local max        fourIntInds (numpy array):
+        twoIntSameYInds (numpy array):
+            indicies of yrealAllRealInds which should have 2 intersections on the 
+            same Y side of the projected ellipse as the star        twoIntOppositeXInds (numpy array):
+        only2RealInds (numpy array):
+            indicies where there can only ever by 2 circle-ellipse intersections
+        W (numpy array): 
+            Longitude of the ascending node of the body
+        w (numpy array): 
+            argument of periapsis of the body
+        inc (numpy array): 
+            inclination of the body's orbit
+    Returns:
+        nu_fourInt (numpy array):
+            true anomalies of the four intersection point cases
+        nu_twoIntSameY (numpy array):
+            true anomalies of the two intersection points on same y-side as star cases
+        nu_twoIntOppositeX (numpy array):
+            true anomalies of the two intersection point on the opposite x-side of the star cases
+        nu_IntersectionsOnly2 (numpy array):
+            true anomalies of the only two intersection point cases
+    """
+    nu_fourInt = np.zeros(fourInt_x_dr.shape)
+    nu_fourInt[:,0] = trueAnomalyFromXY(fourInt_x_dr[:,0], fourInt_y_dr[:,0],W[yrealAllRealInds[fourIntInds]],w[yrealAllRealInds[fourIntInds]],inc[yrealAllRealInds[fourIntInds]])
+    nu_fourInt[:,1] = trueAnomalyFromXY(fourInt_x_dr[:,1], fourInt_y_dr[:,1],W[yrealAllRealInds[fourIntInds]],w[yrealAllRealInds[fourIntInds]],inc[yrealAllRealInds[fourIntInds]])
+    nu_fourInt[:,2] = trueAnomalyFromXY(fourInt_x_dr[:,2], fourInt_y_dr[:,2],W[yrealAllRealInds[fourIntInds]],w[yrealAllRealInds[fourIntInds]],inc[yrealAllRealInds[fourIntInds]])
+    nu_fourInt[:,3] = trueAnomalyFromXY(fourInt_x_dr[:,3], fourInt_y_dr[:,3],W[yrealAllRealInds[fourIntInds]],w[yrealAllRealInds[fourIntInds]],inc[yrealAllRealInds[fourIntInds]])
+    nu_twoIntSameY = np.zeros(twoIntSameY_x_dr.shape)
+    nu_twoIntSameY[:,0] = trueAnomalyFromXY(twoIntSameY_x_dr[:,0], twoIntSameY_y_dr[:,0],W[yrealAllRealInds[twoIntSameYInds]],w[yrealAllRealInds[twoIntSameYInds]],inc[yrealAllRealInds[twoIntSameYInds]])
+    nu_twoIntSameY[:,1] = trueAnomalyFromXY(twoIntSameY_x_dr[:,1], twoIntSameY_y_dr[:,1],W[yrealAllRealInds[twoIntSameYInds]],w[yrealAllRealInds[twoIntSameYInds]],inc[yrealAllRealInds[twoIntSameYInds]])
+    nu_twoIntOppositeX = np.zeros(twoIntOppositeX_x_dr.shape)
+    nu_twoIntOppositeX[:,0] = trueAnomalyFromXY(twoIntOppositeX_x_dr[:,0], twoIntOppositeX_y_dr[:,0],W[yrealAllRealInds[twoIntOppositeXInds]],w[yrealAllRealInds[twoIntOppositeXInds]],inc[yrealAllRealInds[twoIntOppositeXInds]])
+    nu_twoIntOppositeX[:,1] = trueAnomalyFromXY(twoIntOppositeX_x_dr[:,1], twoIntOppositeX_y_dr[:,1],W[yrealAllRealInds[twoIntOppositeXInds]],w[yrealAllRealInds[twoIntOppositeXInds]],inc[yrealAllRealInds[twoIntOppositeXInds]])
+    nu_IntersectionsOnly2 = np.zeros(xIntersectionsOnly2_dr.shape)
+    nu_IntersectionsOnly2[:,0] = trueAnomalyFromXY(xIntersectionsOnly2_dr[:,0], yIntersectionsOnly2_dr[:,0],W[only2RealInds],w[only2RealInds],inc[only2RealInds])
+    nu_IntersectionsOnly2[:,1] = trueAnomalyFromXY(xIntersectionsOnly2_dr[:,1], yIntersectionsOnly2_dr[:,1],W[only2RealInds],w[only2RealInds],inc[only2RealInds])
+    return nu_fourInt, nu_twoIntSameY, nu_twoIntOppositeX, nu_IntersectionsOnly2
+
+def trueAnomaliesOfSepPoints(minSepPoints_x_dr, minSepPoints_y_dr, maxSepPoints_x_dr, maxSepPoints_y_dr, lminSepPoints_x_dr, lminSepPoints_y_dr, lmaxSepPoints_x_dr, lmaxSepPoints_y_dr,\
+    yrealAllRealInds, W, w, inc):
+    """ Given the location of the points of the separation extrema between the star and the derotated ellipse,
+    this method calculates the true anomalies of these extrema
+    Args:
+        minSepPoints_x_dr (numpy array):
+            derotated minSepPoints_x
+        minSepPoints_y_dr (numpy array):
+            derotated minSepPoints_y
+        maxSepPoints_x_dr (numpy array):
+            derotated maxSepPoints_x
+        maxSepPoints_y_dr (numpy array):
+            derotated maxSepPoints_y
+        lminSepPoints_x_dr (numpy array):
+            derotated lminSepPoints_x
+        lminSepPoints_y_dr (numpy array):
+            derotated lminSepPoints_y
+        lmaxSepPoints_x_dr (numpy array):
+            derotated lmaxSepPoints_x
+        lmaxSepPoints_y_dr (numpy array):
+            derotated lmaxSepPoints_y
+        yrealAllRealInds (numpy array):
+            an array of integers acting as indicies of planets which have min, max, local min, local max        fourIntInds (numpy array):
+        W (numpy array): 
+            Longitude of the ascending node of the body
+        w (numpy array): 
+            argument of periapsis of the body
+        inc (numpy array): 
+            inclination of the body's orbit
+    Returns:
+        nu_minSepPoints (numpy array):
+            true anomaly of the minimum separation points
+        nu_maxSepPoints (numpy array):
+            true anomaly of the maximum separation points
+        nu_lminSepPoints (numpy array):
+            true anomaly of the local minimum separation points
+        nu_lmaxSepPoints (numpy array):
+            true anomaly of the maximum separation points
+    """
+    nu_minSepPoints = trueAnomalyFromXY(minSepPoints_x_dr, minSepPoints_y_dr,W,w,inc)
+    nu_maxSepPoints = trueAnomalyFromXY(maxSepPoints_x_dr, maxSepPoints_y_dr,W,w,inc)
+    nu_lminSepPoints = trueAnomalyFromXY(lminSepPoints_x_dr, lminSepPoints_y_dr,W[yrealAllRealInds],w[yrealAllRealInds],inc[yrealAllRealInds])
+    nu_lmaxSepPoints = trueAnomalyFromXY(lmaxSepPoints_x_dr, lmaxSepPoints_y_dr,W[yrealAllRealInds],w[yrealAllRealInds],inc[yrealAllRealInds])
+    return nu_minSepPoints, nu_maxSepPoints, nu_lminSepPoints, nu_lmaxSepPoints
+
 #### Nu corections for extrema
 def nuCorrections_extrema(sma,e,W,w,inc,nus,mainInds,seps):
     """ A method for correcting the nus of the extrema points. The input nus are calculated with arctan meaning it could be nu or nu+pi
@@ -3849,8 +3954,8 @@ def calc_planet_sep_extrema(sma,e,W,w,inc):
     #x- x coordinates of host star relative to projected ellipse center
     #y- y coordinates of host star relative to projected ellipse center
     #Phi- Angle of projected ellipse semi-major axis from x-axis
-    if plotBool == False: #deletes these angles because they are no longer necessary
-        del theta_OpQ_X, theta_OpQp_X
+    #if plotBool == False: #deletes these angles because they are no longer necessary
+    del theta_OpQ_X, theta_OpQp_X
     ####
 
     #### Calculate X,Y Position of Minimum and Maximums with Quartic
@@ -3882,12 +3987,16 @@ def calc_planet_sep_extrema(sma,e,W,w,inc):
         Phi, Op, yrealAllRealInds)
 
     #### Calculate True Anomalies of Points
-    nu_minSepPoints, nu_maxSepPoints, nu_lminSepPoints, nu_lmaxSepPoints, nu_fourInt, nu_twoIntSameY, nu_twoIntOppositeX, nu_IntersectionsOnly2\
-         = trueAnomaliesOfPoints(minSepPoints_x_dr, minSepPoints_y_dr, maxSepPoints_x_dr, maxSepPoints_y_dr, lminSepPoints_x_dr, lminSepPoints_y_dr, lmaxSepPoints_x_dr, lmaxSepPoints_y_dr,\
-        fourInt_x_dr, fourInt_y_dr, twoIntSameY_x_dr, twoIntSameY_y_dr, twoIntOppositeX_x_dr, twoIntOppositeX_y_dr, xIntersectionsOnly2_dr, yIntersectionsOnly2_dr,\
-        yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds, W, w, inc)
+    nu_minSepPoints, nu_maxSepPoints, nu_lminSepPoints, nu_lmaxSepPoints = trueAnomaliesOfSepPoints(minSepPoints_x_dr, minSepPoints_y_dr, maxSepPoints_x_dr, maxSepPoints_y_dr, lminSepPoints_x_dr, lminSepPoints_y_dr, lmaxSepPoints_x_dr, lmaxSepPoints_y_dr,\
+    yrealAllRealInds, W, w, inc)
+
+
+    # nu_minSepPoints, nu_maxSepPoints, nu_lminSepPoints, nu_lmaxSepPoints, nu_fourInt, nu_twoIntSameY, nu_twoIntOppositeX, nu_IntersectionsOnly2\
+    #      = trueAnomaliesOfPoints(minSepPoints_x_dr, minSepPoints_y_dr, maxSepPoints_x_dr, maxSepPoints_y_dr, lminSepPoints_x_dr, lminSepPoints_y_dr, lmaxSepPoints_x_dr, lmaxSepPoints_y_dr,\
+    #     fourInt_x_dr, fourInt_y_dr, twoIntSameY_x_dr, twoIntSameY_y_dr, twoIntOppositeX_x_dr, twoIntOppositeX_y_dr, xIntersectionsOnly2_dr, yIntersectionsOnly2_dr,\
+    #     yrealAllRealInds, fourIntInds, twoIntSameYInds, twoIntOppositeXInds, only2RealInds, W, w, inc)
     del minSepPoints_x_dr, minSepPoints_y_dr, maxSepPoints_x_dr, maxSepPoints_y_dr, lminSepPoints_x_dr, lminSepPoints_y_dr, lmaxSepPoints_x_dr, lmaxSepPoints_y_dr
-    del fourInt_x_dr, fourInt_y_dr, twoIntSameY_x_dr, twoIntSameY_y_dr, twoIntOppositeX_x_dr, twoIntOppositeX_y_dr, xIntersectionsOnly2_dr, yIntersectionsOnly2_dr
+    #del fourInt_x_dr, fourInt_y_dr, twoIntSameY_x_dr, twoIntSameY_y_dr, twoIntOppositeX_x_dr, twoIntOppositeX_y_dr, xIntersectionsOnly2_dr, yIntersectionsOnly2_dr
     ####
 
     #### Fix minSep True Anomalies
