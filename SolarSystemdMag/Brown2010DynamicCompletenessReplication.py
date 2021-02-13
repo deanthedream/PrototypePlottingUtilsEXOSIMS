@@ -126,7 +126,7 @@ trange = np.linspace(start=0.,stop=365.*13.,num=1000)
 dynComps = list()
 revisitComps = list()
 for k in np.arange(len(trange)):
-    dynComp, revisitComp = dynamicCompleteness(ts2,planetIsVisibleBool2,tobs1,trange[k],None)
+    dynComp, revisitComp = dynamicCompleteness(ts2,planetIsVisibleBool2,tobs1,trange[k],periods,None)
     dynComps.append(dynComp)
     revisitComps.append(revisitComp)
 timingStop = time.time()
