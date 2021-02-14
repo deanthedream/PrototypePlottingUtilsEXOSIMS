@@ -171,8 +171,9 @@ indsWith2_2 = detectableByBothInds[np.where(numberOfVisibleRegionsPerPlanets2==2
 indsWith2_3 = detectableByBothInds[np.where(numberOfVisibleRegionsPerPlanets2==3)[0]]
 indsWith2_4 = detectableByBothInds[np.where(numberOfVisibleRegionsPerPlanets2==4)[0]]
 
-np.histogram(numberOfVisibleRegionsPerPlanets1)
-np.histogram(numberOfVisibleRegionsPerPlanets2)
+#DELETE
+#np.histogram(numberOfVisibleRegionsPerPlanets1)
+#np.histogram(numberOfVisibleRegionsPerPlanets2)
 
 #Subdivide sets of inds where Image 1 has 1 visible region 
 setNumVisTimes = dict()
@@ -302,6 +303,21 @@ print(str(len(indsCase1)) + " cases where det 1 up and left of det 2\n" +\
     str(len(indsCase4)) + " cases where det 1 up and right of det 2")
 #TODO add these cases to the stack of inds in planetsInVisibleRegionsInTimeWindow
 
+def calc_planetAngularXYPosition_FromXaxis(sma,e,w,W,inc,nu):
+    """ Calculate the angular position of the planet from the X-axis at nu
+    """
+    r=(sma*(1.-e**2.))/(1.+e*np.cos(nu))
+    X = r*(np.cos(W)* np.cos(w + nu) - np.sin(W)*np.sin(w + nu)*np.cos(inc))
+    Y = r*(np.sin(W)* np.cos(w + nu) + np.cos(W)*np.sin(w + nu)*np.cos(inc))
+    Z = r*np.sin(inc)* np.sin(w + nu)
+    thetas = np.arctan2(Y,X) #angle of planet position from X-axis
+    return thetas
+
+#TODO left off here. Check for t
+thetas1 = calc_planetAngularXYPosition_FromXaxis(sma[detectableByBothInds],e[detectableByBothInds],w[detectableByBothInds],W[detectableByBothInds],inc[detectableByBothInds],nus1[detectableByBothInds])
+thetas2 = calc_planetAngularXYPosition_FromXaxis(sma[detectableByBothInds],e[detectableByBothInds],w[detectableByBothInds],W[detectableByBothInds],inc[detectableByBothInds],nus2[detectableByBothInds])
+#Calc all dthetas of planets in pop.
+#filter ones matching dTheta below
 
 #Delta Theta reduction
 actualDeltaTheta = theta2-theta1 #the change in theta observed
@@ -525,6 +541,10 @@ ax42.legend()
 #ax42.set_yscale('log')
 
 plt.show(block=False)
+
+
+#TODO: Plot COVARIANCE MATRICES FOR PLANETS find an old scatter plot or something
+
 
 
 
