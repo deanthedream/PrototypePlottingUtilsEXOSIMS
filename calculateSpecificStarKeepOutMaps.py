@@ -10,8 +10,8 @@ from astropy.time import Time
 
 #### INPUTS ##########################
 #(there are other ways to do this, but simulating a full mission simulation and generating a mission outspec is relatively easy)
-starName = 'HIP 669'
-scriptfile = '/home/dean/Documents/exosims/Scripts/WFIRSTcycle6core.json'
+starName = 'HIP 19855'
+scriptfile = '/home/dean/Documents/exosims/Scripts/WFIRSTcycle6core_CKL2_PPKL2_modified.json'
 ######################################
 
 #Create Mission Object To Extract Some Plotting Limits
@@ -36,8 +36,6 @@ culprit = np.zeros([TL.nStars,len(koEvaltimes),11])   #keeps track of whose keep
 
 # choose observing modes selected for detection (default marked with a flag)
 allModes = OS.observingModes
-det_mode = list(filter(lambda mode: mode['detectionMode'] == True, allModes))[0]
-mode = det_mode
 
 #Construct koangles
 nSystems  = len(allModes)
@@ -49,9 +47,13 @@ for x in systOrder:
     rel_mode = list(filter(lambda mode: mode['syst']['name'] == systNames[x], allModes))[0]
     koangles[x] = np.asarray([rel_mode['syst'][k] for k in koStr])
 
-#calculating keepout angles for all stars       
-koGood,r_body, r_targ, culprit, koangleArray = obs.keepout(TL, [indWhereStarName,indWhereStarName], koEvaltimes, koangles, True)
-culprit = culprit[0] #Reduce array down to only 1 planet
+#Keepouts are calculated here
+kogood = np.zeros([1,koEvaltimes.size])
+culprit = np.zeros([1,koEvaltimes.size,12])
+for t,date in enumerate(koEvaltimes):
+    tmpkogood,r_body, r_targ, tmpculprit, koangleArray = obs.keepout(TL, [indWhereStarName,indWhereStarName], date, koangles, True)
+    kogood[0,t] = tmpkogood[0,0,0] #reassign to boolean array of overall visibility
+    culprit[0,t,:] = tmpculprit[0,0,0,:] #reassign to boolean array describing visibility of individual keepout perpetrators
 
 #creating an array of visibility based on culprit
 sunFault   = [bool(culprit[0,t,0]) for t in np.arange(len(koEvaltimes))] #TL.nStars)]
@@ -60,8 +62,8 @@ moonFault  = [bool(culprit[0,t,1]) for t in np.arange(len(koEvaltimes))] #TL.nSt
 mercFault  = [bool(culprit[0,t,3]) for t in np.arange(len(koEvaltimes))] #TL.nStars)]
 venFault   = [bool(culprit[0,t,4]) for t in np.arange(len(koEvaltimes))] #TL.nStars)]
 marsFault  = [bool(culprit[0,t,5]) for t in np.arange(len(koEvaltimes))] #TL.nStars)]
+solarPanelFault  = [bool(culprit[0,t,11]) for t in np.arange(len(koEvaltimes))] #TL.nStars)]
     
-
 #### Outputs ############################################
 #koEvalTimes - the times of the bin edges of the KeepOut Map koGood and culprit
 #indWhereStarName - the ind of koGood[ind,:] indicating where starName occurs
