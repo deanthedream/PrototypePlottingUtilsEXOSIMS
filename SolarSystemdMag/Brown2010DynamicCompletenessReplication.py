@@ -17,6 +17,8 @@ import itertools
 import datetime
 import re
 from matplotlib import colors
+import csv
+import pickle
 
 #### PLOT BOOL
 plotBool = False
@@ -132,6 +134,19 @@ for k in np.arange(len(trange)):
 timingStop = time.time()
 print('time: ' + str(timingStop-timingStart))
 
+#### Load CSV Data Of Brown2010 Paper
+BrownData = list()
+with open('Brown2010DynamicCompDataPickedFromFigure1.csv') as csvfile:
+    readCSV = csv.reader(csvfile, delimiter=',')
+    for row in readCSV:
+        BrownData.append(row)
+BrownData = np.asarray(BrownData).astype('float')
+
+#Dynamic Completeness With Corey's Method
+with open('./Brown2010Lambert.pkl', 'rb') as f:
+    Brown2010Lambert = pickle.load(f)
+with open('./Brown2010QuasiLambert.pkl', 'rb') as f:
+    Brown2010QuasiLambert = pickle.load(f)
 
 #### Plot Revisit and Dynamic Completeness of All Planets and Earth-Like Planets
 num=8008
@@ -141,13 +156,25 @@ plt.rc('axes',linewidth=2)
 plt.rc('lines',linewidth=2)
 plt.rcParams['axes.linewidth']=2
 plt.rc('font',weight='bold')
-plt.plot(trange*24*60*60,dynComps,color='blue',label='New Detection')
-plt.plot(trange*24*60*60,revisitComps,color='red',label='Redetection')
+plt.plot(trange*24*60*60,dynComps,color='blue',label='This Work')
+#plt.plot(trange*24*60*60,revisitComps,color='red',label='Redetection')
+plt.scatter(10.**BrownData[:,0],BrownData[:,1],color='black',s=2,label='Figure 1 Brown 2010 Data')
+plt.plot(Brown2010Lambert[0],Brown2010Lambert[1],color='orange',label='Brown Lambert')
+plt.plot(Brown2010QuasiLambert[0],Brown2010QuasiLambert[1],color='red',label='Brown Quasi-Lambert')
 plt.xlabel('Time Past Observation (sec)',weight='bold')
 plt.ylabel('Probability of ',weight='bold')
-plt.legend(loc=1, prop={'size': 10})
+plt.legend(loc=4, prop={'size': 10})
 plt.xlim([10**5,np.max(trange*24*60*60)])
 plt.ylim([0.,0.3])
 plt.xscale('log')
 plt.show(block=False)
+plt.gcf().canvas.draw()
+# Save to a File
+date = str(datetime.datetime.now())
+date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+fname = 'Brown2010DynamicCompleteness' + folder.split('/')[-1] + '_' + date
+plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
+plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
+plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
+plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
 
