@@ -12,16 +12,10 @@ from astropy.time import Time
 #(there are other ways to do this, but simulating a full mission simulation and generating a mission outspec is relatively easy)
 starName = 'HIP 19855'
 scriptfile = '/home/dean/Documents/exosims/Scripts/WFIRSTcycle6core_CKL2_PPKL2_modified.json'
-######################################
 
 #Create Mission Object To Extract Some Plotting Limits
 sim = EXOSIMS.MissionSim.MissionSim(scriptfile, nopar=True)
-obs = sim.Observatory
-TL  = sim.TargetList   #target list 
-missionStart = sim.TimeKeeping.missionStart  #Time Object
-TK = sim.TimeKeeping
-OS = sim.OpticalSystem
-##########################################################################################
+obs, TL, TK = sim.Observatory, sim.TargetList, sim.TimeKeeping
 
 #Get Star Name Ind
 indWhereStarName = np.where(TL.Name == starName)[0]
@@ -56,13 +50,13 @@ for t,date in enumerate(koEvaltimes):
     culprit[0,t,:] = tmpculprit[0,0,0,:] #reassign to boolean array describing visibility of individual keepout perpetrators
 
 #creating an array of visibility based on culprit
-sunFault   = [bool(culprit[0,t,0]) for t in np.arange(len(koEvaltimes))] #TL.nStars)]
-earthFault = [bool(culprit[0,t,2]) for t in np.arange(len(koEvaltimes))] #TL.nStars)]
-moonFault  = [bool(culprit[0,t,1]) for t in np.arange(len(koEvaltimes))] #TL.nStars)]
-mercFault  = [bool(culprit[0,t,3]) for t in np.arange(len(koEvaltimes))] #TL.nStars)]
-venFault   = [bool(culprit[0,t,4]) for t in np.arange(len(koEvaltimes))] #TL.nStars)]
-marsFault  = [bool(culprit[0,t,5]) for t in np.arange(len(koEvaltimes))] #TL.nStars)]
-solarPanelFault  = [bool(culprit[0,t,11]) for t in np.arange(len(koEvaltimes))] #TL.nStars)]
+sunFault   = [bool(culprit[0,t,0]) for t in np.arange(len(koEvaltimes))]
+earthFault = [bool(culprit[0,t,2]) for t in np.arange(len(koEvaltimes))]
+moonFault  = [bool(culprit[0,t,1]) for t in np.arange(len(koEvaltimes))]
+mercFault  = [bool(culprit[0,t,3]) for t in np.arange(len(koEvaltimes))]
+venFault   = [bool(culprit[0,t,4]) for t in np.arange(len(koEvaltimes))]
+marsFault  = [bool(culprit[0,t,5]) for t in np.arange(len(koEvaltimes))]
+solarPanelFault  = [bool(culprit[0,t,11]) for t in np.arange(len(koEvaltimes))]
     
 #### Outputs ############################################
 #koEvalTimes - the times of the bin edges of the KeepOut Map koGood and culprit
