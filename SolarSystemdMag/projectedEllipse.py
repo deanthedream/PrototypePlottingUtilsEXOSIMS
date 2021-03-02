@@ -1683,6 +1683,69 @@ def timeFromTrueAnomaly(nu,T,e):
     t = (E-e*np.sin(E))/(2.*np.pi/T)
     return t
 
+# def eccanom(M, e):
+#     """Finds eccentric anomaly from mean anomaly and eccentricity
+#     Copied From EXOSIMS.util.eccanom.py
+    
+#     This method uses algorithm 2 from Vallado to find the eccentric anomaly
+#     from mean anomaly and eccentricity.
+    
+#     Args:
+#         M (float or ndarray):
+#             mean anomaly
+#         e (float or ndarray):
+#             eccentricity (eccentricity may be a scalar if M is given as
+#             an array, but otherwise must match the size of M.
+            
+#     Returns:
+#         E (float or ndarray):
+#             eccentric anomaly
+    
+#     """
+    
+#     # make sure M and e are of the correct format.
+#     # if 1 value provided for e, array must match size of M
+#     M = np.array(M).astype(float)
+#     if not M.shape:
+#         M = np.array([M])
+#     e = np.array(e).astype(float)
+#     if not e.shape:
+#         e = np.array([e]*len(M))
+    
+#     assert e.shape == M.shape, "Incompatible inputs."
+#     assert np.all((e>=0)&(e<1)), "e defined outside [0,1)"
+
+#     #initial values for E
+#     E = M/(1-e)
+#     mask = e*E**2 > 6*(1-e)
+#     E[mask] = (6*M[mask]/e[mask])**(1./3)
+    
+#     # Newton-Raphson setup
+#     tolerance = np.finfo(float).eps*4.01
+#     numIter = 0
+#     maxIter = 200
+#     err = 1.
+#     while err > tolerance and numIter < maxIter:
+#         E = E - (M - E + e*np.sin(E))/(e*np.cos(E)-1) # verbatim from first page of Vallado
+#         err = np.max(abs(M - (E - e*np.sin(E))))
+#         numIter += 1
+    
+#     if numIter == maxIter:
+#         raise Exception("eccanom failed to converge. Final error of %e"%err)
+    
+#     return E
+
+# def trueAnomalyFromTime(t,T,e):
+#     """ Calculate True Anomaly From Time
+#     Args:
+#     Returns:
+#     """
+#     M = 2.*np.pi/T
+#     E = eccanom(M, e)
+#     PAUSING HERE. THE EQUATIONS ARE ON WIKIPEDIA, BUT IT REQUIRES AN ARCCOS OR AN ARCTAN, BOTH OF WHICH WILL ONLY GIVE NU FOR PART OF THE RANGE AND 
+#     np.arccos()
+#     return nu
+
 def printKOE(ind,a,e,W,w,inc):
     print('a: ' + str(np.round(sma[ind],2)) + ' e: ' + str(np.round(e[ind],2)) + ' W: ' + str(np.round(W[ind],2)) + ' w: ' + str(np.round(w[ind],2)) + ' i: ' + str(np.round(inc[ind],2)))# + ' theta: ' + str(np.round(theta[ind],2)))
     return None
