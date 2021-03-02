@@ -34,8 +34,12 @@ scriptfile = os.path.join(folder_load,filename)
 sim = EXOSIMS.MissionSim.MissionSim(scriptfile=scriptfile,nopar=True)
 PPop = sim.PlanetPopulation
 comp = sim.Completeness
+OS = sim.OpticalSystem
+ZL = sim.ZodiacalLight
 TL = sim.TargetList
-n = 4.*10**5 #Dean's nice computer can go up to 10**8 what can atuin go up to?
+TL.BV[0] = 0.65 #http://spiff.rit.edu/classes/phys440/lectures/color/color.html
+TL.Vmag[0] = 1. #reference star
+n = 4*10**3 #Dean's nice computer can go up to 10**8 what can atuin go up to?
 inc, W, w = PPop.gen_angles(n,None)
 W = W.to('rad').value
 w = w.to('rad').value
@@ -121,6 +125,7 @@ plt.show(block=False)
 # Instrument Uncertainty
 uncertainty_dmag = 0.01 #HabEx requirement is 1%
 uncertainty_s = 5.*u.mas.to('rad')*10.*u.pc.to('AU')
+uncertainty_theta_min = np.arctan2(uncertainty_s,s_inner)
 
 #Detection one #TODO make these of a specific planet
 #nurange[50] used for determing location of first detection
@@ -130,6 +135,9 @@ dmag1 = dmags[50] #23. #Luminosity Scaled Planet-star Difference in Magnitude, '
 theta1 = thetas[50]
 nus1, planetIsVisibleBool1 = planetVisibilityBounds(sma,e,W,w,inc,p,Rp,starMass,plotBool, sep1-uncertainty_s, sep1+uncertainty_s, dmag1*(1.+uncertainty_dmag), dmag1*(1.-uncertainty_dmag)) #Calculate planet-star nu edges and visible regions
 ts1 = timeFromTrueAnomaly(nus1,np.tile(periods,(18,1)).T*u.year.to('day'),np.tile(e,(18,1)).T) #Calculate the planet-star intersection edges
+uncertainty_theta1 = np.arctan2(uncertainty_s,sep1)
+mode = [mode for mode in OS.observingModes if mode['detectionMode'] == True][0]
+intTime1 = sim.OpticalSystem.calc_intTime(TL, [0], ZL.fZ0, ZL.fEZ0, dmag1, (sep1/(10.*u.pc.to('AU')))*u.rad, mode)
 # dt = ts[:,1:] - ts[:,:-1] #Calculate time region widths
 # maxIntTime = 0.
 # gtIntLimit = dt > maxIntTime #Create boolean array for inds
@@ -149,15 +157,167 @@ dmag2 = dmags[75] #23. #Luminosity Scaled Planet-star Difference in Magnitude, '
 theta2 = thetas[75]
 nus2, planetIsVisibleBool2 = planetVisibilityBounds(sma,e,W,w,inc,p,Rp,starMass,plotBool, sep2-uncertainty_s, sep2+uncertainty_s, dmag2*(1.+uncertainty_dmag), dmag2*(1.-uncertainty_dmag)) #Calculate planet-star nu edges and visible regions
 ts2 = timeFromTrueAnomaly(nus2,np.tile(periods,(18,1)).T*u.year.to('day'),np.tile(e,(18,1)).T) #Calculate the planet-star intersection edges
-
+uncertainty_theta2 = np.arctan2(uncertainty_s,sep2)
+intTime2 = sim.OpticalSystem.calc_intTime(TL, [0], ZL.fZ0, ZL.fEZ0, dmag2, (sep2/(10.*u.pc.to('AU')))*u.rad, mode)
 numPlanetsInRegion2 = np.sum(np.any(planetIsVisibleBool2,axis=1))
+
 
 #### Find Planet Inds With Both
 detectableByBothBoolArray = np.any(planetIsVisibleBool2,axis=1)*np.any(planetIsVisibleBool1,axis=1)
 numDetectableByBothArray = np.sum(detectableByBothBoolArray)
 detectableByBothInds = np.where(detectableByBothBoolArray)[0] #inds of planets that are detectable at time 1 and time 2
 #seems to successfully reduce numplanets by 1/100
+
+#### Actual Planet Time Difference
 actualPlanetTimeDifference = tpastPeriastron2-tpastPeriastron1 #the time that passed between image1 and image2
+
+#### Actual Delta Theta
+actualDeltaTheta = theta2-theta1 #the change in theta observed
+dTheta_1 = (theta2-np.abs(np.arctan2(uncertainty_s,sep2))) - (theta1+np.abs(np.arctan2(uncertainty_s,sep1))) #could be largest or smallest
+dTheta_2 = (theta2+np.abs(np.arctan2(uncertainty_s,sep2))) - (theta1-np.abs(np.arctan2(uncertainty_s,sep1))) #could be largest of smallest
+deltaTheta_min = np.min([dTheta_1,dTheta_2]) #minimum of range
+delteTheta_max = np.max([dTheta_1,dTheta_2]) #maximum of range
+
+
+
+#### Calculates XY plane Angles
+def calc_planetAngularXYPosition_FromXaxis(sma,e,w,W,inc,nu):
+    """ Calculate the angular position of the planet from the X-axis at nu
+    """
+    r=(np.tile(sma,(18,1)).T*(1.-np.tile(e,(18,1)).T**2.))/(1.+np.tile(e,(18,1)).T*np.cos(nu))
+    X = r*(np.cos(np.tile(W,(18,1)).T)* np.cos(np.tile(w,(18,1)).T + nu) - np.sin(np.tile(W,(18,1)).T)*np.sin(np.tile(w,(18,1)).T + nu)*np.cos(np.tile(inc,(18,1)).T))
+    Y = r*(np.sin(np.tile(W,(18,1)).T)* np.cos(np.tile(w,(18,1)).T + nu) + np.cos(np.tile(W,(18,1)).T)*np.sin(np.tile(w,(18,1)).T + nu)*np.cos(np.tile(inc,(18,1)).T))
+    #Z = r*np.sin(np.tile(inc,(18,1)).T)* np.sin(np.tile(w,(18,1)).T + nu)
+    thetas = np.mod(np.arctan2(Y,X),2.*np.pi) #angle of planet position from X-axis, ranges from 0 to 2pi
+    return thetas
+
+
+def nuFromTheta(theta,sma,e,w,Omega,inc): #,nu):
+    """ Calculates true anomaly from theta
+    Args:
+        theta (numpy array):
+        sma (numpy array):
+        e (numpy array):
+        w (numpy array):
+        Omega (numpy array):
+        inc (numpy array):
+        nu #DELETE FOR DEBUGGIN
+    Returns:
+        nu (float):
+            true anomaly where theta occurs
+    """
+    tanTheta = np.tan(theta) #ranges from -inf to +inf
+
+    if len(theta.shape) == 2:
+        sma2 = np.tile(sma,(18,1)).T
+        e2 = np.tile(e,(18,1)).T
+        w2 = np.tile(w,(18,1)).T
+        Omega2 = np.tile(Omega,(18,1)).T
+        inc2 = np.tile(inc,(18,1)).T
+
+
+    # #Coefficients of the quadratic equation in theatFromKOE.ipynb
+    # a0 = tanTheta**2.*np.sin(Omega2)**2.*np.sin(w2)**2.*np.cos(inc2)**2. + tanTheta**2.*np.sin(Omega2)**2.*np.cos(inc2)**2.*np.cos(w2)**2. + tanTheta**2.*np.sin(w2)**2.*np.cos(Omega2)**2.\
+    #     + tanTheta**2.*np.cos(Omega2)**2.*np.cos(w2)**2. + 2.*tanTheta*np.sin(Omega2)*np.sin(w2)**2.*np.cos(Omega2)*np.cos(inc2)**2. - 2.*tanTheta*np.sin(Omega2)*np.sin(w2)**2.*np.cos(Omega2)\
+    #     + 2.*tanTheta*np.sin(Omega2)*np.cos(Omega2)*np.cos(inc2)**2.*np.cos(w2)**2. - 2.*tanTheta*np.sin(Omega2)*np.cos(Omega2)*np.cos(w2)**2. + np.sin(Omega2)**2.*np.sin(w2)**2.\
+    #     + np.sin(Omega2)**2.*np.cos(w2)**2. + np.sin(w2)**2.*np.cos(Omega2)**2.*np.cos(inc2)**2. + np.cos(Omega2)**2.*np.cos(inc2)**2.*np.cos(w2)**2.
+    # #a1 = 0. #this term is 0 so i just simplified the quadratic solution
+    # a2 = -tanTheta**2.*np.sin(Omega2)**2.*np.cos(inc2)**2.*np.cos(w2)**2. - 2.*tanTheta**2.*np.sin(Omega2)*np.sin(w2)*np.cos(Omega2)*np.cos(inc2)*np.cos(w2) - tanTheta**2.*np.sin(w2)**2.*np.cos(Omega2)**2.\
+    #     + 2.*tanTheta*np.sin(Omega2)**2.*np.sin(w2)*np.cos(inc2)*np.cos(w2) + 2.*tanTheta*np.sin(Omega2)*np.sin(w2)**2.*np.cos(Omega2) - 2.*tanTheta*np.sin(Omega2)*np.cos(Omega2)*np.cos(inc2)**2.*np.cos(w2)**2.\
+    #     - 2.*tanTheta*np.sin(w2)*np.cos(Omega2)**2.*np.cos(inc2)*np.cos(w2) - np.sin(Omega2)**2.*np.sin(w2)**2. + 2.*np.sin(Omega2)*np.sin(w2)*np.cos(Omega2)*np.cos(inc2)*np.cos(w2) - np.cos(Omega2)**2.*np.cos(inc2)**2.*np.cos(w2)**2.
+    # #Solve Quadratic
+    # x0 = np.sqrt(-a0*a2)/a0
+    # x1 = -np.sqrt(-a0*a2)/a0
+
+    A = -tanTheta*np.sin(Omega2)*np.cos(inc2)*np.cos(w2) - tanTheta*np.sin(w2)*np.cos(Omega2) + np.sin(Omega2)*np.sin(w2) - np.cos(Omega2)*np.cos(inc2)*np.cos(w2)
+    B = -tanTheta*np.sin(Omega2)*np.sin(w2)*np.cos(inc2) + tanTheta*np.cos(Omega2)*np.cos(w2) - np.sin(Omega2)*np.cos(w2) - np.sin(w2)*np.cos(Omega2)*np.cos(inc2)
+    x0 = np.sqrt(1./(1.+(B/A)**2.)) #strictly ranges from 0 to 1
+    x1 = -np.sqrt(1./(1.+(B/A)**2.)) #strictly ranges from -1 to 0
+
+    #Calculate nus
+    nu00 = np.arccos(np.clip(x0,-1,1)) #clip fixes float errors, ranges from 0 to pi/2
+    nu01 = 2.*np.pi - nu00 #opposite solution, ranges from 3pi/2 to 2pi
+    nu10 = np.arccos(np.clip(x1,-1,1)) #ramges from pi/2 to pi
+    nu11 = 2.*np.pi - nu10 #ranges from pi to 3pi/2
+    #shove nus into a (#plan, 18, 4) array
+    nuArray = list()
+    nuArray.append(nu00)
+    nuArray.append(nu01)
+    nuArray.append(nu10)
+    nuArray.append(nu11)
+    nuArray = np.asarray(nuArray)
+    nuArray = np.swapaxes(nuArray,0,1)
+    nuArray = np.swapaxes(nuArray,1,2)
+    #nuArray = np.reshape(nuArray,(nu00.shape[0],nu00.shape[1],4)) #create an array with all errors in it so we can search along dimension for min
+
+    #Calculate Thetas From nus
+    thetas00 = calc_planetAngularXYPosition_FromXaxis(sma,e,w,W,inc,nu00) #nu00 has same shape as nu
+    thetas01 = calc_planetAngularXYPosition_FromXaxis(sma,e,w,W,inc,nu01)
+    thetas10 = calc_planetAngularXYPosition_FromXaxis(sma,e,w,W,inc,nu10)
+    thetas11 = calc_planetAngularXYPosition_FromXaxis(sma,e,w,W,inc,nu11)
+    thetasArray = list()
+    thetasArray.append(thetas00)
+    thetasArray.append(thetas01)
+    thetasArray.append(thetas10)
+    thetasArray.append(thetas11)
+    thetasArray = np.asarray(thetasArray)
+    thetasArray = np.swapaxes(thetasArray,0,1)
+    thetasArray = np.swapaxes(thetasArray,1,2)
+    #thetasArray = np.reshape(thetasArray,(thetas00.shape[0],thetas00.shape[1],4)) #create an array with all errors in it so we can search along dimension for min
+
+    #Calculate errors between calculated and input
+    error00 = np.abs(thetas00-theta)
+    error01 = np.abs(thetas01-theta)
+    error10 = np.abs(thetas10-theta)
+    error11 = np.abs(thetas11-theta)
+
+    #Calculate errors
+    errorArray = list()
+    errorArray.append(error00)
+    errorArray.append(error01)
+    errorArray.append(error10)
+    errorArray.append(error11)
+    errorArray = np.asarray(errorArray)
+    errorArray = np.swapaxes(errorArray,0,1)
+    errorArray = np.swapaxes(errorArray,1,2)
+    #errorArray = np.reshape(errorArray,(error00.shape[0],error00.shape[1],4)) #create an array with all errors in it so we can search along dimension for min
+
+    #Find the minimum error along star, 18 solutions
+    #minErrorArray0 = np.zeros((error00.shape[0],error00.shape[1]))
+    #outThetasArray = np.zeros((error00.shape[0],error00.shape[1]))
+    outNuArray = np.zeros((error00.shape[0],error00.shape[1]))
+    minErrorIndsArray0 = np.zeros((error00.shape[0],error00.shape[1]),dtype='int')
+    for i in np.arange(error00.shape[0]): #iterate over each star
+        for j in np.arange(error00.shape[1]):#iterate over all 18 solutions
+            try:
+                minErrorIndsArray0[i,j] = np.nanargmin(errorArray[i,j])
+                #minErrorArray0[i,j] = errorArray[i,j,minErrorIndsArray0[i,j]]
+                #outThetasArray[i,j] = thetasArray[i,j,minErrorIndsArray0[i,j]]
+                outNuArray[i,j] = nuArray[i,j,minErrorIndsArray0[i,j]]
+            except:
+                minErrorIndsArray0[i,j] = 0
+                #minErrorArray0[i,j] = np.nan
+                #outThetasArray[i,j] = np.nan
+                outNuArray[i,j] = np.nan
+
+    return outNuArray
+
+#TODO left off here. Check for t
+# thetas1 = calc_planetAngularXYPosition_FromXaxis(sma[detectableByBothInds],e[detectableByBothInds],w[detectableByBothInds],W[detectableByBothInds],inc[detectableByBothInds],nus1[detectableByBothInds])
+# thetas2 = calc_planetAngularXYPosition_FromXaxis(sma[detectableByBothInds],e[detectableByBothInds],w[detectableByBothInds],W[detectableByBothInds],inc[detectableByBothInds],nus2[detectableByBothInds])
+thetas1 = calc_planetAngularXYPosition_FromXaxis(sma,e,w,W,inc,nus1)
+thetas2 = calc_planetAngularXYPosition_FromXaxis(sma,e,w,W,inc,nus2)
+nuFromTheta1m = nuFromTheta(thetas1-sigma_theta,sma,e,w,W,inc)
+nuFromTheta1p = nuFromTheta(thetas1+sigma_theta,sma,e,w,W,inc)
+nuFromTheta2m = nuFromTheta(thetas2-sigma_theta,sma,e,w,W,inc)
+nuFromTheta2p = nuFromTheta(thetas2+sigma_theta,sma,e,w,W,inc)
+
+#### Verify nuFromTheta function works
+nu = nuFromTheta(thetas1,sma,e,w,W,inc) #doing this to validate this function
+
+#???Calc all dthetas of planets in pop.
+#???filter ones matching dTheta below
+
 
 #Find Number of Times Planet Is Visible #TODO add error checking for if 3 visible regions doesn't exist
 numberOfVisibleRegionsPerPlanets1 = np.sum(planetIsVisibleBool1[detectableByBothInds],axis=1)
@@ -226,41 +386,107 @@ assert len(setNumVisTimes[(1,1)]['inds'])+len(setNumVisTimes[(1,2)]['inds'])+len
 
 print('Determing if Times between s1,dmag1 and s2,dmag2 are appropriate')
 #Calculate All Intersection Times For NumVisibleTimes (i,j)
-timeTolerance = 3. #random tolerance on the time between two observations in days #TODO find a better number for this. Should be integration time x 2 since two detections must occur
+timeTolerance = np.max([intTime1.to('d').value, intTime2.to('d').value]) #3. #random tolerance on the time between two observations in days #TODO find a better number for this. Should be integration time x 2 since two detections must occur
 planetsInVisibleRegionsInTimeWindow = list()
-for (i,j) in [(1,1),(1,2),(1,3),(1,4),(2,1),(2,2),(2,3),(2,4),(3,1),(3,2),(3,3),(3,4),(4,1)]: #iterate over sets of inds of intersections
+planetsInVisibleRegionsInTimeWindowInAngle = list()
+planetsInVisibleRegionsInTimeWindow2 = list()
+for (i,j) in [(1,1),(1,2),(1,3),(1,4),(2,1),(2,2),(2,3),(2,4),(3,1),(3,2),(3,3),(3,4),(4,1),(4,2),(4,3),(4,4)]: #iterate over sets of inds of intersections
     # i indicates the number of visible regions in image 1
     # j indicates the number of visible regions in image 2
-    for planetj in np.arange(len(setNumVisTimes[(i,j)]['inds'])): #iterate over planet
+    for planetj in np.arange(len(setNumVisTimes[(i,j)]['inds'])): #iterate over all planets
         indsOfVisibleRegionsk = np.where(planetIsVisibleBool1[setNumVisTimes[(i,j)]['inds'][planetj]])[0] #should give us a new matrix with shape len(setNumVisTimes[(1,1)]['inds']), 17
         indsOfVisibleRegionsl = np.where(planetIsVisibleBool2[setNumVisTimes[(i,j)]['inds'][planetj]])[0]
 
         #Iterate over visible regions of image 1 and image 2, pick out smallest dt, pick out largest dt
-        smallestdt = 10000000. #rediculously large number
-        largestdt = 0.
         for k in indsOfVisibleRegionsk: #iterate over image 1 visible regions
             regionStart1 = ts1[setNumVisTimes[(i,j)]['inds'][planetj],k]
             regionEnd1 = ts1[setNumVisTimes[(i,j)]['inds'][planetj],k+1]
             #taverage1 = (regionStart1+regionEnd1)/2. #average time of time window
+            angleStart1 = thetas1[setNumVisTimes[(i,j)]['inds'][planetj],k]
+            angleStop1 = thetas1[setNumVisTimes[(i,j)]['inds'][planetj],k+1]
+
+            #NOTE: This may be improved by (1) looking at only forward time cases (2) making backward in time cases have inc+pi 
             for l in indsOfVisibleRegionsl: #iterate over image 2 visible regions
-                regionStart2 = ts2[setNumVisTimes[(i,j)]['inds'][planetj],k]
-                regionEnd2 = ts2[setNumVisTimes[(i,j)]['inds'][planetj],k+1]
+                regionStart2 = ts2[setNumVisTimes[(i,j)]['inds'][planetj],l]
+                regionEnd2 = ts2[setNumVisTimes[(i,j)]['inds'][planetj],l+1]
                 #taverage2 = (regionStart2+regionEnd2)/2. #average time of time window
+                angleStart2 = thetas2[setNumVisTimes[(i,j)]['inds'][planetj],l]
+                angleStop2 = thetas2[setNumVisTimes[(i,j)]['inds'][planetj],l+1]
+
+
+                #ADD DELTA THETA CALCULATION BOUNDS HERE???? I THINK ???? MIGHT NEED TO BE AN INSTRUMENT CALCULATION
+
+
+                #Note whether region 1 starts first or region 2 starts first
+                if regionStart1 < regionStart2: #the start time of region1 is before the start time of region 2
+                    region1StartsFirstBool = True
+                    maxdt = regionEnd2 - regionStart1
+                    mindt = regionStart2 - regionEnd1
+                    mindt = np.max([0.,mindt]) #ensures mindt is positive or 0
+
+                    #Finding Min and max acceptable angles
+                    if np.sign(angleStart2-angleStart1) == np.sign(actualDeltaTheta): #angle of region 2 relative to region 1 is in the same angular direction as the actual planet
+                        maxDeltaAngle = (angleStop2 + uncertainty_theta2) - (angleStart1 - uncertainty_theta1) #largest angular change
+                        minDeltaAngle = np.max([0.,(angleStart2 - uncertainty_theta2) - (angleStop1 + uncertainty_theta1)]) #smallest angular change
+                    else: #otherwise angle of region 2 relative to region 1 is opposite what was actually observed
+                        maxDeltaAngle = (angleStop1 + uncertainty_theta1) - (angleStart2 - uncertainty_theta2) #largest angular change
+                        minDeltaAngle = np.max([0.,(angleStart1 - uncertainty_theta1) - (angleStop2 + uncertainty_theta2)]) #smallest angular change
+                else:
+                    region1StartsFirstBool = False
+                    maxdt = regionEnd1 - regionStart2
+                    mindt = regionStart1 - regionEnd2
+                    mindt = np.max([0.,mindt]) #ensures mindt is positive or 0
+
+                    #Finding Min and Max Acceptable Angles 
+                    if -np.sign(angleStart2-angleStart1) == np.sign(actualDeltaTheta): #angle of region 2 relative to region 1 is in the same angular direction as the actual planet
+                        maxDeltaAngle = (angleStop1 + uncertainty_theta1) - (angleStart2 - uncertainty_theta2)
+                        minDeltaAngle = np.min([0.,(angleStart1 - uncertainty_theta1) - (angleStop2 + uncertainty_theta2)])
+                    else: #otherwise angle of region 2 relative to region 1 is opposite what was actually observed
+                        maxDeltaAngle = (angleStop2 + uncertainty_theta2) - (angleStart1 - uncertainty_theta1)
+                        minDeltaAngle = np.min([0.,(angleStart2 - uncertainty_theta2) - (angleStop1 + uncertainty_theta1)])
+
+                # #Note whether region 1 starts angularly smaller than region2
+                # if angleStart1 < angleStart2:
+                #     region1AngleFirstBool = True
+                # else:
+                #     region1AngleFirstBool = False
 
                 #Calculate largest and smallest visibility window
                 dt1 = np.abs(regionEnd2-regionStart1) #time difference between starting region 1 and ending region 2
                 dt2 = np.abs(regionEnd1-regionStart2) #time difference between starting region 2 and ending region 1
-                smaller = np.min([dt1,dt2])
-                larger = np.max([dt1,dt2])
+                smallerInd = np.argmin([dt1,dt2]) #smaller of the two dts
+                largerInd = np.argmax([dt1,dt2]) #larger of the two dts
+                smaller = np.min([dt1,dt2]) #smaller of the two dts
+                larger = np.max([dt1,dt2]) #larger of the two dts
+
+                # dtheta1 = angleStop2-angleStart1
+                # dtheta2 = angleStop1-angleStart2
+                # mindTheta = np.min([dtheta1,dtheta2])
+                # maxdTheta = np.max([dtheta1,dtheta2])
+
                 #dtaverage = taverage2-taverage1
                 # if dtaverage < timeTolerance: #if the planet is in both windows within the allowed time tolerance
                 #     planetsInVisibleRegionsInTimeWindow.append((i,j,planetj,k,l))
-                if actualPlanetTimeDifference-timeTolerance < larger and actualPlanetTimeDifference+timeTolerance > smaller:
-                    planetsInVisibleRegionsInTimeWindow.append((i,j,setNumVisTimes[(i,j)]['inds'][planetj],k,l))
+
+                if actualPlanetTimeDifference > mindt - timeTolerance and actualPlanetTimeDifference < maxdt + timeTolerance:
+                    planetsInVisibleRegionsInTimeWindow.append((i,j,setNumVisTimes[(i,j)]['inds'][planetj],k,l,region1StartsFirstBool))
+
+                    if actualDeltaTheta < maxDeltaAngle and actualDeltaTheta > minDeltaAngle:
+                        planetsInVisibleRegionsInTimeWindowInAngle.append((i,j,setNumVisTimes[(i,j)]['inds'][planetj],k,l,region1StartsFirstBool))
+
+
+
+                # if actualPlanetTimeDifference-timeTolerance < larger and actualPlanetTimeDifference+timeTolerance > smaller:
+                #     planetsInVisibleRegionsInTimeWindow.append((i,j,setNumVisTimes[(i,j)]['inds'][planetj],k,l,region1StartsFirstBool))
+
+                #     if actualDeltaTheta < maxDeltaAngle and actualDeltaTheta > minDeltaAngle:
+                #         planetsInVisibleRegionsInTimeWindowInAngle.append((i,j,setNumVisTimes[(i,j)]['inds'][planetj],k,l,region1StartsFirstBool))
+
                 # if np.abs(np.abs(regionEnd2-regionStart1) - actualPlanetTimeDifference) < timeTolerance or\
                 #     np.abs(np.abs(regionEnd1-regionStart2-) - actualPlanetTimeDifference) < timeTolerance:
 
 print("Number of Planets Visible In Time Window: " + str(len(planetsInVisibleRegionsInTimeWindow)))
+print("Number of Planets Visible In Time Window and Angle: " + str(len(planetsInVisibleRegionsInTimeWindowInAngle)))
 #TODO: Time sign matters between the first and second observation.
 #We may be able to keep the planets within the time window if we change the planet parameter by pi or something.
 
@@ -302,29 +528,6 @@ print(str(len(indsCase1)) + " cases where det 1 up and left of det 2\n" +\
     str(len(indsCase3)) + " cases where det 1 down and right of det 2\n" +\
     str(len(indsCase4)) + " cases where det 1 up and right of det 2")
 #TODO add these cases to the stack of inds in planetsInVisibleRegionsInTimeWindow
-
-def calc_planetAngularXYPosition_FromXaxis(sma,e,w,W,inc,nu):
-    """ Calculate the angular position of the planet from the X-axis at nu
-    """
-    r=(sma*(1.-e**2.))/(1.+e*np.cos(nu))
-    X = r*(np.cos(W)* np.cos(w + nu) - np.sin(W)*np.sin(w + nu)*np.cos(inc))
-    Y = r*(np.sin(W)* np.cos(w + nu) + np.cos(W)*np.sin(w + nu)*np.cos(inc))
-    Z = r*np.sin(inc)* np.sin(w + nu)
-    thetas = np.arctan2(Y,X) #angle of planet position from X-axis
-    return thetas
-
-#TODO left off here. Check for t
-thetas1 = calc_planetAngularXYPosition_FromXaxis(sma[detectableByBothInds],e[detectableByBothInds],w[detectableByBothInds],W[detectableByBothInds],inc[detectableByBothInds],nus1[detectableByBothInds])
-thetas2 = calc_planetAngularXYPosition_FromXaxis(sma[detectableByBothInds],e[detectableByBothInds],w[detectableByBothInds],W[detectableByBothInds],inc[detectableByBothInds],nus2[detectableByBothInds])
-#Calc all dthetas of planets in pop.
-#filter ones matching dTheta below
-
-#Delta Theta reduction
-actualDeltaTheta = theta2-theta1 #the change in theta observed
-dTheta_1 = (theta2-np.abs(np.arctan2(uncertainty_s,sep2))) - (theta1+np.abs(np.arctan2(uncertainty_s,sep1))) #could be largest or smallest
-dTheta_2 = (theta2+np.abs(np.arctan2(uncertainty_s,sep2))) - (theta1-np.abs(np.arctan2(uncertainty_s,sep1))) #could be largest of smallest
-deltaTheta_min = np.min([dTheta_1,dTheta_2]) #minimum of range
-delteTheta_max = np.max([dTheta_1,dTheta_2]) #maximum of range
 
 
 #TODO: create function to calculate theta of each planet from X-axis given nu. Calculate these and use to find thetas of planets
@@ -524,8 +727,8 @@ ax32.set_ylabel('Frequency',weight='bold')
 ax32.legend()
 #ax32.set_yscale('log')
 
-ax41.hist(Rp.value,color='black',alpha=0.3,density=True,label='Pop.',bins=np.linspace(start=0.,stop=np.max(Rp),endpoint=True,num=30))
-ax41.hist(Rp[planetsInVisibleRegionsInTimeWindowInds].value,color='purple',alpha=0.3,density=True,label='Sub-pop.',bins=np.linspace(start=0.,stop=np.max(Rp),endpoint=True,num=30))
+ax41.hist(Rp.value,color='black',alpha=0.3,density=True,label='Pop.',bins=np.linspace(start=0.,stop=np.max(Rp.value),endpoint=True,num=30))
+ax41.hist(Rp[planetsInVisibleRegionsInTimeWindowInds].value,color='purple',alpha=0.3,density=True,label='Sub-pop.',bins=np.linspace(start=0.,stop=np.max(Rp.value),endpoint=True,num=30))
 ax41.plot([Rp[ind].value,Rp[ind].value],[0,1],color='black')
 ax41.set_xlabel('Planet Radius, in Earth Raddius',weight='bold')
 ax41.set_ylabel('Frequency',weight='bold')
