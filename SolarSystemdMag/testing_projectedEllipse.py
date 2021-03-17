@@ -683,11 +683,73 @@ print('Done plotting KeithlyCompvsIntTimeEarthLike2')
 
 
 
+#### Log-scale Integration Time Adjusted Completeness
+plt.figure(num=101010133)
+plt.rc('axes',linewidth=2)
+plt.rc('lines',linewidth=2)
+plt.rcParams['axes.linewidth']=2
+plt.rc('font',weight='bold')
+maxpt = 0
+for i in np.arange(len(starDistances)):
+    ypts = list()
+    for j in np.arange(len(maxIntTimes)):
+        ypts.append(compDict[(i,j)]['totalCompleteness_maxIntTimeCorrected'])
+        if compDict[(i,j)]['totalCompleteness_maxIntTimeCorrected'] > maxpt:
+            maxpt = compDict[(i,j)]['totalCompleteness_maxIntTimeCorrected']
+    plt.plot(maxIntTimes,ypts,color=colors[i],marker=markers[i],label= str(int(starDistances[i])) + ' pc')
+plt.xlabel('Maximum Integration Time (d)',weight='bold')
+plt.ylabel('Integration Time Adjusted Completeness',weight='bold')
+plt.xlim([0.1,100.])
+plt.ylim([0.,1.05*np.max(maxpt)])
+plt.legend()
+plt.xscale('log')
+plt.show(block=False)
+plt.gcf().canvas.draw()
+# Save to a File
+date = str(datetime.datetime.now())
+date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+fname = 'KeithlyCompvsIntTimeLOG' + folder.split('/')[-1] + '_' + date
+plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
+plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
+plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
+plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
+print('Done plotting KeithlyCompvsIntTimeLOG')
 
-#### Dynamic Completeness Calculations ################################
-#######################################################################
 
-#### Dynamic Completeness By Subtype Calculations #####################
-#######################################################################
+#### Integration Time Adjusted Completenes For Earth-Like Planets
+plt.figure(num=101010233)
+plt.rc('axes',linewidth=2)
+plt.rc('lines',linewidth=2)
+plt.rcParams['axes.linewidth']=2
+plt.rc('font',weight='bold')
+maxpt = 0
+for i in np.arange(len(starDistances)):
+    ypts = list()
+    for j in np.arange(len(maxIntTimes)):
+        ypts.append(compDict[(i,j)]['EarthlikeComp2_maxIntTimeCorrected'])
+        if compDict[(i,j)]['EarthlikeComp2_maxIntTimeCorrected'] > maxpt:
+            maxpt = compDict[(i,j)]['EarthlikeComp2_maxIntTimeCorrected']
+    plt.plot(maxIntTimes,ypts,color=colors[i],marker=markers[i],label= str(int(starDistances[i])) + ' pc')
+plt.xlabel('Maximum Integration Time (d)',weight='bold')
+plt.ylabel('Integration Time Adjusted Completeness',weight='bold')
+plt.xlim([0.1,100.])
+plt.ylim([0.,1.05*np.max(maxpt)])
+plt.legend()
+plt.xscale('log')
+plt.show(block=False)
+plt.gcf().canvas.draw()
+# Save to a File
+date = str(datetime.datetime.now())
+date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+fname = 'KeithlyCompvsIntTimeEarthLikeLOG' + folder.split('/')[-1] + '_' + date
+plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
+plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
+plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
+plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
+print('Done plotting KeithlyCompvsIntTimeEarthLike2LOG')
+####
 
+# for i in [0,1,2,3,4,5,6,7,8,9,10,11]:
+#     print(maxIntTimes[i])
+#     print(compDict[(4,i)]['EarthlikeComp2_maxIntTimeCorrected'])
 
