@@ -158,11 +158,11 @@ plt.rcParams['axes.linewidth']=2
 plt.rc('font',weight='bold')
 plt.plot(trange*24*60*60,dynComps,color='blue',label='This Work')
 #plt.plot(trange*24*60*60,revisitComps,color='red',label='Redetection')
-plt.scatter(10.**BrownData[:,0],BrownData[:,1],color='black',s=2,label='Figure 1 Brown 2010 Data')
+#KEEP plt.scatter(10.**BrownData[:,0],BrownData[:,1],color='black',s=2,label='Figure 1 Brown 2010 Data') #KEEP, not using because dmitry said not to. might confuse the reviewer
 plt.plot(Brown2010Lambert[0],Brown2010Lambert[1],color='orange',label='Brown Lambert')
 plt.plot(Brown2010QuasiLambert[0],Brown2010QuasiLambert[1],color='red',label='Brown Quasi-Lambert')
 plt.xlabel('Time Past Observation (sec)',weight='bold')
-plt.ylabel('Probability of ',weight='bold')
+plt.ylabel('Dynamic Completeness',weight='bold')
 plt.legend(loc=4, prop={'size': 10})
 plt.xlim([10**5,np.max(trange*24*60*60)])
 plt.ylim([0.,0.3])
@@ -173,6 +173,36 @@ plt.gcf().canvas.draw()
 date = str(datetime.datetime.now())
 date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
 fname = 'Brown2010DynamicCompleteness' + folder.split('/')[-1] + '_' + date
+plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
+plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
+plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
+plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
+
+#### Plot Revisit and Dynamic Completeness of All Planets and Earth-Like Planets
+num=8009
+plt.close(num)
+plt.figure(num=num)
+plt.rc('axes',linewidth=2)
+plt.rc('lines',linewidth=2)
+plt.rcParams['axes.linewidth']=2
+plt.rc('font',weight='bold')
+plt.plot(trange*24*60*60,dynComps,color='blue',label='New Detection')
+plt.plot(trange*24*60*60,revisitComps,color='red',label='Redetection')
+#plt.scatter(10.**BrownData[:,0],BrownData[:,1],color='black',s=2,label='Figure 1 Brown 2010 Data')
+#plt.plot(Brown2010Lambert[0],Brown2010Lambert[1],color='orange',label='Brown Lambert')
+#plt.plot(Brown2010QuasiLambert[0],Brown2010QuasiLambert[1],color='red',label='Brown Quasi-Lambert')
+plt.xlabel('Time Past Observation (sec)',weight='bold')
+plt.ylabel('Probability',weight='bold')
+plt.legend(loc=4, prop={'size': 10})
+plt.xlim([10**5,np.max(trange*24*60*60)])
+plt.ylim([0.,1.0])
+plt.xscale('log')
+plt.show(block=False)
+plt.gcf().canvas.draw()
+# Save to a File
+date = str(datetime.datetime.now())
+date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+fname = 'RevisitCompleteness' + folder.split('/')[-1] + '_' + date
 plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
 plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
 plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
