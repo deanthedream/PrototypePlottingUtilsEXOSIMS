@@ -1,7 +1,7 @@
 #Two Det Priors
 """
 Purpose:
-Given any two (s1,dmag1), (s2,dmag2), and dtheta pairs (and time between images???)
+Given any two (s1,dmag1), (s2,dmag2), and dtheta pairs and dt between images
 Find the probability the planet detected is of the Given Type
 """
 import os
@@ -20,6 +20,8 @@ import itertools
 import datetime
 import re
 import matplotlib.gridspec as gridspec
+from pandas.plotting import scatter_matrix
+import pandas as pd 
 
 folder = './'
 PPoutpath = './'
@@ -28,7 +30,7 @@ PPoutpath = './'
 folder_load = os.path.normpath(os.path.expandvars('$HOME/Documents/exosims/Scripts'))
 filename = 'HabEx_CKL2_PPKL2.json'
 filename = 'WFIRSTcycle6core.json'
-filename = 'HabEx_CSAG13_PPSAG13_compSubtype.json'
+filename = 'HabEx_CSAG13_PPSAG13_compSubtype_uniformalbedo.json'
 #filename = 'HabEx_CSAG13_PPSAG13_compSubtypeHighEccen.json'
 scriptfile = os.path.join(folder_load,filename)
 sim = EXOSIMS.MissionSim.MissionSim(scriptfile=scriptfile,nopar=True)
@@ -39,7 +41,7 @@ ZL = sim.ZodiacalLight
 TL = sim.TargetList
 TL.BV[0] = 0.65 #http://spiff.rit.edu/classes/phys440/lectures/color/color.html
 TL.Vmag[0] = 1. #reference star
-n = 4*10**3 #Dean's nice computer can go up to 10**8 what can atuin go up to?
+n = 1*10**5 #Dean's nice computer can go up to 10**8 what can atuin go up to?
 inc, W, w = PPop.gen_angles(n,None)
 W = W.to('rad').value
 w = w.to('rad').value
@@ -146,7 +148,6 @@ intTime1 = sim.OpticalSystem.calc_intTime(TL, [0], ZL.fZ0, ZL.fEZ0, dmag1, (sep1
 
 # ts2 = ts[:,0:8] #cutting out all the nans
 # planetIsVisibleBool2 = planetIsVisibleBool[:,0:7] #cutting out all the nans
-
 numPlanetsInRegion1 = np.sum(np.any(planetIsVisibleBool1,axis=1))
 
 #Dection 2
@@ -160,7 +161,11 @@ ts2 = timeFromTrueAnomaly(nus2,np.tile(periods,(18,1)).T*u.year.to('day'),np.til
 uncertainty_theta2 = np.arctan2(uncertainty_s,sep2)
 intTime2 = sim.OpticalSystem.calc_intTime(TL, [0], ZL.fZ0, ZL.fEZ0, dmag2, (sep2/(10.*u.pc.to('AU')))*u.rad, mode)
 numPlanetsInRegion2 = np.sum(np.any(planetIsVisibleBool2,axis=1))
-
+#Stitching Last Time Window To First Time Window
+lastVisWindowIndex2 = np.nanargmax(ts2,axis=1) #finds index of last non-nan
+firstAndLastVis = np.multiply(planetIsVisibleBool2[np.arange(len(lastVisWindowIndex2)),lastVisWindowIndex2-1],planetIsVisibleBool2[np.arange(len(lastVisWindowIndex2)),np.zeros(len(lastVisWindowIndex2)).astype('int')]) # an array indicating indicies where the first and last time window are visible and should therefore be "spliced" together
+#need to figure out how to stitch first and last together
+#thinking of just adding ts2[lastVisibleTime]+ts2[1] (adding the time index 1 since the time at index 0 is 0)
 
 #### Find Planet Inds With Both
 detectableByBothBoolArray = np.any(planetIsVisibleBool2,axis=1)*np.any(planetIsVisibleBool1,axis=1)
@@ -307,10 +312,10 @@ def nuFromTheta(theta,sma,e,w,Omega,inc): #,nu):
 # thetas2 = calc_planetAngularXYPosition_FromXaxis(sma[detectableByBothInds],e[detectableByBothInds],w[detectableByBothInds],W[detectableByBothInds],inc[detectableByBothInds],nus2[detectableByBothInds])
 thetas1 = calc_planetAngularXYPosition_FromXaxis(sma,e,w,W,inc,nus1)
 thetas2 = calc_planetAngularXYPosition_FromXaxis(sma,e,w,W,inc,nus2)
-nuFromTheta1m = nuFromTheta(thetas1-sigma_theta,sma,e,w,W,inc)
-nuFromTheta1p = nuFromTheta(thetas1+sigma_theta,sma,e,w,W,inc)
-nuFromTheta2m = nuFromTheta(thetas2-sigma_theta,sma,e,w,W,inc)
-nuFromTheta2p = nuFromTheta(thetas2+sigma_theta,sma,e,w,W,inc)
+nuFromTheta1m = nuFromTheta(thetas1-uncertainty_theta1,sma,e,w,W,inc)
+nuFromTheta1p = nuFromTheta(thetas1+uncertainty_theta1,sma,e,w,W,inc)
+nuFromTheta2m = nuFromTheta(thetas2-uncertainty_theta1,sma,e,w,W,inc)
+nuFromTheta2p = nuFromTheta(thetas2+uncertainty_theta1,sma,e,w,W,inc)
 
 #### Verify nuFromTheta function works
 nu = nuFromTheta(thetas1,sma,e,w,W,inc) #doing this to validate this function
@@ -386,7 +391,7 @@ assert len(setNumVisTimes[(1,1)]['inds'])+len(setNumVisTimes[(1,2)]['inds'])+len
 
 print('Determing if Times between s1,dmag1 and s2,dmag2 are appropriate')
 #Calculate All Intersection Times For NumVisibleTimes (i,j)
-timeTolerance = np.max([intTime1.to('d').value, intTime2.to('d').value]) #3. #random tolerance on the time between two observations in days #TODO find a better number for this. Should be integration time x 2 since two detections must occur
+timeTolerance = 30. #days NOTE: The max is appropriate here but I am using a planet not detectable by the specific instrument in the file #np.max([intTime1.to('d').value, intTime2.to('d').value]) #3. #random tolerance on the time between two observations in days #TODO find a better number for this. Should be integration time x 2 since two detections must occur
 planetsInVisibleRegionsInTimeWindow = list()
 planetsInVisibleRegionsInTimeWindowInAngle = list()
 planetsInVisibleRegionsInTimeWindow2 = list()
@@ -413,6 +418,9 @@ for (i,j) in [(1,1),(1,2),(1,3),(1,4),(2,1),(2,2),(2,3),(2,4),(3,1),(3,2),(3,3),
                 angleStart2 = thetas2[setNumVisTimes[(i,j)]['inds'][planetj],l]
                 angleStop2 = thetas2[setNumVisTimes[(i,j)]['inds'][planetj],l+1]
 
+                #just checking DELETE later
+                if np.isnan(ts2[setNumVisTimes[(i,j)]['inds'][planetj],l+1]):
+                    print(saltyburrito)
 
                 #ADD DELTA THETA CALCULATION BOUNDS HERE???? I THINK ???? MIGHT NEED TO BE AN INSTRUMENT CALCULATION
 
@@ -534,6 +542,7 @@ print(str(len(indsCase1)) + " cases where det 1 up and left of det 2\n" +\
 
 #planetsInVisibleRegionsInTimeWindow
 planetsInVisibleRegionsInTimeWindowInds = [planetsInVisibleRegionsInTimeWindow[i][2] for i in np.arange(len(planetsInVisibleRegionsInTimeWindow))]
+planetsInVisibleRegionsInTimeWindowInAngleInds = [planetsInVisibleRegionsInTimeWindowInAngle[i][2] for i in np.arange(len(planetsInVisibleRegionsInTimeWindowInAngle))]
 
 
 # num=121321222112111
@@ -636,7 +645,7 @@ planetsInVisibleRegionsInTimeWindowInds = [planetsInVisibleRegionsInTimeWindow[i
 # plt.hist(Rp.value,color='black',alpha=0.3,density=True,label='Pop.')
 # plt.hist(Rp[planetsInVisibleRegionsInTimeWindowInds].value,color='purple',alpha=0.3,density=True,label='Sub-pop.')
 # plt.plot([Rp[ind].value,Rp[ind].value],[0,1],color='black')
-# plt.xlabel('Planet Radius, in Earth Raddius',weight='bold')
+# plt.xlabel('Planet Radius, in Earth Radius',weight='bold')
 # plt.ylabel('Frequency',weight='bold')
 # plt.legend()
 # plt.yscale('log')
@@ -730,7 +739,7 @@ ax32.legend()
 ax41.hist(Rp.value,color='black',alpha=0.3,density=True,label='Pop.',bins=np.linspace(start=0.,stop=np.max(Rp.value),endpoint=True,num=30))
 ax41.hist(Rp[planetsInVisibleRegionsInTimeWindowInds].value,color='purple',alpha=0.3,density=True,label='Sub-pop.',bins=np.linspace(start=0.,stop=np.max(Rp.value),endpoint=True,num=30))
 ax41.plot([Rp[ind].value,Rp[ind].value],[0,1],color='black')
-ax41.set_xlabel('Planet Radius, in Earth Raddius',weight='bold')
+ax41.set_xlabel('Planet Radius, in Earth Radius',weight='bold')
 ax41.set_ylabel('Frequency',weight='bold')
 ax41.legend()
 #ax41.set_yscale('log')
@@ -746,8 +755,184 @@ ax42.legend()
 plt.show(block=False)
 
 
+#### Plot With Angle Filtered
+num=86753099
+plt.close(num)
+fig = plt.figure(num=num,constrained_layout=True,figsize=(8,12))
+plt.rc('axes',linewidth=2)
+plt.rc('lines',linewidth=2)
+plt.rcParams['axes.linewidth']=2
+plt.rc('font',weight='bold')
+gs = gridspec.GridSpec(ncols=2, nrows=4, figure=fig)
+ax211 = fig.add_subplot(gs[0, 0])
+ax212 = fig.add_subplot(gs[0, 1])
+ax221 = fig.add_subplot(gs[1, 0])
+ax222 = fig.add_subplot(gs[1, 1])
+ax231 = fig.add_subplot(gs[2, 0])
+ax232 = fig.add_subplot(gs[2, 1])
+ax241 = fig.add_subplot(gs[3, 0])
+ax242 = fig.add_subplot(gs[3, 1])
+
+ax211.hist(sma,color='black',alpha=0.3,density=True,label='Pop.',bins=np.linspace(start=0.,stop=np.max(sma),endpoint=True,num=30))
+ax211.hist(sma[planetsInVisibleRegionsInTimeWindowInAngleInds],color='purple',alpha=0.3,density=True,label='Sub-pop.',bins=np.linspace(start=0.,stop=np.max(sma),endpoint=True,num=30))
+ax211.plot([sma[ind],sma[ind]],[0,1],color='black')
+ax211.set_xlabel('Semi-major axis, in AU',weight='bold')
+ax211.set_ylabel('Frequency',weight='bold')
+ax211.legend()
+#ax11.set_yscale('log')
+
+ax212.hist(e,color='black',alpha=0.3,density=True,label='Pop.',bins=np.linspace(start=0.,stop=np.max(e),endpoint=True,num=30))
+ax212.hist(e[planetsInVisibleRegionsInTimeWindowInAngleInds],color='purple',alpha=0.3,density=True,label='Sub-pop.',bins=np.linspace(start=0.,stop=np.max(e),endpoint=True,num=30))
+ax212.plot([e[ind],e[ind]],[0,1],color='black')
+ax212.set_xlabel('Eccentricity',weight='bold')
+ax212.set_ylabel('Frequency',weight='bold')
+ax212.legend()
+#ax12.set_yscale('log')
+
+ax221.hist(inc,color='black',alpha=0.3,density=True,label='Pop.',bins=np.linspace(start=0.,stop=np.pi,endpoint=True,num=30))
+ax221.hist(inc[planetsInVisibleRegionsInTimeWindowInAngleInds],color='purple',alpha=0.3,density=True,label='Sub-pop.',bins=np.linspace(start=0.,stop=np.pi,endpoint=True,num=30))
+tinc = inc[planetsInVisibleRegionsInTimeWindowInAngleInds]
+tinc[np.where(tinc > np.pi/2.)[0]] = np.pi - tinc[np.where(tinc > np.pi/2.)[0]]
+ax221.hist(tinc,color='red',alpha=0.3,density=True,label='Adjusted Inc.\nSub-pop.')
+ax221.plot([inc[ind],inc[ind]],[0,1],color='black')
+ax221.set_xlabel('Inclination, in rad',weight='bold')
+ax221.set_ylabel('Frequency',weight='bold')
+ax221.legend()
+#ax21.set_yscale('log')
+
+ax222.hist(w,color='black',alpha=0.3,density=True,label='Pop.',bins=np.linspace(start=0.,stop=2.*np.pi,endpoint=True,num=30))
+ax222.hist(w[planetsInVisibleRegionsInTimeWindowInAngleInds],color='purple',alpha=0.3,density=True,label='Sub-pop.',bins=np.linspace(start=0.,stop=2.*np.pi,endpoint=True,num=30))
+ax222.plot([w[ind],w[ind]],[0,1],color='black')
+ax222.set_xlabel('Argument of periapsis, in rad',weight='bold')
+ax222.set_ylabel('Frequency',weight='bold')
+ax222.legend()
+#ax22.set_yscale('log')
+
+ax231.hist(W,color='black',alpha=0.3,density=True,label='Pop.',bins=np.linspace(start=0.,stop=2.*np.pi,endpoint=True,num=30))
+ax231.hist(W[planetsInVisibleRegionsInTimeWindowInAngleInds],color='purple',alpha=0.3,density=True,label='Sub-pop.',bins=np.linspace(start=0.,stop=2.*np.pi,endpoint=True,num=30))
+ax231.plot([W[ind],W[ind]],[0,1],color='black')
+ax231.set_xlabel('Longitude of the Ascending Node, in rad',weight='bold')
+ax231.set_ylabel('Frequency',weight='bold')
+ax231.legend()
+#ax31.set_yscale('log')
+
+ax232.hist(p,color='black',alpha=0.3,density=True,label='Pop.',bins=np.linspace(start=0.,stop=np.max(p),endpoint=True,num=30))
+ax232.hist(p[planetsInVisibleRegionsInTimeWindowInAngleInds],color='purple',alpha=0.3,density=True,label='Sub-pop.',bins=np.linspace(start=0.,stop=np.max(p),endpoint=True,num=30))
+ax232.plot([p[ind],p[ind]],[0,1],color='black')
+ax232.set_xlabel('Planet Albedo',weight='bold')
+ax232.set_ylabel('Frequency',weight='bold')
+ax232.legend()
+#ax32.set_yscale('log')
+
+ax241.hist(Rp.value,color='black',alpha=0.3,density=True,label='Pop.',bins=np.linspace(start=0.,stop=np.max(Rp.value),endpoint=True,num=30))
+ax241.hist(Rp[planetsInVisibleRegionsInTimeWindowInAngleInds].value,color='purple',alpha=0.3,density=True,label='Sub-pop.',bins=np.linspace(start=0.,stop=np.max(Rp.value),endpoint=True,num=30))
+ax241.plot([Rp[ind].value,Rp[ind].value],[0,1],color='black')
+ax241.set_xlabel('Planet Radius, in Earth Radius',weight='bold')
+ax241.set_ylabel('Frequency',weight='bold')
+ax241.legend()
+#ax41.set_yscale('log')
+
+ax242.hist(np.multiply(p,Rp.value),color='black',alpha=0.3,density=True,label='Pop.',bins=np.linspace(start=0.,stop=np.max(p*Rp.value),endpoint=True,num=30))
+ax242.hist(np.multiply(p[planetsInVisibleRegionsInTimeWindowInAngleInds],Rp[planetsInVisibleRegionsInTimeWindowInAngleInds].value),color='purple',alpha=0.3,density=True,label='Sub-pop.',bins=np.linspace(start=0.,stop=np.max(p*Rp.value),endpoint=True,num=30))
+ax242.plot([p[ind]*Rp[ind].value,p[ind]*Rp[ind].value],[0,1],color='black')
+ax242.set_xlabel('p*Rp',weight='bold')
+ax242.set_ylabel('Frequency',weight='bold')
+ax242.legend()
+#ax42.set_yscale('log')
+
+plt.show(block=False)
+
+
 #TODO: Plot COVARIANCE MATRICES FOR PLANETS find an old scatter plot or something
 
 
 
+plotBOOL = True
+def SaveToFile(UniqueName, plotBOOL=False):
+    plt.gcf()
+    plt.gca()
+    # Save to a File
+    if plotBOOL==True:
+        PPoutpath = '/home/dean/Documents/exosims/PrototypePlottingUtilsEXOSIMS/SolarSystemdMag/twoDetPriors'
+        folder = PPoutpath
+        date = str(datetime.datetime.now())
+        date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+        fname = UniqueName + folder.split('/')[-1] + '_' + date
+        plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=200)
+        #plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
+        #plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=200)
+        print('Done Saving ' + UniqueName + ' Figure')
+        del PPoutpath, folder, fname
+    else:
+        print('Skipping Saving ' + UniqueName + ' Figure')
+
+#### Plot Orbit Dist Scatter Matrix #########################################
+def plotPlanetDist_scatterMatrix(pdData, pdData_subpop, plotBOOL):
+    """ Plots a scatter matrix of Keplerian Orbital Parameter Data
+    Args:
+        pdData (pandas dataframe object)
+    """
+    df = pd.DataFrame(data=pdData)
+    df2 = pd.DataFrame(data=pdData_subpop)
+    fignum = 651686214
+    plt.close(fignum)
+    fig = plt.figure(num=fignum,figsize=(12,12))
+    plt.rc('axes',linewidth=2)
+    plt.rc('lines',linewidth=2)
+    plt.rcParams['axes.linewidth']=2
+    plt.rc('font',weight='bold')
+    ax = plt.axes()
+    ax2 = scatter_matrix(df, alpha=0.01, diagonal='kde', ax=ax, **{'color':'black'})#, **kwds)
+    #ax2 = scatter_matrix(df2, alpha=0.05, diagonal='kde', ax=ax, **{'color':'red'})#, **kwds)
+    for ax_sub1 in ax2:
+        for ax_sub2 in ax_sub1:
+            label = ax_sub2.get_ylabel()
+            ax_sub2.set_ylabel(label,rotation=0, labelpad=40, weight='bold', fontsize=8)
+            if 'Motion' in label: # the mean motion label has bad tickmarkers 0.050000000001 or something like that
+                tmplabels = ax_sub2.get_ymajorticklabels()
+                if not tmplabels[0].get_text() == '': #cant be empty for float() to work
+                    for i in np.arange(len(tmplabels)):
+                        txt = tmplabels[i].get_text()
+                        tmplabels[i].set_text("{:.3f}".format(np.round(float(txt),decimals=3)))
+                        del txt
+                    ax_sub2.set_yticklabels(tmplabels)
+                del tmplabels
+            label2 = ax_sub2.get_xlabel()
+            ax_sub2.set_xlabel(label2, weight='bold', fontsize=8)
+            del label2
+    plt.show(block=False)
+    print('Done Plotting Scatter Matrix')
+    plt.pause(2.)
+    del df
+
+
+
+    #DELETE
+    # 'Semi-major\nAxis\n(Earth Radii)':sma,'Eccentricity':e, 'Inclination\n(rad)':inc,\
+    #      'Arg. of\nPerigee\n(rad)':w, 'Longitude\nAscending\nNode\n(rad)':W,\
+    #      'Albedo':p,'Planet\nRadius\nEarthRad':Rp,'p*Rp':p*Rp
+
+    print('Done plotting Scatter Matrix Limits')
+    plt.pause(2.)
+    #del SMA, MEANMOTION, APOAPSIS, PERIAPSIS, ECCEN, R, minAlt, R_earth, mu
+
+    #### Save Scatter Data
+    # Save to a File
+    SaveToFile('PlanetOrbitalParametersScatterMatrix_', plotBOOL=plotBOOL)
+
+
+#### Convert into pdData form
+# pdData = {'Mean\nMotion\n(rad/min)':no, 'Eccentricity':ecco, 'Inclination\n(rad)':inclo,\
+#         'Mean\nAnomaly\n(rad)':mo, 'Arg. of\nPerigee\n(rad)':argpo, 'Longitude\nAscending\nNode\n(rad)':nodeo,\
+#         'Semi-major\nAxis\n(Earth Radii)':a,'Apoapsis\nAltitude\n(Earth Radii)':alta, 'Periapsis\nAtlitude\n(Earth radii)':altp,\
+#         'Time Since\nEpoch (JD)':jdsatepoch, 'Eccentric\nAnomaly\n(rad)':E, 'True\nAnomaly\n(rad)':v, 'omega\n+\nv':omega_plus_v}
+pdData = {'Semi-major\nAxis\n(Earth Radii)':sma[np.arange(5000)],'Eccentricity':e[np.arange(5000)], 'Inclination\n(rad)':inc[np.arange(5000)],\
+         'Arg. of\nPerigee\n(rad)':w[np.arange(5000)], 'Longitude\nAscending\nNode\n(rad)':W[np.arange(5000)],\
+         'Albedo':p[np.arange(5000)],'Planet\nRadius\nEarthRad':Rp[np.arange(5000)],'p*Rp':p[np.arange(5000)]*Rp[np.arange(5000)]}
+
+pdData_subpop = {'Semi-major\nAxis\n(Earth Radii)':sma[planetsInVisibleRegionsInTimeWindowInds],'Eccentricity':e[planetsInVisibleRegionsInTimeWindowInds], 'Inclination\n(rad)':inc[planetsInVisibleRegionsInTimeWindowInds],\
+         'Arg. of\nPerigee\n(rad)':w[planetsInVisibleRegionsInTimeWindowInds], 'Longitude\nAscending\nNode\n(rad)':W[planetsInVisibleRegionsInTimeWindowInds],\
+         'Albedo':p[planetsInVisibleRegionsInTimeWindowInds],'Planet\nRadius\nEarthRad':Rp[planetsInVisibleRegionsInTimeWindowInds],'p*Rp':p[planetsInVisibleRegionsInTimeWindowInds]*Rp[planetsInVisibleRegionsInTimeWindowInds]}
+
+plotPlanetDist_scatterMatrix(pdData, pdData_subpop, plotBOOL)
 
