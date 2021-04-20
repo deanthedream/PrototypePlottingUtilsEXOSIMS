@@ -175,7 +175,7 @@ def nuFromTheta(theta,sma,e,w,Omega,inc): #,nu):
     return outNuArray
 
 
-def dthetabydnu(v,w,i):
+def dthetabydnufunc(v,w,i):
     """ Calculates the angular rate of change of the planet about the star
     Args:
     Returns:
@@ -201,7 +201,7 @@ def ddthetabyddvFromnu(v,w,i):
         + np.cos(v)*np.cos(w))**2. + (np.sin(v)*np.cos(w) + np.sin(w)*np.cos(v))**2.*np.cos(i)**2.)**2.
     return ddthetabyddv
 
-def ddthetabyddt(v,w,i,e,T):
+def ddthetabyddtfunc(v,w,i,e,T):
     """
     """
     ddthetabyddt = 2.*np.pi*np.sqrt(1. - e**2.)*(e*np.cos(v) + 1.)**2.*(-4.*np.pi*e*np.sqrt(1. - e**2.)*(e*np.cos(v) + 1.)*np.sin(v)*np.cos(i)/(T*(np.sin(v + w)**2.*np.cos(i)**2.\
@@ -265,19 +265,19 @@ def nuOfdthetabydnuExtrema(w,i,T,e):
     nus = np.asarray([nu0,nu1,nu2,nu3])
 
     #Calculate rate of change
-    dthetabydnu0 = dthetabydnu(nu0,w,i)
-    dthetabydnu1 = dthetabydnu(nu1,w,i)
-    dthetabydnu2 = dthetabydnu(nu2,w,i)
-    dthetabydnu3 = dthetabydnu(nu3,w,i)
+    dthetabydnu0 = dthetabydnufunc(nu0,w,i)
+    dthetabydnu1 = dthetabydnufunc(nu1,w,i)
+    dthetabydnu2 = dthetabydnufunc(nu2,w,i)
+    dthetabydnu3 = dthetabydnufunc(nu3,w,i)
 
     #Calculate pm
-    dthetabydnu0p = dthetabydnu(nu0+1e-5,w,i)
-    dthetabydnu0m = dthetabydnu(nu0-1e-5,w,i)
-    dthetabydnu1p = dthetabydnu(nu1+1e-5,w,i)
-    dthetabydnu1m = dthetabydnu(nu1-1e-5,w,i)
-    dthetabydnu2p = dthetabydnu(nu2+1e-5,w,i)
-    dthetabydnu2m = dthetabydnu(nu2-1e-5,w,i)
-    dthetabydnu3p = dthetabydnu(nu3+1e-5,w,i)
+    dthetabydnu0p = dthetabydnufunc(nu0+1e-5,w,i)
+    dthetabydnu0m = dthetabydnufunc(nu0-1e-5,w,i)
+    dthetabydnu1p = dthetabydnufunc(nu1+1e-5,w,i)
+    dthetabydnu1m = dthetabydnufunc(nu1-1e-5,w,i)
+    dthetabydnu2p = dthetabydnufunc(nu2+1e-5,w,i)
+    dthetabydnu2m = dthetabydnufunc(nu2-1e-5,w,i)
+    dthetabydnu3p = dthetabydnufunc(nu3+1e-5,w,i)
     dthetabydnu3m = dthetabydnu(nu3-1e-5,w,i)
 
     nu0IsExtrema = ((dthetabydnu0 < dthetabydnu0p) and (dthetabydnu0 < dthetabydnu0m)) or ((dthetabydnu0 > dthetabydnu0p) and (dthetabydnu0 > dthetabydnu0m))
@@ -318,30 +318,13 @@ def nuOfdthetabydnuExtrema(w,i,T,e):
 
 
 
-def ddthetabyddtZeros(w,i,e,T,nus0, nusIsExtrema, tsIsExtrema):
+def ddthetabyddtExtrema(w,i,e,T):
+    """ Calculates the extrema values and true anomalies of extrema values
+    Args:
+        w,i,e,T
+    Return:
+        dthetamin, dthetamax, dthetalocalmin, dthetalocalmax, numin, numax, nulocalmin, nulocalmax, inds2ThetaExtrema, inds4ThetaExtrema
     """
-    """
-
-
-
-    #DELETE old??
-    # x4Coeff = -4.*np.sin(w)**4.*np.cos(i)**4. + 8.*np.sin(w)**4.*np.cos(i)**2. - 4.*np.sin(w)**4. - 8.*np.sin(w)**2.*np.cos(i)**4.*np.cos(w)**2.\
-    #     + 16.*np.sin(w)**2.*np.cos(i)**2.*np.cos(w)**2. - 8.*np.sin(w)**2.*np.cos(w)**2. - 4.*np.cos(i)**4.*np.cos(w)**4. + 8.*np.cos(i)**2.*np.cos(w)**4. - 4.*np.cos(w)**4.
-    # A = (8.*e*np.sin(w)**4.*np.cos(i)**2. - 8.*e*np.sin(w)**4. - 8.*e*np.sin(w)**2.*np.cos(i)**4.*np.cos(w)**2. + 16.*e*np.sin(w)**2.*np.cos(i)**2.*np.cos(w)**2.\
-    #     - 8.*e*np.sin(w)**2.*np.cos(w)**2. - 8.*e*np.cos(i)**4.*np.cos(w)**4. + 8.*e*np.cos(i)**2.*np.cos(w)**4.)/x4Coeff
-    # B = (-4.*e**2.*np.sin(w)**4. - 4.*e**2.*np.sin(w)**2.*np.cos(i)**4.*np.cos(w)**2. - 4.*e**2.*np.sin(w)**2.*np.cos(w)**2. - 4.*e**2.*np.cos(i)**4.*np.cos(w)**4.\
-    #     + 4.*np.sin(w)**4.*np.cos(i)**4. - 8.*np.sin(w)**4.*np.cos(i)**2. + 4.*np.sin(w)**4. + 8.*np.sin(w)**2.*np.cos(i)**4.*np.cos(w)**2.\
-    #     - 16.*np.sin(w)**2.*np.cos(i)**2.*np.cos(w)**2. + 8.*np.sin(w)**2.*np.cos(w)**2. + 4.*np.cos(i)**4.*np.cos(w)**4. - 8.*np.cos(i)**2.*np.cos(w)**4. + 4.*np.cos(w)**4.)/x4Coeff
-    # C = (-8.*e*np.sin(w)**4.*np.cos(i)**2. + 8.*e*np.sin(w)**4. + 8.*e*np.cos(i)**4.*np.cos(w)**4. - 8.*e*np.cos(i)**2.*np.cos(w)**4.)/x4Coeff
-    # D = (4.*e**2.*np.sin(w)**4. + 8.*e**2.*np.sin(w)**2.*np.cos(i)**2.*np.cos(w)**2. + 4.*e**2.*np.cos(i)**4.*np.cos(w)**4. - 4.*np.sin(w)**2.*np.cos(i)**4.*np.cos(w)**2.\
-    #     + 8.*np.sin(w)**2.*np.cos(i)**2.*np.cos(w)**2. - 4.*np.sin(w)**2.*np.cos(w)**2.)/x4Coeff
-
-    #DELETE (same as below anyway)
-    # x4Coeff = -np.sin(i)**4.
-    # A = (2.*e*(np.cos(i)**2.*np.cos(w)**2. + np.cos(w)**2. - 1.)*np.sin(i)**2.)/x4Coeff
-    # B = (-e**2.*np.cos(i)**4.*np.cos(w)**2. + e**2.*np.cos(w)**2. - e**2. + np.cos(i)**4. - 2.*np.cos(i)**2. + 1.)/x4Coeff
-    # C = (2.*e*(np.sin(i)**2.*np.sin(w)**4. - 2.*np.sin(i)**2.*np.sin(w)**2. + np.sin(i)**2. + 2.*np.sin(w)**2. - 1.)*np.sin(i)**2.)/x4Coeff
-    # D = (e**2.*np.sin(w)**4. + 2.*e**2.*np.sin(w)**2.*np.cos(i)**2.*np.cos(w)**2. + e**2.*np.cos(i)**4.*np.cos(w)**4. - (1. - np.cos(2.*i))**2.*(1. - np.cos(4.*w))/32.)/x4Coeff
 
     x4Coeff = -np.sin(i)**4.
     A = (2.*e*(np.cos(i)**2.*np.cos(w)**2. + np.cos(w)**2. - 1.)*np.sin(i)**2.)/x4Coeff
@@ -353,30 +336,66 @@ def ddthetabyddtZeros(w,i,e,T,nus0, nusIsExtrema, tsIsExtrema):
     xs, delta, P, D2, R, delta_0 = quarticSolutions_ellipse_to_Quarticipynb(A.astype('complex128'), B, C, D)
 
     #nus = np.zeros((xs.shape[0],2*xs.shape[1]))
-    nus = np.zeros(2*xs.shape[0])
-    nus[:4] = np.arccos(xs)
-    nus[4:] = 2.*np.pi - nus[:4]
+    nus = np.zeros((xs.shape[0],2*xs.shape[1]))
+    nus[:,:4] = np.arccos(xs)
+    nus[:,4:] = 2.*np.pi - nus[:,:4]
 
-    ts = timeFromTrueAnomaly(nus,T*u.year.to('day'),e)
-    dthetabydt = dthetabydtFromnu(nus,w,i,e,T)
-    dthetabydtp = dthetabydtFromnu(nus+1e-5,w,i,e,T)
-    dthetabydtm = dthetabydtFromnu(nus-1e-5,w,i,e,T)
-    tIsExtrema = np.logical_or((dthetabydt < dthetabydtp)*(dthetabydt < dthetabydtm),(dthetabydt > dthetabydtp)*(dthetabydt > dthetabydtm))
+    #DELETEts = timeFromTrueAnomaly(nus,T*u.year.to('day'),e) unnecessary
+    dthetabydt = dthetabydtFromnu(nus,np.tile(w,(8,1)).T,np.tile(i,(8,1)).T,np.tile(e,(8,1)).T,np.tile(T,(8,1)).T*u.year.to('day'))
+    dthetabydtp = dthetabydtFromnu(nus+1e-5,np.tile(w,(8,1)).T,np.tile(i,(8,1)).T,np.tile(e,(8,1)).T,np.tile(T,(8,1)).T*u.year.to('day'))
+    dthetabydtm = dthetabydtFromnu(nus-1e-5,np.tile(w,(8,1)).T,np.tile(i,(8,1)).T,np.tile(e,(8,1)).T,np.tile(T,(8,1)).T*u.year.to('day'))
+    tIsExtrema = np.logical_or((dthetabydt < dthetabydtp)*(dthetabydt < dthetabydtm),(dthetabydt > dthetabydtp)*(dthetabydt > dthetabydtm)) #Boolean array indicating whether the nu is an extrema
 
-    #print(saltyburrito)
-    return nus, tIsExtrema
+    numTrue = np.sum(tIsExtrema,axis=1)
+    inds2ThetaExtrema = np.where(numTrue==2)[0] # inds that have 2 extrema
+    inds4ThetaExtrema = np.where(numTrue==4)[0] # inds that have 4 extrema
 
-w=0.25
-i=0.8*np.pi/4.
+    #nan values that are not extrema
+    indsWhereAllNoExtrema = np.where(np.all(np.logical_not(tIsExtrema),axis=1))[0]
+    #assert len(indsWhereAllNoExtrema) == 0, 'at least one planet will not have extrema'
+    dthetabydt[np.logical_not(tIsExtrema)] = np.nan #nan all non-extrema
+    #### All Nan Check
+    indsWhereAllNan = np.where(np.all(np.isnan(dthetabydt),axis=1))[0]
+    if len(indsWhereAllNan) > 0:
+        dthetabydt[indsWhereAllNan] = 2.*np.pi/np.tile(T[indsWhereAllNan],(8,1)).T*u.year.to('day') #the orbit should have an eccentricty, inclination, argument of periapsis resulting in a constant dthetabydt
+    assert np.any(np.logical_not(np.all(np.isnan(dthetabydt),axis=1))), 'one planet has all nan'
+
+    #### Assign Min and Max
+    indsOfMin = np.nanargmin(np.abs(dthetabydt),axis=1) #identify inds of min
+    dthetamin = dthetabydt[np.arange(dthetabydt.shape[0]),indsOfMin] #assign inds of min to dthetamin
+    numin = nus[np.arange(dthetabydt.shape[0]),indsOfMin] #assign nus of min to numin
+    dthetabydt[np.arange(dthetabydt.shape[0]),indsOfMin] = np.nan #nan inds of min
+    indsOfMax = np.nanargmax(np.abs(dthetabydt),axis=1) #identify inds of max
+    dthetamax = dthetabydt[np.arange(dthetabydt.shape[0]),indsOfMax] #assign inds of max to dthetamax
+    numax = nus[np.arange(dthetabydt.shape[0]),indsOfMax] #assign nus of max to numax
+    dthetabydt[np.arange(dthetabydt.shape[0]),indsOfMax] = np.nan #nan inds of max
+
+    #### Assign Local Min and Local Max
+    indsOfLocalMin = np.nanargmin(np.abs(dthetabydt[inds4ThetaExtrema]),axis=1) #identify inds of min
+    dthetalocalmin = dthetabydt[inds4ThetaExtrema,indsOfLocalMin] #assign inds of localmin to dthetalocalmin
+    nulocalmin = nus[inds4ThetaExtrema,indsOfLocalMin] #assign nus of local min to nulocalmin
+    indsOfLocalMax = np.nanargmax(np.abs(dthetabydt[inds4ThetaExtrema]),axis=1) #identify inds of max
+    dthetalocalmax = dthetabydt[inds4ThetaExtrema,indsOfLocalMax] #assign inds of max to dthetamax
+    nulocalmax = nus[inds4ThetaExtrema,indsOfLocalMax] #assign nus of local max to nulocalmax
+
+    return dthetamin, dthetamax, dthetalocalmin, dthetalocalmax, numin, numax, nulocalmin, nulocalmax, inds2ThetaExtrema, inds4ThetaExtrema
+
+
+# w=0.25
+# i=0.8*np.pi/4.
+# T=5.
+# e=0.05
+w=2.3565016377399135
+i=0.040947321084765696
 T=5.
-e=0.05
+e=0.24193973823267068
 
 #### Plot dtheta by dt
 nurange = np.linspace(start=0.,stop=2.*np.pi,num=400)
 dthetabydts = dthetabydtFromnu(nurange,w,i,e,T)
-dthetabydnus = dthetabydnu(nurange,w,i)
-dthetabydnusAdjusted = dthetabydnu(nurange,w,i)*(e*np.cos(nurange)+1.)**2.
-ddthetabyddt = ddthetabyddt(nurange,w,i,e,T)
+dthetabydnus = dthetabydnufunc(nurange,w,i)
+dthetabydnusAdjusted = dthetabydnufunc(nurange,w,i)*(e*np.cos(nurange)+1.)**2.
+ddthetabyddt = ddthetabyddtfunc(nurange,w,i,e,T)
 
 tmpx = np.cos(nurange)
 x4Coeff = -np.sin(i)**4.
@@ -406,31 +425,9 @@ ax2.set_ylabel(r'$\ddot{\theta}$')
 plt.show(block=False)
 
 
-nus0, nusIsExtrema, tsIsExtrema = nuOfdthetabydnuExtrema(w,i,T,e)
-#I THINK THIS REALLY NEEDS ECCENTRICTY delete this at some point
-nus, tIsExtrema = ddthetabyddtZeros(w,i,e,T,nus0, nusIsExtrema=nusIsExtrema, tsIsExtrema=tsIsExtrema)
-
-
-print(saltyburrito)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+# nus0, nusIsExtrema, tsIsExtrema = nuOfdthetabydnuExtrema(w,i,T,e)
+# #I THINK THIS REALLY NEEDS ECCENTRICTY delete this at some point
+# nus, tIsExtrema = ddthetabyddtExtrema(w,i,e,T,nus0, nusIsExtrema=nusIsExtrema, tsIsExtrema=tsIsExtrema)
 
 
 
@@ -567,18 +564,21 @@ intTime1 = sim.OpticalSystem.calc_intTime(TL, [0], ZL.fZ0, ZL.fEZ0, dmag1, (sep1
 
 numPlanetsInRegion1 = np.sum(np.any(planetIsVisibleBool1,axis=1))
 
-# #Dection 2
-# #nurange[75] #used for determining location of second detection
-# tpastPeriastron2 = timeFromTrueAnomaly(nurange[75],periods[ind]*u.year.to('day'),e[ind]) #Calculate the planet-star intersection edges
-# sep2 = ss[75] #0.7 #AU
-# dmag2 = dmags[75] #23. #Luminosity Scaled Planet-star Difference in Magnitude, ' + r'$\Delta\mathrm{mag}-2.5\log_{10}(L)$'
-# theta2 = thetas[75]
-# nus2, planetIsVisibleBool2 = planetVisibilityBounds(sma,e,W,w,inc,p,Rp,starMass,plotBool, sep2-uncertainty_s, sep2+uncertainty_s, dmag2*(1.+uncertainty_dmag), dmag2*(1.-uncertainty_dmag)) #Calculate planet-star nu edges and visible regions
-# ts2 = timeFromTrueAnomaly(nus2,np.tile(periods,(18,1)).T*u.year.to('day'),np.tile(e,(18,1)).T) #Calculate the planet-star intersection edges
-# uncertainty_theta2 = np.arctan2(uncertainty_s,sep2)
-# intTime2 = sim.OpticalSystem.calc_intTime(TL, [0], ZL.fZ0, ZL.fEZ0, dmag2, (sep2/(10.*u.pc.to('AU')))*u.rad, mode)
-# numPlanetsInRegion2 = np.sum(np.any(planetIsVisibleBool2,axis=1))
-
+#Dection 2
+#nurange[75] #used for determining location of second detection
+tpastPeriastron2 = timeFromTrueAnomaly(nurange[75],periods[ind]*u.year.to('day'),e[ind]) #Calculate the planet-star intersection edges
+sep2 = ss[75] #0.7 #AU
+dmag2 = dmags[75] #23. #Luminosity Scaled Planet-star Difference in Magnitude, ' + r'$\Delta\mathrm{mag}-2.5\log_{10}(L)$'
+theta2 = thetas[75]
+nus2, planetIsVisibleBool2 = planetVisibilityBounds(sma,e,W,w,inc,p,Rp,starMass,plotBool, sep2-uncertainty_s, sep2+uncertainty_s, dmag2*(1.+uncertainty_dmag), dmag2*(1.-uncertainty_dmag)) #Calculate planet-star nu edges and visible regions
+ts2 = timeFromTrueAnomaly(nus2,np.tile(periods,(18,1)).T*u.year.to('day'),np.tile(e,(18,1)).T) #Calculate the planet-star intersection edges
+uncertainty_theta2 = np.arctan2(uncertainty_s,sep2)
+intTime2 = sim.OpticalSystem.calc_intTime(TL, [0], ZL.fZ0, ZL.fEZ0, dmag2, (sep2/(10.*u.pc.to('AU')))*u.rad, mode)
+numPlanetsInRegion2 = np.sum(np.any(planetIsVisibleBool2,axis=1))
+dtheta = theta2-theta1 #actual change in theta fron detection 1 to detection 2
+dthetaPositiveBool = dtheta >= 0 #true if value is positive
+indsOfPositiveTheta = np.where(dtheta >= 0)[0] #inds where the angular rate of change is positive
+indsOfNegativeTheta = np.where(dtheta < 0)[0] #inds where the angular rate of change is negative
 
 # #### Find Planet Inds With Both
 # detectableByBothBoolArray = np.any(planetIsVisibleBool2,axis=1)*np.any(planetIsVisibleBool1,axis=1)
@@ -588,7 +588,6 @@ numPlanetsInRegion1 = np.sum(np.any(planetIsVisibleBool1,axis=1))
 
 # #### Actual Planet Time Difference
 # actualPlanetTimeDifference = tpastPeriastron2-tpastPeriastron1 #the time that passed between image1 and image2
-666666666666666666
 # #### Actual Delta Theta
 # actualDeltaTheta = theta2-theta1 #the change in theta observed
 # dTheta_1 = (theta2-np.abs(np.arctan2(uncertainty_s,sep2))) - (theta1+np.abs(np.arctan2(uncertainty_s,sep1))) #could be largest or smallest
@@ -622,7 +621,7 @@ indsWithPlanetsIn2 = np.where(np.sum(planetIsVisibleBool2,axis=1) >= 1)[0] #inds
 indsInBoth = np.intersect1d(indsWithPlanetsIn1,indsWithPlanetsIn2) #inds where the planet has detections in both cases
 
 
-ts1Average = (ts1[:,:-1] + ts1[:,1:])/2. #average the times for the visible regions #Might be worth it to calculate spread distribution
+#DELETEts1Average = (ts1[:,:-1] + ts1[:,1:])/2. #average the times for the visible regions #Might be worth it to calculate spread distribution
 
 
 #use planetIsVisibleBool1 and indsInBoth
@@ -634,8 +633,13 @@ ts1Average = (ts1[:,:-1] + ts1[:,1:])/2. #average the times for the visible regi
 # dtm = np.abs(ts1Average[indsInBoth[indsWith1_1]][planetIsVisibleBool1[indsInBoth[indsWith1_1]]] - ts2[indsInBoth[indsWith1_1],:-1][planetIsVisibleBool1[indsInBoth[indsWith1_1]]])
 
 
+#### Planets Satisfying dTheta Limitations
+# dtheta by dt Minimum and Maximum
+dthetamin, dthetamax, dthetalocalmin, dthetalocalmax, numin, numax, nulocalmin, nulocalmax, inds2ThetaExtrema, inds4ThetaExtrema = ddthetabyddtExtrema(w,inc,e,periods)
+#DELETEdthetas = np.abs(thetas2 - thetas1) #change in thetas
 
 
+#### Number of visible regions per planet lists of inds
 numberOfVisibleRegionsPerPlanets1 = np.sum(planetIsVisibleBool1[indsInBoth],axis=1)
 indsWith1_1 = indsInBoth[np.where(numberOfVisibleRegionsPerPlanets1==1)[0]] #uses detectableByBothInds[np.where] format to ensure indsWith1_1 are inds of planetIsVisibleBool1
 indsWith1_2 = indsInBoth[np.where(numberOfVisibleRegionsPerPlanets1==2)[0]]
@@ -722,6 +726,8 @@ for (i,j) in [(1,1),(1,2),(1,3),(1,4),(2,1),(2,2),(2,3),(2,4),(3,1),(3,2),(3,3),
             shortestTimeInds = np.asarray([0,0])
             shortestTimes = np.asarray([minTime,minTime])
             for l in indsOfVisibleRegionsl: #iterate over image 2 visible regions
+                actualTimeWindowdt1 = 10**15.
+                actualTimeWindowdt2 = 10**15.
                 #Need to check if planet is visible in first and last visibility regions (they are separate due to true anomaly)
                 if indOfLastVisRange1[setNumVisTimes[(i,j)]['inds'][planetj]]-1 == k: # I do -1 because I check the range edges not the number of ranges and #ranges = #edges-1
                     #then we need to check if the first time range is also visible for the planet
@@ -730,8 +736,8 @@ for (i,j) in [(1,1),(1,2),(1,3),(1,4),(2,1),(2,2),(2,3),(2,4),(3,1),(3,2),(3,3),
                         #(Note: I suspect this if statement to almost always be True)
                         actualTimeWindowEndTime1 = periods[setNumVisTimes[(i,j)]['inds'][planetj]] + ts1[setNumVisTimes[(i,j)]['inds'][planetj],0] #add period for first time window
                         actualTimeWindowdt1 = actualTimeWindowEndTime1 - ts1[setNumVisTimes[(i,j)]['inds'][planetj],k] #difference between calculated end time and this end time
-                        actualWindowEndTheta1 = 2.*np.pi + thetas1[setNumVisTimes[(i,j)]['inds'][planetj],0] #add 2 pi for first time window
-                        actualWindowdTheta1 = actualWindowEndTheta1 - thetas1[setNumVisTimes[(i,j)]['inds'][planetj],k] #difference between calculated end angle and this end angle
+                        #actualWindowEndTheta1 = 2.*np.pi + thetas1[setNumVisTimes[(i,j)]['inds'][planetj],0] #add 2 pi for first time window
+                        #actualWindowdTheta1 = actualWindowEndTheta1 - thetas1[setNumVisTimes[(i,j)]['inds'][planetj],k] #difference between calculated end angle and this end angle
 
                 #Need to check if planet is visible in first and last visibility regions (they are separate due to true anomaly)
                 if indOfLastVisRange2[setNumVisTimes[(i,j)]['inds'][planetj]]-1 == l: # I do -1 because I check the range edges not the number of ranges and #ranges = #edges-1
@@ -741,35 +747,31 @@ for (i,j) in [(1,1),(1,2),(1,3),(1,4),(2,1),(2,2),(2,3),(2,4),(3,1),(3,2),(3,3),
                         #(Note: I suspect this if statement to almost always be True)
                         actualTimeWindowEndTime2 = periods[setNumVisTimes[(i,j)]['inds'][planetj]] + ts2[setNumVisTimes[(i,j)]['inds'][planetj],0] #add period for first time window
                         actualTimeWindowdt2 = actualTimeWindowEndTime2 - ts2[setNumVisTimes[(i,j)]['inds'][planetj],l] #difference between calculated end time and this end time
-                        actualWindowEndTheta2 = 2.*np.pi + thetas2[setNumVisTimes[(i,j)]['inds'][planetj],0] #add 2 pi for first time window
-                        actualWindowdTheta2 = actualWindowEndTheta2 - thetas2[setNumVisTimes[(i,j)]['inds'][planetj],k] #difference between calculated end angle and this end angle
-
-            #BASICALLY NOBODY CARES ABOUT WHAT THETA IS, WE ONLY CARE ABOUT THE CHANGE IN THETA AND WHETHER THE GIVEN PLANET CAN HAVE THE OBSERVED CHANGE IN THETA AT THE SEPARATIONS AND DMAGS OBSERVED
-
-            #NOTE: FOR EFFICIENCY, WE COULD CALCULATE THE THEORETICAL MINIMUM AND MAXIMUM ANGULAR CHANGE IN POSITION OF THE PLANET AND USE THOSE TO THROW OUT PLANET NOT "FITTING THE BILL".
-            #ABOUT SECOND ORBITS. USING THESE TECHNIQUES, IT MAY BE POSSIBLE THAT THE PLANET ORBITS THE STAR SUFFICIENTLY FAST TO BE ON ITS SECOND ORBIT WHEN DETECTED.
-            #LETS ASSUME CHANGE IN ORBITAL POSITION MUST OCCUR WITHIN ONE ORBIT
-            #THIS IMPLIES WE THROW OUT ANY PLANETS WITH PERIODS SMALLER THAN THE dt between observations.
-
-            #should I also throw out planets that have minimum seps smaller than the minimum observed seperation?
-            #should I also throw out planets that have minimum dmag larger than the brightest observed dmag?
-
-            #Calculate maximum and minimum angular rate of change for each planet
-            #max angular rate of change should be the maximum angular rate of change at the s,dmag box intersections (maybe check one point in between using nu_avg)
-            #min angular rate of change should be the minimum angular rate of change at the s,dmag box intersections (maybe check one point in between using nu_avg)
-            #Then check if observed dtheta-3sigma > max angular rate of change*dt between obs
-            #Then check if observed dtheta+3sigma < min angular rate of change*dt between obs
-            #If both are true, planet is within observable range
+                        #actualWindowEndTheta2 = 2.*np.pi + thetas2[setNumVisTimes[(i,j)]['inds'][planetj],0] #add 2 pi for first time window
+                        #actualWindowdTheta2 = actualWindowEndTheta2 - thetas2[setNumVisTimes[(i,j)]['inds'][planetj],k] #difference between calculated end angle and this end angle
 
 
-                ta1 = ts1[setNumVisTimes[(i,j)]['inds'][planetj],k]
-                tb1 = ts1[setNumVisTimes[(i,j)]['inds'][planetj],k+1]
-                ta2 = ts2[setNumVisTimes[(i,j)]['inds'][planetj],l]                
-                tb2 = ts2[setNumVisTimes[(i,j)]['inds'][planetj],l+1]
+                #BASICALLY NOBODY CARES ABOUT WHAT THETA IS, WE ONLY CARE ABOUT THE CHANGE IN THETA AND WHETHER THE GIVEN PLANET CAN HAVE THE OBSERVED CHANGE IN THETA AT THE SEPARATIONS AND DMAGS OBSERVED
 
-                #if 
+                #NOTE: FOR EFFICIENCY, WE COULD CALCULATE THE THEORETICAL MINIMUM AND MAXIMUM ANGULAR CHANGE IN POSITION OF THE PLANET AND USE THOSE TO THROW OUT PLANET NOT "FITTING THE BILL".
+                #ABOUT SECOND ORBITS. USING THESE TECHNIQUES, IT MAY BE POSSIBLE THAT THE PLANET ORBITS THE STAR SUFFICIENTLY FAST TO BE ON ITS SECOND ORBIT WHEN DETECTED.
+                #LETS ASSUME CHANGE IN ORBITAL POSITION MUST OCCUR WITHIN ONE ORBIT
+                #THIS IMPLIES WE THROW OUT ANY PLANETS WITH PERIODS SMALLER THAN THE dt between observations.
 
+                #should I also throw out planets that have minimum seps smaller than the minimum observed seperation?
+                #should I also throw out planets that have minimum dmag larger than the brightest observed dmag?
 
+                #Calculate maximum and minimum angular rate of change for each planet
+                #max angular rate of change should be the maximum angular rate of change at the s,dmag box intersections (maybe check one point in between using nu_avg)
+                #min angular rate of change should be the minimum angular rate of change at the s,dmag box intersections (maybe check one point in between using nu_avg)
+                #Then check if observed dtheta-3sigma > max angular rate of change*dt between obs
+                #Then check if observed dtheta+3sigma < min angular rate of change*dt between obs
+                #If both are true, planet is within observable range
+
+                #ta1 = ts1[setNumVisTimes[(i,j)]['inds'][planetj],k]
+                #tb1 = ts1[setNumVisTimes[(i,j)]['inds'][planetj],k+1]
+                #ta2 = ts2[setNumVisTimes[(i,j)]['inds'][planetj],l]                
+                #tb2 = ts2[setNumVisTimes[(i,j)]['inds'][planetj],l+1]
 
                 # dtm = np.abs(ts1Average[setNumVisTimes[(i,j)]['inds'][planetj],k] - ts2[setNumVisTimes[(i,j)]['inds'][planetj],l]) #originally dtm
                 # dtp = np.abs(ts1Average[setNumVisTimes[(i,j)]['inds'][planetj],k] - ts2[setNumVisTimes[(i,j)]['inds'][planetj],l+1]) #originally dtp
@@ -778,35 +780,54 @@ for (i,j) in [(1,1),(1,2),(1,3),(1,4),(2,1),(2,2),(2,3),(2,4),(3,1),(3,2),(3,3),
                 dtmp = np.abs(ts1[setNumVisTimes[(i,j)]['inds'][planetj],k] - ts2[setNumVisTimes[(i,j)]['inds'][planetj],l+1])
                 dtpm = np.abs(ts1[setNumVisTimes[(i,j)]['inds'][planetj],k+1] - ts2[setNumVisTimes[(i,j)]['inds'][planetj],l])
                 dtpp = np.abs(ts1[setNumVisTimes[(i,j)]['inds'][planetj],k+1] - ts2[setNumVisTimes[(i,j)]['inds'][planetj],l+1])
-                minOptions = [dtmm,dtmp,dtpm,dtpp] #creating array for indexing convenience
-                minIndOfOptions = np.argmin(minOptions) #find which is minimum
-
+                minOptions = [dtmm,dtmp,dtpm,dtpp,actualTimeWindowdt1,actualTimeWindowdt2] #creating array for indexing convenience
+                minIndOfOptions = np.argsort(minOptions) #np.argmin(minOptions) #find which is minimum
 
 
                 #Note thetas can be either increasing or decreasing on either side
-                th1 = thetas1[setNumVisTimes[(i,j)]['inds'][planetj],k]
-                th2 = thetas1[setNumVisTimes[(i,j)]['inds'][planetj],k+1]
+                #th1 = thetas1[setNumVisTimes[(i,j)]['inds'][planetj],k]
+                #th2 = thetas1[setNumVisTimes[(i,j)]['inds'][planetj],k+1]
                 #need to deal with wrapping
                 #if sign(th2-th1) >= 0: #then evaluate th2+3sigma and th1-3sigma to get largest theta range
                 #TODO need to deal with wrapping. 
 
-
-                dtThetap = (ts1Average[setNumVisTimes[(i,j)]['inds'][planetj],k] - t_ofTheta1p[ts1Average[setNumVisTimes[(i,j)]['inds'][planetj],l]])
-                dtThetam = (ts1Average[setNumVisTimes[(i,j)]['inds'][planetj],k] - t_ofTheta1m[ts1Average[setNumVisTimes[(i,j)]['inds'][planetj],l+1]])
+                #dtThetap = (ts1Average[setNumVisTimes[(i,j)]['inds'][planetj],k] - t_ofTheta1p[ts1Average[setNumVisTimes[(i,j)]['inds'][planetj],l]])
+                #dtThetam = (ts1Average[setNumVisTimes[(i,j)]['inds'][planetj],k] - t_ofTheta1m[ts1Average[setNumVisTimes[(i,j)]['inds'][planetj],l+1]])
                 #IF DT_THETA IS SMALLER THAN DTP OR DTM, THEN REPLACE???
-                if np.min([dtp,dtm]) < minTime:
-                    shortestTimeInds = np.asarray([j,j+1])
-                    shortestTimes = np.asarray([dtp,dtm])
-            planetWindowdts.append((planetj,k,l,shortestTimeInds,shortestTimes))
+                # if np.min([dtp,dtm]) < minTime:
+                #     shortestTimeInds = np.asarray([j,j+1])
+                #     shortestTimes = np.asarray([dtp,dtm])
+                if minOptions[minIndOfOptions[0]] < minTime:
+                    shortestTimeMinOptions = minOptions
+                    shortestTimel = l
+                    shortestTimes = np.asarray([minOptions[minIndOfOptions[0]],minOptions[minIndOfOptions[1]]]) #selecting the shortest two times
+                    
+            #Identify whether the planet has angular rate of change withing the minimum and maximum change in theta the planet could possibly have
 
+            inThetaRange = np.zeros(len(dthetamin)).astype('bool') #define boolean array so I can access by index
+            inThetaRange2 = np.zeros(len(dthetamin)).astype('bool') #define boolean array so I can access by index
+            if dthetaPositiveBool == True:
+                inThetaRange[indsOfPositiveTheta] = (dtheta+3.*uncertainty_theta1 > np.min(shortestTimes)*dthetamin[indsOfPositiveTheta])*(dtheta-3.*uncertainty_theta1 < np.max(shortestTimes)*dthetamax[indsOfPositiveTheta])
+                inThetaRange2[indsOfPositiveTheta] = (dtheta+3.*uncertainty_theta1 > np.min(shortestTimes)*dthetamin[indsOfPositiveTheta])*(dtheta-3.*uncertainty_theta1 < np.max(shortestTimes)*dthetamax[indsOfPositiveTheta])
+                inThetaRange2[indsOfNegativeTheta] = (-dtheta-3.*uncertainty_theta1 < np.min(shortestTimes)*dthetamin[indsOfNegativeTheta])*(-dtheta+3.*uncertainty_theta1 > np.max(shortestTimes)*dthetamax[indsOfNegativeTheta])
+            else: #if dthetaPositiveBool == False
+                #inThetaRange[indsOfPositiveTheta] = (dtheta > np.min(shortestTimes)*dthetamin[indsOfPositiveTheta])*(dtheta < np.max(shortestTimes)*dthetamax[indsOfPositiveTheta])
+                inThetaRange[indsOfNegativeTheta] = (dtheta+3.*uncertainty_theta1 > np.min(shortestTimes)*dthetamin[indsOfNegativeTheta])*(dtheta-3.*uncertainty_theta1 < np.max(shortestTimes)*dthetamax[indsOfNegativeTheta])
+                inThetaRange2[indsOfPositiveTheta] = (-dtheta+3.*uncertainty_theta1 > np.min(shortestTimes)*dthetamin[indsOfPositiveTheta])*(-dtheta-3.*uncertainty_theta1 < np.max(shortestTimes)*dthetamax[indsOfPositiveTheta])
+                inThetaRange2[indsOfNegativeTheta] = (dtheta+3.*uncertainty_theta1 > np.min(shortestTimes)*dthetamin[indsOfNegativeTheta])*(dtheta-3.*uncertainty_theta1 < np.max(shortestTimes)*dthetamax[indsOfNegativeTheta])
 
+            #TODO change the immediately above to be calculations of time for the min and max time a planet can be within the dtheta range of the detected planet
+            #move what is here to the two det priors box
+
+            planetWindowdts.append((planetj,k,l,shortestTimeMinOptions,shortestTimel,shortestTimes))
 print("Number of Planet Window dts: " + str(len(planetWindowdts)))
 
+
+#Move stuff to list for plot
 dts = list()
 for i in np.arange(len(planetWindowdts)):
-    dts.append(planetWindowdts[i][4][0])
-    dts.append(planetWindowdts[i][4][1])
-
+    dts.append(planetWindowdts[i][5][0])
+    dts.append(planetWindowdts[i][5][1])
 
 
 num=123321
@@ -827,12 +848,11 @@ plt.show(block=False)
 #For each time the planet crosses the 1 sigma bounding box, 
     #Find 
 
+
 print(saltyburrito)
 
 
-
-
-
+#the rest of this stuff is from two det priors and can be deleted here
 
 
 
@@ -842,10 +862,10 @@ print(saltyburrito)
 # thetas2 = calc_planetAngularXYPosition_FromXaxis(sma[detectableByBothInds],e[detectableByBothInds],w[detectableByBothInds],W[detectableByBothInds],inc[detectableByBothInds],nus2[detectableByBothInds])
 thetas1 = calc_planetAngularXYPosition_FromXaxis(sma,e,w,W,inc,nus1)
 thetas2 = calc_planetAngularXYPosition_FromXaxis(sma,e,w,W,inc,nus2)
-nuFromTheta1m = nuFromTheta(thetas1-sigma_theta,sma,e,w,W,inc)
-nuFromTheta1p = nuFromTheta(thetas1+sigma_theta,sma,e,w,W,inc)
-nuFromTheta2m = nuFromTheta(thetas2-sigma_theta,sma,e,w,W,inc)
-nuFromTheta2p = nuFromTheta(thetas2+sigma_theta,sma,e,w,W,inc)
+nuFromTheta1m = nuFromTheta(thetas1-uncertainty_theta1,sma,e,w,W,inc)
+nuFromTheta1p = nuFromTheta(thetas1+uncertainty_theta1,sma,e,w,W,inc)
+nuFromTheta2m = nuFromTheta(thetas2-uncertainty_theta1,sma,e,w,W,inc)
+nuFromTheta2p = nuFromTheta(thetas2+uncertainty_theta1,sma,e,w,W,inc)
 
 #### Verify nuFromTheta function works
 nu = nuFromTheta(thetas1,sma,e,w,W,inc) #doing this to validate this function
