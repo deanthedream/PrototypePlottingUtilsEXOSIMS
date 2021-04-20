@@ -289,7 +289,7 @@ firstAndLastVis1 = np.multiply(planetIsVisibleBool1[np.arange(len(lastVisWindowI
 firstAndLastVisInds1 = np.where(firstAndLastVis1)[0]
 #Replace first ind with period-t[lastInd-1]. Note the lastInd is the same as period, we want the one before it
 ts1[firstAndLastVisInds1,0] = ts1[firstAndLastVisInds1,lastVisWindowIndex1[firstAndLastVisInds1]-1] - periods[firstAndLastVisInds1]*u.year.to('day')
-ts1[firstAndLastVisInds1,lastVisWindowIndex1[firstAndLastVisInds1]] = ts1[firstAndLastVisInds1,0 + periods[firstAndLastVisInds1]*u.year.to('day')#DO WE NEED TO MODIFY THE LAST TS1??
+ts1[firstAndLastVisInds1,lastVisWindowIndex1[firstAndLastVisInds1]] = ts1[firstAndLastVisInds1,0] + periods[firstAndLastVisInds1]*u.year.to('day')#DO WE NEED TO MODIFY THE LAST TS1??
 # totalCompleteness = np.divide(totalVisibleTimePerTarget,periods*u.year.to('day')) # Fraction of time each planet is visible of its period
 
 
@@ -322,7 +322,7 @@ firstAndLastVis2 = np.multiply(planetIsVisibleBool2[np.arange(len(lastVisWindowI
 firstAndLastVisInds2 = np.where(firstAndLastVis2)[0]
 #Replace first ind with period-t[lastInd-1]. Note the lastInd is the same as period, we want the one before it
 ts2[firstAndLastVisInds2,0] = ts2[firstAndLastVisInds2,lastVisWindowIndex2[firstAndLastVisInds2]-1] - periods[firstAndLastVisInds2]*u.year.to('day')
-ts2[firstAndLastVisInds2,lastVisWindowIndex2[firstAndLastVisInds2]] = ts2[firstAndLastVisInds2,0 + periods[firstAndLastVisInds2]*u.year.to('day')#DO WE NEED TO MODIFY THE LAST TS1??
+ts2[firstAndLastVisInds2,lastVisWindowIndex2[firstAndLastVisInds2]] = ts2[firstAndLastVisInds2,0] + periods[firstAndLastVisInds2]*u.year.to('day')#DO WE NEED TO MODIFY THE LAST TS1??
 
 #TODO CHANGE THETA2 AND TS2 START AND STOP VALUES WHERE FIRST AND LAST VIS INDS
 
@@ -358,8 +358,6 @@ indsWith2_1 = detectableByBothInds[np.where(numberOfVisibleRegionsPerPlanets2==1
 indsWith2_2 = detectableByBothInds[np.where(numberOfVisibleRegionsPerPlanets2==2)[0]]
 indsWith2_3 = detectableByBothInds[np.where(numberOfVisibleRegionsPerPlanets2==3)[0]]
 indsWith2_4 = detectableByBothInds[np.where(numberOfVisibleRegionsPerPlanets2==4)[0]]
-
-print(saltyburrito)
 
 #### Subdivide sets of inds where Image 1 has i visible regions and image 2 has j visible regions 
 setNumVisTimes = dict()
