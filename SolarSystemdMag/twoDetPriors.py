@@ -273,6 +273,10 @@ theta1 = thetas[50]
 uncertainty_theta1 = np.arctan2(uncertainty_s,sep1)
 nus1, planetIsVisibleBool1 = planetVisibilityBounds(sma,e,W,w,inc,p,Rp,starMass,plotBool, sep1-uncertainty_s, sep1+uncertainty_s, dmag1*(1.+uncertainty_dmag), dmag1*(1.-uncertainty_dmag)) #Calculate planet-star nu edges and visible regions
 ts1 = timeFromTrueAnomaly(nus1,np.tile(periods,(18,1)).T*u.year.to('day'),np.tile(e,(18,1)).T) #Calculate the planet-star intersection edges
+thetas1 = calc_planetAngularXYPosition_FromXaxis(sma,e,w,W,inc,nus1) #Calculates XY planet Angles
+nuFromTheta1m = nuFromTheta(thetas1-uncertainty_theta1,sma,e,w,W,inc)
+nuFromTheta1p = nuFromTheta(thetas1+uncertainty_theta1,sma,e,w,W,inc)
+nu = nuFromTheta(thetas1,sma,e,w,W,inc) #doing this to validate this function #### Verify nuFromTheta function works
 mode = [mode for mode in OS.observingModes if mode['detectionMode'] == True][0]
 intTime1 = sim.OpticalSystem.calc_intTime(TL, [0], ZL.fZ0, ZL.fEZ0, dmag1, (sep1/(10.*u.pc.to('AU')))*u.rad, mode)
 # dt = ts[:,1:] - ts[:,:-1] #Calculate time region widths
@@ -283,11 +287,11 @@ intTime1 = sim.OpticalSystem.calc_intTime(TL, [0], ZL.fZ0, ZL.fEZ0, dmag1, (sep1
 lastVisWindowIndex1 = np.nanargmax(ts1,axis=1) #finds index of last non-nan
 firstAndLastVis1 = np.multiply(planetIsVisibleBool1[np.arange(len(lastVisWindowIndex1)),lastVisWindowIndex1-1],planetIsVisibleBool1[np.arange(len(lastVisWindowIndex1)),np.zeros(len(lastVisWindowIndex1)).astype('int')]) # an array indicating indicies where the first and last time window are visible and should therefore be "spliced" together
 firstAndLastVisInds1 = np.where(firstAndLastVis1)[0]
-#need to figure out how to stitch first and last together
-#thinking of just adding ts2[lastVisibleTime]+ts2[1] (adding the time index 1 since the time at index 0 is 0)
-# totalCompleteness = np.divide(totalVisibleTimePerTarget,periods*u.year.to('day')) # Fraction of time each planet is visible of its period
 #Replace first ind with period-t[lastInd-1]. Note the lastInd is the same as period, we want the one before it
 ts1[firstAndLastVisInds1,0] = ts1[firstAndLastVisInds1,lastVisWindowIndex1[firstAndLastVisInds1]-1] - periods[firstAndLastVisInds1]*u.year.to('day')
+ts1[firstAndLastVisInds1,lastVisWindowIndex1[firstAndLastVisInds1]] = ts1[firstAndLastVisInds1,0 + periods[firstAndLastVisInds1]*u.year.to('day')#DO WE NEED TO MODIFY THE LAST TS1??
+# totalCompleteness = np.divide(totalVisibleTimePerTarget,periods*u.year.to('day')) # Fraction of time each planet is visible of its period
+
 
 
 # ts2 = ts[:,0:8] #cutting out all the nans
@@ -307,14 +311,18 @@ theta2 = thetas[75]
 uncertainty_theta2 = np.arctan2(uncertainty_s,sep2)
 nus2, planetIsVisibleBool2 = planetVisibilityBounds(sma,e,W,w,inc,p,Rp,starMass,plotBool, sep2-uncertainty_s, sep2+uncertainty_s, dmag2*(1.+uncertainty_dmag), dmag2*(1.-uncertainty_dmag)) #Calculate planet-star nu edges and visible regions
 ts2 = timeFromTrueAnomaly(nus2,np.tile(periods,(18,1)).T*u.year.to('day'),np.tile(e,(18,1)).T) #Calculate the planet-star intersection edges
+thetas2 = calc_planetAngularXYPosition_FromXaxis(sma,e,w,W,inc,nus2) #Calculates XY planet Angles
+nuFromTheta2m = nuFromTheta(thetas2-uncertainty_theta1,sma,e,w,W,inc)
+nuFromTheta2p = nuFromTheta(thetas2+uncertainty_theta1,sma,e,w,W,inc)
 intTime2 = sim.OpticalSystem.calc_intTime(TL, [0], ZL.fZ0, ZL.fEZ0, dmag2, (sep2/(10.*u.pc.to('AU')))*u.rad, mode)
 numPlanetsInRegion2 = np.sum(np.any(planetIsVisibleBool2,axis=1)) #calculates the number of planets within detection window 2
 #Stitching Last Time Window To First Time Window
 lastVisWindowIndex2 = np.nanargmax(ts2,axis=1) #finds index of last non-nan
 firstAndLastVis2 = np.multiply(planetIsVisibleBool2[np.arange(len(lastVisWindowIndex2)),lastVisWindowIndex2-1],planetIsVisibleBool2[np.arange(len(lastVisWindowIndex2)),np.zeros(len(lastVisWindowIndex2)).astype('int')]) # an array indicating indicies where the first and last time window are visible and should therefore be "spliced" together
 firstAndLastVisInds2 = np.where(firstAndLastVis2)[0]
-#need to figure out how to stitch first and last together
-#thinking of just adding ts2[lastVisibleTime]+ts2[1] (adding the time index 1 since the time at index 0 is 0)
+#Replace first ind with period-t[lastInd-1]. Note the lastInd is the same as period, we want the one before it
+ts2[firstAndLastVisInds2,0] = ts2[firstAndLastVisInds2,lastVisWindowIndex2[firstAndLastVisInds2]-1] - periods[firstAndLastVisInds2]*u.year.to('day')
+ts2[firstAndLastVisInds2,lastVisWindowIndex2[firstAndLastVisInds2]] = ts2[firstAndLastVisInds2,0 + periods[firstAndLastVisInds2]*u.year.to('day')#DO WE NEED TO MODIFY THE LAST TS1??
 
 #TODO CHANGE THETA2 AND TS2 START AND STOP VALUES WHERE FIRST AND LAST VIS INDS
 
@@ -333,22 +341,6 @@ dTheta_1 = (theta2-np.abs(np.arctan2(uncertainty_s,sep2))) - (theta1+np.abs(np.a
 dTheta_2 = (theta2+np.abs(np.arctan2(uncertainty_s,sep2))) - (theta1-np.abs(np.arctan2(uncertainty_s,sep1))) #could be largest of smallest
 deltaTheta_min = np.min([dTheta_1,dTheta_2]) #minimum of range
 delteTheta_max = np.max([dTheta_1,dTheta_2]) #maximum of range
-
-print(saltyburrito)
-
-#### Calculates XY plane Angles
-#TODO left off here. Check for t
-# thetas1 = calc_planetAngularXYPosition_FromXaxis(sma[detectableByBothInds],e[detectableByBothInds],w[detectableByBothInds],W[detectableByBothInds],inc[detectableByBothInds],nus1[detectableByBothInds])
-# thetas2 = calc_planetAngularXYPosition_FromXaxis(sma[detectableByBothInds],e[detectableByBothInds],w[detectableByBothInds],W[detectableByBothInds],inc[detectableByBothInds],nus2[detectableByBothInds])
-thetas1 = calc_planetAngularXYPosition_FromXaxis(sma,e,w,W,inc,nus1)
-thetas2 = calc_planetAngularXYPosition_FromXaxis(sma,e,w,W,inc,nus2)
-nuFromTheta1m = nuFromTheta(thetas1-uncertainty_theta1,sma,e,w,W,inc)
-nuFromTheta1p = nuFromTheta(thetas1+uncertainty_theta1,sma,e,w,W,inc)
-nuFromTheta2m = nuFromTheta(thetas2-uncertainty_theta1,sma,e,w,W,inc)
-nuFromTheta2p = nuFromTheta(thetas2+uncertainty_theta1,sma,e,w,W,inc)
-
-#### Verify nuFromTheta function works
-nu = nuFromTheta(thetas1,sma,e,w,W,inc) #doing this to validate this function
 
 #???Calc all dthetas of planets in pop.
 #???filter ones matching dTheta below
