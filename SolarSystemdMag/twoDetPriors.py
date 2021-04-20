@@ -160,6 +160,9 @@ firstAndLastVisInds1 = np.where(firstAndLastVis1)[0]
 # planetIsVisibleBool2 = planetIsVisibleBool[:,0:7] #cutting out all the nans
 numPlanetsInRegion1 = np.sum(np.any(planetIsVisibleBool1,axis=1))
 detectedFirsTimeInds = np.where(np.any(planetIsVisibleBool1,axis=1))[0]
+#TODO CREATE TWO ARRAYS SAME LENGTH AS DETECTEDFIRSTTIMEINDS 
+#GET FIRST TS1
+#GET LAST-1 TS1
 
 #Dection 2 #####################################################
 #nurange[75] #used for determining location of second detection
@@ -179,6 +182,8 @@ firstAndLastVisInds2 = np.where(firstAndLastVis2)[0]
 #need to figure out how to stitch first and last together
 #thinking of just adding ts2[lastVisibleTime]+ts2[1] (adding the time index 1 since the time at index 0 is 0)
 
+#TODO CHANGE THETA2 AND TS2 START AND STOP VALUES WHERE FIRST AND LAST VIS INDS
+
 #### Find Planet Inds With Both
 detectableByBothBoolArray = np.any(planetIsVisibleBool2,axis=1)*np.any(planetIsVisibleBool1,axis=1)
 numDetectableByBothArray = np.sum(detectableByBothBoolArray)
@@ -195,7 +200,7 @@ dTheta_2 = (theta2+np.abs(np.arctan2(uncertainty_s,sep2))) - (theta1-np.abs(np.a
 deltaTheta_min = np.min([dTheta_1,dTheta_2]) #minimum of range
 delteTheta_max = np.max([dTheta_1,dTheta_2]) #maximum of range
 
-
+print(saltyburrito)
 
 #### Calculates XY plane Angles
 def calc_planetAngularXYPosition_FromXaxis(sma,e,w,W,inc,nu):
@@ -337,6 +342,7 @@ nu = nuFromTheta(thetas1,sma,e,w,W,inc) #doing this to validate this function
 
 
 #Find Number of Times Planet Is Visible 
+#TODO REDUCE Number of VISIBLE REGION PER PLANET
 numberOfVisibleRegionsPerPlanets1 = np.sum(planetIsVisibleBool1[detectableByBothInds],axis=1)
 indsWith1_1 = detectableByBothInds[np.where(numberOfVisibleRegionsPerPlanets1==1)[0]] #uses detectableByBothInds[np.where] format to ensure indsWith1_1 are inds of planetIsVisibleBool1
 indsWith1_2 = detectableByBothInds[np.where(numberOfVisibleRegionsPerPlanets1==2)[0]]
