@@ -139,7 +139,7 @@ for ii,j in itertools.product(np.arange(len(comp.Rp_hi)),np.arange(len(comp.L_lo
         prob1[ii,j] = 0.
         normProb1[ii,j] = 0.
     else:
-        prob1[ii,j], normProb1[ii,j] = comp.probDetectionIsOfType(comp,dmag,uncertainty_dmag,separation,uncertainty_s,ii,j)
+        prob1[ii,j], normProb1[ii,j] = comp.probDetectionIsOfType(comp,dmag,uncertainty_dmag,earth_separation,uncertainty_s,[ii,j])
         # res = nquad(lambda si,dmagi:f_sep.cdf(si)*f_dmag.cdf(dmagi)*comp.EVPOCpdf_hs[ii,j].ev(si,dmagi),\
         #         ranges=[(earth_separation-3.*uncertainty_s,earth_separation+3.*uncertainty_s),\
         #             (earth_dmag-3.*uncertainty_dmag*earth_dmag,earth_dmag+3.*uncertainty_dmag*earth_dmag)])
