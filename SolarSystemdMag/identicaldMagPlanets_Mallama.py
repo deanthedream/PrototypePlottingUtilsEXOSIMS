@@ -900,6 +900,79 @@ print(line9)
 
 
 
+#### Table 2 #############################################################################
+lines = list()
+for k in [(0,1),(0,2),(0,3),(0,6),(0,7),(1,2),(1,5),(2,3),(2,5),(2,6),(2,7),(3,4),(3,6),(4,5),(4,6),(4,7),(5,6),(5,7),(6,7)]:
+    i = k[0]
+    j = k[1]
+    eqnDmagLHS = eqnDmag.subs(Phi,symbolicPhases[i]).subs(a,planProp[planets[i]]['a']).subs(R,planProp[planets[i]]['R']).subs(p,planProp[planets[i]]['p'])
+    if i==3 and j==4:
+        ik =  incDict[i,j][incDict[i,j]['optNum']]['inc_range'][incDict[i,j]['maxIncInd_Opt']]
+        ask = incDict[i,j][incDict[i,j]['optNum']]['v1'][incDict[i,j]['maxIncInd_Opt']]
+        alk = incDict[i,j][incDict[i,j]['optNum']]['v2'][incDict[i,j]['maxIncInd_Opt']]
+        dmagk = float(eqnDmagLHS.subs(alpha,ask).evalf())
+        sk = float(eqnSAlpha.subs(a,planProp[planets[i]]['a']*u.m.to('AU')).subs(alpha,ask).evalf())
+        ik2 = np.min([np.min([ask,180.-ask]),np.min([alk,180.-alk])])
+        lines.append(" & " + str(np.round(dmagk,2)) + " & " + str(np.round(sk,2)) + " & " + str(np.round(ask,2)) + " & " + str(np.round(alk,2)) + " & " + str(np.round(ik2,2)) + "\\\\")
+
+        # i43 = incDict[3,4]['opt3']['inc_range'][12]
+        # as43 = incDict[3,4]['opt3']['v1'][12]
+        # al43 = incDict[3,4]['opt3']['v2'][12]
+        # dmag43 = float(eqnDmagLHS.subs(alpha,al43).evalf())
+        # s43 = float(eqnSAlpha.subs(a,planProp[planets[3]]['a']*u.m.to('AU')).subs(alpha,as43).evalf())
+        # ind_smaller = 4
+        # eqnDmagLHS = eqnDmag.subs(Phi,symbolicPhases[ind_smaller]).subs(a,planProp[planets[ind_smaller]]['a']).subs(R,planProp[planets[ind_smaller]]['R']).subs(p,planProp[planets[ind_smaller]]['p'])
+
+        ik =  incDict[i,j][incDict[i,j]['optNum']]['inc_range'][12]
+        ask = incDict[i,j][incDict[i,j]['optNum']]['v1'][12]
+        alk = incDict[i,j][incDict[i,j]['optNum']]['v2'][12]
+        dmagk = float(eqnDmagLHS.subs(alpha,ask).evalf())
+        sk = float(eqnSAlpha.subs(a,planProp[planets[i]]['a']*u.m.to('AU')).subs(alpha,ask).evalf())
+        ik2 = np.min([np.min([ask,180.-ask]),np.min([alk,180.-alk])])
+        lines.append(" & " + str(np.round(dmagk,2)) + " & " + str(np.round(sk,2)) + " & " + str(np.round(ask,2)) + " & " + str(np.round(alk,2)) + " & " + str(np.round(ik2,2)) + "\\\\")
+    elif i==4 and j==5:
+        ik =  incDict[i,j][incDict[i,j]['optNum']]['inc_range'][incDict[i,j]['maxIncInd_Opt']]
+        ask = incDict[i,j][incDict[i,j]['optNum']]['v1'][incDict[i,j]['maxIncInd_Opt']]
+        alk = incDict[i,j][incDict[i,j]['optNum']]['v2'][incDict[i,j]['maxIncInd_Opt']]
+        dmagk = float(eqnDmagLHS.subs(alpha,ask).evalf())
+        sk = float(eqnSAlpha.subs(a,planProp[planets[i]]['a']*u.m.to('AU')).subs(alpha,ask).evalf())
+        ik2 = np.min([np.min([ask,180.-ask]),np.min([alk,180.-alk])])
+        lines.append(" & " + str(np.round(dmagk,2)) + " & " + str(np.round(sk,2)) + " & " + str(np.round(ask,2)) + " & " + str(np.round(alk,2)) + " & " + str(np.round(ik2,2)) + "\\\\")
+
+        # i54 = 0.75#incDict[4,5]['opt3']['inc_range'][12]
+        # as54 = 178.55#incDict[4,5]['opt3']['v1'][12]
+        # al54 = 179.20#incDict[4,5]['opt3']['v2'][12]
+        # eqnDmagLHSs = eqnDmag.subs(Phi,symbolicPhases[4]).subs(a,planProp[planets[4]]['a']).subs(R,planProp[planets[4]]['R']).subs(p,planProp[planets[4]]['p'])  
+        # eqnDmagLHSl = eqnDmag.subs(Phi,symbolicPhases[5]).subs(a,planProp[planets[5]]['a']).subs(R,planProp[planets[5]]['R']).subs(p,planProp[planets[5]]['p'])
+        # dmag54 = float(eqnDmagLHSs.subs(alpha,as54).evalf())
+        # dmag54_2 = float(eqnDmagLHSl.subs(alpha,al54).evalf())
+        # s54 = float(eqnSAlpha.subs(a,planProp[planets[4]]['a']*u.m.to('AU')).subs(alpha,as54).evalf())
+        # ind_smaller = 5
+        # eqnDmagLHS = eqnDmag.subs(Phi,symbolicPhases[ind_smaller]).subs(a,planProp[planets[ind_smaller]]['a']).subs(R,planProp[planets[ind_smaller]]['R']).subs(p,planProp[planets[ind_smaller]]['p'])
+
+        ik =  0.75 #incDict[i,j][incDict[i,j]['optNum']]['inc_range'][incDict[i,j]['maxIncInd_Opt']]
+        ask = 178.55 #incDict[i,j][incDict[i,j]['optNum']]['v1'][incDict[i,j]['maxIncInd_Opt']]
+        alk = 179.20 #incDict[i,j][incDict[i,j]['optNum']]['v2'][incDict[i,j]['maxIncInd_Opt']]
+        dmagk = float(eqnDmagLHS.subs(alpha,ask).evalf())
+        sk = float(eqnSAlpha.subs(a,planProp[planets[i]]['a']*u.m.to('AU')).subs(alpha,ask).evalf())
+        ik2 = np.min([np.min([ask,180.-ask]),np.min([alk,180.-alk])])
+        lines.append(" & " + str(np.round(dmagk,2)) + " & " + str(np.round(sk,2)) + " & " + str(np.round(ask,2)) + " & " + str(np.round(alk,2)) + " & " + str(np.round(ik2,2)) + "\\\\")
+    else:
+
+        ik =  incDict[i,j][incDict[i,j]['optNum']]['inc_range'][incDict[i,j]['maxIncInd_Opt']]
+        ask = incDict[i,j][incDict[i,j]['optNum']]['v1'][incDict[i,j]['maxIncInd_Opt']]
+        alk = incDict[i,j][incDict[i,j]['optNum']]['v2'][incDict[i,j]['maxIncInd_Opt']]
+        dmagk = float(eqnDmagLHS.subs(alpha,ask).evalf())
+        sk = float(eqnSAlpha.subs(a,planProp[planets[i]]['a']*u.m.to('AU')).subs(alpha,ask).evalf())
+        ik2 = np.min([np.min([ask,180.-ask]),np.min([alk,180.-alk])])
+        lines.append(" & " + str(np.round(dmagk,2)) + " & " + str(np.round(sk,2)) + " & " + str(np.round(ask,2)) + " & " + str(np.round(alk,2)) + " & " + str(np.round(ik2,2)) + "\\\\")
+print(lines)
+for line in lines:
+    print(line)
+print(saltyburrito)
+##########################################################################################
+
+
 
 
 
