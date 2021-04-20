@@ -17,6 +17,9 @@ from EXOSIMS.util.phaseFunctions import *
 folder = './'
 PPoutpath = './'
 
+#a_p is the distance of the planet from the sun
+#d is the distance of the planet from Earth
+
 #### Planet Properties #####################################
 planProp = dict() #all in units of meters
 planProp['mercury'] = {'R':2439.7*1000.,'a':57.91*10.**9.,'p':0.142}
@@ -1231,27 +1234,44 @@ def plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_Ha
     print('Done with plotDmagvssMonteCarlo')
 
 
-plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=0., num=670, folder='./', PPoutpath='./')
-plt.close(670)
-plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=2.2, num=680, folder='./', PPoutpath='./')
-plt.close(680)
-plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=21., num=690, folder='./', PPoutpath='./')
-plt.close(690)
-plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=25.3, num=700, folder='./', PPoutpath='./')
-plt.close(700)
-plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=43.6, num=710, folder='./', PPoutpath='./')
-plt.close(710)
+#KEEP TEMPORARY commenting to make code run faster
+# plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=0., num=670, folder='./', PPoutpath='./')
+# plt.close(670)
+# plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=2.2, num=680, folder='./', PPoutpath='./')
+# plt.close(680)
+# plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=21., num=690, folder='./', PPoutpath='./')
+# plt.close(690)
+# plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=25.3, num=700, folder='./', PPoutpath='./')
+# plt.close(700)
+# plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=43.6, num=710, folder='./', PPoutpath='./')
+# plt.close(710)
 
 
 #### Fraction of Solar system-like star systems with Coincident Planets
 import scipy.integrate as integrate
-intersectionInclinations = np.asarray([1.0,1.7,2.2,21.0,25.3,43.6])
-totalIntegral = integrate.quad(lambda x: np.cos(x), 0., np.pi/2.)[0]
+#intersectionInclinations = np.asarray([1.0,1.7,2.2,21.0,25.3,43.6])
+tmpbs = [111.8,92.4,139.3,17.0,130.7,148.2] #taken from SolarSystemPlanetCoincidence \beta_s and \beta_l of only Earth intersections
+tmpbl = [158.9,46.2,25.3,1.7,2.2,1.0]
+intersectionInclinations = [np.min([np.min([tmpbs[i],180.-tmpbs[i]]),np.min([tmpbl[i],180.-tmpbl[i]])]) for i in np.arange(len(tmpbs))]
+#totalIntegral = integrate.quad(lambda x: np.cos(x), 0., np.pi/2.)[0]
+totalIntegral = integrate.quad(lambda x: 0.5*np.sin(x), 0., np.pi)[0]
 fractionStarsWithCoincidentPlanets = list()
 for i in np.arange(len(intersectionInclinations)):
-    fractionStarsWithCoincidentPlanets.append(integrate.quad(lambda x: np.cos(x), a=0.,b=intersectionInclinations[i]*np.pi/180.)[0])
-fractionStarsWithCoincidentPlanets = np.asarray(fractionStarsWithCoincidentPlanets)/totalIntegral
+    #fractionStarsWithCoincidentPlanets.append(integrate.quad(lambda x: np.cos(x), a=0.,b=intersectionInclinations[i]*np.pi/180.)[0])
+    fractionStarsWithCoincidentPlanets.append(integrate.quad(lambda x: np.sin(x)/2., a=(90.-intersectionInclinations[i])*np.pi/180.,b=(90.+intersectionInclinations[i])*np.pi/180.)[0])
+fractionStarsWithCoincidentPlanets2 = np.asarray(fractionStarsWithCoincidentPlanets)/totalIntegral
 
-print(fractionStarsWithCoincidentPlanets)
+print(fractionStarsWithCoincidentPlanets2)
+
+
+tmpbs2 = [42.1,111.8,81.1,67,99.2,92.4,73.3,139.3,17,130.7,148.2,76.6,169.6,0,114.6,178.5,155.2,162.3,156.3,159.5,93.8]#taken from SolarSystemPlanetCoincidence \beta_s and \beta_l of ALL intersections
+tmpbl2 = [158.9,158.9,14.5,1.,0.7,46.2,4.1,25.3,1.7,2.2,1.,163.4,176.9,0.,29.5,179.2,6.5,3.,11.5,6.3,39.6]
+
+intersectionInclinations2 = [np.min([np.min([tmpbs2[i],180.-tmpbs2[i]]),np.min([tmpbl2[i],180.-tmpbl2[i]])]) for i in np.arange(len(tmpbs2))]
 ####
+
+
+
+
+
 
