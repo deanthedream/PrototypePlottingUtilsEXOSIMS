@@ -244,7 +244,7 @@ def V_magSaturn_3(alpha,a_p,d):
     """ Valid alpha from 6 to 150. deg
     Saturn Globe Only Pioneer Observations
     """
-    V = 5.*np.log10(a_p*d) - 8.94 + 2.446e-4*alpha + 2.672e-4*alpha**2. - 1.505e-6*alpha**3. + 4.767e-9*alpha**2.
+    V = 5.*np.log10(a_p*d) - 8.94 + 2.446e-4*alpha + 2.672e-4*alpha**2. - 1.505e-6*alpha**3. + 4.767e-9*alpha**4.
     return V
 def phase_Saturn_1(alpha,beta=0.):
     """ Valid alpha from 0 to 6.5 deg
@@ -264,8 +264,8 @@ def phase_Saturn_3(alpha):
     """ Valid alpha from 6 to 150. deg
     Saturn Globe Only Pioneer Observations
     """
-    difference = phase_Saturn_2(6.5) - 10.**(-0.4*(2.446e-4*6.5 + 2.672e-4*6.5**2. - 1.505e-6*6.5**3. + 4.767e-9*6.5**2.))
-    phase = difference + 10.**(-0.4*(2.446e-4*alpha + 2.672e-4*alpha**2. - 1.505e-6*alpha**3. + 4.767e-9*alpha**2.))
+    difference = phase_Saturn_2(6.5) - 10.**(-0.4*(2.446e-4*6.5 + 2.672e-4*6.5**2. - 1.505e-6*6.5**3. + 4.767e-9*6.5**4.))
+    phase = difference + 10.**(-0.4*(2.446e-4*alpha + 2.672e-4*alpha**2. - 1.505e-6*alpha**3. + 4.767e-9*alpha**4.))
     return phase
 def phase_Saturn_melded(alpha):
     phase = transitionEnd(alpha,6.5,5.)*phase_Saturn_2(alpha) + \
@@ -736,11 +736,11 @@ plt.rc('font',weight='bold')
 for i in np.arange(len(planets)):
     plt.plot(np.linspace(start=0.,stop=180.,num=180),planProp[planets[i]]['phaseFuncMelded'](np.linspace(start=0.,stop=180.,num=180)),color=planProp[planets[i]]['planet_labelcolors'],label=planProp[planets[i]]['planet_name'].capitalize())
 plt.plot(np.linspace(start=0.,stop=180.,num=180),phi_lambert(np.linspace(start=0.,stop=180.,num=180)*np.pi/180.),color='black',label='Lambert',linestyle='--')
-plt.plot(np.linspace(start=0.,stop=180.,num=180),quasiLambertPhaseFunction(np.linspace(start=0.,stop=180.,num=180)*u.deg),color='Green',label='Quasi-Lambert',linestyle='-.')
+#plt.plot(np.linspace(start=0.,stop=180.,num=180),quasiLambertPhaseFunction(np.linspace(start=0.,stop=180.,num=180)*u.deg),color='Green',label='Quasi-Lambert',linestyle='-.')
 # Add Hyperbolic Earth Tangent Phase Function
-plt.plot(np.linspace(start=0.,stop=180.,num=180),hyperbolicTangentPhaseFunc(np.linspace(start=0.,stop=180.,num=180)*u.deg,A=0.78415,B=1.86891455,C=0.5295894,D=1.07587213), color='purple', linestyle=':', label=r'$\Phi_{H,\oplus}$')
+#plt.plot(np.linspace(start=0.,stop=180.,num=180),hyperbolicTangentPhaseFunc(np.linspace(start=0.,stop=180.,num=180)*u.deg,A=0.78415,B=1.86891455,C=0.5295894,D=1.07587213), color='purple', linestyle=':', label=r'$\Phi_{H,\oplus}$')
 # Add Hyperbolic Earth Tangent Phase Function
-plt.plot(np.linspace(start=0.,stop=180.,num=180),hyperbolicTangentPhaseFunc(np.linspace(start=0.,stop=180.,num=180)*u.deg,A=1.85908529,B=0.89598952,C=1.04850586,D=-0.08084817), color='black', linestyle=':', label=r'$\Phi_{H,all}$')
+#plt.plot(np.linspace(start=0.,stop=180.,num=180),hyperbolicTangentPhaseFunc(np.linspace(start=0.,stop=180.,num=180)*u.deg,A=1.85908529,B=0.89598952,C=1.04850586,D=-0.08084817), color='black', linestyle=':', label=r'$\Phi_{H,all}$')
 plt.xlim([0.,180.])
 plt.ylim([0.,1.0])
 plt.ylabel(r'Solar System Planet Phase, $\Phi$', weight='bold')
