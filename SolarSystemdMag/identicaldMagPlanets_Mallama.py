@@ -966,10 +966,11 @@ for k in [(0,1),(0,2),(0,3),(0,6),(0,7),(1,2),(1,5),(2,3),(2,5),(2,6),(2,7),(3,4
         sk = float(eqnSAlpha.subs(a,planProp[planets[i]]['a']*u.m.to('AU')).subs(alpha,ask).evalf())
         ik2 = np.min([np.min([ask,180.-ask]),np.min([alk,180.-alk])])
         lines.append(" & " + str(np.round(dmagk,2)) + " & " + str(np.round(sk,2)) + " & " + str(np.round(ask,2)) + " & " + str(np.round(alk,2)) + " & " + str(np.round(ik2,2)) + "\\\\")
+print('******************Lines for Table 2 in Paper ***************************')
 print(lines)
 for line in lines:
     print(line)
-print(saltyburrito)
+print('******************Lines for Table 2 in Paper ***************************')
 ##########################################################################################
 
 

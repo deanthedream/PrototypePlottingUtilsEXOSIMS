@@ -1169,7 +1169,7 @@ def plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_Ha
         tmpColor = tuple(tmpColor)
 
         #Generate a Monte Carlo of detected planets with the initial uncertainties
-        nuncertainties = int(2.5*10**5)
+        nuncertainties = int(1.5*10**5)
         dsTemplate = np.random.normal(loc=0.0, scale=uncertainty_s, size=nuncertainties)
         ddmagTemplate = np.random.normal(loc=0.0, scale=uncertainty_dmag, size=nuncertainties)
         planArray_s = np.asarray([])
@@ -1235,16 +1235,16 @@ def plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_Ha
 
 
 #KEEP TEMPORARY commenting to make code run faster
-# plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=0., num=670, folder='./', PPoutpath='./')
-# plt.close(670)
-# plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=2.2, num=680, folder='./', PPoutpath='./')
-# plt.close(680)
-# plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=21., num=690, folder='./', PPoutpath='./')
-# plt.close(690)
-# plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=25.3, num=700, folder='./', PPoutpath='./')
-# plt.close(700)
-# plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=43.6, num=710, folder='./', PPoutpath='./')
-# plt.close(710)
+plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=0., num=670, folder='./', PPoutpath='./')
+plt.close(670)
+plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=2.2, num=680, folder='./', PPoutpath='./')
+plt.close(680)
+plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=21., num=690, folder='./', PPoutpath='./')
+plt.close(690)
+plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=25.3, num=700, folder='./', PPoutpath='./')
+plt.close(700)
+plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=43.7, num=710, folder='./', PPoutpath='./')
+plt.close(710)
 
 
 #### Fraction of Solar system-like star systems with Coincident Planets
