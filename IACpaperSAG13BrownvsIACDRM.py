@@ -58,29 +58,18 @@ def loadFiles(pklfile,outspecfile):
 
 
 
-folder = '/home/dean/Documents/exosims/EXOSIMSres/HabEx_SAG13HabZone_6621/HabEx_SAG13HabZone_lam_lam/'
+#folder = '/home/dean/Documents/exosims/EXOSIMSres/HabEx_SAG13HabZone_6621/HabEx_SAG13HabZone_lam_lam/'
+folder = '/home/dean/Documents/exosims/EXOSIMSres/HabExCSpPrior_52521/HabEx_CPFQL_PPPFQL/'
 
-#if self.args == None: # Nothing was provided as input
-# grab random pkl file from folder
-# pklfiles_in_folder = [myFileName for myFileName in os.listdir(folder) if 'run' in myFileName and '.pkl' in myFileName]  # Get names of all pkl files in path
-# pklfname = np.random.choice(pklfiles_in_folder)
-# pklfile = os.path.join(folder,pklfname)
-# elif 'pklfile' in self.args.keys(): # specific pklfile was provided for analysis
-#     pklfile = self.args['pklfile']
-#else: # grab random pkl file from folder
-# pklfiles_in_folder = [myFileName for myFileName in os.listdir(folder) if 'run' in myFileName and '.pkl' in myFileName]  # Get names of all pkl files in path
-# pklfname = np.random.choice(pklfiles_in_folder)
-# pklfile = os.path.join(folder,pklfname)
 pklfiles_in_folder = [myFileName for myFileName in os.listdir(folder) if 'run' in myFileName and '.pkl' in myFileName]  # Get names of all pkl files in path
 pklfname = np.random.choice(pklfiles_in_folder)
 pklfile = os.path.join(folder,pklfname)
 outspecfile = os.path.join(folder,'outspec.json')
 
-
-
 import copy
 DRM, outspec = loadFiles(pklfile, outspecfile)
 outspec_saved = copy.deepcopy(outspec)
+
 
 #Create Simulation Object
 sim = EXOSIMS.MissionSim.MissionSim(scriptfile=None, nopar=True, **outspec)
@@ -108,6 +97,7 @@ names2 = sim2.TargetList.Name
 nameIndsIn1and2 = list() #contains list of indicies in 1 that are also in 2
 nameInd12 = list() #indicies of 2 where star in 1 is in 2
 for i in np.arange(len(names1)):
+    print(str(i) + " of " + str(len(names1)))
     if names1[i] in names2:
         nameIndsIn1and2.append(i)
         ind = np.where(names1[i] == names2)[0]
@@ -156,6 +146,110 @@ for i in np.arange(len(nameInd12)):
         lines.append(sim2.SurveySimulation.TargetList.Name[nameInd12[i]] + ' & ' + str(np.round(sim2.SurveySimulation.TargetList.dist[nameInd12[i]].value,2)) + ' & ' + \
             str(np.round(sim.SurveySimulation.t0[i].value,3)) + ' & ' + str(np.round(dMag[i],3)) + " & " + str(np.round(brownComps[i],3)) + " & " + str(np.round(IACComps[i],3)) + "\\\\")
 
+#Creates the Table For the IAC Paper
 for i in np.arange(len(lines)):
     print(lines[i])
+
+distList = list()
+for i in np.arange(len(nameInd12)):
+    if sim.SurveySimulation.t0[i].value > 1e-10:
+        distList.append(sim2.SurveySimulation.TargetList.dist[nameInd12[i]].value)
+
+
+
+
+
+#### Calculating IAC vs Int. Time. ######################################
+starName = 'HIP 37279'
+starInd = np.where(sim2.SurveySimulation.TargetList.Name == starName)[0]
+OS = sim2.OpticalSystem
+TL = sim2.TargetList
+COMP = sim2.Completeness
+
+
+intTimes, sInds, fZ, fEZ, WA, smin, smax, dMag = sim2.SurveySimulation.Completeness.comps_input_reshape(sim.SurveySimulation.t0[starInd], sim2.SurveySimulation.TargetList, starInd, SS2.valfZmin[starInd],\
+    SS2.ZodiacalLight.fEZ0, SS2.WAint[starInd], SS2.detmode, C_b=None, C_sp=None, TK=sim2.SurveySimulation.TimeKeeping)
+
+
+dMags = list()
+IACComps2 = list()
+intTimes2 = np.logspace(start=-8.,stop=np.log10(90.),num=100)
+for i in np.arange(len(intTimes2)):
+    print("on run: " + str(i) + " out of " + str(300))
+    #tmpdMag = OS.calc_dMag_per_intTime(intTimes2[i]*u.d, TL, starInd, SS2.valfZmin[starInd], ZL.fEZ0, SS2.WAint[starInd], SS2.detmode, C_b=None, C_sp=None, TK=None)
+    #dMags.append(tmpdMag)
+    #tCp, tCb, tCsp = OS.Cp_Cb_Csp(TL, starInd, SS2.valfZmin[starInd], ZL.fEZ0, tmpdMag, SS2.WAint[starInd], SS2.detmode)
+    tmpintTimes, tmpsInds, tmpfZ, tmpfEZ, tmpWA, tmpsmin, tmpsmax, tmpdMag  = sim2.Completeness.comps_input_reshape(intTimes2[i]*u.d, TL, starInd, SS2.valfZmin[starInd], SS2.ZodiacalLight.fEZ0, SS2.WAint[starInd], SS2.detmode, C_b=None, C_sp=None, TK=None)
+    dMags.append(tmpdMag)
+    tmpIACComps = SS2.Completeness.comp_calc(tmpsmin, tmpsmax, tmpdMag,tmax=intTimes2[i],starMass=sim2.SurveySimulation.TargetList.MsEst[starInd], IACbool=True)
+    IACComps2.append(tmpIACComps)
+
+brownComps2 = list()
+for i in np.arange(len(intTimes2)):
+    tmpbrownComps = SS.Completeness.comp_per_intTime(intTimes2[i]*u.d, TL, starInd, SS2.valfZmin[starInd], 
+        SS2.ZodiacalLight.fEZ0, SS2.WAint[starInd], SS2.detmode, TK=SS2.TimeKeeping)
+    #tmpdMag2 = sim2.SurveySimulation.OpticalSystem.calc_dMag_per_intTime(intTimes2[i]*u.d, TL, starInd, SS2.valfZmin[starInd], SS2.ZodiacalLight.fEZ0, SS2.WAint[starInd], SS2.detmode, C_b=None, C_sp=None, TK=None)
+    
+    #tmpintTimes, tmpsInds, tmpfZ, tmpfEZ, tmpWA, tmpsmin, tmpsmax, tmpdMag2  = sim.Completeness.comps_input_reshape(intTimes2[i]*u.d, TL, starInd, SS2.valfZmin[starInd], SS2.ZodiacalLight.fEZ0, SS2.WAint[starInd], SS2.detmode, C_b=None, C_sp=None, TK=None)
+    #tmpbrownComps = sim.SurveySimulation.Completeness.comp_calc(tmpsmin, tmpsmax, tmpdMag2)
+    brownComps2.append(tmpbrownComps)
+
+
+num=546843521843244
+plt.close(num)
+plt.figure(num=num)
+plt.rc('axes',linewidth=2)
+plt.rc('lines',linewidth=2)
+plt.rcParams['axes.linewidth']=2
+plt.rc('font',weight='bold')
+plt.plot(intTimes2,IACComps2,color='purple',label='IAC')
+plt.plot(intTimes2,brownComps2,color='green',label='Brown')
+#plt.xscale('log')
+plt.ylabel('Integration Time Adjusted Completeness',weight='bold')
+plt.xlabel('Integration Time (d)',weight='bold')
+plt.show(block=False)
+
+num=5468435218432445468
+plt.close(num)
+plt.figure(num=num)
+plt.rc('axes',linewidth=2)
+plt.rc('lines',linewidth=2)
+plt.rcParams['axes.linewidth']=2
+plt.rc('font',weight='bold')
+plt.plot(intTimes2,IACComps2,color='purple',label='This Work')
+plt.plot(intTimes2,brownComps2,color='green',label='Brown')
+plt.legend()
+plt.xscale('log')
+plt.ylabel('Integration Time Adjusted Completeness ' + starName,weight='bold')
+plt.xlabel('Integration Time (d)',weight='bold')
+plt.show(block=False)
+
+
+plt.figure()
+plt.plot(intTimes2,dMags)
+plt.xscale('log')
+plt.show(block=False)
+
+
+
+
+#### Checling L and MsStar hists
+from astropy.constants import iau2012 as const
+usedStarInds = np.where(sim.SurveySimulation.t0.value > 1e-10)[0]
+Ls = sim.SurveySimulation.TargetList.L[usedStarInds]
+Ms = sim.SurveySimulation.TargetList.MsTrue[usedStarInds]
+
+
+num=654684321
+plt.figure(num=num)
+plt.hist(Ls,bins=500)
+plt.xlabel('L_Sun')
+plt.show(block=False)
+
+num=65468432111
+plt.figure(num=num)
+plt.hist(Ms.value,bins=50)
+plt.xlabel('M_sun')
+plt.show(block=False)
+
 
