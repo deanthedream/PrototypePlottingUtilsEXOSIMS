@@ -23,6 +23,7 @@ import re
 import matplotlib.gridspec as gridspec
 from pandas.plotting import scatter_matrix
 import pandas as pd 
+import corner
 
 def calc_planetAngularXYPosition_FromXaxis(sma,e,w,W,inc,nu):
     """ Calculate the angular position of the planet from the X-axis at nu
@@ -178,7 +179,7 @@ ZL = sim.ZodiacalLight
 TL = sim.TargetList
 TL.BV[0] = 0.65 #http://spiff.rit.edu/classes/phys440/lectures/color/color.html
 TL.Vmag[0] = 1. #reference star
-n = 1*10**5 #Dean's nice computer can go up to 10**8 what can atuin go up to?
+n = 10*10**5 #Dean's nice computer can go up to 10**8 what can atuin go up to?
 inc, W, w = PPop.gen_angles(n,None)
 W = W.to('rad').value
 w = w.to('rad').value
@@ -265,6 +266,7 @@ print('sma: ' + str(sma[ind]) + ' e: ' + str(e[ind]) + ' i: ' + str(inc[ind]) + 
 ##############################################################
 
 #Detection 1 #################################################### #TODO find a desired planet I want to detect and us that instead of something pulled from the pop
+print("STARTING DETECTION 1")
 #nurange[50] used for determing location of first detection
 tpastPeriastron1 = timeFromTrueAnomaly(nurange[50],periods[ind]*u.year.to('day'),e[ind]) #Calculate the planet-star intersection edges
 sep1 = ss[50] #0.7 #AU
@@ -272,11 +274,15 @@ dmag1 = dmags[50] #23. #Luminosity Scaled Planet-star Difference in Magnitude, '
 theta1 = thetas[50]
 uncertainty_theta1 = np.arctan2(uncertainty_s,sep1)
 nus1, planetIsVisibleBool1 = planetVisibilityBounds(sma,e,W,w,inc,p,Rp,starMass,plotBool, sep1-uncertainty_s, sep1+uncertainty_s, dmag1*(1.+uncertainty_dmag), dmag1*(1.-uncertainty_dmag)) #Calculate planet-star nu edges and visible regions
+print('done planet visibility bounds')
 ts1 = timeFromTrueAnomaly(nus1,np.tile(periods,(18,1)).T*u.year.to('day'),np.tile(e,(18,1)).T) #Calculate the planet-star intersection edges
+print('done time from true anomaly')
 thetas1 = calc_planetAngularXYPosition_FromXaxis(sma,e,w,W,inc,nus1) #Calculates XY planet Angles
+print('done thetas from nus')
 nuFromTheta1m = nuFromTheta(thetas1-uncertainty_theta1,sma,e,w,W,inc)
 nuFromTheta1p = nuFromTheta(thetas1+uncertainty_theta1,sma,e,w,W,inc)
 nu = nuFromTheta(thetas1,sma,e,w,W,inc) #doing this to validate this function #### Verify nuFromTheta function works
+print('done nu from theta')
 mode = [mode for mode in OS.observingModes if mode['detectionMode'] == True][0]
 intTime1 = sim.OpticalSystem.calc_intTime(TL, [0], ZL.fZ0, ZL.fEZ0, dmag1, (sep1/(10.*u.pc.to('AU')))*u.rad, mode)
 # dt = ts[:,1:] - ts[:,:-1] #Calculate time region widths
@@ -292,17 +298,13 @@ ts1[firstAndLastVisInds1,0] = ts1[firstAndLastVisInds1,lastVisWindowIndex1[first
 ts1[firstAndLastVisInds1,lastVisWindowIndex1[firstAndLastVisInds1]] = ts1[firstAndLastVisInds1,0] + periods[firstAndLastVisInds1]*u.year.to('day')#DO WE NEED TO MODIFY THE LAST TS1??
 # totalCompleteness = np.divide(totalVisibleTimePerTarget,periods*u.year.to('day')) # Fraction of time each planet is visible of its period
 
-
-
 # ts2 = ts[:,0:8] #cutting out all the nans
 # planetIsVisibleBool2 = planetIsVisibleBool[:,0:7] #cutting out all the nans
 numPlanetsInRegion1 = np.sum(np.any(planetIsVisibleBool1,axis=1))
 detectedFirsTimeInds = np.where(np.any(planetIsVisibleBool1,axis=1))[0]
-#TODO CREATE TWO ARRAYS SAME LENGTH AS DETECTEDFIRSTTIMEINDS 
-#GET FIRST TS1
-#GET LAST-1 TS1
 
 #Dection 2 #####################################################
+print("STARTING DETECTION 2")
 #nurange[75] #used for determining location of second detection
 tpastPeriastron2 = timeFromTrueAnomaly(nurange[75],periods[ind]*u.year.to('day'),e[ind]) #Calculate the planet-star intersection edges
 sep2 = ss[75] #0.7 #AU
@@ -409,12 +411,14 @@ assert len(setNumVisTimes[(1,1)]['inds'])+len(setNumVisTimes[(1,2)]['inds'])+len
     len(setNumVisTimes[(4,1)]['inds'])+len(setNumVisTimes[(4,2)]['inds'])+len(setNumVisTimes[(4,3)]['inds'])+len(setNumVisTimes[(4,4)]['inds']) == len(detectableByBothInds),\
     'Whoops, missing a case where num visible regions > 3' #error checking number of inds
 
-print('Determing if Times between s1,dmag1 and s2,dmag2 are appropriate')
+
+print('Determing if Times and Angles between s1,dmag1 and s2,dmag2 are appropriate')
 #Calculate All Intersection Times For NumVisibleTimes (i,j)
-timeTolerance = 10. #days NOTE: The max is appropriate here but I am using a planet not detectable by the specific instrument in the file #np.max([intTime1.to('d').value, intTime2.to('d').value]) #3. #random tolerance on the time between two observations in days #TODO find a better number for this. Should be integration time x 2 since two detections must occur
+timeTolerance = 5. #days NOTE: The max is appropriate here but I am using a planet not detectable by the specific instrument in the file #np.max([intTime1.to('d').value, intTime2.to('d').value]) #3. #random tolerance on the time between two observations in days #TODO find a better number for this. Should be integration time x 2 since two detections must occur
 planetsInVisibleRegionsInTimeWindow = list()
 planetsInVisibleRegionsInTimeWindowInAngle = list()
 planetsInVisibleRegionsInTimeWindow2 = list()
+planetsNOTInVisibleRegionsInTimeWindow = list()
 for (i,j) in [(1,1),(1,2),(1,3),(1,4),(2,1),(2,2),(2,3),(2,4),(3,1),(3,2),(3,3),(3,4),(4,1),(4,2),(4,3),(4,4)]: #iterate over sets of inds of intersections
     # i indicates the number of visible regions in image 1
     # j indicates the number of visible regions in image 2
@@ -450,6 +454,8 @@ for (i,j) in [(1,1),(1,2),(1,3),(1,4),(2,1),(2,2),(2,3),(2,4),(3,1),(3,2),(3,3),
                     region1StartsFirstBool = True
                     maxdt = regionEnd2 - regionStart1
                     mindt = regionStart2 - regionEnd1
+                    assert maxdt > 0, "maxdt <= 0"
+                    assert mindt > 0, "mindt <= 0"
                     mindt = np.max([0.,mindt]) #ensures mindt is positive or 0
 
                     #Finding Min and max acceptable angles
@@ -459,10 +465,12 @@ for (i,j) in [(1,1),(1,2),(1,3),(1,4),(2,1),(2,2),(2,3),(2,4),(3,1),(3,2),(3,3),
                     else: #otherwise angle of region 2 relative to region 1 is opposite what was actually observed
                         maxDeltaAngle = (angleStop1 + uncertainty_theta1) - (angleStart2 - uncertainty_theta2) #largest angular change
                         minDeltaAngle = np.max([0.,(angleStart1 - uncertainty_theta1) - (angleStop2 + uncertainty_theta2)]) #smallest angular change
-                else:
+                else: #regionStart2 < regionStart1
                     region1StartsFirstBool = False
                     maxdt = regionEnd1 - regionStart2
                     mindt = regionStart1 - regionEnd2
+                    assert maxdt > 0, "maxdt <= 0"
+                    assert mindt > 0, "mindt <= 0"
                     mindt = np.max([0.,mindt]) #ensures mindt is positive or 0
 
                     #Finding Min and Max Acceptable Angles 
@@ -501,6 +509,8 @@ for (i,j) in [(1,1),(1,2),(1,3),(1,4),(2,1),(2,2),(2,3),(2,4),(3,1),(3,2),(3,3),
 
                     if actualDeltaTheta < maxDeltaAngle and actualDeltaTheta > minDeltaAngle:
                         planetsInVisibleRegionsInTimeWindowInAngle.append((i,j,setNumVisTimes[(i,j)]['inds'][planetj],k,l,region1StartsFirstBool))
+                else: #Saving planets not in time window to check mindt windows
+                    planetsNOTInVisibleRegionsInTimeWindow.append((i,j,setNumVisTimes[(i,j)]['inds'][planetj],k,l,region1StartsFirstBool, mindt, maxdt))
 
 
 
@@ -557,10 +567,7 @@ print(str(len(indsCase1)) + " cases where det 1 up and left of det 2\n" +\
     str(len(indsCase4)) + " cases where det 1 up and right of det 2")
 #TODO add these cases to the stack of inds in planetsInVisibleRegionsInTimeWindow
 
-
-#TODO: create function to calculate theta of each planet from X-axis given nu. Calculate these and use to find thetas of planets
-
-#planetsInVisibleRegionsInTimeWindow
+#### Extract Set of Planets Satisfying Criteria    planetsInVisibleRegionsInTimeWindow
 planetsInVisibleRegionsInTimeWindowInds = [planetsInVisibleRegionsInTimeWindow[i][2] for i in np.arange(len(planetsInVisibleRegionsInTimeWindow))]
 planetsInVisibleRegionsInTimeWindowInAngleInds = [planetsInVisibleRegionsInTimeWindowInAngle[i][2] for i in np.arange(len(planetsInVisibleRegionsInTimeWindowInAngle))]
 
@@ -688,7 +695,8 @@ planetsInVisibleRegionsInTimeWindowInAngleInds = [planetsInVisibleRegionsInTimeW
 
 
 #### Gridspec of above plots
-num=8675309007
+#### Histograms Number 1
+num=867530900700001
 plt.close(num)
 fig = plt.figure(num=num,constrained_layout=True,figsize=(8,12))
 plt.rc('axes',linewidth=2)
@@ -706,7 +714,7 @@ ax041 = fig.add_subplot(gs[3, 0])
 ax042 = fig.add_subplot(gs[3, 1])
 
 ax011.hist(sma,color='black',alpha=0.3,density=True,label='Pop.',bins=np.linspace(start=0.,stop=np.max(sma),endpoint=True,num=60))
-ax011.hist(sma[detectedFirsTimeInds],color='purple',alpha=0.3,density=True,label='Sub-pop.',bins=np.linspace(start=0.,stop=np.max(sma),endpoint=True,num=60))
+ax011.hist(sma[detectedFirsTimeInds],color='purple',alpha=0.3,density=True,label='Sub-pop. '+str(len(detectedFirsTimeInds)),bins=np.linspace(start=0.,stop=np.max(sma),endpoint=True,num=60))
 ax011.plot([sma[ind],sma[ind]],[0,1],color='black')
 ax011.set_xlabel('Semi-major axis, in AU',weight='bold')
 ax011.set_ylabel('Frequency',weight='bold')
@@ -714,7 +722,7 @@ ax011.legend()
 #ax11.set_yscale('log')
 
 ax012.hist(e,color='black',alpha=0.3,density=True,label='Pop.',bins=np.linspace(start=0.,stop=np.max(e),endpoint=True,num=60))
-ax012.hist(e[detectedFirsTimeInds],color='purple',alpha=0.3,density=True,label='Sub-pop.',bins=np.linspace(start=0.,stop=np.max(e),endpoint=True,num=60))
+ax012.hist(e[detectedFirsTimeInds],color='purple',alpha=0.3,density=True,label='Sub-pop. '+str(len(detectedFirsTimeInds)),bins=np.linspace(start=0.,stop=np.max(e),endpoint=True,num=60))
 ax012.plot([e[ind],e[ind]],[0,1],color='black')
 ax012.set_xlabel('Eccentricity',weight='bold')
 ax012.set_ylabel('Frequency',weight='bold')
@@ -722,10 +730,10 @@ ax012.legend()
 #ax12.set_yscale('log')
 
 ax021.hist(inc,color='black',alpha=0.3,density=True,label='Pop.',bins=np.linspace(start=0.,stop=np.pi,endpoint=True,num=60))
-ax021.hist(inc[detectedFirsTimeInds],color='purple',alpha=0.3,density=True,label='Sub-pop.',bins=np.linspace(start=0.,stop=np.pi,endpoint=True,num=60))
+ax021.hist(inc[detectedFirsTimeInds],color='purple',alpha=0.3,density=True,label='Sub-pop. '+str(len(detectedFirsTimeInds)),bins=np.linspace(start=0.,stop=np.pi,endpoint=True,num=60))
 tinc = inc[detectedFirsTimeInds]
 tinc[np.where(tinc > np.pi/2.)[0]] = np.pi - tinc[np.where(tinc > np.pi/2.)[0]]
-ax021.hist(tinc,color='red',alpha=0.3,density=True,label='Adjusted Inc.\nSub-pop.',bins=np.linspace(start=0.,stop=np.pi,endpoint=True,num=60))
+ax021.hist(tinc,color='red',alpha=0.3,density=True,label='Adjusted Inc.\nSub-pop. ',bins=np.linspace(start=0.,stop=np.pi,endpoint=True,num=60))
 ax021.plot([inc[ind],inc[ind]],[0,1],color='black')
 ax021.set_xlabel('Inclination, in rad',weight='bold')
 ax021.set_ylabel('Frequency',weight='bold')
@@ -733,7 +741,7 @@ ax021.legend()
 #ax021.set_yscale('log')
 
 ax022.hist(w,color='black',alpha=0.3,density=True,label='Pop.',bins=np.linspace(start=0.,stop=2.*np.pi,endpoint=True,num=60))
-ax022.hist(w[detectedFirsTimeInds],color='purple',alpha=0.3,density=True,label='Sub-pop.',bins=np.linspace(start=0.,stop=2.*np.pi,endpoint=True,num=60))
+ax022.hist(w[detectedFirsTimeInds],color='purple',alpha=0.3,density=True,label='Sub-pop. '+str(len(detectedFirsTimeInds)),bins=np.linspace(start=0.,stop=2.*np.pi,endpoint=True,num=60))
 ax022.plot([w[ind],w[ind]],[0,1],color='black')
 ax022.set_xlabel('Argument of periapsis, in rad',weight='bold')
 ax022.set_ylabel('Frequency',weight='bold')
@@ -741,7 +749,7 @@ ax022.legend()
 #ax022.set_yscale('log')
 
 ax031.hist(W,color='black',alpha=0.3,density=True,label='Pop.',bins=np.linspace(start=0.,stop=2.*np.pi,endpoint=True,num=60))
-ax031.hist(W[detectedFirsTimeInds],color='purple',alpha=0.3,density=True,label='Sub-pop.',bins=np.linspace(start=0.,stop=2.*np.pi,endpoint=True,num=60))
+ax031.hist(W[detectedFirsTimeInds],color='purple',alpha=0.3,density=True,label='Sub-pop. '+str(len(detectedFirsTimeInds)),bins=np.linspace(start=0.,stop=2.*np.pi,endpoint=True,num=60))
 ax031.plot([W[ind],W[ind]],[0,1],color='black')
 ax031.set_xlabel('Longitude of the Ascending Node, in rad',weight='bold')
 ax031.set_ylabel('Frequency',weight='bold')
@@ -749,7 +757,7 @@ ax031.legend()
 #ax031.set_yscale('log')
 
 ax032.hist(p,color='black',alpha=0.3,density=True,label='Pop.',bins=np.linspace(start=0.,stop=np.max(p),endpoint=True,num=60))
-ax032.hist(p[detectedFirsTimeInds],color='purple',alpha=0.3,density=True,label='Sub-pop.',bins=np.linspace(start=0.,stop=np.max(p),endpoint=True,num=60))
+ax032.hist(p[detectedFirsTimeInds],color='purple',alpha=0.3,density=True,label='Sub-pop. '+str(len(detectedFirsTimeInds)),bins=np.linspace(start=0.,stop=np.max(p),endpoint=True,num=60))
 ax032.plot([p[ind],p[ind]],[0,1],color='black')
 ax032.set_xlabel('Planet Albedo',weight='bold')
 ax032.set_ylabel('Frequency',weight='bold')
@@ -757,7 +765,7 @@ ax032.legend()
 #ax32.set_yscale('log')
 
 ax041.hist(Rp.value,color='black',alpha=0.3,density=True,label='Pop.',bins=np.linspace(start=0.,stop=np.max(Rp.value),endpoint=True,num=60))
-ax041.hist(Rp[detectedFirsTimeInds].value,color='purple',alpha=0.3,density=True,label='Sub-pop.',bins=np.linspace(start=0.,stop=np.max(Rp.value),endpoint=True,num=60))
+ax041.hist(Rp[detectedFirsTimeInds].value,color='purple',alpha=0.3,density=True,label='Sub-pop. '+str(len(detectedFirsTimeInds)),bins=np.linspace(start=0.,stop=np.max(Rp.value),endpoint=True,num=60))
 ax041.plot([Rp[ind].value,Rp[ind].value],[0,1],color='black')
 ax041.set_xlabel('Planet Radius, in Earth Radius',weight='bold')
 ax041.set_ylabel('Frequency',weight='bold')
@@ -765,7 +773,7 @@ ax041.legend()
 #ax41.set_yscale('log')
 
 ax042.hist(np.multiply(p,Rp.value),color='black',alpha=0.3,density=True,label='Pop.',bins=np.linspace(start=0.,stop=np.max(p*Rp.value),endpoint=True,num=60))
-ax042.hist(np.multiply(p[detectedFirsTimeInds],Rp[detectedFirsTimeInds].value),color='purple',alpha=0.3,density=True,label='Sub-pop.',bins=np.linspace(start=0.,stop=np.max(p*Rp.value),endpoint=True,num=60))
+ax042.hist(np.multiply(p[detectedFirsTimeInds],Rp[detectedFirsTimeInds].value),color='purple',alpha=0.3,density=True,label='Sub-pop. '+str(len(detectedFirsTimeInds)),bins=np.linspace(start=0.,stop=np.max(p*Rp.value),endpoint=True,num=60))
 ax042.plot([p[ind]*Rp[ind].value,p[ind]*Rp[ind].value],[0,1],color='black')
 ax042.set_xlabel('p*Rp',weight='bold')
 ax042.set_ylabel('Frequency',weight='bold')
@@ -778,7 +786,7 @@ plt.show(block=False)
 
 
 #### Gridspec inds in both regions (no angle filter)
-num=8675309
+num=867530900002
 plt.close(num)
 fig = plt.figure(num=num,constrained_layout=True,figsize=(8,12))
 plt.rc('axes',linewidth=2)
@@ -796,7 +804,7 @@ ax41 = fig.add_subplot(gs[3, 0])
 ax42 = fig.add_subplot(gs[3, 1])
 
 ax11.hist(sma,color='black',alpha=0.3,density=True,label='Pop.',bins=np.linspace(start=0.,stop=np.max(sma),endpoint=True,num=60))
-ax11.hist(sma[planetsInVisibleRegionsInTimeWindowInds],color='purple',alpha=0.3,density=True,label='Sub-pop.',bins=np.linspace(start=0.,stop=np.max(sma),endpoint=True,num=60))
+ax11.hist(sma[planetsInVisibleRegionsInTimeWindowInds],color='purple',alpha=0.3,density=True,label='Sub-pop. '+str(len(planetsInVisibleRegionsInTimeWindowInds)),bins=np.linspace(start=0.,stop=np.max(sma),endpoint=True,num=60))
 ax11.plot([sma[ind],sma[ind]],[0,1],color='black')
 ax11.set_xlabel('Semi-major axis, in AU',weight='bold')
 ax11.set_ylabel('Frequency',weight='bold')
@@ -804,7 +812,7 @@ ax11.legend()
 #ax11.set_yscale('log')
 
 ax12.hist(e,color='black',alpha=0.3,density=True,label='Pop.',bins=np.linspace(start=0.,stop=np.max(e),endpoint=True,num=60))
-ax12.hist(e[planetsInVisibleRegionsInTimeWindowInds],color='purple',alpha=0.3,density=True,label='Sub-pop.',bins=np.linspace(start=0.,stop=np.max(e),endpoint=True,num=60))
+ax12.hist(e[planetsInVisibleRegionsInTimeWindowInds],color='purple',alpha=0.3,density=True,label='Sub-pop. '+str(len(planetsInVisibleRegionsInTimeWindowInds)),bins=np.linspace(start=0.,stop=np.max(e),endpoint=True,num=60))
 ax12.plot([e[ind],e[ind]],[0,1],color='black')
 ax12.set_xlabel('Eccentricity',weight='bold')
 ax12.set_ylabel('Frequency',weight='bold')
@@ -812,10 +820,10 @@ ax12.legend()
 #ax12.set_yscale('log')
 
 ax21.hist(inc,color='black',alpha=0.3,density=True,label='Pop.',bins=np.linspace(start=0.,stop=np.pi,endpoint=True,num=60))
-ax21.hist(inc[planetsInVisibleRegionsInTimeWindowInds],color='purple',alpha=0.3,density=True,label='Sub-pop.',bins=np.linspace(start=0.,stop=np.pi,endpoint=True,num=60))
+ax21.hist(inc[planetsInVisibleRegionsInTimeWindowInds],color='purple',alpha=0.3,density=True,label='Sub-pop. '+str(len(planetsInVisibleRegionsInTimeWindowInds)),bins=np.linspace(start=0.,stop=np.pi,endpoint=True,num=60))
 tinc = inc[planetsInVisibleRegionsInTimeWindowInds]
 tinc[np.where(tinc > np.pi/2.)[0]] = np.pi - tinc[np.where(tinc > np.pi/2.)[0]]
-ax21.hist(tinc,color='red',alpha=0.3,density=True,label='Adjusted Inc.\nSub-pop.',bins=np.linspace(start=0.,stop=np.pi,endpoint=True,num=60))
+ax21.hist(tinc,color='red',alpha=0.3,density=True,label='Adjusted Inc.\nSub-pop. ',bins=np.linspace(start=0.,stop=np.pi,endpoint=True,num=60))
 ax21.plot([inc[ind],inc[ind]],[0,1],color='black')
 ax21.set_xlabel('Inclination, in rad',weight='bold')
 ax21.set_ylabel('Frequency',weight='bold')
@@ -823,7 +831,7 @@ ax21.legend()
 #ax21.set_yscale('log')
 
 ax22.hist(w,color='black',alpha=0.3,density=True,label='Pop.',bins=np.linspace(start=0.,stop=2.*np.pi,endpoint=True,num=60))
-ax22.hist(w[planetsInVisibleRegionsInTimeWindowInds],color='purple',alpha=0.3,density=True,label='Sub-pop.',bins=np.linspace(start=0.,stop=2.*np.pi,endpoint=True,num=60))
+ax22.hist(w[planetsInVisibleRegionsInTimeWindowInds],color='purple',alpha=0.3,density=True,label='Sub-pop. '+str(len(planetsInVisibleRegionsInTimeWindowInds)),bins=np.linspace(start=0.,stop=2.*np.pi,endpoint=True,num=60))
 ax22.plot([w[ind],w[ind]],[0,1],color='black')
 ax22.set_xlabel('Argument of periapsis, in rad',weight='bold')
 ax22.set_ylabel('Frequency',weight='bold')
@@ -831,7 +839,7 @@ ax22.legend()
 #ax22.set_yscale('log')
 
 ax31.hist(W,color='black',alpha=0.3,density=True,label='Pop.',bins=np.linspace(start=0.,stop=2.*np.pi,endpoint=True,num=60))
-ax31.hist(W[planetsInVisibleRegionsInTimeWindowInds],color='purple',alpha=0.3,density=True,label='Sub-pop.',bins=np.linspace(start=0.,stop=2.*np.pi,endpoint=True,num=60))
+ax31.hist(W[planetsInVisibleRegionsInTimeWindowInds],color='purple',alpha=0.3,density=True,label='Sub-pop. '+str(len(planetsInVisibleRegionsInTimeWindowInds)),bins=np.linspace(start=0.,stop=2.*np.pi,endpoint=True,num=60))
 ax31.plot([W[ind],W[ind]],[0,1],color='black')
 ax31.set_xlabel('Longitude of the Ascending Node, in rad',weight='bold')
 ax31.set_ylabel('Frequency',weight='bold')
@@ -839,7 +847,7 @@ ax31.legend()
 #ax31.set_yscale('log')
 
 ax32.hist(p,color='black',alpha=0.3,density=True,label='Pop.',bins=np.linspace(start=0.,stop=np.max(p),endpoint=True,num=60))
-ax32.hist(p[planetsInVisibleRegionsInTimeWindowInds],color='purple',alpha=0.3,density=True,label='Sub-pop.',bins=np.linspace(start=0.,stop=np.max(p),endpoint=True,num=60))
+ax32.hist(p[planetsInVisibleRegionsInTimeWindowInds],color='purple',alpha=0.3,density=True,label='Sub-pop. '+str(len(planetsInVisibleRegionsInTimeWindowInds)),bins=np.linspace(start=0.,stop=np.max(p),endpoint=True,num=60))
 ax32.plot([p[ind],p[ind]],[0,1],color='black')
 ax32.set_xlabel('Planet Albedo',weight='bold')
 ax32.set_ylabel('Frequency',weight='bold')
@@ -847,7 +855,7 @@ ax32.legend()
 #ax32.set_yscale('log')
 
 ax41.hist(Rp.value,color='black',alpha=0.3,density=True,label='Pop.',bins=np.linspace(start=0.,stop=np.max(Rp.value),endpoint=True,num=60))
-ax41.hist(Rp[planetsInVisibleRegionsInTimeWindowInds].value,color='purple',alpha=0.3,density=True,label='Sub-pop.',bins=np.linspace(start=0.,stop=np.max(Rp.value),endpoint=True,num=60))
+ax41.hist(Rp[planetsInVisibleRegionsInTimeWindowInds].value,color='purple',alpha=0.3,density=True,label='Sub-pop. '+str(len(planetsInVisibleRegionsInTimeWindowInds)),bins=np.linspace(start=0.,stop=np.max(Rp.value),endpoint=True,num=60))
 ax41.plot([Rp[ind].value,Rp[ind].value],[0,1],color='black')
 ax41.set_xlabel('Planet Radius, in Earth Radius',weight='bold')
 ax41.set_ylabel('Frequency',weight='bold')
@@ -855,7 +863,7 @@ ax41.legend()
 #ax41.set_yscale('log')
 
 ax42.hist(np.multiply(p,Rp.value),color='black',alpha=0.3,density=True,label='Pop.',bins=np.linspace(start=0.,stop=np.max(p*Rp.value),endpoint=True,num=60))
-ax42.hist(np.multiply(p[planetsInVisibleRegionsInTimeWindowInds],Rp[planetsInVisibleRegionsInTimeWindowInds].value),color='purple',alpha=0.3,density=True,label='Sub-pop.',bins=np.linspace(start=0.,stop=np.max(p*Rp.value),endpoint=True,num=60))
+ax42.hist(np.multiply(p[planetsInVisibleRegionsInTimeWindowInds],Rp[planetsInVisibleRegionsInTimeWindowInds].value),color='purple',alpha=0.3,density=True,label='Sub-pop. '+str(len(planetsInVisibleRegionsInTimeWindowInds)),bins=np.linspace(start=0.,stop=np.max(p*Rp.value),endpoint=True,num=60))
 ax42.plot([p[ind]*Rp[ind].value,p[ind]*Rp[ind].value],[0,1],color='black')
 ax42.set_xlabel('p*Rp',weight='bold')
 ax42.set_ylabel('Frequency',weight='bold')
@@ -866,7 +874,7 @@ plt.show(block=False)
 
 
 #### Plot With Angle Filtered
-num=86753099
+num=8675309900003
 plt.close(num)
 fig = plt.figure(num=num,constrained_layout=True,figsize=(8,12))
 plt.rc('axes',linewidth=2)
@@ -884,7 +892,7 @@ ax241 = fig.add_subplot(gs[3, 0])
 ax242 = fig.add_subplot(gs[3, 1])
 
 ax211.hist(sma,color='black',alpha=0.3,density=True,label='Pop.',bins=np.linspace(start=0.,stop=np.max(sma),endpoint=True,num=60))
-ax211.hist(sma[planetsInVisibleRegionsInTimeWindowInAngleInds],color='purple',alpha=0.3,density=True,label='Sub-pop.',bins=np.linspace(start=0.,stop=np.max(sma),endpoint=True,num=60))
+ax211.hist(sma[planetsInVisibleRegionsInTimeWindowInAngleInds],color='purple',alpha=0.3,density=True,label='Sub-pop. '+str(len(planetsInVisibleRegionsInTimeWindowInAngleInds)),bins=np.linspace(start=0.,stop=np.max(sma),endpoint=True,num=60))
 ax211.plot([sma[ind],sma[ind]],[0,1],color='black')
 ax211.set_xlabel('Semi-major axis, in AU',weight='bold')
 ax211.set_ylabel('Frequency',weight='bold')
@@ -892,7 +900,7 @@ ax211.legend()
 #ax11.set_yscale('log')
 
 ax212.hist(e,color='black',alpha=0.3,density=True,label='Pop.',bins=np.linspace(start=0.,stop=np.max(e),endpoint=True,num=60))
-ax212.hist(e[planetsInVisibleRegionsInTimeWindowInAngleInds],color='purple',alpha=0.3,density=True,label='Sub-pop.',bins=np.linspace(start=0.,stop=np.max(e),endpoint=True,num=60))
+ax212.hist(e[planetsInVisibleRegionsInTimeWindowInAngleInds],color='purple',alpha=0.3,density=True,label='Sub-pop. '+str(len(planetsInVisibleRegionsInTimeWindowInAngleInds)),bins=np.linspace(start=0.,stop=np.max(e),endpoint=True,num=60))
 ax212.plot([e[ind],e[ind]],[0,1],color='black')
 ax212.set_xlabel('Eccentricity',weight='bold')
 ax212.set_ylabel('Frequency',weight='bold')
@@ -900,10 +908,10 @@ ax212.legend()
 #ax12.set_yscale('log')
 
 ax221.hist(inc,color='black',alpha=0.3,density=True,label='Pop.',bins=np.linspace(start=0.,stop=np.pi,endpoint=True,num=60))
-ax221.hist(inc[planetsInVisibleRegionsInTimeWindowInAngleInds],color='purple',alpha=0.3,density=True,label='Sub-pop.',bins=np.linspace(start=0.,stop=np.pi,endpoint=True,num=60))
+ax221.hist(inc[planetsInVisibleRegionsInTimeWindowInAngleInds],color='purple',alpha=0.3,density=True,label='Sub-pop. '+str(len(planetsInVisibleRegionsInTimeWindowInAngleInds)),bins=np.linspace(start=0.,stop=np.pi,endpoint=True,num=60))
 tinc = inc[planetsInVisibleRegionsInTimeWindowInAngleInds]
 tinc[np.where(tinc > np.pi/2.)[0]] = np.pi - tinc[np.where(tinc > np.pi/2.)[0]]
-ax221.hist(tinc,color='red',alpha=0.3,density=True,label='Adjusted Inc.\nSub-pop.',bins=np.linspace(start=0.,stop=np.pi,endpoint=True,num=60))
+ax221.hist(tinc,color='red',alpha=0.3,density=True,label='Adjusted Inc.\nSub-pop. ',bins=np.linspace(start=0.,stop=np.pi,endpoint=True,num=60))
 ax221.plot([inc[ind],inc[ind]],[0,1],color='black')
 ax221.set_xlabel('Inclination, in rad',weight='bold')
 ax221.set_ylabel('Frequency',weight='bold')
@@ -911,7 +919,7 @@ ax221.legend()
 #ax21.set_yscale('log')
 
 ax222.hist(w,color='black',alpha=0.3,density=True,label='Pop.',bins=np.linspace(start=0.,stop=2.*np.pi,endpoint=True,num=60))
-ax222.hist(w[planetsInVisibleRegionsInTimeWindowInAngleInds],color='purple',alpha=0.3,density=True,label='Sub-pop.',bins=np.linspace(start=0.,stop=2.*np.pi,endpoint=True,num=60))
+ax222.hist(w[planetsInVisibleRegionsInTimeWindowInAngleInds],color='purple',alpha=0.3,density=True,label='Sub-pop. '+str(len(planetsInVisibleRegionsInTimeWindowInAngleInds)),bins=np.linspace(start=0.,stop=2.*np.pi,endpoint=True,num=60))
 ax222.plot([w[ind],w[ind]],[0,1],color='black')
 ax222.set_xlabel('Argument of periapsis, in rad',weight='bold')
 ax222.set_ylabel('Frequency',weight='bold')
@@ -919,7 +927,7 @@ ax222.legend()
 #ax22.set_yscale('log')
 
 ax231.hist(W,color='black',alpha=0.3,density=True,label='Pop.',bins=np.linspace(start=0.,stop=2.*np.pi,endpoint=True,num=60))
-ax231.hist(W[planetsInVisibleRegionsInTimeWindowInAngleInds],color='purple',alpha=0.3,density=True,label='Sub-pop.',bins=np.linspace(start=0.,stop=2.*np.pi,endpoint=True,num=60))
+ax231.hist(W[planetsInVisibleRegionsInTimeWindowInAngleInds],color='purple',alpha=0.3,density=True,label='Sub-pop. '+str(len(planetsInVisibleRegionsInTimeWindowInAngleInds)),bins=np.linspace(start=0.,stop=2.*np.pi,endpoint=True,num=60))
 ax231.plot([W[ind],W[ind]],[0,1],color='black')
 ax231.set_xlabel('Longitude of the Ascending Node, in rad',weight='bold')
 ax231.set_ylabel('Frequency',weight='bold')
@@ -927,7 +935,7 @@ ax231.legend()
 #ax31.set_yscale('log')
 
 ax232.hist(p,color='black',alpha=0.3,density=True,label='Pop.',bins=np.linspace(start=0.,stop=np.max(p),endpoint=True,num=60))
-ax232.hist(p[planetsInVisibleRegionsInTimeWindowInAngleInds],color='purple',alpha=0.3,density=True,label='Sub-pop.',bins=np.linspace(start=0.,stop=np.max(p),endpoint=True,num=60))
+ax232.hist(p[planetsInVisibleRegionsInTimeWindowInAngleInds],color='purple',alpha=0.3,density=True,label='Sub-pop. '+str(len(planetsInVisibleRegionsInTimeWindowInAngleInds)),bins=np.linspace(start=0.,stop=np.max(p),endpoint=True,num=60))
 ax232.plot([p[ind],p[ind]],[0,1],color='black')
 ax232.set_xlabel('Planet Albedo',weight='bold')
 ax232.set_ylabel('Frequency',weight='bold')
@@ -935,7 +943,7 @@ ax232.legend()
 #ax32.set_yscale('log')
 
 ax241.hist(Rp.value,color='black',alpha=0.3,density=True,label='Pop.',bins=np.linspace(start=0.,stop=np.max(Rp.value),endpoint=True,num=60))
-ax241.hist(Rp[planetsInVisibleRegionsInTimeWindowInAngleInds].value,color='purple',alpha=0.3,density=True,label='Sub-pop.',bins=np.linspace(start=0.,stop=np.max(Rp.value),endpoint=True,num=60))
+ax241.hist(Rp[planetsInVisibleRegionsInTimeWindowInAngleInds].value,color='purple',alpha=0.3,density=True,label='Sub-pop. '+str(len(planetsInVisibleRegionsInTimeWindowInAngleInds)),bins=np.linspace(start=0.,stop=np.max(Rp.value),endpoint=True,num=60))
 ax241.plot([Rp[ind].value,Rp[ind].value],[0,1],color='black')
 ax241.set_xlabel('Planet Radius, in Earth Radius',weight='bold')
 ax241.set_ylabel('Frequency',weight='bold')
@@ -943,7 +951,7 @@ ax241.legend()
 #ax41.set_yscale('log')
 
 ax242.hist(np.multiply(p,Rp.value),color='black',alpha=0.3,density=True,label='Pop.',bins=np.linspace(start=0.,stop=np.max(p*Rp.value),endpoint=True,num=60))
-ax242.hist(np.multiply(p[planetsInVisibleRegionsInTimeWindowInAngleInds],Rp[planetsInVisibleRegionsInTimeWindowInAngleInds].value),color='purple',alpha=0.3,density=True,label='Sub-pop.',bins=np.linspace(start=0.,stop=np.max(p*Rp.value),endpoint=True,num=60))
+ax242.hist(np.multiply(p[planetsInVisibleRegionsInTimeWindowInAngleInds],Rp[planetsInVisibleRegionsInTimeWindowInAngleInds].value),color='purple',alpha=0.3,density=True,label='Sub-pop. '+str(len(planetsInVisibleRegionsInTimeWindowInAngleInds)),bins=np.linspace(start=0.,stop=np.max(p*Rp.value),endpoint=True,num=60))
 ax242.plot([p[ind]*Rp[ind].value,p[ind]*Rp[ind].value],[0,1],color='black')
 ax242.set_xlabel('p*Rp',weight='bold')
 ax242.set_ylabel('Frequency',weight='bold')
@@ -955,6 +963,23 @@ plt.show(block=False)
 
 #TODO: Plot COVARIANCE MATRICES FOR PLANETS find an old scatter plot or something
 
+
+
+data = np.vstack([sma,e,inc,w,W,p*Rp.value]).T
+figure00000 = corner.corner(data, labels=[r"$a$", r"$e$", r"$i$", r"$\omega$", r"$\Omega$",r"$p*R_p$"], quantiles=[0.16, 0.5, 0.84], show_titles=True, title_kwargs={"fontsize": 12})
+figure00000.suptitle('Population: ' + str(len(sma)), fontsize=14, fontweight='bold')
+figure00001 = corner.corner(data[detectedFirsTimeInds], labels=[r"$a$", r"$e$", r"$i$", r"$\omega$", r"$\Omega$",r"$p*R_p$"], quantiles=[0.16, 0.5, 0.84], show_titles=True, title_kwargs={"fontsize": 12})
+figure00001.suptitle('First Det Sub-Pop.: ' + str(len(detectedFirsTimeInds)), fontsize=14, fontweight='bold')
+figure00002 = corner.corner(data[planetsInVisibleRegionsInTimeWindowInds], labels=[r"$a$", r"$e$", r"$i$", r"$\omega$", r"$\Omega$",r"$p*R_p$"], quantiles=[0.16, 0.5, 0.84], show_titles=True, title_kwargs={"fontsize": 12})
+figure00002.suptitle('Second Det, Time: ' + str(len(planetsInVisibleRegionsInTimeWindowInds)), fontsize=14, fontweight='bold')
+figure00003 = corner.corner(data[planetsInVisibleRegionsInTimeWindowInAngleInds], labels=[r"$a$", r"$e$", r"$i$", r"$\omega$", r"$\Omega$",r"$p*R_p$"], quantiles=[0.16, 0.5, 0.84], show_titles=True, title_kwargs={"fontsize": 12})
+figure00003.suptitle('Second Det, Time, Ang.: ' + str(len(planetsInVisibleRegionsInTimeWindowInAngleInds)), fontsize=14, fontweight='bold')
+figure00004 = corner.corner(data[planetsNOTInVisibleRegionsInTimeWindow], labels=[r"$a$", r"$e$", r"$i$", r"$\omega$", r"$\Omega$",r"$p*R_p$"], quantiles=[0.16, 0.5, 0.84], show_titles=True, title_kwargs={"fontsize": 12})
+figure00004.suptitle('Not Vis: ' + str(len(planetsNOTInVisibleRegionsInTimeWindow)), fontsize=14, fontweight='bold')
+plt.show(block=False)
+
+
+print(satltyburrito)
 
 
 plotBOOL = True
