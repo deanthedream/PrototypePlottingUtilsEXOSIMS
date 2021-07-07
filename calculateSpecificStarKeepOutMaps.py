@@ -1,6 +1,10 @@
 """ Calculate Star KeepOutMaps For Specific Stars
 By: Dean Keithly
 Date: 2/18/2021
+
+Plots a Keepout Map Histogram of...
+maximum continuous visibility window
+average visibility window per year
 """
 import os
 import sys, os.path, EXOSIMS, EXOSIMS.MissionSim
@@ -15,7 +19,7 @@ scriptfile = '/home/dean/Documents/exosims/Scripts/WFIRSTcycle6core_CKL2_PPKL2_m
 
 #Create Mission Object To Extract Some Plotting Limits
 sim = EXOSIMS.MissionSim.MissionSim(scriptfile, nopar=True)
-obs, TL, TK = sim.Observatory, sim.TargetList, sim.TimeKeeping
+obs, TL, TK, OS = sim.Observatory, sim.TargetList, sim.TimeKeeping, sim.OpticalSystem
 
 #Get Star Name Ind
 indWhereStarName = np.where(TL.Name == starName)[0]
@@ -66,3 +70,76 @@ solarPanelFault  = [bool(culprit[0,t,11]) for t in np.arange(len(koEvaltimes))]
 #sunFault - the array (nStars,len(koEvalTimes)) of booleans indicating whether the star is in keepout by the sun
 #########################################################
 
+import matplotlib.pyplot as plt
+import matplotlib
+from itertools import groupby
+
+#Keepouts are calculated here
+#kogood = np.zeros([1,koEvaltimes.size])
+#culprit = np.zeros([1,koEvaltimes.size,12])
+#for t,date in enumerate(koEvaltimes):
+print("Starting Keepout")
+kogood,r_body, r_targ, culprit, koangleArray = obs.keepout(TL, np.arange(TL.nStars), koEvaltimes, koangles, True)
+
+print("Starting Analysis")
+#Find fraction of time visible
+fracTimeVis = np.average(kogood[0],axis=1) 
+
+#Find average number of days visible per year
+fracOfYearVis = np.average(kogood[0],axis=1)*365.25
+
+#Function for finding largest number of consecutive true in 1d array
+from EXOSIMS.util.maxConsecutiveTrue import maxConsecutiveTrue
+
+maxNumConsecutive = np.zeros(kogood.shape[1])
+for i in np.arange(kogood.shape[1]):
+    maxNumConsecutive[i] = maxConsecutiveTrue(kogood[0,i])
+    #maxNumConsecutive[i] = np.sum(k for k,v in groupby(kogood[0,i]))
+maxNumConsecutiveInOneYear = maxNumConsecutive
+maxNumConsecutiveInOneYear[maxNumConsecutiveInOneYear > 365.25] = 365.25
+
+
+#### Plot Histograms #############################
+num=316854836473542322
+plt.close(num)
+plt.figure(num=num)
+plt.rc('axes',linewidth=2)
+plt.rc('lines',linewidth=2)
+plt.rcParams['axes.linewidth']=2
+plt.rc('font',weight='bold')
+bins = np.linspace(start=0.,stop=366,num=92)
+plt.hist(maxNumConsecutiveInOneYear,bins=bins)
+plt.xlim([0.,366.])
+plt.yscale('log')
+plt.ylabel('Frequency', weight='bold')
+plt.xlabel('Number of Consecutive Days Visible (d)', weight='bold')
+textstr = '\n'.join((r'  $\oplus$: ' + r'$45^{\circ} < \gamma$', r'  $\odot$: ' + r'$45^{\circ} < \gamma < 124^{\circ}$','\u2642\u263F:   ' + r'$1^{\circ} < \gamma$'))
+props = dict(facecolor='white', alpha=0.5)
+plt.gca().text(0.55, 0.95, textstr, transform=plt.gca().transAxes, fontsize=14,
+        verticalalignment='top', bbox=props)
+plt.show(block=False)
+plt.gcf().canvas.draw()
+plt.savefig('KeepoutDurationHistogramLOG', format='png', dpi=200)
+####
+num=316854836473542322234234
+plt.close(num)
+plt.figure(num=num)
+plt.rc('axes',linewidth=2)
+plt.rc('lines',linewidth=2)
+plt.rcParams['axes.linewidth']=2
+plt.rc('font',weight='bold')
+bins = np.linspace(start=0.,stop=366,num=92)
+plt.hist(maxNumConsecutiveInOneYear,bins=bins)
+plt.xlim([0.,366.])
+plt.ylabel('Frequency', weight='bold')
+plt.xlabel('Number of Consecutive Days Visible (d)', weight='bold')
+textstr = '\n'.join((r'  $\oplus$: ' + r'$45^{\circ} < \gamma$', r'  $\odot$: ' + r'$45^{\circ} < \gamma < 124^{\circ}$','\u2642\u263F:   ' + r'$1^{\circ} < \gamma$'))
+props = dict(facecolor='white', alpha=0.5)
+plt.gca().text(0.55, 0.95, textstr, transform=plt.gca().transAxes, fontsize=14,
+        verticalalignment='top', bbox=props)
+plt.show(block=False)
+plt.gcf().canvas.draw()
+plt.savefig('KeepoutDurationHistogram', format='png', dpi=200)
+####
+
+##################################################
