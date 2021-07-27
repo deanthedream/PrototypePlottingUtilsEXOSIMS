@@ -2,11 +2,10 @@
 import numpy as np
 import math as m
 
-a = np.asarray([[1,0,0],[0,1,0],[0,0,1],[2,0,2]])
-b = np.asarray([[1,0,0],[1,0,0],[1,0,0],[1,0,0]])
-
-
-c = np.einsum('ij,ij->i',a,b)
+#DELETE
+#a = np.asarray([[1,0,0],[0,1,0],[0,0,1],[2,0,2]])
+#b = np.asarray([[1,0,0],[1,0,0],[1,0,0],[1,0,0]])
+#c = np.einsum('ij,ij->i',a,b)
 
 
 def angleBetweenNandR(ns,rs):
@@ -313,7 +312,9 @@ sma_dr_sc = (np.linalg.norm(OpQp,axis=0) + np.linalg.norm(OpQ,axis=0))/2. #Calcu
 smna_dr_sc = (np.linalg.norm(OpQp,axis=0) - np.linalg.norm(OpQ,axis=0))/2. #Calculates the semi-minor axis of the derotated and scaled FOV ellipse
 psi = 0.5*(np.arctan2(OpQ[1],OpQ[0]) + np.arctan2(OpQp[1],OpQp[0])) #Calculate the angle in radians the semi-major axis of the derotated and scaled FOV ellipse makes with the x-axis
 
-
+#Get FOV ellipse Extremas
+from scFOVEllipseSepExtrema import calc_FOVEllipseExtrema_QuarticCoefficients
+extremeCoeffs = calc_FOVEllipseExtrema_QuarticCoefficients(sma_dr_sc,smna_dr_sc,r_xy_Olook_dr_sc[0],r_xy_Olook_dr_sc[1],psi)
 
 # def theta_limits(x, y, th, h, k, psi, a_lscdr, b_lscdr):
 #     """Takes in some ellipse in 3D space and 1) determines whether the origin is inside the ellipse, returns this boolean array and
