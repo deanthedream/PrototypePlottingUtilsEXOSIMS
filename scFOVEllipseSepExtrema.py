@@ -21,6 +21,7 @@ def calc_FOVEllipseExtrema_QuarticCoefficients(a,b,h,k,psi):
     1) it has been translated the distance required to center the orbital ellipse
     2) it has been rotated enough to align the orbital ellipse nu=0 vector to the x-axis
     3) and it has been scaled along the x-axis by b/a of the orbital ellipse
+    Equations from SpacecraftInFieldOfView.ipynb
     Args:
         ndarray:
             a the semi-major axis of the centered, derotated, scaled FOV ellipse
@@ -235,4 +236,75 @@ def calc_FOVEllipseExtrema_QuarticCoefficients(a,b,h,k,psi):
 
     return B2/A2, C2/A2, D2/A2, E2/A2, B3/A3, C3/A3, D3/A3, E3/A3
 
+def calc_FOVEllipseIntersection_QuarticCoefficients(a_look,b_look,h,k,psi,b_orbit):
+    """ Calculates the coefficients from the Ellipse-circle intersection equation
+    Equations From SpacecraftInFieldOfView.ipynb
+    Args:
+        a_look,b_look,h,k,psi,b_orbit
+    Returns:
+        ndarray:
+            A
+        ndarray:
+            B
+        ndarray:
+            C
+        ndarray:
+            D   
+    """
+    A = b_look**(-4.) - 2./(a_look**2.*b_look**2.) + a_look**(-4.)
+    B = 4.*(a_look**4.*(h*np.cos(2.*psi) - h + k*np.sin(2.*psi))/2. + a_look**2.*b_look**2.*h - b_look**4.*(h*np.cos(2.*psi) + h + k*np.sin(2.*psi))/2.)/(a_look**4.*b_look**4.)
+    C = 2.*(a_look**4.*b_look**2.*np.cos(2.*psi) + a_look**4.*(b_orbit**2.*np.sin(psi)**2. - b_orbit**2. + 2.*h**2.*np.sin(psi)**4. + h**2.*np.sin(psi)**2. - 6.*h*k*np.sin(psi)**3.*np.cos(psi) - 2.*h*k*np.sin(psi)*np.cos(psi)**3. - 2.*k**2.*np.sin(psi)**4. + k**2.*np.sin(psi)**2. + k**2.) - a_look**2.*b_look**4.*np.cos(2.*psi) + a_look**2.*b_look**2.*(b_orbit**2. - 4.*h**2.*np.sin(psi)**4. + 4.*h**2.*np.sin(psi)**2. - h**2. + 4.*h*k*np.sin(psi)**3.*np.cos(psi) - 4.*h*k*np.sin(psi)*np.cos(psi)**3. + 4.*k**2.*np.sin(psi)**4. - 4.*k**2.*np.sin(psi)**2. + k**2.) + b_look**4.*(-b_orbit**2.*np.sin(psi)**2. + 2.*h**2.*np.sin(psi)**4. - 5.*h**2.*np.sin(psi)**2. + 3.*h**2. + 2.*h*k*np.sin(psi)**3.*np.cos(psi) + 6.*h*k*np.sin(psi)*np.cos(psi)**3. - 2.*k**2.*np.sin(psi)**4. + 3.*k**2.*np.sin(psi)**2.))/(a_look**4.*b_look**4.)
+    D = -2.*h*np.cos(2.*psi)/b_look**2. + 2.*h/b_look**2. - 2.*k*np.sin(2.*psi)/b_look**2. - b_orbit**2.*h*np.cos(2.*psi)**2./b_look**4. + b_orbit**2.*h/b_look**4. - b_orbit**2.*k*np.sin(2.*psi)/b_look**4. - b_orbit**2.*k*np.sin(4.*psi)/(2.*b_look**4.) - h**3.*np.cos(2.*psi)**2./b_look**4. + 2.*h**3.*np.cos(2.*psi)/b_look**4. - h**3./b_look**4. + 3.*h**2.*k*np.sin(2.*psi)/b_look**4. - 3.*h**2.*k*np.sin(4.*psi)/(2.*b_look**4.) + 3.*h*k**2.*np.cos(2.*psi)**2./b_look**4. - 3.*h*k**2./b_look**4. + k**3.*np.sin(2.*psi)/b_look**4. + k**3.*np.sin(4.*psi)/(2.*b_look**4.) + 2.*h*np.cos(2.*psi)/a_look**2. + 2.*h/a_look**2. + 2.*k*np.sin(2.*psi)/a_look**2. + 2.*b_orbit**2.*h*np.cos(2.*psi)**2./(a_look**2.*b_look**2.) - 6.*b_orbit**2.*h/(a_look**2.*b_look**2.) + b_orbit**2.*k*np.sin(4.*psi)/(a_look**2.*b_look**2.) + 2.*h**3.*np.cos(2.*psi)**2./(a_look**2.*b_look**2.) - 2.*h**3./(a_look**2.*b_look**2.) + 3.*h**2.*k*np.sin(4.*psi)/(a_look**2.*b_look**2.) - 6.*h*k**2.*np.cos(2.*psi)**2./(a_look**2.*b_look**2.) + 2.*h*k**2./(a_look**2.*b_look**2.) - k**3.*np.sin(4.*psi)/(a_look**2.*b_look**2.) - b_orbit**2.*h*np.cos(2.*psi)**2./a_look**4. + b_orbit**2.*h/a_look**4. + b_orbit**2.*k*np.sin(2.*psi)/a_look**4. - b_orbit**2.*k*np.sin(4.*psi)/(2.*a_look**4.) - h**3.*np.cos(2.*psi)**2./a_look**4. - 2.*h**3.*np.cos(2.*psi)/a_look**4. - h**3./a_look**4. - 3.*h**2.*k*np.sin(2.*psi)/a_look**4. - 3.*h**2.*k*np.sin(4.*psi)/(2.*a_look**4.) + 3.*h*k**2.*np.cos(2.*psi)**2./a_look**4. - 3.*h*k**2./a_look**4. - k**3.*np.sin(2.*psi)/a_look**4. + k**3.*np.sin(4.*psi)/(2.*a_look**4.)
+    E = (a_look**4.*b_look**4. + 2.*a_look**4.*b_look**2.*(-b_orbit**2.*np.cos(psi)**2. - h**2.*np.sin(psi)**2. + h*k*np.sin(2.*psi) - k**2.*np.cos(psi)**2.) + a_look**4.*(b_orbit**4.*np.cos(psi)**4. - b_orbit**2.*h**2.*(1. - np.cos(4.*psi))/4. + 4.*b_orbit**2.*h*k*np.sin(psi)*np.cos(psi)**3. - 2.*b_orbit**2.*k**2.*np.cos(psi)**4. + h**4.*np.sin(psi)**4. - 4.*h**3.*k*np.sin(psi)**3.*np.cos(psi) + 3.*h**2.*k**2.*(1. - np.cos(4.*psi))/4. - 4.*h*k**3.*np.sin(psi)*np.cos(psi)**3. + k**4.*np.cos(psi)**4.) + 2.*a_look**2.*b_look**4.*(-b_orbit**2.*np.sin(psi)**2. - h**2.*np.cos(psi)**2. - h*k*np.sin(2.*psi) - k**2.*np.sin(psi)**2.) + 2.*a_look**2.*b_look**2.*(b_orbit**4.*(1. - np.cos(4.*psi))/8. + b_orbit**2.*h**2.*(1. - np.cos(4.*psi))/2. + b_orbit**2.*h**2.*np.sin(psi)**4. + b_orbit**2.*h**2.*np.cos(psi)**4. + 2.*b_orbit**2.*h*k*np.sin(psi)**3.*np.cos(psi) - 2.*b_orbit**2.*h*k*np.sin(psi)*np.cos(psi)**3. - b_orbit**2.*k**2.*(1. - np.cos(4.*psi))/4. + h**4.*(1. - np.cos(4.*psi))/8. + 2.*h**3.*k*np.sin(psi)**3.*np.cos(psi) - 2.*h**3.*k*np.sin(psi)*np.cos(psi)**3. - h**2.*k**2.*(1. - np.cos(4.*psi))/2. + h**2.*k**2.*np.sin(psi)**4. + h**2.*k**2.*np.cos(psi)**4. - 2.*h*k**3.*np.sin(psi)**3.*np.cos(psi) + 2.*h*k**3.*np.sin(psi)*np.cos(psi)**3. + k**4.*(1. - np.cos(4.*psi))/8.) + b_look**4.*(b_orbit**4.*np.sin(psi)**4. - b_orbit**2.*h**2.*(1. - np.cos(4.*psi))/4. - 4.*b_orbit**2.*h*k*np.sin(psi)**3.*np.cos(psi) - 2.*b_orbit**2.*k**2.*np.sin(psi)**4. + h**4.*np.cos(psi)**4. + 4.*h**3.*k*np.sin(psi)*np.cos(psi)**3. + 3.*h**2.*k**2.*(1. - np.cos(4.*psi))/4. + 4.*h*k**3.*np.sin(psi)**3.*np.cos(psi) + k**4.*np.sin(psi)**4.))/(a_look**4.*b_look**4.)
+    return B/A, C/A, D/A, E/A
+
+def calc_FOVEllipse_yscdrFromxscdr(a_lscdr,b_lscdr,h,k,psi,x): 
+    """ Calculates the derotated and scaled FOV ellipse y from x
+    Args:
+        ndarray:
+            a_lscdr
+        ndarray:
+            b_lscdr
+        ndarray:
+            h
+        ndarray:
+            k
+        ndarray:
+            psi
+        ndarray:
+            x
+    Returns:
+        ndarray:
+            yeqn0
+        ndarray:
+            yeqn1
+    """
+    yeqn0 = (-a_lscdr**2.*h*np.sin(2.*psi)/2. + a_lscdr**2.*k*np.cos(psi)**2. + a_lscdr**2.*x*np.sin(2.*psi)/2. - a_lscdr*b_lscdr*np.sqrt(-a_lscdr**2.*np.sin(psi)**2. + a_lscdr**2. + b_lscdr**2.*np.sin(psi)**2. - h**2. + 2.*h*x - x**2.) + b_lscdr**2.*h*np.sin(2.*psi)/2. + b_lscdr**2.*k*np.sin(psi)**2. - b_lscdr**2.*x*np.sin(2.*psi)/2.)/(a_lscdr**2.*np.cos(psi)**2. + b_lscdr**2.*np.sin(psi)**2.)
+    yeqn1 = (-a_lscdr**2.*h*np.sin(2.*psi)/2. + a_lscdr**2.*k*np.cos(psi)**2. + a_lscdr**2.*x*np.sin(2.*psi)/2. + a_lscdr*b_lscdr*np.sqrt(-a_lscdr**2.*np.sin(psi)**2. + a_lscdr**2. + b_lscdr**2.*np.sin(psi)**2. - h**2. + 2.*h*x - x**2.) + b_lscdr**2.*h*np.sin(2.*psi)/2. + b_lscdr**2.*k*np.sin(psi)**2. - b_lscdr**2.*x*np.sin(2.*psi)/2.)/(a_lscdr**2.*np.cos(psi)**2. + b_lscdr**2.*np.sin(psi)**2.)
+    return yeqn0, yeqn1
+
+
+def calc_FOVEllipse_scdr_dydxEqn(a_lscdr,b_lscdr,h,k,psi,x,y):
+    """ Calculates the derivative of ellipse y from x From SpacecraftInFieldOfView.ipynb (Note this could be the negative of the correct answer, plot to find out)
+    Args:
+        ndarray:
+            a_lscdr
+        ndarray:
+            b_lscdr
+        ndarray:
+            h
+        ndarray:
+            k
+        ndarray:
+            psi
+        ndarray:
+            x
+        ndarray:
+            y
+    Returns:
+        ndarray:
+            dydx
+    """
+    dydx = (2.*h*np.sin(psi)**2./b_lscdr**2. - 2.*k*np.sin(psi)*np.cos(psi)/b_lscdr**2. - 2.*x*np.sin(psi)**2./b_lscdr**2. + 2.*y*np.sin(psi)*np.cos(psi)/b_lscdr**2. + 2.*h*np.sin(psi)*np.cos(psi)/a_lscdr**2. + 2.*h*np.cos(psi)**2./a_lscdr**2. - 2.*x*np.cos(psi)**2./a_lscdr**2. - 2.*y*np.sin(psi)*np.cos(psi)/a_lscdr**2.)/(2.*h*np.sin(psi)*np.cos(psi)/b_lscdr**2. - 2.*k*np.cos(psi)**2./b_lscdr**2. - 2.*x*np.sin(psi)*np.cos(psi)/b_lscdr**2. + 2.*y*np.cos(psi)**2./b_lscdr**2. - 2.*h*np.sin(psi)**2./a_lscdr**2. - 2.*h*np.sin(psi)*np.cos(psi)/a_lscdr**2. + 2.*x*np.sin(psi)*np.cos(psi)/a_lscdr**2. + 2.*y*np.sin(psi)**2./a_lscdr**2.)
+    return dydx
 
