@@ -663,6 +663,7 @@ y_intersections = np.zeros((len(psi),4))*np.nan
 # Under these conditions, the orbit circle center is within the elliptical FOV and we can use methods from exodetbox-projectedEllipse to determine intersection locations/quantity
 indsOrbitCenterInsideFOVEllipse = np.where(((0.-r_xy_Olook_dr_sc[0])*np.cos(psi) + (0.-r_xy_Olook_dr_sc[1])*np.sin(psi))**2./sma_dr_sc**2. + ((0.-r_xy_Olook_dr_sc[0])*np.sin(psi) - (0.-r_xy_Olook_dr_sc[1])*np.cos(psi))**2./smna_dr_sc**2.<=1.)[0]
 indsOrbitCenterOutsideFOVEllipse = np.where(((0.-r_xy_Olook_dr_sc[0])*np.cos(psi) + (0.-r_xy_Olook_dr_sc[1])*np.sin(psi))**2./sma_dr_sc**2. + ((0.-r_xy_Olook_dr_sc[0])*np.sin(psi) - (0.-r_xy_Olook_dr_sc[1])*np.cos(psi))**2./smna_dr_sc**2.>1.)[0]
+#NOTE: WE WILL NEED TO ACCOMODATE THE CASE WHERE 2*SMA OF THE FOV ELLIPSE INTERSECTS WITH THE ORBIT.
 
 
 #### Inds Inside FOV Ellipse
@@ -759,54 +760,79 @@ if len(indsOrbitCenterInsideFOVEllipse) > 0: #There is at least one orbit with o
 ### Inds Outside FOV Ellipse
 #NOTE REFORMULATE TO EXCLUDE indsOrbitCenterInsideFOVEllipse (ONLY CALCULATE WITH THE ONES WE NEED) 
 #Get FOV ellipse Extremas
-from scFOVEllipseSepExtrema import calc_FOVEllipseExtrema_QuarticCoefficients, calc_FOVEllipse_yscdrFromxscdr, calc_FOVEllipse_scdr_dydxEqn
-A2, B2, C2, D2, A3, B3, C3, D3 = calc_FOVEllipseExtrema_QuarticCoefficients(sma_dr_sc[indsOrbitCenterOutsideFOVEllipse],smna_dr_sc[indsOrbitCenterOutsideFOVEllipse],r_xy_Olook_dr_sc[0,indsOrbitCenterOutsideFOVEllipse],r_xy_Olook_dr_sc[1,indsOrbitCenterOutsideFOVEllipse],psi[indsOrbitCenterOutsideFOVEllipse])
-from exodetbox.projectedEllipse import *
-xout2, delta2, P2, D22, R2, delta_02 = quarticSolutions_ellipse_to_Quarticipynb(A2.astype('complex128'), B2, C2, D2)
-xout3, delta3, P3, D23, R3, delta_03 = quarticSolutions_ellipse_to_Quarticipynb(A3.astype('complex128'), B3, C3, D3)
-xout_combined = np.concatenate((xout2,xout3),axis=1)
+from scFOVEllipseSepExtrema import calc_FOVEllipse_yscdrFromxscdr, calc_FOVEllipse_scdr_dydxEqn, calc_FOVEllipseExtrema_QuarticCoefficients2
+A4, B4, C4, D4 = calc_FOVEllipseExtrema_QuarticCoefficients2(sma_dr_sc[indsOrbitCenterOutsideFOVEllipse],smna_dr_sc[indsOrbitCenterOutsideFOVEllipse],r_xy_Olook_dr_sc[0,indsOrbitCenterOutsideFOVEllipse],r_xy_Olook_dr_sc[1,indsOrbitCenterOutsideFOVEllipse],psi[indsOrbitCenterOutsideFOVEllipse])
+xout4, delta4, P4, D24, R4, delta_04 = quarticSolutions_ellipse_to_Quarticipynb(A4.astype('complex128'), B4, C4, D4)
+nu8 = np.concatenate((np.arccos(xout4),2.*np.pi - np.arccos(xout4)),axis=1)
+
+# argsortabsimag_xout_combined = np.argsort(np.abs(np.imag(nu8)),axis=1) #find which of the 8 solutions produces a minimum imaginary component
+# minImagInds = np.asarray([argsortabsimag_xout_combined[:,0],argsortabsimag_xout_combined[:,1],argsortabsimag_xout_combined[:,3],argsortabsimag_xout_combined[:,2]]) #assign two smallest imaginary solutions to output array
+# del argsortabsimag_xout_combined
+# nu4 = np.zeros((nu8.shape[0],4))
+# nu4[:,0] = np.real(nu8[np.arange(minImagInds.shape[1]),minImagInds[0]])
+
+xellipseEqn4 = np.zeros((nu8.shape))
+yellipseEqn4 = np.zeros((nu8.shape))
+for i in np.arange(8):
+    xellipseEqn4[:,i] = sma_dr_sc[indsOrbitCenterOutsideFOVEllipse]*np.cos(psi[indsOrbitCenterOutsideFOVEllipse])*np.cos(nu8[:,i]) - smna_dr_sc[indsOrbitCenterOutsideFOVEllipse]*np.sin(psi[indsOrbitCenterOutsideFOVEllipse])*np.sin(nu8[:,i]) + r_xy_Olook_dr_sc[0,indsOrbitCenterOutsideFOVEllipse] #x parametric equation for ellipse rotated and not at origin
+    yellipseEqn4[:,i] = sma_dr_sc[indsOrbitCenterOutsideFOVEllipse]*np.sin(psi[indsOrbitCenterOutsideFOVEllipse])*np.cos(nu8[:,i]) + smna_dr_sc[indsOrbitCenterOutsideFOVEllipse]*np.cos(psi[indsOrbitCenterOutsideFOVEllipse])*np.sin(nu8[:,i]) + r_xy_Olook_dr_sc[1,indsOrbitCenterOutsideFOVEllipse] #y parametric equation for ellipse rotated and not at origin
+
+#xellipseEqn = a_lscdr*sp.cos(psi)*sp.cos(nu) - b_lscdr*sp.sin(psi)*sp.sin(nu) + h #x parametric equation for ellipse rotated and not at origin
+#yellipseEqn = a_lscdr*sp.sin(psi)*sp.cos(nu) + b_lscdr*sp.cos(psi)*sp.sin(nu) + k #y parametric equation for ellipse rotated and not at origin
+
+sepsOut = np.sqrt(xellipseEqn4**2. + yellipseEqn4**2.)#np.zeros(nu8.shape)
+ellipseOut = np.zeros(nu8.shape)
+for i in np.arange(8):
+    ellipseOut[:,i] = np.abs(((xellipseEqn4[:,i]-r_xy_Olook_dr_sc[0,indsOrbitCenterOutsideFOVEllipse])*np.cos(psi[indsOrbitCenterOutsideFOVEllipse]) + (yellipseEqn4[:,i]-r_xy_Olook_dr_sc[1,indsOrbitCenterOutsideFOVEllipse])*np.sin(psi[indsOrbitCenterOutsideFOVEllipse]))**2./sma_dr_sc[indsOrbitCenterOutsideFOVEllipse]**2. + ((xellipseEqn4[:,i]-r_xy_Olook_dr_sc[0,indsOrbitCenterOutsideFOVEllipse])*np.sin(psi[indsOrbitCenterOutsideFOVEllipse]) - (yellipseEqn4[:,i]-r_xy_Olook_dr_sc[1,indsOrbitCenterOutsideFOVEllipse])*np.cos(psi[indsOrbitCenterOutsideFOVEllipse]))**2./smna_dr_sc[indsOrbitCenterOutsideFOVEllipse]**2. - 1.)
+
+metric = (1e-5 + np.logical_not(ellipseOut < 1e-5))*sepsOut #we add 1e-5 and use the logical not so that points inside the ellipse take value 
+argsortabs_nus8 = np.argsort(np.abs(metric),axis=1) #find which of the 8 solutions produces a minimum imaginary component
+minImagInds = np.asarray([argsortabs_nus8[:,0],argsortabs_nus8[:,1],argsortabs_nus8[:,2],argsortabs_nus8[:,3]]) #assign two smallest imaginary solutions to output array
+del argsortabs_nus8
+nuMin = np.real(nu8[np.arange(minImagInds.shape[1]),minImagInds[0]])
+xMin = np.real(xellipseEqn4[np.arange(minImagInds.shape[1]),minImagInds[0]])
+yMin = np.real(yellipseEqn4[np.arange(minImagInds.shape[1]),minImagInds[0]])
+nuMax = np.real(nu8[np.arange(minImagInds.shape[1]),minImagInds[3]])
+xMax = np.real(xellipseEqn4[np.arange(minImagInds.shape[1]),minImagInds[3]])
+yMax = np.real(yellipseEqn4[np.arange(minImagInds.shape[1]),minImagInds[3]])
+
+#TODO IDENTIFY WHEN THERE ARE LOCAL EXTREMA AS WELL!
+
+nu4 = np.zeros((nu8.shape[0],4))
+nu4[:,0] = np.real(nu8[np.arange(minImagInds.shape[1]),minImagInds[0]])
+nu4[:,1] = np.real(nu8[np.arange(minImagInds.shape[1]),minImagInds[1]])
+nu4[:,2] = np.real(nu8[np.arange(minImagInds.shape[1]),minImagInds[2]])
+nu4[:,3] = np.real(nu8[np.arange(minImagInds.shape[1]),minImagInds[3]])
+xellipseEqn4_4 = np.zeros((nu8.shape[0],4))
+xellipseEqn4_4[:,0] = np.real(xellipseEqn4[np.arange(minImagInds.shape[1]),minImagInds[0]])
+xellipseEqn4_4[:,1] = np.real(xellipseEqn4[np.arange(minImagInds.shape[1]),minImagInds[1]])
+xellipseEqn4_4[:,2] = np.real(xellipseEqn4[np.arange(minImagInds.shape[1]),minImagInds[2]])
+xellipseEqn4_4[:,3] = np.real(xellipseEqn4[np.arange(minImagInds.shape[1]),minImagInds[3]])
+yellipseEqn4_4 = np.zeros((nu8.shape[0],4))
+yellipseEqn4_4[:,0] = np.real(yellipseEqn4[np.arange(minImagInds.shape[1]),minImagInds[0]])
+yellipseEqn4_4[:,1] = np.real(yellipseEqn4[np.arange(minImagInds.shape[1]),minImagInds[1]])
+yellipseEqn4_4[:,2] = np.real(yellipseEqn4[np.arange(minImagInds.shape[1]),minImagInds[2]])
+yellipseEqn4_4[:,3] = np.real(yellipseEqn4[np.arange(minImagInds.shape[1]),minImagInds[3]])
+#np.argsort(np.abs(np.imag(nu8)),axis=1)
 
 
-#where there are only 2 solutions, use them and use the equation to solve for y
-argsortabsimag_xout_combined = np.argsort(np.abs(np.imag(xout_combined)),axis=1)
-minImagInds = np.asarray([argsortabsimag_xout_combined[:,0],argsortabsimag_xout_combined[:,1]])
-del argsortabsimag_xout_combined
-#minImagInds = np.asarray([np.argsort(np.abs(np.imag(xout_combined)),axis=1)[:,0],np.argsort(np.abs(np.imag(xout_combined)),axis=1)[:,1]])
-sortabsimag_xout_combined = np.argsort(np.abs(np.imag(xout_combined)),axis=1)
-minImagVals = np.asarray([sortabsimag_xout_combined[:,0],sortabsimag_xout_combined[:,1]])
-del sortabsimag_xout_combined
+ind20 = np.random.choice(np.arange(len(x0)))
+#Plot Min and Max Separations 
+num=51843213543215
+plt.close(int(num))
+plt.figure(num=num)
+plt.scatter(0.,0.,color='black')
+plt.plot(sma_dr_sc[indsOrbitCenterOutsideFOVEllipse[ind20]]*np.cos(psi[indsOrbitCenterOutsideFOVEllipse[ind20]])*np.cos(nu) - smna_dr_sc[indsOrbitCenterOutsideFOVEllipse[ind20]]*np.sin(psi[indsOrbitCenterOutsideFOVEllipse[ind20]])*np.sin(nu) + r_xy_Olook_dr_sc[0,indsOrbitCenterOutsideFOVEllipse[ind20]],\
+    sma_dr_sc[indsOrbitCenterOutsideFOVEllipse[ind20]]*np.sin(psi[indsOrbitCenterOutsideFOVEllipse[ind20]])*np.cos(nu) + smna_dr_sc[indsOrbitCenterOutsideFOVEllipse[ind20]]*np.cos(psi[indsOrbitCenterOutsideFOVEllipse[ind20]])*np.sin(nu) + r_xy_Olook_dr_sc[1,indsOrbitCenterOutsideFOVEllipse[ind20]],color='purple')
+plt.scatter(r_xy_Olook_dr_sc[0,indsOrbitCenterOutsideFOVEllipse[ind20]],r_xy_Olook_dr_sc[1,indsOrbitCenterOutsideFOVEllipse[ind20]],color='purple')
 
-x0 = np.real(xout_combined[np.arange(minImagInds.shape[1]),minImagInds[0]])
-x1 = np.real(xout_combined[np.arange(minImagInds.shape[1]),minImagInds[1]])
-y0m, y0p = calc_FOVEllipse_yscdrFromxscdr(sma_dr_sc[indsOrbitCenterOutsideFOVEllipse],smna_dr_sc[indsOrbitCenterOutsideFOVEllipse],r_xy_Olook_dr_sc[0,indsOrbitCenterOutsideFOVEllipse],r_xy_Olook_dr_sc[1,indsOrbitCenterOutsideFOVEllipse],psi[indsOrbitCenterOutsideFOVEllipse],x0)
-y1m, y1p = calc_FOVEllipse_yscdrFromxscdr(sma_dr_sc[indsOrbitCenterOutsideFOVEllipse],smna_dr_sc[indsOrbitCenterOutsideFOVEllipse],r_xy_Olook_dr_sc[0,indsOrbitCenterOutsideFOVEllipse],r_xy_Olook_dr_sc[1,indsOrbitCenterOutsideFOVEllipse],psi[indsOrbitCenterOutsideFOVEllipse],x1)
-m0m = np.divide(y0m,x0)
-m0p = np.divide(y0p,x0)
-dydx0m = calc_FOCEllipse_scdr_dydxEqn(sma_dr_sc[indsOrbitCenterOutsideFOVEllipse],smna_dr_sc[indsOrbitCenterOutsideFOVEllipse],r_xy_Olook_dr_sc[0,indsOrbitCenterOutsideFOVEllipse],r_xy_Olook_dr_sc[1,indsOrbitCenterOutsideFOVEllipse],psi[indsOrbitCenterOutsideFOVEllipse],x0,y0m)
-dydx0p = calc_FOCEllipse_scdr_dydxEqn(sma_dr_sc[indsOrbitCenterOutsideFOVEllipse],smna_dr_sc[indsOrbitCenterOutsideFOVEllipse],r_xy_Olook_dr_sc[0,indsOrbitCenterOutsideFOVEllipse],r_xy_Olook_dr_sc[1,indsOrbitCenterOutsideFOVEllipse],psi[indsOrbitCenterOutsideFOVEllipse],x0,y0p)
-error0m = np.abs(dxdy0m + 1./m0m)
-error0p = np.abs(dxdy0p + 1./m0p)
+plt.plot(smna[indsPlaneEllipse[indsOrbitCenterOutsideFOVEllipse[ind20]]]*np.cos(nu),smna[indsPlaneEllipse[indsOrbitCenterOutsideFOVEllipse[ind20]]]*np.sin(nu),color='black') #scaled, derotated, orbit circle
 
-m1m = np.divide(y1m,x1)
-m1p = np.divide(y1p,x1)
-dydx1m = calc_FOCEllipse_scdr_dydxEqn(sma_dr_sc[indsOrbitCenterOutsideFOVEllipse],smna_dr_sc[indsOrbitCenterOutsideFOVEllipse],r_xy_Olook_dr_sc[0,indsOrbitCenterOutsideFOVEllipse],r_xy_Olook_dr_sc[1,indsOrbitCenterOutsideFOVEllipse],psi[indsOrbitCenterOutsideFOVEllipse],x1,y1m)
-dydx1p = calc_FOCEllipse_scdr_dydxEqn(sma_dr_sc[indsOrbitCenterOutsideFOVEllipse],smna_dr_sc[indsOrbitCenterOutsideFOVEllipse],r_xy_Olook_dr_sc[0,indsOrbitCenterOutsideFOVEllipse],r_xy_Olook_dr_sc[1,indsOrbitCenterOutsideFOVEllipse],psi[indsOrbitCenterOutsideFOVEllipse],x1,y1p)
-error1m = np.abs(dxdy1m + 1./m1m)
-error1p = np.abs(dxdy1p + 1./m1p)
-
-#numSols = np.sum(np.isnan(xout_combined),axis=1) #number of solutions
-
-
-print(saltyburrito)
-
-indsWhere0 = np.where(numSols == 0)[0]
-indsWhere1 = np.where(numSols == 1)[0]
-indsWhere2 = np.where(numSols == 2)[0]
-indsWhere3 = np.where(numSols == 3)[0]
-indsWhere4 = np.where(numSols == 4)[0]
-indsWhere5 = np.where(numSols == 5)[0]
-indsWhere6 = np.where(numSols == 6)[0]
-indsWhere7 = np.where(numSols == 7)[0]
+plt.scatter(xellipseEqn4_4[ind20],yellipseEqn4_4[ind20],color='green')
+plt.scatter(xMin[ind20],yMin[ind20],color='red') #Plots the minimum
+plt.scatter(xMax[ind20],yMax[ind20],color='blue') #Plots the maximum
+plt.gca().axis('equal')
+plt.show(block=False)
 
 
 print(saltyburrito)
