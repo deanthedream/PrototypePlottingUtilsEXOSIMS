@@ -902,7 +902,7 @@ print(line9)
 
 #### Table 2 #############################################################################
 lines = list()
-for k in [(0,1),(0,2),(0,3),(0,6),(0,7),(1,2),(1,5),(2,3),(2,5),(2,6),(2,7),(3,4),(3,6),(4,5),(4,6),(4,7),(5,6),(5,7),(6,7)]:
+for k in [(0,1),(0,2),(0,3),(0,6),(0,7),(1,2),(1,5),(2,3),(2,5),(2,6),(2,7),(3,4),(3,6),(3,7),(4,5),(4,6),(4,7),(5,6),(5,7),(6,7)]: #iterate over planet pairs
     i = k[0]
     j = k[1]
     eqnDmagLHS = eqnDmag.subs(Phi,symbolicPhases[i]).subs(a,planProp[planets[i]]['a']).subs(R,planProp[planets[i]]['R']).subs(p,planProp[planets[i]]['p'])
@@ -913,7 +913,7 @@ for k in [(0,1),(0,2),(0,3),(0,6),(0,7),(1,2),(1,5),(2,3),(2,5),(2,6),(2,7),(3,4
         dmagk = float(eqnDmagLHS.subs(alpha,ask).evalf())
         sk = float(eqnSAlpha.subs(a,planProp[planets[i]]['a']*u.m.to('AU')).subs(alpha,ask).evalf())
         ik2 = np.min([np.min([ask,180.-ask]),np.min([alk,180.-alk])])
-        lines.append(" & " + str(np.round(dmagk,2)) + " & " + str(np.round(sk,2)) + " & " + str(np.round(ask,2)) + " & " + str(np.round(alk,2)) + " & " + str(np.round(ik2,2)) + "\\\\")
+        lines.append(planets[i] + "-" + planets[j] + " & " + str(np.round(dmagk,2)) + " & " + str(np.round(sk,2)) + " & " + str(np.round(ask,2)) + " & " + str(np.round(alk,2)) + " & " + str(np.round(ik2,2)) + "\\\\")
 
         # i43 = incDict[3,4]['opt3']['inc_range'][12]
         # as43 = incDict[3,4]['opt3']['v1'][12]
@@ -929,7 +929,7 @@ for k in [(0,1),(0,2),(0,3),(0,6),(0,7),(1,2),(1,5),(2,3),(2,5),(2,6),(2,7),(3,4
         dmagk = float(eqnDmagLHS.subs(alpha,ask).evalf())
         sk = float(eqnSAlpha.subs(a,planProp[planets[i]]['a']*u.m.to('AU')).subs(alpha,ask).evalf())
         ik2 = np.min([np.min([ask,180.-ask]),np.min([alk,180.-alk])])
-        lines.append(" & " + str(np.round(dmagk,2)) + " & " + str(np.round(sk,2)) + " & " + str(np.round(ask,2)) + " & " + str(np.round(alk,2)) + " & " + str(np.round(ik2,2)) + "\\\\")
+        lines.append(planets[i] + "-" + planets[j] + " & " + str(np.round(dmagk,2)) + " & " + str(np.round(sk,2)) + " & " + str(np.round(ask,2)) + " & " + str(np.round(alk,2)) + " & " + str(np.round(ik2,2)) + "\\\\")
     elif i==4 and j==5:
         ik =  incDict[i,j][incDict[i,j]['optNum']]['inc_range'][incDict[i,j]['maxIncInd_Opt']]
         ask = incDict[i,j][incDict[i,j]['optNum']]['v1'][incDict[i,j]['maxIncInd_Opt']]
@@ -937,7 +937,7 @@ for k in [(0,1),(0,2),(0,3),(0,6),(0,7),(1,2),(1,5),(2,3),(2,5),(2,6),(2,7),(3,4
         dmagk = float(eqnDmagLHS.subs(alpha,ask).evalf())
         sk = float(eqnSAlpha.subs(a,planProp[planets[i]]['a']*u.m.to('AU')).subs(alpha,ask).evalf())
         ik2 = np.min([np.min([ask,180.-ask]),np.min([alk,180.-alk])])
-        lines.append(" & " + str(np.round(dmagk,2)) + " & " + str(np.round(sk,2)) + " & " + str(np.round(ask,2)) + " & " + str(np.round(alk,2)) + " & " + str(np.round(ik2,2)) + "\\\\")
+        lines.append(planets[i] + "-" + planets[j] + " & " + str(np.round(dmagk,2)) + " & " + str(np.round(sk,2)) + " & " + str(np.round(ask,2)) + " & " + str(np.round(alk,2)) + " & " + str(np.round(ik2,2)) + "\\\\")
 
         # i54 = 0.75#incDict[4,5]['opt3']['inc_range'][12]
         # as54 = 178.55#incDict[4,5]['opt3']['v1'][12]
@@ -956,7 +956,7 @@ for k in [(0,1),(0,2),(0,3),(0,6),(0,7),(1,2),(1,5),(2,3),(2,5),(2,6),(2,7),(3,4
         dmagk = float(eqnDmagLHS.subs(alpha,ask).evalf())
         sk = float(eqnSAlpha.subs(a,planProp[planets[i]]['a']*u.m.to('AU')).subs(alpha,ask).evalf())
         ik2 = np.min([np.min([ask,180.-ask]),np.min([alk,180.-alk])])
-        lines.append(" & " + str(np.round(dmagk,2)) + " & " + str(np.round(sk,2)) + " & " + str(np.round(ask,2)) + " & " + str(np.round(alk,2)) + " & " + str(np.round(ik2,2)) + "\\\\")
+        lines.append(planets[i] + "-" + planets[j] + " & " + str(np.round(dmagk,2)) + " & " + str(np.round(sk,2)) + " & " + str(np.round(ask,2)) + " & " + str(np.round(alk,2)) + " & " + str(np.round(ik2,2)) + "\\\\")
     else:
 
         ik =  incDict[i,j][incDict[i,j]['optNum']]['inc_range'][incDict[i,j]['maxIncInd_Opt']]
@@ -965,7 +965,7 @@ for k in [(0,1),(0,2),(0,3),(0,6),(0,7),(1,2),(1,5),(2,3),(2,5),(2,6),(2,7),(3,4
         dmagk = float(eqnDmagLHS.subs(alpha,ask).evalf())
         sk = float(eqnSAlpha.subs(a,planProp[planets[i]]['a']*u.m.to('AU')).subs(alpha,ask).evalf())
         ik2 = np.min([np.min([ask,180.-ask]),np.min([alk,180.-alk])])
-        lines.append(" & " + str(np.round(dmagk,2)) + " & " + str(np.round(sk,2)) + " & " + str(np.round(ask,2)) + " & " + str(np.round(alk,2)) + " & " + str(np.round(ik2,2)) + "\\\\")
+        lines.append(planets[i] + "-" + planets[j] + " & " + str(np.round(dmagk,2)) + " & " + str(np.round(sk,2)) + " & " + str(np.round(ask,2)) + " & " + str(np.round(alk,2)) + " & " + str(np.round(ik2,2)) + "\\\\")
 print('******************Lines for Table 2 in Paper ***************************')
 print(lines)
 for line in lines:
@@ -1117,5 +1117,788 @@ plotDmagvss(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,
 plotDmagvss(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=0.5, folder='./', PPoutpath='./')
 plotDmagvss(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=0.85, folder='./', PPoutpath='./')
 plotDmagvss(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=25.3, folder='./', PPoutpath='./')
+
+
+
+
+
+#### Calculate Phi Inverse Function for each melded phase function
+
+table2Data = [['Mercury-Venus' , 25.41 , 0.26 , 42.18 , 158.94 , 21.06], #mercury all dmag Venus s-3sigma s-2sigma s-1sigma dmag-1sigma dmag-2sigma dmag-3sigma
+['Mercury-Earth' , 27.72 , 0.36 , 111.84 , 158.94 , 21.06], #Mercury all dmag Earth all dmag
+['Mercury-Mars' , 26.57 , 0.38 , 81.16 , 14.54 , 14.54], #Mercury all dmag Mars all s
+['Mercury-Uranus' , 26.13 , 0.36 , 67.06 , 1.06 , 1.06], #Mercury all dmag Uranus all s
+['Mercury-Neptune' , 27.2 , 0.38 , 99.27 , 0.73 , 0.73], #Mercury all dmag Neptune all s
+['Venus-Earth' , 23.15 , 0.72 , 92.46 , 46.27 , 46.27], # Venus all dmag Earth all s
+['Venus-Saturn' , 22.72 , 0.69 , 73.37 , 4.15 , 4.15], # Venus all dmag Saturn all s
+['Earth-Mars' , 26.6 , 0.65 , 139.34 , 25.32 , 25.32], #Earth all dmag Mars all s
+['Earth-Saturn' , 22.8 , 0.29 , 17.06 , 1.75 , 1.75], # Earth all s Saturn all s
+['Earth-Uranus' , 26.13 , 0.76 , 130.77 , 2.26 , 2.26], #Earth all dmag Uranus all s
+['Earth-Neptune' , 27.12 , 0.53 , 148.27 , 1.0 , 1.0], #Earth all dmag Neptune all s
+['Mars-Jupiter (1)' , 27.48 , 1.48 , 76.61 , 163.45 , 16.55], #Jupiter: left s-3sigma, s-2sigma, s-1sigma  right dmag-1sigma, dmag-2sigma, s+3sigma, Mars: 
+['Mars-Jupiter (2)' , 32.98 , 0.27 , 169.67 , 176.99 , 3.01], #intersections, all dmag intersections
+['Mars-Uranus' , 26.2 , 0.0 , 0.0 , 0.0 , 0.0], #Both all s
+['Mars-Neptune', 27.22 , 1.38 , 65.07 , 2.64 , 2.64],
+['Jupiter-Saturn' , 22.83 , 4.73 , 114.64 , 29.58 , 29.58], #Both All s
+['Jupiter-Uranus' , 26.1 , 2.18 , 155.24 , 6.52 , 6.52], #Both all s
+['Jupiter-Neptune' , 27.19 , 1.58 , 162.36 , 3.01 , 3.01], #Jupiter all s Neptune: all s
+['Saturn-Uranus' , 26.19 , 5.47 , 145.21 , 16.55 , 16.55], #Both all s
+['Saturn-Neptune' , 27.27 , 4.35 , 153.02 , 8.32 , 8.32], #Both all s
+['Uranus-Neptune' , 27.66 , 19.16 , 93.89 , 39.61 , 39.61]] #Uranus s-3sigma s-2sigma s-1sigma dmag-1sigma s-2sigma s-3sigma Neptune all s
+# mercury -0
+# venus -1
+# earth -2
+# mars -3
+# jupiter -4
+# saturn -5
+# uranus -6
+# neptune -7
+
+#Create a dictionary of the intersection types
+#encodes what line each sigma intersects [[6 smaller sma planet intersections],[6 larger sma planet intersections]]
+#each pair blongs to a sigma. the pair is ordered from smallest beta to largest beta (counter-clockwise) [[1sigma 1sigma],[2sigma 2sigma],[3sigma 3sigma]]
+#encoding reads as s or d for separation or dmag and + or - for lower or upper and a or b indicates beta is (approximately) above or below 90deg. example 'd-a' means the intersection is dmag-uncertainty_dmag and 90deg<beta<180deg
+sigmaIntTypeDict = dict() #[smaller planet 3sigma,]
+sigmaIntTypeDict[(0,1)] = [[['d-b','d+b'],['d-b','d+b'],['d-b','d+b']],[['d-a','s-a'],['d-a','s-a'],['d-a','s-a']]] #OK
+sigmaIntTypeDict[(0,2)] = [[['d-a','d+a'],['d-a','d+a'],['d-a','d+a']],[['d-a','d+a'],['d-a','d+a'],['d-a','d+a']]] #OK
+sigmaIntTypeDict[(0,3)] = [[['d-b','d+b'],['d-b','d+b'],['d-b','d+a']],[['s-b','s+b'],['s-b','s+b'],['s-b','s+b']]] #OK
+sigmaIntTypeDict[(0,6)] = [[['d-b','d+b'],['d-b','d+b'],['d-b','d+b']],[['s-b','s+b'],['s-b','s+b'],['s-b','s+b']]] #OK
+sigmaIntTypeDict[(0,7)] = [[['d-a','d+a'],['d-a','d+a'],['d-b','d+a']],[['s-b','s+b'],['s-b','s+b'],['s-b','s+b']]] #OK
+
+sigmaIntTypeDict[(1,2)] = [[['d-b','d+a'],['d-b','d+a'],['d-b','d+a']],[['s-b','s+b'],['s-b','s+b'],['s-b','s+b']]] #OK
+sigmaIntTypeDict[(1,5)] = [[['d-b','d+b'],['d-b','d+b'],['d-b','d+a']],[['s-b','s+b'],['s-b','s+b'],['s-b','s+b']]] #OK
+
+sigmaIntTypeDict[(2,3)] = [[['d-a','d+a'],['d-a','d+a'],['d-a','d+a']],[['s-b','s+b'],['s-b','s+b'],['s-b','s+b']]] #OK
+sigmaIntTypeDict[(2,5)] = [[['s-b','s+b'],['s-b','s+b'],['s-b','s+b']],[['s-b','s+b'],['s-b','s+b'],['s-b','s+b']]] #OK
+sigmaIntTypeDict[(2,6)] = [[['d-a','d+a'],['d-a','d+a'],['d-a','d+a']],[['s-b','s+b'],['s-b','s+b'],['s-b','s+b']]] #OK
+sigmaIntTypeDict[(2,7)] = [[['d-a','d+a'],['d-a','d+a'],['d-a','d+a']],[['s-b','s+b'],['s-b','s+b'],['s-b','s+b']]] #OK
+
+sigmaIntTypeDict[(3,4)] = [[[['d-b','d+b'],['s-b','d+b'],['s-b','d+b']],[['s+a','s-a'],['s+a','s-a'],['s+a','s-a']]], # JUPITER 0 OK
+    [[['d-a','d+a'],['d-a','d+a'],['d-a','d+a']],[['d-a','d+a'],['d-a','d+a'],['d-a','d+a']]]] #the high dmag one #OK JUPITER 1
+sigmaIntTypeDict[(3,6)] = [[['s+b','s+b'],['s+b','s+b'],['s+b','s+b']],[['s+b','s+b'],['s+b','s+b'],['s+b','s+b']]] #OK
+sigmaIntTypeDict[(3,7)] = [[['s-b','s+b'],['s-b','s+b'],['s-b','d+b']],[['s-b','s+b'],['s-b','s+b'],['s-b','s+b']]] #OK
+
+sigmaIntTypeDict[(4,5)] = [[['s+a','s-a'],['s+a','s-a'],['s+a','s-a']],[['s-b','s+b'],['s-b','s+b'],['s-b','s+b']]] #OK
+sigmaIntTypeDict[(4,6)] = [[['s+a','s-a'],['s+a','s-a'],['s+a','s-a']],[['s-b','s+b'],['s-b','s+b'],['s-b','s+b']]] #OK
+sigmaIntTypeDict[(4,7)] = [[['s+a','s-a'],['s+a','s-a'],['s+a','s-a']],[['s-b','s+b'],['s-b','s+b'],['s-b','s+b']]] #OK
+
+sigmaIntTypeDict[(5,6)] = [[['s+a','s-a'],['s+a','s-a'],['s+a','s-a']],[['s-b','s+b'],['s-b','s+b'],['s-b','s+b']]] #OK
+sigmaIntTypeDict[(5,7)] = [[['s+a','s-a'],['s+a','s-a'],['s+a','s-a']],[['s-b','s+b'],['s-b','s+b'],['s-b','s+b']]] #OK
+
+sigmaIntTypeDict[(6,7)] = [[['d-b','s-a'],['s-b','s-a'],['s-b','s-a']],[['s-b','s+b'],['s-b','s+b'],['s-b','s+b']]] #OK
+
+
+#Define Phase Function Inverse For Eacg Planet
+from scipy.interpolate import PchipInterpolator
+import scipy.integrate as integrate
+for i in np.arange(len(planets)):
+    betas = np.linspace(start=0.,stop=180.,num=1000,endpoint=True)
+    if i == 1: #VENUS MUST BE DONE PIECEWISE
+        #need to find the betas of local extrema for Venus phase function.... sigh
+        from scipy.signal import argrelextrema
+        betas = np.linspace(start=0.,stop=180.,num=10**6,endpoint=True) #in deg
+        indlmax = argrelextrema(planProp[planets[1]]['phaseFuncMelded'](betas), np.greater)[0]# for local maxima
+        dmaglmax = planProp[planets[1]]['phaseFuncMelded'](betas[indlmax[1]])
+        indlmin = argrelextrema(planProp[planets[1]]['phaseFuncMelded'](betas), np.less)[0] # for local minima
+        dmaglmin = planProp[planets[1]]['phaseFuncMelded'](betas[indlmin[0]])
+
+        #Create 3 independent beta ranges
+        beta0 = np.linspace(start=betas[indlmax[0]],stop=betas[indlmin[0]-1],num=2000) # 0->localmin
+        beta1 = np.linspace(start=betas[indlmin[0]+1],stop=betas[indlmax[1]-1],num=2000) # localmin->localmax
+        beta2 = np.linspace(start=betas[indlmax[1]+1],stop=betas[indlmin[1]],num=2000) # localmax -> pi
+        Phis0 = planProp[planets[i]]['phaseFuncMelded'](beta0)
+        Phis1 = planProp[planets[i]]['phaseFuncMelded'](beta1)
+        Phis2 = planProp[planets[i]]['phaseFuncMelded'](beta2)
+
+        #DELETE
+        # plt.figure(53548431)
+        # plt.plot(beta0,-Phis0)
+        # plt.show(block=False)
+        # plt.figure(53548431)
+        # plt.plot(beta2,-Phis2)
+        # plt.show(block=False)
+
+        planProp[planets[i]]['phaseFuncMeldedInverse'] = [PchipInterpolator(-Phis0,beta0),\
+            PchipInterpolator(Phis1,beta1),\
+            PchipInterpolator(-Phis2,beta2)] #the -Phis ensure the function monotonically increases NOTE THAT PHIS1 MUST BE THE OPPOSITE SIGN
+        planProp[planets[i]]['threedmagIntLimits'] = [dmaglmin,dmaglmax]
+        planProp[planets[i]]['threebetaLimits'] = [betas[indlmin[1]],betas[indlmax[1]]]
+
+    else:
+        #Phis = self.calc_Phi(betas,np.asarray([])) #TODO: Redefine for compatability with whichPlanetPhaseFunction Input realSolarSystemPhaseFunc
+        Phis = planProp[planets[i]]['phaseFuncMelded'](betas)
+        indlmax = argrelextrema(Phis, np.greater)[0]# for local maxima
+        if len(indlmax) > 0:
+            #DELETE
+            # plt.figure(53548431)
+            # plt.plot(betas[indlmax[0]:],-Phis[indlmax[0]:])#[indlmax[0]:])
+            # plt.title(str(i))
+            # plt.show(block=False)
+            planProp[planets[i]]['phaseFuncMeldedInverse'] = PchipInterpolator(-Phis[indlmax[0]:],betas[indlmax[0]:]) #the -Phis ensure the function monotonically increases
+        else:
+            planProp[planets[i]]['phaseFuncMeldedInverse'] = PchipInterpolator(-Phis,betas) #the -Phis ensure the function monotonically increases
+
+
+
+
+
+
+
+
+
+
+num=8888888883333
+plt.close(num)
+fig67 = plt.figure(num=num)
+
+#Plot Central Line
+betas = np.linspace(start=0.,stop=180.,num=1000)
+for i in np.arange(len(planets)):
+    dmags69 = deltaMag(planProp[planets[i]]['p'], planProp[planets[i]]['R']*u.m, planProp[planets[i]]['a']*u.m, planProp[planets[i]]['phaseFuncMelded'](betas))
+    seps69 = separation_from_alpha_ap(betas*np.pi/180.,planProp[planets[i]]['a']*u.m).to('AU').value
+    plt.plot(seps69,dmags69,color=planProp[planets[i]]['planet_labelcolors'],label=planProp[planets[i]]['planet_name'].capitalize())
+
+#Plot all intersections
+for k in [(0,1),(0,2),(0,3),(0,6),(0,7),(1,2),(1,5),(2,3),(2,5),(2,6),(2,7),(3,4),(3,6),(3,7),(4,5),(4,6),(4,7),(5,6),(5,7),(6,7)]: #iterate over planet pairs
+    i = k[0]
+    j = k[1]
+    eqnDmagLHS = eqnDmag.subs(Phi,symbolicPhases[i]).subs(a,planProp[planets[i]]['a']).subs(R,planProp[planets[i]]['R']).subs(p,planProp[planets[i]]['p'])
+    if i==3 and j==4:
+        ik =  incDict[i,j][incDict[i,j]['optNum']]['inc_range'][incDict[i,j]['maxIncInd_Opt']]
+        ask = incDict[i,j][incDict[i,j]['optNum']]['v1'][incDict[i,j]['maxIncInd_Opt']]
+        alk = incDict[i,j][incDict[i,j]['optNum']]['v2'][incDict[i,j]['maxIncInd_Opt']]
+        dmagk = float(eqnDmagLHS.subs(alpha,ask).evalf())
+        sk = float(eqnSAlpha.subs(a,planProp[planets[i]]['a']*u.m.to('AU')).subs(alpha,ask).evalf())
+        ik2 = np.min([np.min([ask,180.-ask]),np.min([alk,180.-alk])])
+
+        plt.scatter(sk,dmagk,color='black')
+        plt.plot([sk-uncertainty_s,sk-uncertainty_s,sk+uncertainty_s,sk+uncertainty_s,sk-uncertainty_s],\
+            [dmagk+uncertainty_dmag,dmagk-uncertainty_dmag,dmagk-uncertainty_dmag,dmagk+uncertainty_dmag,dmagk+uncertainty_dmag],color='darkblue',linewidth=0.5)
+        plt.plot([sk-2.*uncertainty_s,sk-2.*uncertainty_s,sk+2.*uncertainty_s,sk+2.*uncertainty_s,sk-2.*uncertainty_s],\
+            [dmagk+2.*uncertainty_dmag,dmagk-2.*uncertainty_dmag,dmagk-2.*uncertainty_dmag,dmagk+2.*uncertainty_dmag,dmagk+2.*uncertainty_dmag],color='blue',linewidth=0.5)
+        plt.plot([sk-3.*uncertainty_s,sk-3.*uncertainty_s,sk+3.*uncertainty_s,sk+3.*uncertainty_s,sk-3.*uncertainty_s],\
+            [dmagk+3.*uncertainty_dmag,dmagk-3.*uncertainty_dmag,dmagk-3.*uncertainty_dmag,dmagk+3.*uncertainty_dmag,dmagk+3.*uncertainty_dmag],color='skyblue',linewidth=0.5)
+
+        ik =  incDict[i,j][incDict[i,j]['optNum']]['inc_range'][12]
+        ask = incDict[i,j][incDict[i,j]['optNum']]['v1'][12]
+        alk = incDict[i,j][incDict[i,j]['optNum']]['v2'][12]
+        dmagk = float(eqnDmagLHS.subs(alpha,ask).evalf())
+        sk = float(eqnSAlpha.subs(a,planProp[planets[i]]['a']*u.m.to('AU')).subs(alpha,ask).evalf())
+        ik2 = np.min([np.min([ask,180.-ask]),np.min([alk,180.-alk])])
+    elif i==4 and j==5:
+        ik =  incDict[i,j][incDict[i,j]['optNum']]['inc_range'][incDict[i,j]['maxIncInd_Opt']]
+        ask = 118.238
+        alk = 28.585
+        # ask = incDict[i,j][incDict[i,j]['optNum']]['v1'][incDict[i,j]['maxIncInd_Opt']]
+        # alk = incDict[i,j][incDict[i,j]['optNum']]['v2'][incDict[i,j]['maxIncInd_Opt']]
+        dmagk = float(eqnDmagLHS.subs(alpha,ask).evalf())
+        sk = float(eqnSAlpha.subs(a,planProp[planets[i]]['a']*u.m.to('AU')).subs(alpha,ask).evalf())
+        ik2 = np.min([np.min([ask,180.-ask]),np.min([alk,180.-alk])])
+
+        # ik =  0.75 #incDict[i,j][incDict[i,j]['optNum']]['inc_range'][incDict[i,j]['maxIncInd_Opt']]
+        
+        # #ask = 178.55 #incDict[i,j][incDict[i,j]['optNum']]['v1'][incDict[i,j]['maxIncInd_Opt']]
+        # #alk = 179.20 #incDict[i,j][incDict[i,j]['optNum']]['v2'][incDict[i,j]['maxIncInd_Opt']]
+        # ik =  incDict[i,j][incDict[i,j]['optNum']]['inc_range'][incDict[i,j]['maxIncInd_Opt']]
+        # ask = incDict[i,j][incDict[i,j]['optNum']]['v1'][incDict[i,j]['maxIncInd_Opt']]
+        # alk = incDict[i,j][incDict[i,j]['optNum']]['v2'][incDict[i,j]['maxIncInd_Opt']]
+        dmagk = float(eqnDmagLHS.subs(alpha,ask).evalf())
+        sk = float(eqnSAlpha.subs(a,planProp[planets[i]]['a']*u.m.to('AU')).subs(alpha,ask).evalf())
+        ik2 = np.min([np.min([ask,180.-ask]),np.min([alk,180.-alk])])
+    else:
+        ik =  incDict[i,j][incDict[i,j]['optNum']]['inc_range'][incDict[i,j]['maxIncInd_Opt']]
+        ask = incDict[i,j][incDict[i,j]['optNum']]['v1'][incDict[i,j]['maxIncInd_Opt']]
+        alk = incDict[i,j][incDict[i,j]['optNum']]['v2'][incDict[i,j]['maxIncInd_Opt']]
+        dmagk = float(eqnDmagLHS.subs(alpha,ask).evalf())
+        sk = float(eqnSAlpha.subs(a,planProp[planets[i]]['a']*u.m.to('AU')).subs(alpha,ask).evalf())
+        ik2 = np.min([np.min([ask,180.-ask]),np.min([alk,180.-alk])])
+
+    plt.scatter(sk,dmagk,color='black')
+    plt.plot([sk-uncertainty_s,sk-uncertainty_s,sk+uncertainty_s,sk+uncertainty_s,sk-uncertainty_s],\
+        [dmagk+uncertainty_dmag,dmagk-uncertainty_dmag,dmagk-uncertainty_dmag,dmagk+uncertainty_dmag,dmagk+uncertainty_dmag],color='darkblue',linewidth=0.5)
+    plt.plot([sk-2.*uncertainty_s,sk-2.*uncertainty_s,sk+2.*uncertainty_s,sk+2.*uncertainty_s,sk-2.*uncertainty_s],\
+        [dmagk+2.*uncertainty_dmag,dmagk-2.*uncertainty_dmag,dmagk-2.*uncertainty_dmag,dmagk+2.*uncertainty_dmag,dmagk+2.*uncertainty_dmag],color='blue',linewidth=0.5)
+    plt.plot([sk-3.*uncertainty_s,sk-3.*uncertainty_s,sk+3.*uncertainty_s,sk+3.*uncertainty_s,sk-3.*uncertainty_s],\
+        [dmagk+3.*uncertainty_dmag,dmagk-3.*uncertainty_dmag,dmagk-3.*uncertainty_dmag,dmagk+3.*uncertainty_dmag,dmagk+3.*uncertainty_dmag],color='skyblue',linewidth=0.5)
+
+#plt.scatter(planProp[planets[i]]['s'],planProp[planets[i]]['dmag'],color='black',s=16,zorder=50) #Used for checking spacing
+plt.xlim([1e-1,0.5])
+plt.xscale('log')
+plt.gcf().canvas.draw()
+plt.show(block=False)
+plt.gcf().canvas.draw()
+
+#ADD SMIN FOR TELESCOPE
+smin_telescope = IWA_HabEx.to('rad').value*10.*u.pc.to('AU') #IWA for HabEx 45 mas observing target at 10 pc
+plt.plot([smin_telescope,smin_telescope],[10.,70.],color='black',linestyle='-')
+smin_telescope2 = IWA2.to('rad').value*10.*u.pc.to('AU') #IWA for HabEx 45 mas observing target at 10 pc
+plt.plot([smin_telescope2,smin_telescope2],[10.,70.],color='black',linestyle='-')
+
+#plt.text(7,19.5,'Credit: Dean Keithly',fontsize='small',fontweight='normal')
+plt.text(1.05*smin_telescope,41, str(int(IWA_HabEx.value*1000)) + ' mas\nat 10 pc',fontsize='medium',fontweight='bold',rotation=90)
+plt.text(1.05*smin_telescope2,41, str(int(IWA2.value*1000)) + ' mas\nat 10 pc',fontsize='medium',fontweight='bold',rotation=90)
+plt.xlim([1e-1,32.])
+plt.ylim([19.,46.])
+plt.ylabel('Planet-Star ' + r'$\Delta \mathrm{mag}$', weight='bold')
+plt.xlabel('Projected Planet-Star Separation, ' + r'$s$,' +' in AU', weight='bold')
+plt.legend(loc=1)
+#plt.title('Inclination: ' + str(np.round(90-inclination,1)) + r'$^\circ$' ,weight='bold')
+plt.gcf().canvas.draw()
+plt.show(block=False)
+plt.gcf().canvas.draw()
+#print('Done with planet: ' + str(planets[i]))
+
+
+
+
+
+
+
+
+
+
+
+
+#### Calculate Probability
+from astropy import constants as const
+#from exodetbox.trueAnomalyFromEccentricAnomaly import trueAnomalyFromEccentricAnomaly
+#from exodetbox.projectedEllipse import *
+for k in [(0,1),(0,2),(0,3),(0,6),(0,7),(1,2),(1,5),(2,3),(2,5),(2,6),(2,7),(3,4),(3,6),(3,7),(4,5),(4,6),(4,7),(5,6),(5,7),(6,7)]: #iterate over planet pairs
+    i = k[0]
+    j = k[1]
+    eqnDmagLHS = eqnDmag.subs(Phi,symbolicPhases[i]).subs(a,planProp[planets[i]]['a']).subs(R,planProp[planets[i]]['R']).subs(p,planProp[planets[i]]['p'])
+    if i==3 and j==4:
+        ik =  incDict[i,j][incDict[i,j]['optNum']]['inc_range'][incDict[i,j]['maxIncInd_Opt']]
+        ask = incDict[i,j][incDict[i,j]['optNum']]['v1'][incDict[i,j]['maxIncInd_Opt']]
+        alk = incDict[i,j][incDict[i,j]['optNum']]['v2'][incDict[i,j]['maxIncInd_Opt']]
+        dmagk = float(eqnDmagLHS.subs(alpha,ask).evalf())
+        sk = float(eqnSAlpha.subs(a,planProp[planets[i]]['a']*u.m.to('AU')).subs(alpha,ask).evalf())
+        ik2 = np.min([np.min([ask,180.-ask]),np.min([alk,180.-alk])])
+        sk_34 = sk
+        dmagk_34 = dmagk
+
+
+        ik =  incDict[i,j][incDict[i,j]['optNum']]['inc_range'][12]
+        ask = incDict[i,j][incDict[i,j]['optNum']]['v1'][12]
+        alk = incDict[i,j][incDict[i,j]['optNum']]['v2'][12]
+        dmagk = float(eqnDmagLHS.subs(alpha,ask).evalf())
+        sk = float(eqnSAlpha.subs(a,planProp[planets[i]]['a']*u.m.to('AU')).subs(alpha,ask).evalf())
+        ik2 = np.min([np.min([ask,180.-ask]),np.min([alk,180.-alk])])
+    elif i==4 and j==5:
+        # ik =  incDict[i,j][incDict[i,j]['optNum']]['inc_range'][incDict[i,j]['maxIncInd_Opt']]
+        # ask = incDict[i,j][incDict[i,j]['optNum']]['v1'][incDict[i,j]['maxIncInd_Opt']]
+        # alk = incDict[i,j][incDict[i,j]['optNum']]['v2'][incDict[i,j]['maxIncInd_Opt']]
+        # dmagk = float(eqnDmagLHS.subs(alpha,ask).evalf())
+        # sk = float(eqnSAlpha.subs(a,planProp[planets[i]]['a']*u.m.to('AU')).subs(alpha,ask).evalf())
+        # ik2 = np.min([np.min([ask,180.-ask]),np.min([alk,180.-alk])])
+
+        ask = 118.238
+        alk = 28.585
+        # ask = incDict[i,j][incDict[i,j]['optNum']]['v1'][incDict[i,j]['maxIncInd_Opt']]
+        # alk = incDict[i,j][incDict[i,j]['optNum']]['v2'][incDict[i,j]['maxIncInd_Opt']]
+        dmagk = float(eqnDmagLHS.subs(alpha,ask).evalf())
+        sk = float(eqnSAlpha.subs(a,planProp[planets[i]]['a']*u.m.to('AU')).subs(alpha,ask).evalf())
+        ik2 = np.min([np.min([ask,180.-ask]),np.min([alk,180.-alk])])
+    else:
+        ik =  incDict[i,j][incDict[i,j]['optNum']]['inc_range'][incDict[i,j]['maxIncInd_Opt']]
+        ask = incDict[i,j][incDict[i,j]['optNum']]['v1'][incDict[i,j]['maxIncInd_Opt']]
+        alk = incDict[i,j][incDict[i,j]['optNum']]['v2'][incDict[i,j]['maxIncInd_Opt']]
+        dmagk = float(eqnDmagLHS.subs(alpha,ask).evalf())
+        sk = float(eqnSAlpha.subs(a,planProp[planets[i]]['a']*u.m.to('AU')).subs(alpha,ask).evalf())
+        ik2 = np.min([np.min([ask,180.-ask]),np.min([alk,180.-alk])])
+
+    
+    #ik2
+    #sk
+    #dmagk
+
+    ####
+    #[(i,j) determines planet pair][0 smaller or 1 larger sma planet][clockwise intersection start 0 or stop 1]
+    intbounds = sigmaIntTypeDict[(i,j)] #The types of intersections the planet makes with the various sigma bounds
+    intTypes = intbounds[0][0]
+
+    def limitingIncFuncs(intTypes, sk, dmagk, uncertainty_dmag, uncertainty_s, sma, p, R, pm, PhiInv):
+        limitingIncs = list()
+        for intType in intTypes:
+            if '+' in intType:
+                pm = 1.
+            else: #'-' in intType
+                pm = -1.
+
+            if 's' in intType: #Calculate the time of this orbit intersection using the separation form
+                #it shouldn't matter whether beta is 0<beta<pi/2 or pi/2<beta<pi
+                inc_tmp = np.arcsin(np.cos(np.arcsin((sk+pm*uncertainty_s)/(sma)))) #*180./np.pi
+                # if 'a' in intType: #the intersection occurs where beta>90deg
+                #     #will need to substitute in np.pi - beta in the relevant bit of code
+                #     inc_tmp = np.arcsin(np.cos(np.arcsin((sk+pm*uncertainty_s)/(planProp[planets[i]]['a']*u.m.to('AU')))))    
+                #     #beta = np.pi-np.arcsin((sk + pm*uncertainty_s)/sma)
+                #     #ti = (np.pi - np.arcsin(np.cos( beta )/np.sin(inc2)))*periods/(2.*np.pi)
+                # else: #'b' in intType
+                #     #Use the normal form, 0<beta<np.pi/2
+            else: #'d' is in the 
+                inc_tmp = np.arcsin(np.cos( np.pi/180.*PhiInv(- sma**2.* 10**(-(dmagk + pm*uncertainty_dmag)/2.5) /(p * R**2.)) ) ) #*180./np.pi
+                #beta = PhiInv(- sma**2.* 10**(-(dmagk + pm*uncertainty_dmag)/2.5) /(p * R**2.))
+                #DO MODIFICATIONS HERE TO INCLINATION CALCULATION
+            limitingIncs.append(inc_tmp)
+        return np.asarray(limitingIncs)
+        
+    if i == 1:
+        limitingIncsi = limitingIncFuncs(intTypes, sk, dmagk, uncertainty_dmag, uncertainty_s, planProp[planets[i]]['a']*u.m.to('AU'), planProp[planets[i]]['p'], planProp[planets[i]]['R']*u.m.to('AU'), pm, planProp[planets[i]]['phaseFuncMeldedInverse'][0])
+    else:
+        limitingIncsi = limitingIncFuncs(intTypes, sk, dmagk, uncertainty_dmag, uncertainty_s, planProp[planets[i]]['a']*u.m.to('AU'), planProp[planets[i]]['p'], planProp[planets[i]]['R']*u.m.to('AU'), pm, planProp[planets[i]]['phaseFuncMeldedInverse'])
+
+    if j == 1:
+        limitingIncsj = limitingIncFuncs(intTypes, sk, dmagk, uncertainty_dmag, uncertainty_s, planProp[planets[j]]['a']*u.m.to('AU'), planProp[planets[j]]['p'], planProp[planets[j]]['R']*u.m.to('AU'), pm, planProp[planets[j]]['phaseFuncMeldedInverse'][0])
+    else:
+        limitingIncsj = limitingIncFuncs(intTypes, sk, dmagk, uncertainty_dmag, uncertainty_s, planProp[planets[j]]['a']*u.m.to('AU'), planProp[planets[j]]['p'], planProp[planets[j]]['R']*u.m.to('AU'), pm, planProp[planets[j]]['phaseFuncMeldedInverse'])
+
+
+    #THIS PLOT VERIFIES LIMITINGINCS ARE CALCULATED CORRECTLY
+    nus = np.linspace(start=0.,stop=2.*np.pi,num=200)
+    limitingBeta0 = np.arccos(np.sin(limitingIncsi[0])*np.sin(nus))
+    limitingBeta1 = np.arccos(np.sin(limitingIncsi[1])*np.sin(nus))
+    #betas0 = np.linspace(start=np.min(limitingBeta0,limitingBeta1),stop=np.max(limitingBeta0,limitingBeta1),num=300)
+    # seps0 = planProp[planets[i]]['a']*u.m.to('AU')*np.sin(limitingBeta0)
+    # dmags0 = -2.5*np.log10(planProp[planets[i]]['p']*(planProp[planets[i]]['R']*u.m.to('AU'))**2./(planProp[planets[i]]['a']*u.m.to('AU'))**2.*planProp[planets[i]]['phaseFuncMelded'](limitingBeta0))
+    seps0 = separation_from_alpha_ap(limitingBeta0,planProp[planets[i]]['a']*u.m).to('AU').value#planProp[planets[i]]['a']*u.m.to('AU')*np.sin(limitingBeta1)
+    dmags0 = deltaMag(planProp[planets[i]]['p'], planProp[planets[i]]['R']*u.m, planProp[planets[i]]['a']*u.m, planProp[planets[i]]['phaseFuncMelded'](limitingBeta0*180./np.pi))#-2.5*np.log10(planProp[planets[i]]['p']*(planProp[planets[i]]['R']*u.m.to('AU'))**2./(planProp[planets[i]]['a']*u.m.to('AU'))**2.*planProp[planets[i]]['phaseFuncMelded'](limitingBeta1))
+    seps1 = separation_from_alpha_ap(limitingBeta1,planProp[planets[i]]['a']*u.m).to('AU').value#planProp[planets[i]]['a']*u.m.to('AU')*np.sin(limitingBeta1)
+    dmags1 = deltaMag(planProp[planets[i]]['p'], planProp[planets[i]]['R']*u.m, planProp[planets[i]]['a']*u.m, planProp[planets[i]]['phaseFuncMelded'](limitingBeta1*180./np.pi))#-2.5*np.log10(planProp[planets[i]]['p']*(planProp[planets[i]]['R']*u.m.to('AU'))**2./(planProp[planets[i]]['a']*u.m.to('AU'))**2.*planProp[planets[i]]['phaseFuncMelded'](limitingBeta1))
+    plt.figure(54354832131)
+    plt.plot(seps0,dmags0)
+    plt.plot(seps1,dmags1)
+    plt.scatter(sk,dmagk)
+    indOfMin = np.argmin(np.abs(np.pi/2.-nus))
+    plt.scatter(seps0[indOfMin],dmags0[indOfMin],color='red')
+    plt.plot([sk-uncertainty_s,sk-uncertainty_s,sk+uncertainty_s,sk+uncertainty_s,sk-uncertainty_s],[dmagk+uncertainty_dmag,dmagk-uncertainty_dmag,dmagk-uncertainty_dmag,dmagk+uncertainty_dmag,dmagk+uncertainty_dmag],color='darkblue')
+    plt.show(block=False)
+
+    #tmp_inc = np.arcsin(np.cos( np.arcsin(sk/(planProp[planets[i]]['a']*u.m.to('AU'))) ))
+    # there is an obvious issue with using the ik and ik2 as inclinations in beta=np.arccos(np.sin(i)), the core of all of these calculations for computing the limiting inclinations
+    # currently, I think I need to use arccos. but this doesnt make ligical sense to me. At the end of the day, we need to convert from the system inclination in table2 to the phase angle in table 2
+
+    # plt.figure(2124411122223354)
+    # y = np.linspace(start=0.,stop=np.pi,num=100)
+    # plt.plot(y,np.pi - np.arcsin(np.cos(y)))
+    # plt.show(block=False)
+
+    # plt.figure(6845115566)
+    # y2 = np.linspace(start=0.,stop=1.,num=100)
+    # plt.plot(y2,planProp[planets[i]]['phaseFuncMeldedInverse'](y2))
+    # plt.show(block=False)
+
+    # plt.figure(345347766)
+    # y3 = np.linspace(start=0.,stop=180.,num=100)
+    # plt.plot(y3,planProp[planets[i]]['phaseFuncMelded'](y3))
+    # plt.show(block=False)
+
+    # plt.figure(345347766)
+    # y3 = np.linspace(start=0.,stop=180.,num=100)
+    # plt.plot(-planProp[planets[i]]['phaseFuncMelded'](y3),y3)
+    # plt.show(block=False)
+
+    # tmp = planProp[planets[i]]['phaseFuncMeldedInverse'](-planProp[planets[i]]['phaseFuncMelded'](y3))
+
+    #### Generate Population of Planets
+    tmp_num= 10**6
+    M0 = np.random.uniform(2.*np.pi, size=int(tmp_num)) #Mean Anomaly
+    #M = E - e sin(E) SO FOR CIRCULAR, M=E
+    E0 = M0
+    # tan(v/2) = sqrt((1+e)/(1-e)) tan(E/2), SO FOR CIRCULAR, nu=E
+    nu0 = E0
+
+    #For Planet i
+    maxIncDeltai = np.max(np.abs(np.pi/2.-limitingIncsi))
+    minInci = np.min(limitingIncsi)
+    C = 0.5*(np.cos(minInci*u.rad) - np.cos(np.pi/2.*u.rad))# + ik2*u.deg))
+    tmp_inci = ((np.arccos(np.cos(minInci*u.rad) - 2.*C*np.random.uniform(size=tmp_num))).to('rad')).value
+
+    tmp_smai = np.ones(tmp_num)*planProp[planets[i]]['a']*u.m.to('AU')
+    starMass = const.M_sun
+    periods = (2.*np.pi*np.sqrt((tmp_smai*u.AU)**3./(const.G.to('AU3 / (kg s2)')*starMass))).to('year').value #calculate periods for all planets
+    tmp_ei = np.zeros([tmp_num])
+    tmp_wi = np.zeros([tmp_num])
+    tmp_Wi = np.zeros([tmp_num])
+    tmp_pi = np.ones(tmp_num)*planProp[planets[i]]['p']
+    tmp_Rpi = np.ones(tmp_num)*planProp[planets[i]]['R']*u.m.to('AU')
+
+    tmp_betasi = np.arccos(np.sin(tmp_inci)*np.sin(nu0))*180./np.pi #in deg
+    
+    s0i = separation_from_alpha_ap(tmp_betas*np.pi/180.,tmp_smai)
+    dmag0i = deltaMag(tmp_pi, tmp_Rpi*u.AU, tmp_smai*u.AU, planProp[planets[i]]['phaseFuncMelded'](tmp_betas))
+
+    #### Number of Planets i Within 1 sigma, Monte Carlo
+    inds1Sigmai = np.where((np.abs(s0i-sk) < 1.*uncertainty_s)*(np.abs(dmag0i-dmagk) < 1.*uncertainty_dmag))[0]
+    inds2Sigmai = np.where((np.abs(s0i-sk) < 2.*uncertainty_s)*(np.abs(dmag0i-dmagk) < 2.*uncertainty_dmag))[0]
+    inds3Sigmai = np.where((np.abs(s0i-sk) < 3.*uncertainty_s)*(np.abs(dmag0i-dmagk) < 3.*uncertainty_dmag))[0]
+    fracIn1Sigmai = len(inds1Sigmai)/tmp_num
+    fracIn2Sigmai = len(inds2Sigmai)/tmp_num
+    fracIn3Sigmai = len(inds3Sigmai)/tmp_num
+
+    #For Planet j
+    maxIncDeltaj = np.max(np.abs(np.pi/2.-limitingIncsj))
+    minIncj = np.min(limitingIncsj)
+    C = 0.5*(np.cos(minIncj*u.rad) - np.cos(np.pi/2.*u.rad))# + ik2*u.deg))
+    tmp_incj = ((np.arccos(np.cos(minIncj*u.rad) - 2.*C*np.random.uniform(size=tmp_num))).to('rad')).value
+
+    tmp_smaj = np.ones(tmp_num)*planProp[planets[j]]['a']*u.m.to('AU')
+    periods = (2.*np.pi*np.sqrt((tmp_smaj*u.AU)**3./(const.G.to('AU3 / (kg s2)')*starMass))).to('year').value #calculate periods for all planets
+    tmp_ej = np.zeros([tmp_num])
+    tmp_wj = np.zeros([tmp_num])
+    tmp_Wj = np.zeros([tmp_num])
+    tmp_pj = np.ones(tmp_num)*planProp[planets[j]]['p']
+    tmp_Rpj = np.ones(tmp_num)*planProp[planets[j]]['R']*u.m.to('AU')
+
+    tmp_betasj = np.arccos(np.sin(tmp_incj)*np.sin(nu0))*180./np.pi #in deg
+    
+    s0j = separation_from_alpha_ap(tmp_betasj*np.pi/180.,tmp_smaj)
+    dmag0j = deltaMag(tmp_pj, tmp_Rpj*u.AU, tmp_smaj*u.AU, planProp[planets[j]]['phaseFuncMelded'](tmp_betasj))
+
+    #### Number of Planets i Within 1 sigma, Monte Carlo
+    inds1Sigmaj = np.where((np.abs(s0j-sk) < 1.*uncertainty_s)*(np.abs(dmag0j-dmagk) < 1.*uncertainty_dmag))[0]
+    inds2Sigmaj = np.where((np.abs(s0j-sk) < 2.*uncertainty_s)*(np.abs(dmag0j-dmagk) < 2.*uncertainty_dmag))[0]
+    inds3Sigmaj = np.where((np.abs(s0j-sk) < 3.*uncertainty_s)*(np.abs(dmag0j-dmagk) < 3.*uncertainty_dmag))[0]
+    fracIn1Sigmaj = len(inds1Sigmaj)/tmp_num
+    fracIn2Sigmaj = len(inds2Sigmaj)/tmp_num
+    fracIn3Sigmaj = len(inds3Sigmaj)/tmp_num
+
+    print('(i,j): (' + str(i) + ',' + str(j) + ')' + ' & ' + str(np.round(fracIn1Sigmai*100.,1)) + ' & ' + str(np.round(fracIn1Sigmaj*100.,1)) + ' & ' + str(np.round(fracIn2Sigmai*100.,1)) + ' & ' + str(np.round(fracIn2Sigmaj*100.,1)) + ' & ' + str(np.round(fracIn3Sigmai*100.,1)) + ' & ' + str(np.round(fracIn3Sigmaj*100.,1)))
+
+
+    #We need to rerun for the second intersection
+    if (i,j) == (3,4):
+        limitingIncsi = limitingIncFuncs(intTypes, sk_34, dmagk_34, uncertainty_dmag, uncertainty_s, planProp[planets[i]]['a']*u.m.to('AU'), planProp[planets[i]]['p'], planProp[planets[i]]['R']*u.m.to('AU'), pm, planProp[planets[i]]['phaseFuncMeldedInverse'])
+        limitingIncsj = limitingIncFuncs(intTypes, sk_34, dmagk_34, uncertainty_dmag, uncertainty_s, planProp[planets[j]]['a']*u.m.to('AU'), planProp[planets[j]]['p'], planProp[planets[j]]['R']*u.m.to('AU'), pm, planProp[planets[j]]['phaseFuncMeldedInverse'])
+
+        #For Planet i
+        maxIncDeltai = np.max(np.abs(np.pi/2.-limitingIncsi))
+        minInci = np.min(limitingIncsi)
+        C = 0.5*(np.cos(minInci*u.rad) - np.cos(np.pi/2.*u.rad))# + ik2*u.deg))
+        tmp_inci = ((np.arccos(np.cos(minInci*u.rad) - 2.*C*np.random.uniform(size=tmp_num))).to('rad')).value
+
+        tmp_smai = np.ones(tmp_num)*planProp[planets[i]]['a']*u.m.to('AU')
+        starMass = const.M_sun
+        periods = (2.*np.pi*np.sqrt((tmp_smai*u.AU)**3./(const.G.to('AU3 / (kg s2)')*starMass))).to('year').value #calculate periods for all planets
+        tmp_ei = np.zeros([tmp_num])
+        tmp_wi = np.zeros([tmp_num])
+        tmp_Wi = np.zeros([tmp_num])
+        tmp_pi = np.ones(tmp_num)*planProp[planets[i]]['p']
+        tmp_Rpi = np.ones(tmp_num)*planProp[planets[i]]['R']*u.m.to('AU')
+
+        tmp_betasi = np.arccos(np.sin(tmp_inci)*np.sin(nu0))*180./np.pi #in deg
+        
+        s0i = separation_from_alpha_ap(tmp_betas*np.pi/180.,tmp_smai)
+        dmag0i = deltaMag(tmp_pi, tmp_Rpi*u.AU, tmp_smai*u.AU, planProp[planets[i]]['phaseFuncMelded'](tmp_betas))
+
+        #### Number of Planets i Within 1 sigma, Monte Carlo
+        inds1Sigmai = np.where((np.abs(s0i-sk_34) < 1.*uncertainty_s)*(np.abs(dmag0i-dmagk_34) < 1.*uncertainty_dmag))[0]
+        inds2Sigmai = np.where((np.abs(s0i-sk_34) < 2.*uncertainty_s)*(np.abs(dmag0i-dmagk_34) < 2.*uncertainty_dmag))[0]
+        inds3Sigmai = np.where((np.abs(s0i-sk_34) < 3.*uncertainty_s)*(np.abs(dmag0i-dmagk_34) < 3.*uncertainty_dmag))[0]
+        fracIn1Sigmai = len(inds1Sigmai)/tmp_num
+        fracIn2Sigmai = len(inds2Sigmai)/tmp_num
+        fracIn3Sigmai = len(inds3Sigmai)/tmp_num
+
+        #For Planet j
+        maxIncDeltaj = np.max(np.abs(np.pi/2.-limitingIncsj))
+        minIncj = np.min(limitingIncsj)
+        C = 0.5*(np.cos(minIncj*u.rad) - np.cos(np.pi/2.*u.rad))# + ik2*u.deg))
+        tmp_incj = ((np.arccos(np.cos(minIncj*u.rad) - 2.*C*np.random.uniform(size=tmp_num))).to('rad')).value
+
+        tmp_smaj = np.ones(tmp_num)*planProp[planets[j]]['a']*u.m.to('AU')
+        periods = (2.*np.pi*np.sqrt((tmp_smaj*u.AU)**3./(const.G.to('AU3 / (kg s2)')*starMass))).to('year').value #calculate periods for all planets
+        tmp_ej = np.zeros([tmp_num])
+        tmp_wj = np.zeros([tmp_num])
+        tmp_Wj = np.zeros([tmp_num])
+        tmp_pj = np.ones(tmp_num)*planProp[planets[j]]['p']
+        tmp_Rpj = np.ones(tmp_num)*planProp[planets[j]]['R']*u.m.to('AU')
+
+        tmp_betasj = np.arccos(np.sin(tmp_incj)*np.sin(nu0))*180./np.pi #in deg
+        
+        s0j = separation_from_alpha_ap(tmp_betasj*np.pi/180.,tmp_smaj)
+        dmag0j = deltaMag(tmp_pj, tmp_Rpj*u.AU, tmp_smaj*u.AU, planProp[planets[j]]['phaseFuncMelded'](tmp_betasj))
+
+        #### Number of Planets i Within 1 sigma, Monte Carlo
+        inds1Sigmaj = np.where((np.abs(s0j-sk_34) < 1.*uncertainty_s)*(np.abs(dmag0j-dmagk_34) < 1.*uncertainty_dmag))[0]
+        inds2Sigmaj = np.where((np.abs(s0j-sk_34) < 2.*uncertainty_s)*(np.abs(dmag0j-dmagk_34) < 2.*uncertainty_dmag))[0]
+        inds3Sigmaj = np.where((np.abs(s0j-sk_34) < 3.*uncertainty_s)*(np.abs(dmag0j-dmagk_34) < 3.*uncertainty_dmag))[0]
+        fracIn1Sigmaj = len(inds1Sigmaj)/tmp_num
+        fracIn2Sigmaj = len(inds2Sigmaj)/tmp_num
+        fracIn3Sigmaj = len(inds3Sigmaj)/tmp_num
+
+        print('(i,j): (' + str(i) + ',' + str(j) + ')' + ' & ' + str(np.round(fracIn1Sigmai*100.,1)) + ' & ' + str(np.round(fracIn1Sigmaj*100.,1)) + ' & ' + str(np.round(fracIn2Sigmai*100.,1)) + ' & ' + str(np.round(fracIn2Sigmaj*100.,1)) + ' & ' + str(np.round(fracIn3Sigmai*100.,1)) + ' & ' + str(np.round(fracIn3Sigmaj*100.,1)))
+    ####
+
+
+
+
+
+
+
+    # n=1. #number of sigma
+    # ####Classify Intersection Type
+    # ilower = np.arcsin(np.cos(np.arcsin((sk+n*uncertainty_s)/(planProp[planets[i]]['a']*u.m.to('AU')))))
+    # iupper = np.arcsin(np.cos(np.arcsin((sk-n*uncertainty_s)/(planProp[planets[i]]['a']*u.m.to('AU')))))
+    # #classify orbit type
+    # indsWhereGTiupper = np.where(tmp_inc > iupper)[0] #bounds are ilower and iupper
+    # indsWhereBetween = np.where((tmp_inc < iupper)*(tmp_inc > ilower))[0] #bounds is 0 and ilower
+    # indsWhereLTilower = np.where(tmp_inc < ilower)[0] #no intersection
+    # #calculate times
+    # tlower = np.zeros(len(tmp_inc))
+    # tlower[indsWhereGTiupper] = np.arcsin(np.cos(np.arcsin((sk+n*uncertainty_s)/(planProp[planets[i]]['a']*u.m.to('AU'))))/np.sin(tmp_inc[indsWhereGTiupper]))*periods[indsWhereGTiupper]/(2.*np.pi)
+    # tlower[indsWhereBetween] = np.arcsin(np.cos(np.arcsin((sk+n*uncertainty_s)/(planProp[planets[i]]['a']*u.m.to('AU'))))/np.sin(tmp_inc[indsWhereBetween]))*periods[indsWhereBetween]/(2.*np.pi)
+    # tupper = np.zeros(len(tmp_inc))
+    # tlower[indsWhereGTiupper] = np.arcsin(np.cos(np.arcsin((sk-n*uncertainty_s)/(planProp[planets[i]]['a']*u.m.to('AU'))))/np.sin(tmp_inc[indsWhereGTiupper]))*periods[indsWhereGTiupper]/(2.*np.pi)
+    # tlower[np.isnan(tlower)] = 0.
+    # tupper[np.isnan(tupper)] = 0.
+    # dt = 2.*np.abs(tupper - tlower) #multiply by 2 because of symmetry
+
+    # #Running with a sweep
+    # inc_sweep = np.linspace(start=0.,stop=np.pi/2.,num=1000)
+    # ####Classify Intersection Type
+    # #DUPLICATE ilower = np.arcsin(np.cos(np.arcsin((sk+n*uncertainty_s)/(planProp[planets[i]]['a']*u.m.to('AU')))))
+    # #DUPLICATE iupper = np.arcsin(np.cos(np.arcsin((sk-n*uncertainty_s)/(planProp[planets[i]]['a']*u.m.to('AU')))))
+    # #classify orbit type
+    # #ORIGINAL indsWhereGTiupper_sweep = np.where(inc_sweep > iupper)[0] #bounds are ilower and iupper
+    # # indsWhereBetween_sweep = np.where((inc_sweep < iupper)*(inc_sweep > ilower))[0] #bounds is 0 and ilower
+    # # indsWhereLTilower_sweep = np.where(inc_sweep < ilower)[0] #no intersection
+    # indsWhereGTiupper_sweep = np.where(inc_sweep > np.pi/2. - ilower)[0] #bounds are ilower and iupper
+    # indsWhereBetween_sweep = np.where((inc_sweep > np.pi/2. - iupper)*(inc_sweep < np.pi/2. - ilower))[0] #bounds is 0 and ilower
+    # indsWhereLTilower_sweep = np.where(inc_sweep < iupper)[0] #no intersection
+    # #calculate times
+    # tlower_sweep = np.zeros(len(inc_sweep))
+    # tlower_sweep[indsWhereGTiupper_sweep] = np.arcsin(np.cos(np.arcsin((sk+n*uncertainty_s)/(planProp[planets[i]]['a']*u.m.to('AU'))))/np.sin(inc_sweep[indsWhereGTiupper_sweep]))*periods[indsWhereGTiupper_sweep]/(2.*np.pi)
+    # tlower_sweep[indsWhereBetween_sweep] = np.arcsin(np.cos(np.arcsin((sk+n*uncertainty_s)/(planProp[planets[i]]['a']*u.m.to('AU'))))/np.sin(inc_sweep[indsWhereBetween_sweep]))*periods[indsWhereBetween_sweep]/(2.*np.pi)
+    # tupper_sweep = np.zeros(len(inc_sweep))
+    # tupper_sweep[indsWhereGTiupper_sweep] = np.arcsin(np.cos(np.arcsin((sk-n*uncertainty_s)/(planProp[planets[i]]['a']*u.m.to('AU'))))/np.sin(inc_sweep[indsWhereGTiupper_sweep]))*periods[indsWhereGTiupper_sweep]/(2.*np.pi)
+    # tlower_sweep[np.isnan(tlower_sweep)] = 0.
+    # tupper_sweep[np.isnan(tupper_sweep)] = 0.
+    # dt_sweep = 2.*np.abs(tupper_sweep - tlower_sweep) #multiply by 2 because of symmetry
+
+    # # plt.figure(num=516843138)
+    # # plt.scatter(inc_sweep,dt_sweep,color='black')
+    # # plt.show(block=False)
+
+    # # #Calculate true anomalies of the limits of the planets
+    # # tm1Sigma = np.arcsin(np.cos(np.arcsin((sk-1.*uncertainty_s)/(planProp[planets[i]]['a']*u.m.to('AU'))))/np.sin(tmp_inc))*periods/(2.*np.pi)
+    # # tp1Sigma = np.arcsin(np.cos(np.arcsin((sk+1.*uncertainty_s)/(planProp[planets[i]]['a']*u.m.to('AU'))))/np.sin(tmp_inc))*periods/(2.*np.pi)
+
+    # # tm2Sigma = np.arcsin(np.cos(np.arcsin((sk-2.*uncertainty_s)/(planProp[planets[i]]['a']*u.m.to('AU'))))/np.sin(tmp_inc))*periods/(2.*np.pi)
+    # # tp2Sigma = np.arcsin(np.cos(np.arcsin((sk+2.*uncertainty_s)/(planProp[planets[i]]['a']*u.m.to('AU'))))/np.sin(tmp_inc))*periods/(2.*np.pi)
+
+    # # tm3Sigma = np.arcsin(np.cos(np.arcsin((sk-3.*uncertainty_s)/(planProp[planets[i]]['a']*u.m.to('AU'))))/np.sin(tmp_inc))*periods/(2.*np.pi)
+    # # tp3Sigma = np.arcsin(np.cos(np.arcsin((sk+3.*uncertainty_s)/(planProp[planets[i]]['a']*u.m.to('AU'))))/np.sin(tmp_inc))*periods/(2.*np.pi)
+
+    
+    # def fi(inc):
+    #     """ The probability density function of inclinations
+    #     inc in radians
+    #     """
+    #     return np.sin(inc)/2.
+
+    # def func1(inc,sma,uncertainty_s,sk,periods):
+    #     """For inclinations between the separation uncertainty upper bound and smin of the planet
+    #     """
+    #     tis = deltatFunc(inc,sma,p,R,periods,sigma_s,uncertainty_dmag,sk,dmagk,intTypes,i)
+    #     return fi(inc)*2.*np.abs(tilower-0.)
+
+    # def func2(inc,sma,uncertainty_s,sk,periods):
+    #     """ For inclinations between the lower separation uncertainty bound and upper separation uncertainty bound
+    #     """
+    #     #tisps, tisms, tidmagpdmag, tidmagmdmag = t_ifunc(inc,sma,sigma_s,sk,periods)
+    #     tis = deltatFunc(inc,sma,p,R,periods,sigma_s,uncertainty_dmag,sk,dmagk,intTypes,i)
+    #     return fi(inc)*2.*np.abs(tis[1]-tis[0])
+
+    # def t_ifunc(inc,sma,sigma_s,sk,periods,dmagk,uncertainty_dmag,i,p,R):
+    #     tisps = np.arcsin(np.cos(np.arcsin((sk+sigma_s)/sma))/np.sin(inc))*periods/(2.*np.pi) #tilower
+    #     tisms = np.arcsin(np.cos(np.arcsin((sk-sigma_s)/sma))/np.sin(inc))*periods/(2.*np.pi) #tiupper
+    #     if i == 1: #its venus
+    #         #do tidmagpdmag
+    #         if planProp[planets[i]]['threedmagIntLimits'][1] < dmagk + uncertainty_dmag: #beta is super large, near 180 deg
+    #             tidmagpdmag = periods/(2.*np.pi) * np.arcsin( 1./np.sin(inc) *np.cos( planProp[planets[i]]['phaseFuncMeldedInverse'][0](- sma**2.* 10**(-(dmagk+uncertainty_dmag)/2.5) /(p * R**2.)) ) )
+    #         elif planProp[planets[i]]['threedmagIntLimits'][1] > dmagk + uncertainty_dmag and planProp[planets[i]]['threedmagIntLimits'][0] < dmagk + uncertainty_dmag: #dmag is between local min and local max, all 3 potential intersections must be calculated
+    #             tidmagpdmag0 = periods/(2.*np.pi) * np.arcsin( 1./np.sin(inc) *np.cos( planProp[planets[i]]['phaseFuncMeldedInverse'][0](- sma**2.* 10**(-(dmagk+uncertainty_dmag)/2.5) /(p * R**2.)) ) )
+    #             tidmagpdmag1 = periods/(2.*np.pi) * np.arcsin( 1./np.sin(inc) *np.cos( planProp[planets[i]]['phaseFuncMeldedInverse'][1](sma**2.* 10**(-(dmagk+uncertainty_dmag)/2.5) /(p * R**2.)) ) )
+    #             tidmagpdmag2 = periods/(2.*np.pi) * np.arcsin( 1./np.sin(inc) *np.cos( planProp[planets[i]]['phaseFuncMeldedInverse'][2](- sma**2.* 10**(-(dmagk+uncertainty_dmag)/2.5) /(p * R**2.)) ) )
+    #             #NEED TO DO SOME ERROR HANDLING HERE
+    #         else:
+    #             tidmagpdmag = periods/(2.*np.pi) * np.arcsin( 1./np.sin(inc) *np.cos( planProp[planets[i]]['phaseFuncMeldedInverse'][2](- sma**2.* 10**(-(dmagk+uncertainty_dmag)/2.5) /(p * R**2.)) ) )
+            
+    #         #do tidmagmdmag
+    #         if planProp[planets[i]]['threedmagIntLimits'][1] < dmagk - uncertainty_dmag: #beta is super large, near 180 deg
+    #             tidmagmdmag = periods/(2.*np.pi) * np.arcsin( 1./np.sin(inc) *np.cos( planProp[planets[i]]['phaseFuncMeldedInverse'][0](- sma**2.* 10**(-(dmagk-uncertainty_dmag)/2.5) /(p * R**2.)) ) )
+    #         elif planProp[planets[i]]['threedmagIntLimits'][1] > dmagk - uncertainty_dmag and planProp[planets[i]]['threedmagIntLimits'][0] < dmagk - uncertainty_dmag: #dmag is between local min and local max, all 3 potential intersections must be calculated
+    #             tidmagmdmag0 = periods/(2.*np.pi) * np.arcsin( 1./np.sin(inc) *np.cos( planProp[planets[i]]['phaseFuncMeldedInverse'][0](- sma**2.* 10**(-(dmagk-uncertainty_dmag)/2.5) /(p * R**2.)) ) )
+    #             tidmagmdmag1 = periods/(2.*np.pi) * np.arcsin( 1./np.sin(inc) *np.cos( planProp[planets[i]]['phaseFuncMeldedInverse'][1](sma**2.* 10**(-(dmagk-uncertainty_dmag)/2.5) /(p * R**2.)) ) )
+    #             tidmagmdmag2 = periods/(2.*np.pi) * np.arcsin( 1./np.sin(inc) *np.cos( planProp[planets[i]]['phaseFuncMeldedInverse'][2](- sma**2.* 10**(-(dmagk-uncertainty_dmag)/2.5) /(p * R**2.)) ) )
+    #             #NEED TO DO SOME ERROR HANDLING HERE
+    #         else:
+    #             tidmagmdmag = periods/(2.*np.pi) * np.arcsin( 1./np.sin(inc) *np.cos( planProp[planets[i]]['phaseFuncMeldedInverse'][2](- sma**2.* 10**(-(dmagk-uncertainty_dmag)/2.5) /(p * R**2.)) ) )
+    #     else:
+    #         tidmagpdmag = periods/(2.*np.pi)* np.arcsin( 1./np.sin(inc) *np.cos( planProp[planets[i]]['phaseFuncMeldedInverse'](- sma**2.* 10**(-(dmagk+uncertainty_dmag)/2.5) /(p * R**2.) ,planetInd) ) )
+    #         tidmagmdmag = periods/(2.*np.pi)* np.arcsin( 1./np.sin(inc) *np.cos( planProp[planets[i]]['phaseFuncMeldedInverse'](- sma**2.* 10**(-(dmagk-uncertainty_dmag)/2.5) /(p * R**2.) ,planetInd) ) )
+    #     return tisps, tisms, tidmagpdmag, tidmagmdmag
+
+
+    # def deltatFunc(inc2,sma,p,R,periods,uncertainty_s,uncertainty_dmag,sk,dmagk,intTypes,i,extraOutputBool):
+    #     """
+    #     Calculates the time between a planet intersecting two limits
+    #     inc
+    #     sma
+    #     p
+    #     R
+    #     periods
+    #     uncertainty_s
+    #     uncertainty_dmag
+    #     sk
+    #     dmagk
+    #     intTypes - the uncertainty intersection type, list of 2 strings fo form 's-a'
+    #     i - the planet index
+    #     betweenBool - indicates whether the delta is between the two values, or between the values and 0
+    #     """
+    #     tis = list()
+    #     for intType in intTypes:
+    #         if '+' in intType:
+    #             pm = 1.
+    #         else: #'-' in intType
+    #             pm = -1.
+
+    #         if 's' in intType: #Calculate the time of this orbit intersection using the separation form
+    #             if 'a' in intType: #the intersection occurs where beta>90deg
+    #                 #will need to substitute in np.pi - beta in the relevant bit of code
+    #                 beta = np.pi-np.arcsin((sk + pm*uncertainty_s)/sma)
+    #                 ti = (np.pi - np.arcsin(np.cos( beta )/np.sin(inc2)))*periods/(2.*np.pi)
+    #             else: #'b' in intType
+    #                 #Use the normal form, 0<beta<np.pi/2
+    #                 beta = np.arcsin((sk + pm*uncertainty_s)/sma)
+    #                 ti = np.arcsin(np.cos( beta )/np.sin(inc2))*periods/(2.*np.pi)
+
+                
+    #             #WILL NEED TO CHECK IF THIS NORMAL ARCSIN IS OK. IT MIGHT NOT NEED ADJUSTING BECAUSE OF THE COS
+
+    #         # tisps = np.arcsin(np.cos(np.arcsin((sk+uncertainty_s)/sma))/np.sin(inc))*periods/(2.*np.pi) #tilower
+    #         # tisms = np.arcsin(np.cos( np.pi-np.arcsin((sk-uncertainty_s)/sma) )/np.sin(inc))*periods/(2.*np.pi) #tiupper
+
+    #         else: #'d' in intType
+    #             #Use the dmag equation for time
+    #             if i == 1: #its venus
+    #                 #do tidmagpdmag
+    #                 if planProp[planets[i]]['threedmagIntLimits'][1] < dmagk + uncertainty_dmag: #beta is super large, near 180 deg
+    #                     ti = periods/(2.*np.pi) * np.arcsin( 1./np.sin(inc2) *np.cos( np.pi/180.*planProp[planets[i]]['phaseFuncMeldedInverse'][0](- sma**2.* 10**(-(dmagk + pm*uncertainty_dmag)/2.5) /(p * R**2.)) ) )
+    #                 elif planProp[planets[i]]['threedmagIntLimits'][1] > dmagk - uncertainty_dmag and planProp[planets[i]]['threedmagIntLimits'][0] < dmagk + uncertainty_dmag: #dmag is between local min and local max, all 3 potential intersections must be calculated
+    #                     ti0 = periods/(2.*np.pi) * np.arcsin( 1./np.sin(inc2) *np.cos( np.pi/180.*planProp[planets[i]]['phaseFuncMeldedInverse'][0](- sma**2.* 10**(-(dmagk + pm*uncertainty_dmag)/2.5) /(p * R**2.)) ) )
+    #                     ti1 = periods/(2.*np.pi) * np.arcsin( 1./np.sin(inc2) *np.cos( np.pi/180.*planProp[planets[i]]['phaseFuncMeldedInverse'][1](sma**2.* 10**(-(dmagk + pm*uncertainty_dmag)/2.5) /(p * R**2.)) ) )
+    #                     ti2 = periods/(2.*np.pi) * np.arcsin( 1./np.sin(inc2) *np.cos( np.pi/180.*planProp[planets[i]]['phaseFuncMeldedInverse'][2](- sma**2.* 10**(-(dmagk + pm*uncertainty_dmag)/2.5) /(p * R**2.)) ) )
+    #                     #NEED TO DO SOME ERROR HANDLING HERE, not necessary for this problem it seems
+    #                     #planProp[planets[i]]['threebetaLimits']
+    #                 else:
+    #                     beta = np.pi/180.*planProp[planets[i]]['phaseFuncMeldedInverse'][2](- sma**2.* 10**(-(dmagk + pm*uncertainty_dmag)/2.5) /(p * R**2.))
+    #                     if 'a' in intType:
+    #                         ti = periods/(2.*np.pi) * (np.pi - np.arcsin( np.cos( beta )/np.sin(inc2) ))
+    #                     else: #'b' in intType
+    #                         ti = periods/(2.*np.pi) * np.arcsin( np.cos( beta )/np.sin(inc2) )
+    #             else: #other planets
+    #                 beta = np.pi/180.*planProp[planets[i]]['phaseFuncMeldedInverse'](- sma**2.* 10**(-(dmagk + pm*uncertainty_dmag)/2.5) /(p * R**2.))
+    #                 if 'a' in intType:
+    #                     ti = periods/(2.*np.pi) * (np.pi - np.arcsin(np.cos(beta)/np.sin(inc2)))
+    #                 else:
+    #                     ti = periods/(2.*np.pi) * np.arcsin(np.cos(beta)/np.sin(inc2))
+
+    #         #assert not np.isnan(ti), 'whoops nan'
+    #         tis.append(ti)
+
+    #     # #Do corrections for if the inclination 
+    #     # if 'a' in intTypes[0] and 'a' in intTypes[1]:
+    #     #     tis[1] = np.pi/2.*periods/(2.*np.pi)
+    #     # elif 'b' in intTypes[0] and 'b' in intTypes[1]:
+    #     #     tis[0] = np.pi*periods/(2.*np.pi)
+    #     # else:
+    #     #     print(saltyburrito)
+    #     #     #need to handle this case
+
+
+    #     #assert not np.isnan(tis[1]), 'whoops nan'
+    #     #assert not np.isnan(tis[0]), 'whoops nan'
+    #     out = np.abs(tis[1]-tis[0])
+    #     if np.isnan(out):
+    #         #print() #should I print out the information
+    #         out = 0.
+    #     assert isinstance(out,float), 'dtype of out is incorrect, needs to be a float'
+    #     #assert out >= 0., 'the delta t is not positive'
+
+    #     if extraOutputBool is True:
+    #         return fi(inc2)*out, np.asarray(tis)
+    #     else:
+    #         return fi(inc2)*out
+        
+    # #DO CALCS FOR SMALLER PLANET FIRST
+    # period_smaller = (2.*np.pi*np.sqrt((planProp[planets[i]]['a']*u.m.to('AU')*u.AU)**3./(const.G.to('AU3 / (kg s2)')*starMass))).to('day').value #calculate periods for planet in days
+    # intTypes = sigmaIntTypeDict[(i,j)][0][0] #[0][0] indicates smaller planet and 1sigma
+
+    # # inc2 = limitingIncs[1]
+    # # out,tis = deltatFunc(inc2,planProp[planets[i]]['a']*u.m.to('AU'),planProp[planets[i]]['p'],planProp[planets[i]]['R']*u.m.to('AU'),period_smaller,uncertainty_s,uncertainty_dmag,sk,dmagk,intTypes,i,True)
+
+
+    # #### THIS PLOT VERIFIES LIMITINGINCS ARE CALCULATED CORRECTLY
+    # nus = np.linspace(start=0.,stop=2.*np.pi,num=200)
+    # limitingBeta0 = np.arccos(np.sin(limitingIncs[0])*np.sin(nus))
+    # limitingBeta1 = np.arccos(np.sin(limitingIncs[1])*np.sin(nus))
+    # #betas0 = np.linspace(start=np.min(limitingBeta0,limitingBeta1),stop=np.max(limitingBeta0,limitingBeta1),num=300)
+    # # seps0 = planProp[planets[i]]['a']*u.m.to('AU')*np.sin(limitingBeta0)
+    # # dmags0 = -2.5*np.log10(planProp[planets[i]]['p']*(planProp[planets[i]]['R']*u.m.to('AU'))**2./(planProp[planets[i]]['a']*u.m.to('AU'))**2.*planProp[planets[i]]['phaseFuncMelded'](limitingBeta0))
+    # seps0 = separation_from_alpha_ap(limitingBeta0,planProp[planets[i]]['a']*u.m).to('AU').value#planProp[planets[i]]['a']*u.m.to('AU')*np.sin(limitingBeta1)
+    # dmags0 = deltaMag(planProp[planets[i]]['p'], planProp[planets[i]]['R']*u.m, planProp[planets[i]]['a']*u.m, planProp[planets[i]]['phaseFuncMelded'](limitingBeta0*180./np.pi))#-2.5*np.log10(planProp[planets[i]]['p']*(planProp[planets[i]]['R']*u.m.to('AU'))**2./(planProp[planets[i]]['a']*u.m.to('AU'))**2.*planProp[planets[i]]['phaseFuncMelded'](limitingBeta1))
+    # seps1 = separation_from_alpha_ap(limitingBeta1,planProp[planets[i]]['a']*u.m).to('AU').value#planProp[planets[i]]['a']*u.m.to('AU')*np.sin(limitingBeta1)
+    # dmags1 = deltaMag(planProp[planets[i]]['p'], planProp[planets[i]]['R']*u.m, planProp[planets[i]]['a']*u.m, planProp[planets[i]]['phaseFuncMelded'](limitingBeta1*180./np.pi))#-2.5*np.log10(planProp[planets[i]]['p']*(planProp[planets[i]]['R']*u.m.to('AU'))**2./(planProp[planets[i]]['a']*u.m.to('AU'))**2.*planProp[planets[i]]['phaseFuncMelded'](limitingBeta1))
+    # plt.figure(543548321311111111)
+    # plt.plot(seps0,dmags0)
+    # plt.plot(seps1,dmags1)
+    # plt.scatter(sk,dmagk)
+    # indOfMin = np.argmin(np.abs(np.pi/2.-nus))
+    # plt.scatter(seps0[indOfMin],dmags0[indOfMin],color='red')
+
+    # #out,tis = deltatFunc(limitingIncs[0],planProp[planets[i]]['a']*u.m.to('AU'),planProp[planets[i]]['p'],planProp[planets[i]]['R']*u.m.to('AU'),period_smaller,uncertainty_s,uncertainty_dmag,sk,dmagk,intTypes,i,True)
+    # #find where along limitingBeta0 (since limitingInc0 produces the furthest left point, we need to find the nu where limitingInc0 produces an intersection)
+    # nusToEvalAt = np.asarray(np.max(tis))*2.*np.pi/period_smaller
+    # betasToEvalAt = np.arccos(np.sin(np.max(limitingIncs))*np.sin(nusToEvalAt))
+    # sepsToEvalAt = separation_from_alpha_ap(betasToEvalAt,planProp[planets[i]]['a']*u.m).to('AU').value#planProp[planets[i]]['a']*u.m.to('AU')*np.sin(limitingBeta1)
+    # dmagsToEvalAt = deltaMag(planProp[planets[i]]['p'], planProp[planets[i]]['R']*u.m, planProp[planets[i]]['a']*u.m, planProp[planets[i]]['phaseFuncMelded'](betasToEvalAt*180./np.pi))
+    # plt.scatter(sepsToEvalAt,dmagsToEvalAt,color='green')
+
+    # plt.plot([sk-uncertainty_s,sk-uncertainty_s,sk+uncertainty_s,sk+uncertainty_s,sk-uncertainty_s],[dmagk+uncertainty_dmag,dmagk-uncertainty_dmag,dmagk-uncertainty_dmag,dmagk+uncertainty_dmag,dmagk+uncertainty_dmag],color='darkblue')
+    # plt.show(block=False)
+    # ###
+
+    # if 'a' in intTypes[0] and 'a' in intTypes[1]:
+    #     integrand1 = integrate.quad(deltatFunc,np.min(limitingIncs),np.max(limitingIncs),args=(planProp[planets[i]]['a']*u.m.to('AU'),planProp[planets[i]]['p'],planProp[planets[i]]['R']*u.m.to('AU'),period_smaller,uncertainty_s,uncertainty_dmag,sk,dmagk,intTypes,i,False))[0]
+    #     integrand2 = integrate.quad(deltatFunc,np.max(limitingIncs),np.pi/2.,args=(planProp[planets[i]]['a']*u.m.to('AU'),planProp[planets[i]]['p'],planProp[planets[i]]['R']*u.m.to('AU'),period_smaller,uncertainty_s,uncertainty_dmag,sk,dmagk,intTypes,i,False))[0]
+    
+    # elif 'b' in intTypes[0] and 'b' in intTypes[1]:
+    #     integrand1 = integrate.quad(deltatFunc,np.min(limitingIncs),np.max(limitingIncs),args=(planProp[planets[i]]['a']*u.m.to('AU'),planProp[planets[i]]['p'],planProp[planets[i]]['R']*u.m.to('AU'),period_smaller,uncertainty_s,uncertainty_dmag,sk,dmagk,intTypes,i,False))[0]
+    #     integrand2 = integrate.quad(deltatFunc,np.max(limitingIncs),np.pi/2.,args=(planProp[planets[i]]['a']*u.m.to('AU'),planProp[planets[i]]['p'],planProp[planets[i]]['R']*u.m.to('AU'),period_smaller,uncertainty_s,uncertainty_dmag,sk,dmagk,intTypes,i,False))[0]
+    
+
+    # tavg = 2.*integrand1 + 2.*integrand2
+    # fracOrbit = tavg/period_smaller
+
+    # print('(i,j): ' + '(' + str(i) + ',' + str(j) + ') tavg integration: ' + str(tavg) + ' fracOfOrbit integration: ' + str(fracOrbit) + ' fracIn1Sigma: ' + str(fracIn1Sigma))
+
+    # assert np.abs(fracOrbit-fracIn1Sigma) < 0.01, 'the errors are large'
+
+
+
+
+
+"""
+Equations0
+beta = np.arccos(np.sin(inc)*np.sin(nu))
+s = a*np.sin(beta)
+The inverse
+beta = np.arcsin(s/a)
+nu = np.arcsin(np.cos(beta)/np.sin(inc))
+with  things substituted in
+nu = np.arcsin(np.cos(np.arcsin(s/a))/np.sin(inc))
+
+
+"""
 
 

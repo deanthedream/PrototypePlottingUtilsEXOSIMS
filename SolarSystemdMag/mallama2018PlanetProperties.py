@@ -1150,27 +1150,10 @@ def plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_Ha
 
     #Must Dsitribute alpha such that np.sqrt(ddmag^2+ds^2) = constant
     #need to solve optimal alpha spacing for each planet with optimization algorithm
-    #alphas = np.linspace(start=0.+inclination,stop=)
 
     plt.close(num)
     fig67 = plt.figure(num=num)
     for i in np.arange(len(planets)):
-        #num_points = 2400 #worked
-        #num_points = 3000
-        # betas0 = np.arcsin(np.linspace(start=np.sin((0.+inclination)*np.pi/180.),stop=1.,num=181,endpoint=False))*180./np.pi
-        # betas1 = 180.-np.arcsin(np.linspace(start=1.,stop=np.sin((180.-inclination)*np.pi/180.),num=180,endpoint=False))*180./np.pi
-        # betas = np.concatenate((betas0,betas1))
-        # betas0 = np.arcsin(np.linspace(start=np.sin((0.+inclination)*np.pi/180.),stop=1.,num=181,endpoint=False)**1.2)*180./np.pi #These two worked okay
-        # betas1 = 180.-np.arcsin(np.linspace(start=1.,stop=np.sin((180.-inclination)*np.pi/180.),num=180,endpoint=False)**1.2)*180./np.pi
-
-        # betas0 = np.arcsin(np.linspace(start=np.sin((0.+inclination)*np.pi/180.),stop=1.,num=1*90,endpoint=False))*180./np.pi
-        # betas1 = 180.-np.arcsin(np.linspace(start=1.,stop=np.sin((180.-inclination)*np.pi/180.),num=2*90,endpoint=False))*180./np.pi
-        # betas0 = np.arcsin(np.linspace(start=np.sin((0.+inclination)*np.pi/180.),stop=1.,num=180,endpoint=True))*180./np.pi #include the endpoint for these two so the spacings are calculated evenly
-        # betas1 = 180.-np.arcsin(np.linspace(start=1.,stop=np.sin((180.-inclination)*np.pi/180.),num=180,endpoint=True))*180./np.pi
-
-        #Caused problems
-        #betas0 = np.arcsin(np.logspace(start=np.log10(np.sin((0.+inclination+1e-7)*np.pi/180.)),stop=np.log10(1.),num=6*25,endpoint=False))*180./np.pi
-        #betas1 = 180.-np.arcsin(np.logspace(start=np.log10(1.),stop=np.log10(np.sin((180.-(inclination+1e-7))*np.pi/180.)),num=6*90,endpoint=False))*180./np.pi
 
         #Calculate the minimum and maximum dmag for a planet with 0 inclination to scale the number of points to use
         beta_dmagmin = np.arcsin(0.1/(planProp[planets[i]]['a']*u.m.to('AU')))*180./np.pi
@@ -1185,53 +1168,6 @@ def plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_Ha
         betas = np.sort(betas)
         tmp_betas_saved = betas
 
-
-        # #Estimate the arc-length for the top-half and the bottom half
-        # tmp_dmags = deltaMag(planProp[planets[i]]['p'], planProp[planets[i]]['R']*u.m, planProp[planets[i]]['a']*u.m,\
-        #             planProp[planets[i]]['phaseFuncMelded'](betas))
-        # tmp_ss = separation_from_alpha_ap((betas)*np.pi/180.,planProp[planets[i]]['a']*u.m).to('AU').value
-
-        # inds_tmpssGT1em2 = np.where(tmp_ss >= 0.01)[0]
-        # indsLT90 = np.where((betas <= 90.)*(tmp_ss >= 0.01))[0]
-        # indsGT90 = np.where((betas >= 90.)*(tmp_ss >= 0.01))[0]
-        # totalDist = 0.
-        # tmp_distLT90 = 0.
-        # totalDistLT90 = 0.
-        # for j in np.arange(len(indsLT90)-1):
-        #     tmp_distLT90 += np.sqrt(((np.log10(tmp_ss[indsLT90[j+1]]) - np.log10(tmp_ss[indsLT90[j]]))/np.abs(np.log10(np.max(tmp_ss[inds_tmpssGT1em2]))-np.log10(0.01)))**2. + ((tmp_dmags[indsLT90[j+1]] - tmp_dmags[indsLT90[j]])/np.abs(planetdmagmax - planetdmagmin))**2.)
-        #     #tmp_distLT90 =+ np.sqrt((np.log10(tmp_ss[indsLT90[j+1]]) - np.log10(tmp_ss[indsLT90[j]]))**2. + (tmp_dmags[indsLT90[j+1]] - tmp_dmags[indsLT90[j]])**2.)
-        #     #DELETEtmp_distLT90 =+ np.sqrt(((np.log10(tmp_ss[indsLT90[j+1]]) - np.log10(tmp_ss[indsLT90[j]]))/np.abs(tmp_dmags[indsLT90[-1]]-tmp_dmags[indsLT90[0]]))**2. + ((tmp_dmags[indsLT90[j+1]] - tmp_dmags[indsLT90[j]])/np.abs(np.log10(tmp_ss[indsLT90[-1]])-np.log10(tmp_ss[indsLT90[0]])))**2.)
-        #     totalDistLT90 += np.sqrt((np.log10(tmp_ss[indsLT90[j+1]]) - np.log10(tmp_ss[indsLT90[j]]))**2. + (tmp_dmags[indsLT90[j+1]] - tmp_dmags[indsLT90[j]])**2.)
-        #     totalDist += np.sqrt((np.log10(tmp_ss[indsLT90[j+1]]) - np.log10(tmp_ss[indsLT90[j]]))**2. + (tmp_dmags[indsLT90[j+1]] - tmp_dmags[indsLT90[j]])**2.)
-        # tmp_distGT90 = 0.
-        # totalDistGT90 = 0.
-        # for j in np.arange(len(indsGT90)-1):
-        #     tmp_distGT90 += np.sqrt(((np.log10(tmp_ss[indsGT90[j+1]]) - np.log10(tmp_ss[indsGT90[j]]))/np.abs(np.log10(np.max(tmp_ss[inds_tmpssGT1em2]))-np.log10(0.01)))**2. + ((tmp_dmags[indsGT90[j+1]] - tmp_dmags[indsGT90[j]])/np.abs(planetdmagmax - planetdmagmin))**2.)
-        #     #tmp_distGT90 =+ np.sqrt((np.log10(tmp_ss[indsGT90[j+1]]) - np.log10(tmp_ss[indsGT90[j]]))**2. + (tmp_dmags[indsGT90[j+1]] - tmp_dmags[indsGT90[j]])**2.)
-        #     #DELETEtmp_distGT90 =+ np.sqrt(((np.log10(tmp_ss[indsGT90[j+1]]) - np.log10(tmp_ss[indsGT90[j]]))/np.abs(tmp_dmags[indsGT90[-1]]-tmp_dmags[indsGT90[0]]))**2. + ((tmp_dmags[indsGT90[j+1]] - tmp_dmags[indsGT90[j]])/np.abs(np.log10(tmp_ss[indsGT90[-1]])-np.log10(tmp_ss[indsGT90[0]])))**2.)
-        #     totalDistGT90 += np.sqrt((np.log10(tmp_ss[indsGT90[j+1]]) - np.log10(tmp_ss[indsGT90[j]]))**2. + (tmp_dmags[indsGT90[j+1]] - tmp_dmags[indsGT90[j]])**2.)
-        #     totalDist += np.sqrt((np.log10(tmp_ss[indsGT90[j+1]]) - np.log10(tmp_ss[indsGT90[j]]))**2. + (tmp_dmags[indsGT90[j+1]] - tmp_dmags[indsGT90[j]])**2.)
-
-        # #Reset the number of points in betas0 and betas 1 based on the length calculation above
-        # num_points_betas0 = int(tmp_distLT90/(tmp_distLT90+tmp_distGT90)*num_points*totalDist/27.202055193414157) #27.202055193414157 comes from totalDist of planet i=7
-        # num_points_betas1 = int(tmp_distGT90/(tmp_distLT90+tmp_distGT90)*num_points*totalDist/27.202055193414157)
-        # #num_points_betas0 = int(totalDistLT90*num_points/0.34146) #0.34146 comes from total distance of planet i=7
-        # #num_points_betas1 = int(totalDistGT90*num_points/0.34146)
-        # #betas0 = np.arcsin(np.linspace(start=np.sin((0.+inclination)*np.pi/180.),stop=1.,num=num_points_betas0,endpoint=False))*180./np.pi
-        # #betas1 = 180.-np.arcsin(np.linspace(start=1.,stop=np.sin((180.-inclination)*np.pi/180.),num=num_points_betas1,endpoint=False))*180./np.pi
-        # #betas = np.concatenate((betas0,betas1))
-
-        # smin = separation_from_alpha_ap((inclination)*np.pi/180.,planProp[planets[i]]['a']*u.m).to('AU').value+1e-9#np.sin((0.+inclination)*np.pi/180.) #the minimum separation
-        # hh = np.logspace(start=np.log10(smin+1e-1),stop=np.log10(planProp[planets[i]]['a']*u.m.to('AU')),num=num_points_betas0,endpoint=True)
-        # betas0 = np.arcsin(hh/(planProp[planets[i]]['a']*u.m.to('AU')))*180./np.pi
-        # p2 = np.logspace(start=np.log10(smin+1e-1),stop=np.log10(planProp[planets[i]]['a']*u.m.to('AU')),num=num_points_betas1,endpoint=True)
-        # betas1 = 180.-np.arcsin(p2/(planProp[planets[i]]['a']*u.m.to('AU')))*180./np.pi
-        # betas = np.concatenate((betas0,betas1))
-        # betas = np.sort(betas)
-        # indsWhere90 = np.where(betas==90.)[0]
-        # betas = np.delete(betas,indsWhere90[:-1])
-        # indsWhereNAN = np.where(np.isnan(betas))[0]
-        # betas = np.delete(betas,indsWhereNAN)
         #I want to add two points near the maximum separation peak
         tmp_seps = separation_from_alpha_ap(betas*np.pi/180.,planProp[planets[i]]['a']*u.m).to('AU').value #Calculate temporary separations
         indargmaxsep = np.nanargmax(tmp_seps)
@@ -1239,14 +1175,10 @@ def plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_Ha
         betas = np.concatenate((betas,np.asarray([betas[indargmaxsep] + np.abs(betas[indargmaxsep+1] - betas[indargmaxsep])/3.,betas[indargmaxsep] + 2.*np.abs(betas[indargmaxsep+1] - betas[indargmaxsep])/3.])))
         betas = np.sort(betas)
 
-
-
         #Estimate the arc-length for the top-half and the bottom half
         tmp_dmags = deltaMag(planProp[planets[i]]['p'], planProp[planets[i]]['R']*u.m, planProp[planets[i]]['a']*u.m,\
                     planProp[planets[i]]['phaseFuncMelded'](betas))
         tmp_ss = separation_from_alpha_ap((betas)*np.pi/180.,planProp[planets[i]]['a']*u.m).to('AU').value
-
-
         # #NICE FOR ERROR CHECKING
         # plt.figure(num=444444444444444444444444444444444)
         # plt.scatter(tmp_ss/uncertainty_s  , tmp_dmags/uncertainty_dmag,color='purple',s=2)
@@ -1254,8 +1186,6 @@ def plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_Ha
         # #plt.xlim([-1,20])
         # plt.show(block=False)
         # plt.gcf().canvas.draw()
-
-
 
         inds_tmpssGT1em2 = np.where(tmp_ss >= 0.1)[0]
         indsLT90 = np.where((betas <= 90.)*(tmp_ss >= 0.1))[0]
@@ -1277,16 +1207,6 @@ def plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_Ha
         #Reset the number of points in betas0 and betas 1 based on the length calculation above
         #KEEPnum_points_betas0 = int(totalDistLT90/(totalDistLT90+totalDistGT90)*num_points*totalDist/1256.8259933730733) #1256.8259933730733 comes from totalDist of planet i=7, where totalDist is normalized by uncertainty
         #KEEPnum_points_betas1 = int(totalDistGT90/(totalDistLT90+totalDistGT90)*num_points*totalDist/1256.8259933730733)
-        
-        # num_points_betas0 = int(tmp_distLT90/(tmp_distLT90+tmp_distGT90)*num_points*totalDist/73.54734075177595) #73.54734075177595 comes from totalDist of planet i=7
-        # num_points_betas1 = int(tmp_distGT90/(tmp_distLT90+tmp_distGT90)*num_points*totalDist/73.54734075177595)
-        #num_points_betas0 = int(totalDistLT90*num_points/0.34146) #0.34146 comes from total distance of planet i=7
-        #num_points_betas1 = int(totalDistGT90*num_points/0.34146)
-        #betas0 = np.arcsin(np.linspace(start=np.sin((0.+inclination)*np.pi/180.),stop=1.,num=num_points_betas0,endpoint=False))*180./np.pi
-        #betas1 = 180.-np.arcsin(np.linspace(start=1.,stop=np.sin((180.-inclination)*np.pi/180.),num=num_points_betas1,endpoint=False))*180./np.pi
-        #betas = np.concatenate((betas0,betas1))
-
-
 
         #Incrementally calculate next beta based on the current point
         count = 0
@@ -1335,9 +1255,6 @@ def plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_Ha
                     count = 1e9
                     #Fix the beta_saved
                     beta_saved[-1] = betaEnd
-
-                    
-
             #assert distance < 0.3, 'the point to point distance is too small, add more points'
 
         betas = np.asarray(beta_saved)
@@ -1351,159 +1268,6 @@ def plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_Ha
         # plt.scatter(ss_tmp2/uncertainty_s  , dmag_tmp2/uncertainty_dmag,color='green',s=2)
         # plt.show(block=False)
         # plt.gcf().canvas.draw()
-
-
-        # print(saltyburrito)
-
-
-
-
-
-
-
-
-        # smin = separation_from_alpha_ap((inclination)*np.pi/180.,planProp[planets[i]]['a']*u.m).to('AU').value #np.sin((0.+inclination)*np.pi/180.) #the minimum separation
-        # hh = np.linspace(start=np.max([smin,0.1]),stop=planProp[planets[i]]['a']*u.m.to('AU'),num=num_points_betas0,endpoint=True)
-        # betas0 = np.arcsin(hh/(planProp[planets[i]]['a']*u.m.to('AU')))*180./np.pi
-        # p2 = np.linspace(start=np.max([smin,0.1]),stop=planProp[planets[i]]['a']*u.m.to('AU'),num=num_points_betas1,endpoint=True)
-        # betas1 = 180.-np.arcsin(p2/(planProp[planets[i]]['a']*u.m.to('AU')))*180./np.pi
-        # betas = np.concatenate((betas0,betas1))
-        # betas = np.sort(betas)
-        # indsWhere90 = np.where(betas==90.)[0]
-        # betas = np.delete(betas,indsWhere90[:-1])
-        # indsWhereNAN = np.where(np.isnan(betas))[0]
-        # betas = np.delete(betas,indsWhereNAN)
-        # #I want to add two points near the maximum separation peak
-        # # tmp_seps = separation_from_alpha_ap(betas*np.pi/180.,planProp[planets[i]]['a']*u.m).to('AU').value #Calculate temporary separations
-        # # indargmaxsep = np.nanargmax(tmp_seps)
-        # # betas = np.concatenate((betas,np.asarray([betas[indargmaxsep] - np.abs(betas[indargmaxsep] - betas[indargmaxsep-1])/3.,betas[indargmaxsep] - 2.*np.abs(betas[indargmaxsep] - betas[indargmaxsep-1])/3.]))) #betas less than maxSep beta
-        # # betas = np.concatenate((betas,np.asarray([betas[indargmaxsep] + np.abs(betas[indargmaxsep+1] - betas[indargmaxsep])/3.,betas[indargmaxsep] + 2.*np.abs(betas[indargmaxsep+1] - betas[indargmaxsep])/3.])))
-        # betas = np.sort(betas)
-
-        # #NICE FOR ERROR CHECKING
-        # plt.figure(num=33333333333333)
-        # ss_tmp2 = separation_from_alpha_ap(betas*np.pi/180.,planProp[planets[i]]['a']*u.m).to('AU').value
-        # dmag_tmp2 = deltaMag(planProp[planets[i]]['p'], planProp[planets[i]]['R']*u.m, planProp[planets[i]]['a']*u.m,planProp[planets[i]]['phaseFuncMelded'](betas))
-        # plt.scatter(ss_tmp2/uncertainty_s  , dmag_tmp2/uncertainty_dmag,color='red',s=2)
-        # #plt.gca().set_xscale('log')
-        # #plt.xlim([-1,20])
-        # plt.show(block=False)
-        # plt.gcf().canvas.draw()
-        # # print(saltyburrito)
-
-
-
-        # #DELETE
-        # # dmags = deltaMag(planProp[planets[i]]['p'], planProp[planets[i]]['R']*u.m, planProp[planets[i]]['a']*u.m,\
-        # #         planProp[planets[i]]['phaseFuncMelded'](x0))
-        # # ss = separation_from_alpha_ap(x0*np.pi/180.,planProp[planets[i]]['a']*u.m).to('AU').value
-        # # ssRepInds = np.where(ss <= 1e-5)[0]
-        # # if len(ssRepInds) > 0:
-        # #     ss[ssRepInds] = np.ones(len(ssRepInds))*1e-5
-
-        # # xyzpoints = np.asarray([ss/uncertainty_s,dmags/uncertainty_dmag]).T #worked okay before
-
-        # # distances, closest_point_inds, distances_2 = pt_pt_distances2(xyzpoints)
-
-
-
-
-        # #### Do optimization to optimally spread out point locations along curve (does okay)
-        # def errorPtDistances(x0,i):
-        #     #x0 = np.sort(x0)
-        #     dmags = deltaMag(planProp[planets[i]]['p'], planProp[planets[i]]['R']*u.m, planProp[planets[i]]['a']*u.m,\
-        #             planProp[planets[i]]['phaseFuncMelded'](x0))
-        #     ss = separation_from_alpha_ap(x0*np.pi/180.,planProp[planets[i]]['a']*u.m).to('AU').value
-        #     ssRepInds = np.where(ss <= 1e-5)[0]
-        #     if len(ssRepInds) > 0:
-        #         ss[ssRepInds] = np.ones(len(ssRepInds))*1e-5
-        #     # deltas = np.abs(np.log10(ss[1:]+1e-15)-np.log10(ss[:-1]+1e-15))
-        #     # repInds = np.where(np.isnan(deltas))[0]
-        #     # if len(repInds) > 0:
-        #     #     deltas[repInds] = 1e-15
-        #     # #deltasRepInds = np.where(deltas <= 1e-9)[0]
-        #     # #deltas[deltasRepInds] = np.ones(len(deltasRepInds))*np.sort(deltas)[1]
-        #     # #logDeltas = np.log10(deltas)
-        #     # deltadmag = dmags[1:]-dmags[:-1]
-        #     # dists = (deltadmag/25.)**2 + (deltas/3.)**2
-
-
-        #     #eyeballing from a plot
-        #     #25 across y
-        #     #3 orders across s
-
-        #     xyzpoints = np.asarray([ss/uncertainty_s,dmags/uncertainty_dmag]).T #worked okay before
-        #     #xyzpoints = np.asarray([(np.log10(ss/3)),(dmags-np.min(dmags))/20]).T #worked okay before
-        #     #xyzpoints = np.asarray([(np.log10(ss)-np.min(np.log10(ss)))/np.abs(np.max(np.log10(ss)) - np.min(np.log10(ss))), (dmags-np.min(dmags))/(np.max(dmags)-np.min(dmags))]).T #trying something new
-        #     #KEEPdistances, closest_point_inds = pt_pt_distances(xyzpoints)
-        #     distances, closest_point_inds, distances_2 = pt_pt_distances2(xyzpoints)
-        #     #deltasbys = np.asarray([[ss[i]-ss[j] for j in np.arange(len(ss))] for i in np.arange(len(ss))])
-        #     #deltadmagbydmay = np.asarray([[dmags[i]-dmags[j] for j in np.arange(len(dmags))] for i in np.arange(len(dmags))])
-
-        #     #print(saltyburrito)
-        #     #we want to maximize the smallest point to point distance (minimize )
-        #     #return -np.min(np.asarray(distances)**2) #-(np.mean(dists)-0.1*np.max(dists))
-        #     #srtDist = np.sort(distances)
-        #     #srtDist2 = np.sort(distances_2)
-        #     #print(-np.mean(distances)*(np.sum(srtDist[int(len(distances)*1./3.):]) + np.sum(srtDist2[int(len(distances)*1./3.):])))
-        #     #return -np.mean(distances)*(np.sum(srtDist[int(len(distances)*1./3.):]) + np.sum(srtDist2[int(len(distances)*1./3.):]))
-        #     #print(-np.sum(distances) + np.sum((np.mean(srtDist[int(len(distances)*1./3.):])-distances)**2.)) # we want to maximize the range of points as indicated by the summation, we want to penalize deviation of the minimum distance from the average distance
-        #     #return -np.sum(distances) + np.sum((np.mean(srtDist[int(len(distances)*1./3.):])-distances)**2.)
-
-        #     #print(-np.mean(distances)-np.mean(distances_2) + 10.*np.std(distances) + 10.*np.std(distances_2))
-        #     #return -np.mean(distances)-np.mean(distances_2) + 10.*np.std(distances) + 10.*np.std(distances_2)
-
-        #     print(- (np.max(ss)-np.min(ss)) - (np.max(dmags)-np.min(dmags)) + 100.*np.std(distances) + 100.*np.std(distances_2))
-        #     return - (np.max(ss)-np.min(ss)) - (np.max(dmags)-np.min(dmags)) + 100.*np.std(distances) + 100.*np.std(distances_2)
-
-        #     #print(np.mean(distances)/np.mean(srtDist[int(len(distances)*1./3.):]) - np.mean(distances_2)/np.mean(distances_2))
-        #     #return -2*np.mean(distances)/np.mean(srtDist[int(len(distances)*1./3.):]) - 
-        #     # return -np.min(distances) #DOES NOT WORK WELL
-        #     #We divide by the 
-
-        #     # print(-np.mean(distances)/np.max(distances))
-        #     # return -np.mean(distances)/np.max(distances) #will take the average pt-pt distances and divide this by the largest distances. The smaller the largest distances is, the higher the function value. the mean term ensures the points don't cluster o.w. this would produce a number closer to zero
-        #     #Maximize sum of distances (should give even spread along arc), add term punishing points which are further separated than the mean distance
-        #     #return -np.sum(np.abs(np.asarray(distances))) + np.sum((np.asarray(distances) - np.mean(np.asarray(distances)))**2.)
-
-
-        # print('Optimizing Point Locations')
-        # # betas[0] = betas[0]+1e-7
-        # # betas[-1] = betas[-1]-1e-7
-        # assert np.min(np.abs(betas[:-1]-betas[1:])) > 0, 'oops spacing is 0 so eps will be zeros'
-        # outBetas = minimize(fun=errorPtDistances,x0=betas,args=(i), method='SLSQP', options={'eps':0.2*np.min(np.abs(betas[:-1]-betas[1:])),'ftol':1e-5,'maxiter':500} ,bounds=[(0.+np.max([beta_dmagmin,inclination]),180.-np.max([beta_dmagmin,inclination])) for i in np.arange(len(betas))])
-        # betas = outBetas['x']
-        # betas = np.asarray(list(dict.fromkeys(betas))) #removes any duplicates from list
-        # print(betas)
-        # #I want to add two points near the maximum separation peak
-        # # tmp_seps = separation_from_alpha_ap(betas*np.pi/180.,planProp[planets[i]]['a']*u.m).to('AU').value #Calculate temporary separations
-        # # indargmaxsep = np.argmax(tmp_seps)
-        # # betas = np.concatenate((betas,np.asarray([betas[indargmaxsep] - (betas[indargmaxsep] - betas[indargmaxsep-1])/3.,betas[indargmaxsep] - 2.*(betas[indargmaxsep] - betas[indargmaxsep-1])/3.]))) #betas less than maxSep beta
-        # # betas = np.concatenate((betas,np.asarray([betas[indargmaxsep] + (betas[indargmaxsep+1] - betas[indargmaxsep])/3.,betas[indargmaxsep] + 2.*(betas[indargmaxsep+1] - betas[indargmaxsep])/3.])))
-        # # betas = np.sort(betas)
-        # print('Done Optimizing Distances')
-        
-        # plt.figure(num=11111111111)
-        # ss_tmp = separation_from_alpha_ap(betas*np.pi/180.,planProp[planets[i]]['a']*u.m).to('AU').value
-        # dmag_tmp = deltaMag(planProp[planets[i]]['p'], planProp[planets[i]]['R']*u.m, planProp[planets[i]]['a']*u.m,planProp[planets[i]]['phaseFuncMelded'](betas))
-        # plt.scatter(ss_tmp /uncertainty_s , dmag_tmp/ uncertainty_dmag,color='black',s=2)
-        
-        # #plt.gca().set_xscale('log')
-        # #plt.xlim([-1,20])
-        # plt.show(block=False)
-        # plt.gcf().canvas.draw()
-
-
-        # plt.figure(num=22222222222222)
-        # plt.scatter((np.log10(ss_tmp)-np.min(np.log10(ss_tmp)))/np.abs(np.max(np.log10(ss_tmp)) - np.min(np.log10(ss_tmp))), (dmag_tmp-np.min(dmag_tmp))/(np.max(dmag_tmp)-np.min(dmag_tmp)),color='blue',s=2)
-        # plt.show(block=False)
-        # plt.gcf().canvas.draw()
-        # #print(saltyburrito)
-
-        #### Beta corrections for Jupiter and Neptune
-        #At near 180 deg phase, these planets have really low point densities. This supplants a few more points to correct for this
-        # if i==4 or i==7:
-        #     betas = np.sort(np.concatenate((betas,(betas[-30:]+betas[-31:-1])/2)))
 
         planProp[planets[i]]['dmag'] = deltaMag(planProp[planets[i]]['p'], planProp[planets[i]]['R']*u.m, planProp[planets[i]]['a']*u.m,\
                 planProp[planets[i]]['phaseFuncMelded'](betas))
@@ -1523,7 +1287,7 @@ def plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_Ha
 
         #Generate a Monte Carlo of detected planets with the initial uncertainties
         #nuncertainties = int(1.2*10**5)
-        if i == 0 or i == 1:
+        if i == 0 or i == 1 or i == 2 or i == 3:
             nuncertainties = int(5*nppuncertainty)
         else:
             nuncertainties = int(nppuncertainty) #int(nppuncertainty * 0.05 * 1256.8259933730733/totalDist)
@@ -1609,20 +1373,20 @@ plt.close(3389)
 plt.close(4489)
 
 
-# #KEEP TEMPORARY commenting to make code run faster
-plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=0., num=670, folder='./', PPoutpath='./',sigma_fraction=0.997,nppuncertainty=4e4,sigma_per_point=0.3)
-plt.close(670)
-plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=2.2, num=680, folder='./', PPoutpath='./',sigma_fraction=0.997,nppuncertainty=5e4,sigma_per_point=0.3)
-plt.close(680)
-plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=21., num=690, folder='./', PPoutpath='./',sigma_fraction=0.997,nppuncertainty=4e4,sigma_per_point=0.3)
-plt.close(690)
-plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=25.3, num=700, folder='./', PPoutpath='./',sigma_fraction=0.997,nppuncertainty=7e4,sigma_per_point=0.3)
-plt.close(700)
-plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=43.7, num=710, folder='./', PPoutpath='./',sigma_fraction=0.997,nppuncertainty=1e5,sigma_per_point=0.3)
-plt.close(710)
+# # #KEEP TEMPORARY commenting to make code run faster
+# plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=0., num=670, folder='./', PPoutpath='./',sigma_fraction=0.997,nppuncertainty=4e4,sigma_per_point=0.3)
+# plt.close(670)
+# plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=2.2, num=680, folder='./', PPoutpath='./',sigma_fraction=0.997,nppuncertainty=4e4,sigma_per_point=0.3)
+# plt.close(680)
+# plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=21., num=690, folder='./', PPoutpath='./',sigma_fraction=0.997,nppuncertainty=5e4,sigma_per_point=0.3)
+# plt.close(690)
+# plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=25.3, num=700, folder='./', PPoutpath='./',sigma_fraction=0.997,nppuncertainty=1e5,sigma_per_point=0.3)
+# plt.close(700)
+# plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=43.7, num=710, folder='./', PPoutpath='./',sigma_fraction=0.997,nppuncertainty=1e5,sigma_per_point=0.3)
+# plt.close(710)
 
-plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=0., num=6702, folder='./', PPoutpath='./',sigma_fraction=0.68,nppuncertainty=3e4,sigma_per_point=0.3)
-plt.close(6702)
+# plotDmagvssMonteCarlo(planProp,planets,uncertainty_dmag,uncertainty_s,IWA_HabEx=IWA_HabEx,IWA2=IWA2,inclination=0., num=6702, folder='./', PPoutpath='./',sigma_fraction=0.68,nppuncertainty=3e4,sigma_per_point=0.3)
+# plt.close(6702)
 
 
 #### Fraction of Solar system-like star systems with Coincident Planets
@@ -1651,5 +1415,80 @@ intersectionInclinations2 = [np.min([np.min([tmpbs2[i],180.-tmpbs2[i]]),np.min([
 
 
 
+
+
+#### Check which methods to use for determining intersections
+
+# name  , dmag , $s$ (AU) , beta_s (deg) , beta_l (deg) , delta i_crit (deg)
+table2Data = [['Mercury-Venus' , 25.41 , 0.26 , 42.18 , 158.94 , 21.06], #mercury all dmag Venus s-3sigma s-2sigma s-1sigma dmag-1sigma dmag-2sigma dmag-3sigma
+['Mercury-Earth' , 27.72 , 0.36 , 111.84 , 158.94 , 21.06], #Mercury all dmag Earth all dmag
+['Mercury-Mars' , 26.57 , 0.38 , 81.16 , 14.54 , 14.54], #Mercury all dmag Mars all s
+['Mercury-Uranus' , 26.13 , 0.36 , 67.06 , 1.06 , 1.06], #Mercury all dmag Uranus all s
+['Mercury-Neptune' , 27.2 , 0.38 , 99.27 , 0.73 , 0.73], #Mercury all dmag Neptune all s
+['Venus-Earth' , 23.15 , 0.72 , 92.46 , 46.27 , 46.27], # Venus all dmag Earth all s
+['Venus-Saturn' , 22.72 , 0.69 , 73.37 , 4.15 , 4.15], # Venus all dmag Saturn all s
+['Earth-Mars' , 26.6 , 0.65 , 139.34 , 25.32 , 25.32], #Earth all dmag Mars all s
+['Earth-Saturn' , 22.8 , 0.29 , 17.06 , 1.75 , 1.75], # Earth all s Saturn all s
+['Earth-Uranus' , 26.13 , 0.76 , 130.77 , 2.26 , 2.26], #Earth all dmag Uranus all s
+['Earth-Neptune' , 27.12 , 0.53 , 148.27 , 1.0 , 1.0], #Earth all dmag Neptune all s
+['Mars-Jupiter (1)' , 27.48 , 1.48 , 76.61 , 163.45 , 16.55], #Jupiter: left s-3sigma, s-2sigma, s-1sigma  right dmag-1sigma, dmag-2sigma, s+3sigma, Mars: 
+['Mars-Jupiter (2)' , 32.98 , 0.27 , 169.67 , 176.99 , 3.01], #intersections, all dmag intersections
+['Mars-Uranus' , 26.2 , 0.0 , 0.0 , 0.0 , 0.0], #Both all s
+['Mars-Neptune', 27.22 , 1.38 , 65.07 , 2.64 , 2.64],
+['Jupiter-Saturn' , 22.83 , 4.73 , 114.64 , 29.58 , 29.58], #Both All s
+['Jupiter-Uranus' , 26.1 , 2.18 , 155.24 , 6.52 , 6.52], #Both all s
+['Jupiter-Neptune' , 27.19 , 1.58 , 162.36 , 3.01 , 3.01], #Jupiter all s Neptune: all s
+['Saturn-Uranus' , 26.19 , 5.47 , 145.21 , 16.55 , 16.55], #Both all s
+['Saturn-Neptune' , 27.27 , 4.35 , 153.02 , 8.32 , 8.32], #Both all s
+['Uranus-Neptune' , 27.66 , 19.16 , 93.89 , 39.61 , 39.61]] #Uranus s-3sigma s-2sigma s-1sigma dmag-1sigma s-2sigma s-3sigma Neptune all s
+
+
+num=8888888883333
+plt.close(num)
+fig67 = plt.figure(num=num)
+
+#Plot Central Line
+betas = np.linspace(start=0.,stop=180.,num=1000)
+for i in np.arange(len(planets)):
+    dmags69 = deltaMag(planProp[planets[i]]['p'], planProp[planets[i]]['R']*u.m, planProp[planets[i]]['a']*u.m, planProp[planets[i]]['phaseFuncMelded'](betas))
+    seps69 = separation_from_alpha_ap(betas*np.pi/180.,planProp[planets[i]]['a']*u.m).to('AU').value
+    plt.plot(seps69,dmags69,color=planProp[planets[i]]['planet_labelcolors'],label=planProp[planets[i]]['planet_name'].capitalize())
+
+#Plot all intersections
+for i in np.arange(len(table2Data)):
+    plt.scatter(table2Data[i][2],table2Data[i][1],color='black')
+    plt.plot([table2Data[i][2]-uncertainty_s,table2Data[i][2]-uncertainty_s,table2Data[i][2]+uncertainty_s,table2Data[i][2]+uncertainty_s,table2Data[i][2]-uncertainty_s],\
+        [table2Data[i][1]+uncertainty_dmag,table2Data[i][1]-uncertainty_dmag,table2Data[i][1]-uncertainty_dmag,table2Data[i][1]+uncertainty_dmag,table2Data[i][1]+uncertainty_dmag],color='darkblue',linewidth=0.5)
+    plt.plot([table2Data[i][2]-2.*uncertainty_s,table2Data[i][2]-2.*uncertainty_s,table2Data[i][2]+2.*uncertainty_s,table2Data[i][2]+2.*uncertainty_s,table2Data[i][2]-2.*uncertainty_s],\
+        [table2Data[i][1]+2.*uncertainty_dmag,table2Data[i][1]-2.*uncertainty_dmag,table2Data[i][1]-2.*uncertainty_dmag,table2Data[i][1]+2.*uncertainty_dmag,table2Data[i][1]+2.*uncertainty_dmag],color='blue',linewidth=0.5)
+    plt.plot([table2Data[i][2]-3.*uncertainty_s,table2Data[i][2]-3.*uncertainty_s,table2Data[i][2]+3.*uncertainty_s,table2Data[i][2]+3.*uncertainty_s,table2Data[i][2]-3.*uncertainty_s],\
+        [table2Data[i][1]+3.*uncertainty_dmag,table2Data[i][1]-3.*uncertainty_dmag,table2Data[i][1]-3.*uncertainty_dmag,table2Data[i][1]+3.*uncertainty_dmag,table2Data[i][1]+3.*uncertainty_dmag],color='skyblue',linewidth=0.5)
+
+#plt.scatter(planProp[planets[i]]['s'],planProp[planets[i]]['dmag'],color='black',s=16,zorder=50) #Used for checking spacing
+plt.xlim([1e-1,0.5])
+plt.xscale('log')
+plt.gcf().canvas.draw()
+plt.show(block=False)
+plt.gcf().canvas.draw()
+
+#ADD SMIN FOR TELESCOPE
+smin_telescope = IWA_HabEx.to('rad').value*10.*u.pc.to('AU') #IWA for HabEx 45 mas observing target at 10 pc
+plt.plot([smin_telescope,smin_telescope],[10.,70.],color='black',linestyle='-')
+smin_telescope2 = IWA2.to('rad').value*10.*u.pc.to('AU') #IWA for HabEx 45 mas observing target at 10 pc
+plt.plot([smin_telescope2,smin_telescope2],[10.,70.],color='black',linestyle='-')
+
+#plt.text(7,19.5,'Credit: Dean Keithly',fontsize='small',fontweight='normal')
+plt.text(1.05*smin_telescope,41, str(int(IWA_HabEx.value*1000)) + ' mas\nat 10 pc',fontsize='medium',fontweight='bold',rotation=90)
+plt.text(1.05*smin_telescope2,41, str(int(IWA2.value*1000)) + ' mas\nat 10 pc',fontsize='medium',fontweight='bold',rotation=90)
+plt.xlim([1e-1,32.])
+plt.ylim([19.,46.])
+plt.ylabel('Planet-Star ' + r'$\Delta \mathrm{mag}$', weight='bold')
+plt.xlabel('Projected Planet-Star Separation, ' + r'$s$,' +' in AU', weight='bold')
+plt.legend(loc=1)
+#plt.title('Inclination: ' + str(np.round(90-inclination,1)) + r'$^\circ$' ,weight='bold')
+plt.gcf().canvas.draw()
+plt.show(block=False)
+plt.gcf().canvas.draw()
+#print('Done with planet: ' + str(planets[i]))
 
 
