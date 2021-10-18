@@ -6,14 +6,7 @@ import numpy as np
 import copy
 from copy import deepcopy
 import astropy.units as u
-# folder = os.path.normpath(os.path.expandvars('$HOME/Documents/exosims/Scripts'))#'$HOME/Documents/exosims/Scripts'))#HabExTimeSweep_HabEx_CSAG13_PPSAG13'))#WFIRSTCompSpecPriors_WFIRSTcycle6core_3mo_40519'))#EXOSIMS/EXOSIMS/Scripts'))#EXOSIMS/EXOSIMS/Scripts'))
-# #filename = 'HabEx_4m_TSDD_pop100DD_revisit_20180424.json'
-# #filename = 'HabEx_4m_DDSLSQP_maxiter200_TF14_GA.75_a0.78b0.2c0.07d0.11e.58f.05__20190520_MODIFIED.json'
-# #filename = 'auto_2019_05_18_13_50__HabExTimeSweep_HabEx_CSAG13_PPSAG13_9.json'#'WFIRSTcycle6core_CKL2_PPKL2.json'#'HabEx_4m_TSDD_pop100DD_revisit_20180424.json'#'WFIRSTcycle6core.json'#'Dean3June18RS26CXXfZ01OB66PP01SU01.json'#'Dean1June18RS26CXXfZ01OB56PP01SU01.json'#'./TestScripts/04_KeplerLike_Occulter_linearJScheduler.json'#'Dean13May18RS09CXXfZ01OB01PP03SU01.json'#'sS_AYO7.json'#'ICDcontents.json'###'sS_protoTimeKeeping.json'#'sS_AYO3.json'#sS_SLSQPstatic_parallel_ensembleJTWIN.json'#'sS_JTwin.json'#'sS_AYO4.json'#'sS_AYO3.json'
-# #filename = 'sS_intTime6_KeplerLike2.json'
-# #folder = '/home/dean/Documents/exosims/EXOSIMS/EXOSIMS/Scripts/TestScripts/'
-# filename='01_all_defaults.json'
-# scriptfile = os.path.join(folder,filename)
+
 
 outspec1 = {"missionFinishAbs": 61729.75,
     "missionLife": 3.0,
@@ -78,12 +71,6 @@ outspec1 = {"missionFinishAbs": 61729.75,
       "optics": 0.95,
       "optics_comment": "contamination",
       "core_platescale": 0.1,
-      "occ_trans": "$HOME/Documents/exosims/fitFilesFolder/HabExMay3/G_VC6_occ_trans_asec.fits",
-      "core_thruput": "$HOME/Documents/exosims/fitFilesFolder/HabExMay3/G_VC6_core_thruput_asec.fits",           
-      "core_mean_intensity": "$HOME/Documents/exosims/fitFilesFolder/HabExMay3/G_VC6_core_mean_intensity_asec.fits",
-      "occ_trans_local": "$HOME/Documents/exosims/fitFilesFolder/HabExMay3/G_VC6_occ_trans_asec.fits",
-      "core_thruput_local": "$HOME/Documents/exosims/fitFilesFolder/HabExMay3/G_VC6_core_thruput_asec.fits",           
-      "core_mean_intensity_local": "$HOME/Documents/exosims/fitFilesFolder/HabExMay3/G_VC6_core_mean_intensity_asec.fits",
       "koAngles_Earth": [
             45.0,
             180.0
@@ -118,18 +105,18 @@ outspec1 = {"missionFinishAbs": 61729.75,
     }
   ],
   "modules": {
-    "PlanetPopulation": " ",
+    "PlanetPopulation": "KeplerLike2",
     "StarCatalog": "EXOCAT1",
     "OpticalSystem": " ",
     "ZodiacalLight": " ",
     "BackgroundSources": " ",
-    "PlanetPhysicalModel": " ",
+    "PlanetPhysicalModel": "FortneyMarleyCahoyMix1",
     "Observatory": "WFIRSTObservatoryL2",
     "TimeKeeping": " ",
     "PostProcessing": " ",
     "Completeness": " ",
     "TargetList": " ",
-    "SimulatedUniverse": " ",
+    "SimulatedUniverse": "KeplerLikeUniverse",
     "SurveySimulation": " ",
     "SurveyEnsemble": " "
   }}
@@ -197,12 +184,6 @@ outspec2 = {"missionFinishAbs": 61729.75,
       "optics": 0.95,
       "optics_comment": "contamination",
       "core_platescale": 0.1,
-      "occ_trans": "$HOME/Documents/exosims/fitFilesFolder/HabExMay3/G_VC6_occ_trans_asec.fits",
-      "core_thruput": "$HOME/Documents/exosims/fitFilesFolder/HabExMay3/G_VC6_core_thruput_asec.fits",           
-      "core_mean_intensity": "$HOME/Documents/exosims/fitFilesFolder/HabExMay3/G_VC6_core_mean_intensity_asec.fits",
-      "occ_trans_local": "$HOME/Documents/exosims/fitFilesFolder/HabExMay3/G_VC6_occ_trans_asec.fits",
-      "core_thruput_local": "$HOME/Documents/exosims/fitFilesFolder/HabExMay3/G_VC6_core_thruput_asec.fits",           
-      "core_mean_intensity_local": "$HOME/Documents/exosims/fitFilesFolder/HabExMay3/G_VC6_core_mean_intensity_asec.fits",
       "koAngles_Earth": [
             45.0,
             180.0
