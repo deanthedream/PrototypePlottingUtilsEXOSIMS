@@ -104,8 +104,8 @@ print(phaseJUPITER)
 
 #SATURN
 eqnPhase2Saturn = 10.**(-0.4*(- 3.7e-04*alpha +6.16e-04*alpha**2.))
-eqnDifference = eqnPhase2Saturn.subs(alpha,6.5) - 10.**(-0.4*(2.446e-4*6.5 + 2.672e-4*6.5**2. - 1.505e-6*6.5**3. + 4.767e-9*6.5**2.))
-eqnPhase3Saturn = eqnDifference + 10.**(-0.4*(2.446e-4*alpha + 2.672e-4*alpha**2. - 1.505e-6*alpha**3. + 4.767e-9*alpha**2.))
+eqnDifference = eqnPhase2Saturn.subs(alpha,6.5) - 10.**(-0.4*(2.446e-4*6.5 + 2.672e-4*6.5**2. - 1.505e-6*6.5**3. + 4.767e-9*6.5**4.))
+eqnPhase3Saturn = eqnDifference + 10.**(-0.4*(2.446e-4*alpha + 2.672e-4*alpha**2. - 1.505e-6*alpha**3. + 4.767e-9*alpha**4.))
 phaseSATURN = eqnEND.subs(A,6.5).subs(B,5.)*eqnPhase2Saturn + \
                 eqnSTART.subs(A,6.5).subs(B,5.)*eqnEND.subs(A,150.).subs(B,5.)*eqnPhase3Saturn + \
                 eqnSTART.subs(A,150.).subs(B,5.)*eqnLAMBERT

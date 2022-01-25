@@ -14,6 +14,7 @@ from EXOSIMS.util.planet_star_separation import planet_star_separation
 
 from EXOSIMS.util.phaseFunctions import quasiLambertPhaseFunction
 from EXOSIMS.util.phaseFunctions import betaFunc
+from PrototypePlottingUtilsEXOSIMS.trueAnomalyFromEccentricAnomaly import trueAnomalyFromEccentricAnomaly
 
 import sys, os.path, EXOSIMS
 import numpy as np
@@ -114,16 +115,7 @@ WA_venus_smax = (smavenus.to('AU').value/(15.*u.pc.to('AU')))*u.rad.to('arcsec')
 venus_intTime = OS.calc_intTime(TL,[0],ZL.fZ0*100000.,ZL.fEZ0*100000.,dmag_venus_smax,WA_venus_smax,mode)
 mean_anomalyvenus = venus_intTime.to('year').value*2.*np.pi/periods_venus #total angle moved by planet
 eccentric_anomalyvenus = mean_anomalyvenus#solve eccentric anomaly from mean anomaly
-def trueAnomalyFromEccentricAnomaly(e,E):
-    """ From https://en.wikipedia.org/wiki/True_anomaly #definitely exists in some other python scripts somewhere
-    Args:
-        e:
-        E:
-    Returns:
-        nu:
-    """
-    nu = 2.*np.arctan2(np.sqrt(1.+e)*np.tan(E/2.),np.sqrt(1.-e))
-    return nu
+
 nus_venus = trueAnomalyFromEccentricAnomaly(e,eccentric_anomalyvenus) #This is nominally the total true anomaly venus subtends as it is observed
 sep_venus_edge0 = planet_star_separation(smavenus,e,0.,w,inc).to('AU').value #the separation where the true anomaly would not be observable
 sep_venus_edge1 = planet_star_separation(smavenus,e,nus_venus/2.,w,inc).to('AU').value #the separation where the true anomaly would not be observable

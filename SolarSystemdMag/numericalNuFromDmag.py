@@ -1,7 +1,7 @@
 # numericalNuFromDmag
 
 import os
-from projectedEllipse import *
+from exodetbox.projectedEllipse import *
 import EXOSIMS.MissionSim
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
@@ -18,18 +18,17 @@ except:
 from EXOSIMS.util.deltaMag import deltaMag
 import time
 
-from projectedEllipse import calc_planet_dmagmin_dmagmax
-from projectedEllipse import calc_planetnu_from_dmag
+from exodetbox.projectedEllipse import calc_planet_dmagmin_dmagmax
+from exodetbox.projectedEllipse import calc_planetnu_from_dmag
 import datetime
 import re
-import os
 
 from scipy.interpolate import UnivariateSpline
 
 #### PLOT BOOL
-plotBool = True
-if plotBool == True:
-    from plotProjectedEllipse import *
+#plotBool = True
+#if plotBool == True:
+    #from plotProjectedEllipse import *
 
 #### Randomly Generate Orbits
 PPoutpath = './'
@@ -55,28 +54,42 @@ del wReplacementInds
 inc = inc.to('rad').value
 inc[np.where(inc>np.pi/2.)[0]] = np.pi - inc[np.where(inc>np.pi/2.)[0]]
 sma, e, p, Rp = PPop.gen_plan_params(n)
-sma = sma.to('AU').value
+#sma = sma.to('AU').value
 
-a = sma*u.AU
+
+from badKOE import *
+from badKOELists import badKOELists
+badsma, bader, badWr, badwr, badinc = badKOELists()
+#remove planet KOE with poor 
+for i in np.arange(len(badsma)):
+    w,inc = nukeKOE_winc(w,inc) #expanded trust region
+    if badWr[i] == None or badWr[i] == np.nan:
+        sma,e,w,inc = nukeKOE_noWR(sma,e,w,inc,badsma[i]*u.AU,bader[i],badwr[i],badinc[i])
+    else:
+        sma,e,W,w,inc = nukeKOE(sma,e,W,w,inc,badsma[i]*u.AU,bader[i],badWr[i],badwr[i],badinc[i])
+
+
+
+a = sma#*u.AU
 dmag = 29. #specify the dmag to calculate for
 
 #####################################################################
 #### Solving for dmag_min and dmag_max for each planet ##############################################
-mindmag, maxdmag, dmaglminAll, dmaglmaxAll, indsWith2, indsWith4, nuMinDmag, nuMaxDmag, nulminAll, nulmaxAll = calc_planet_dmagmin_dmagmax(e,inc,w,a,p,Rp)
+mindmag, maxdmag, lmindmag, lmaxdmag, indsWith2, indsWith4, nuMinDmag, nuMaxDmag, nulminAll, nulmaxAll = calc_planet_dmagmin_dmagmax(e,inc,w,a,p,Rp)
 print('Num Planets with At Least 2 Int given dmag: ' + str(np.sum((mindmag < dmag)*(maxdmag > dmag))))
 print('Num Planets with dmag local extrema: ' + str(len(indsWith4)))
-print('Num Planets with given 4 Int given dmag: ' + str(np.sum((dmaglminAll < dmag)*(dmaglmaxAll > dmag))))
-indsWith4Int = indsWith4[np.where((dmaglminAll < dmag)*(dmaglmaxAll > dmag))[0]] #These are inds of n
+print('Num Planets with given 4 Int given dmag: ' + str(np.sum((lmindmag < dmag)*(lmaxdmag > dmag))))
+indsWith4Int = indsWith4[np.where((lmindmag < dmag)*(lmaxdmag > dmag))[0]] #These are inds of n
 indsWith2Int = list(set(np.where((mindmag < dmag)*(maxdmag > dmag))[0]) - set(indsWith4Int)) #These are inds of n
 
-#A subsequent check to see if the the mindmag or maxdmag are close to the dmaglmaxAll or dmaglminAll
-#DELETEerrormin = mindmag[indsWith4] - dmaglminAll
-#DELETEerrormax = maxdmag[indsWith4] - dmaglmaxAll
+#A subsequent check to see if the the mindmag or maxdmag are close to the lmaxdmag or lmindmag
+#DELETEerrormin = mindmag[indsWith4] - lmindmag
+#DELETEerrormax = maxdmag[indsWith4] - lmaxdmag
 #######################################################################################################
 
 ######################################################################
 #### Solving for nu, dmag intersections
-nus2Int, nus4Int, dmag2Int, dmag4Int = calc_planetnu_from_dmag(dmag,e,inc,w,a,p,Rp,mindmag, maxdmag, indsWith2Int, indsWith4Int)
+nus2Int, nus4Int, dmag2Int, dmag4Int = calc_planetnu_from_dmag(dmag,e,inc,w,a,p,Rp,mindmag, maxdmag, indsWith2Int, indsWith4Int, lmindmag, lmaxdmag)
 # t2Int = np.zeros((len(e),2))
 # t2Int[:,0] = timeFromTrueAnomaly(nus2Int[:,0],periods[indsWith2Int],e[indsWith2Int])
 # t2Int[:,1] = timeFromTrueAnomaly(nus2Int[:,1],periods[indsWith2Int],e[indsWith2Int])
@@ -116,8 +129,8 @@ for ind in indsWith4Int:
         nind = np.where(ind == indsWith4Int)[0]
         plt.scatter(nus4Int[nind],dmag4Int[nind],color='green',marker='o',zorder=20)
         plt.plot([0.,2.*np.pi],[dmag,dmag],color='green',zorder=10)
-    plt.scatter(nulminAll[lind],dmaglminAll[lind],color='magenta',marker='d',zorder=20)
-    plt.scatter(nulmaxAll[lind],dmaglmaxAll[lind],color='gold',marker='d',zorder=20)
+    plt.scatter(nulminAll[lind],lmindmag[lind],color='magenta',marker='d',zorder=20)
+    plt.scatter(nulmaxAll[lind],lmaxdmag[lind],color='gold',marker='d',zorder=20)
     plt.xlim([0.,2.*np.pi])
     plt.ylim([-0.05*(maxdmag[ind]-mindmag[ind])+mindmag[ind],0.05*(maxdmag[ind]-mindmag[ind])+maxdmag[ind]])
     plt.ylabel(r'$\Delta \mathrm{mag}$',weight='bold')
@@ -153,8 +166,8 @@ for ind in indsWith2Int:
             nind = np.where(ind == indsWith4Int)[0]
             plt.scatter(nus4Int[nind],dmag4Int[nind],color='green',marker='o',zorder=20)
             plt.plot([0.,2.*np.pi],[dmag,dmag],color='green',zorder=10)
-        plt.scatter(nulminAll[lind],dmaglminAll[lind],color='magenta',marker='d',zorder=20)
-        plt.scatter(nulmaxAll[lind],dmaglmaxAll[lind],color='gold',marker='d',zorder=20)
+        plt.scatter(nulminAll[lind],lmindmag[lind],color='magenta',marker='d',zorder=20)
+        plt.scatter(nulmaxAll[lind],lmaxdmag[lind],color='gold',marker='d',zorder=20)
         plt.xlim([0.,2.*np.pi])
         plt.ylim([-0.05*(maxdmag[ind]-mindmag[ind])+mindmag[ind],0.05*(maxdmag[ind]-mindmag[ind])+maxdmag[ind]])
         plt.ylabel(r'$\Delta \mathrm{mag}$',weight='bold')
@@ -173,31 +186,37 @@ def dmagErrorFromdmagInt(nus,inds,inc,w,a,e,Rp,p,dmag):
     return np.sum(np.abs(dmags-dmag))
 outs = list()
 #errors = list()
+number = 10**4 #total number of planets to run this for
 count = 0
 for ind in indsWith2Int:
-    if count < 5*10**3:
+    if count < number:
         count = count + 1
         #ind = indsWith2Int[0]
         nind = np.where(indsWith2Int == ind)[0][0]
         out = minimize(dmagErrorFromdmagInt,nus2Int[nind],args=(ind,inc,w,a,e,Rp,p,dmag),tol=1e-8)
         outs.append(out['x'])
         #errors.append(out['fun'])
-        print(count/(5*10**3))#len(indsWith2Int))
+        print(count/(10**4))#len(indsWith2Int))
 outs = np.asarray(outs)
-errors = -np.sort(-np.abs(outs.flatten() - nus2Int[np.arange(5*10**3)].flatten()))
+errors = -np.sort(-np.abs(outs.flatten() - nus2Int[np.arange(number)].flatten()))
 
 timeErrorOptStop = time.time()
-print('Error Optimization Root Solver Execution Time: ' + str(timeErrorOptStop-timeErrorOptStart) + ' on ' + str(5*10**3) + ' planets')
+print('Error Optimization Root Solver Execution Time: ' + str(timeErrorOptStop-timeErrorOptStart) + ' on ' + str(number) + ' planets')
 
 import matplotlib.pyplot as plt
 #1/2 nu from dmag error plot
 plt.figure(num = 42)
+plt.figure(num=num)
+plt.rc('axes',linewidth=2)
+plt.rc('lines',linewidth=2)
+plt.rcParams['axes.linewidth']=2
+plt.rc('font',weight='bold')
 plt.plot(np.arange(len(errors)),errors,color='blue', label='Optimization') #Depricated method
 plt.xscale('log')
 plt.yscale('log')
 plt.ylim([10**-8,10**-3])
 plt.ylabel('True Anomaly Error of ' + r'$\Delta\mathrm{mag}$' + ' Intersections (rad)', weight='bold')
-plt.xlabel('Number of Planets', weight='bold')
+plt.xlabel('Intersection Number', weight='bold')
 plt.show(block=False)
 
 #### Generate Error for intersections with univariate splines
@@ -250,7 +269,37 @@ plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
 plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
 plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
 plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
+
+
+#### Nu from dmag error histogram
+num=6543
+plt.close(num)
+plt.figure(num=num)
+plt.rc('axes',linewidth=2)
+plt.rc('lines',linewidth=2)
+plt.rcParams['axes.linewidth']=2
+plt.rc('font',weight='bold')
+bins=np.logspace(start=np.log(np.min(np.abs(errorSplinesRoots).flatten())),stop=np.log(np.max(np.abs(errorSplinesRoots).flatten())), num=100)
+plt.hist(errors,bins=bins,density=True, alpha=0.3 ,color='blue', label='Optimization') #Depricated method
+plt.hist(-np.sort(-np.abs(errorSplinesRoots).flatten()),bins=bins,density=True, alpha=0.3, color='purple',label='Cubic Spline Roots')
+plt.xlim([10**-12,10**-4])
+plt.xscale('log')
+plt.legend()
+plt.xlabel('True Anomaly Error of ' + r'$\Delta\mathrm{mag}$' + ' Intersections (rad)', weight='bold')
+plt.ylabel('Normalized True Anomaly Error Frequency', weight='bold')
+plt.show(block=False)
+plt.gcf().canvas.draw()
+# Save to a File
+date = str(datetime.datetime.now())
+date = ''.join(c + '_' for c in re.split('-|:| ',date)[0:-1])#Removes seconds from date
+fname = 'nuFromDmagErrorHist' + folder.split('/')[-1] + '_' + date
+plt.savefig(os.path.join(PPoutpath, fname + '.png'), format='png', dpi=500)
+plt.savefig(os.path.join(PPoutpath, fname + '.svg'))
+plt.savefig(os.path.join(PPoutpath, fname + '.eps'), format='eps', dpi=500)
+plt.savefig(os.path.join(PPoutpath, fname + '.pdf'), format='pdf', dpi=500)
 #################################################################################################################
+
+
 
 
 
@@ -266,8 +315,8 @@ plt.plot(nus,dmags,color='black',zorder=10)
 plt.scatter(nuMinDmag[ind],mindmag[ind],color='cyan',marker='d',zorder=20)
 plt.scatter(nuMaxDmag[ind],maxdmag[ind],color='red',marker='d',zorder=20)
 lind = np.where(ind == indsWith4)[0]
-plt.scatter(nulminAll[lind],dmaglminAll[lind],color='magenta',marker='d',zorder=20)
-plt.scatter(nulmaxAll[lind],dmaglmaxAll[lind],color='gold',marker='d',zorder=20)
+plt.scatter(nulminAll[lind],lmindmag[lind],color='magenta',marker='d',zorder=20)
+plt.scatter(nulmaxAll[lind],lmaxdmag[lind],color='gold',marker='d',zorder=20)
 plt.show(block=False)
 plt.gcf().canvas.draw()
 
