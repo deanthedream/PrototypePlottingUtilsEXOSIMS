@@ -4,22 +4,281 @@ from scipy.optimize import LinearConstraint
 import matplotlib.pyplot as plt
 from mpl_toolkits.mplot3d import Axes3D
 from itertools import product, combinations
+from numpy.random import normal
 
+#### CAT Data from CAT DDM publication
+#CAT-1, blue
+cd_CAT1 = np.asarray([[0, 1.2599264705882354],
+    [7.115463917525776, 1.1904411764705882],
+    [13.985567010309282, 1.2599264705882354],
+    [21.101030927835055, 1.3808823529411764],
+    [27.971134020618557, 1.079779411764706],
+    [35.08659793814434, 1.2290441176470588],
+    [41.95670103092784, 1.4606617647058824],
+    [49.07216494845362, 1.3397058823529413],
+    [56.18762886597939, 1.280514705882353],
+    [63.057731958762886, 1.1698529411764707],
+    [70.17319587628867, 1.2393382352941176],
+    [77.04329896907217, 1.5481617647058823],
+    [83.91340206185568, 1.1518382352941177],
+    [91.27422680412371, 1.1003676470588237],
+    [98.14432989690724, 1.2522058823529412],
+    [105.01443298969072, 1.39375],
+    [112.37525773195877, 1.2058823529411766],
+    [119.00000000000001, 1.1775735294117649],
+    [126.11546391752579, 1.3988970588235294],
+    [132.9855670103093, 1.5893382352941177],
+    [140.34639175257735, 1.602205882352941],
+    [146.97113402061854, 1.298529411764706],
+    [154.08659793814434, 1.2393382352941176],
+    [160.95670103092783, 1.499264705882353],
+    [168.31752577319588, 1.3988970588235294],
+    [175.18762886597938, 1.2393382352941176],
+    [182.05773195876293, 1.3294117647058823],
+    [188.92783505154642, 1.5224264705882353],
+    [196.04329896907217, 1.5095588235294117],
+    [202.91340206185566, 1.1389705882352943],
+    [210.2742268041237, 1.1389705882352943],
+    [216.89896907216496, 1.3294117647058823]])
+#CAT-2, red
+cd_CAT2 = np.asarray([[0, 1.1981617647058824],
+    [7.115463917525776, 1.21875],
+    [13.985567010309282, 1.2599264705882354],
+    [21.101030927835055, 1.419485294117647],
+    [27.971134020618557, 1.21875],
+    [35.3319587628866, 1.2084558823529412],
+    [41.95670103092784, 1.3783088235294119],
+    [49.07216494845362, 1.4297794117647058],
+    [56.18762886597939, 1.2290441176470588],
+    [63.057731958762886, 1.1904411764705882],
+    [70.17319587628867, 1.3088235294117647],
+    [77.04329896907217, 1.6511029411764706],
+    [84.15876288659794, 1.3474264705882353],
+    [91.02886597938145, 1.097794117647059],
+    [97.89896907216497, 1.2779411764705881],
+    [105.01443298969072, 1.4091911764705882],
+    [112.12989690721649, 1.200735294117647],
+    [119.00000000000001, 1.1904411764705882],
+    [126.11546391752579, 1.4709558823529412],
+    [132.9855670103093, 1.6485294117647058],
+    [140.1010309278351, 1.6408088235294116],
+    [147.21649484536084, 1.3705882352941177],
+    [153.8412371134021, 1.298529411764706],
+    [160.95670103092783, 1.5404411764705883],
+    [168.07216494845363, 1.4091911764705882],
+    [175.18762886597938, 1.200735294117647],
+    [182.05773195876293, 1.2702205882352942],
+    [188.92783505154642, 1.5095588235294117],
+    [196.04329896907217, 1.3474264705882353],
+    [203.1587628865979, 1.2290441176470588],
+    [210.2742268041237, 1.2393382352941176],
+    [217.1443298969072, 1.3602941176470589]])
+#Convert into stds
+std_CAT1 = np.std(cd_CAT1[:,1])
+std_CAT2 = np.std(cd_CAT2[:,1])
+std_CAT1CAT2 = np.std(np.hstack((cd_CAT1[:,1],cd_CAT2[:,1])))
+mean_CAT1CAT2 = np.mean(np.hstack((cd_CAT1[:,1],cd_CAT2[:,1])))
+deltaCD = cd_CAT2[:,1]-cd_CAT1[:,1]
+std_CAT1CAT2Deltas = np.std(deltaCD)
+print("std CAT1: " + str(std_CAT1))
+print("std CAT2: " + str(std_CAT2))
+print("std CAT1+CAT2: " + str(std_CAT1CAT2))
+print("std CAT1 CAT2 deltas: " + str(std_CAT1CAT2Deltas))
+#Because Cd of SV 1 and SV2 are so closely correlated, I will randomly generate Cd for the first and then randomly generate a delta for the second
+Cd0 = normal(mean_CAT1CAT2,std_CAT1CAT2)
+Cd1 = Cd0 + normal(0.,std_CAT1CAT2Deltas)
+Cd2 = Cd0 + normal(0.,std_CAT1CAT2Deltas)
+
+#### The orbit to use
 Re = 6371.
 alt = 600.
 a = Re+alt
-e = 0.003 #as large as 0.01
+e = 0.0 #0.003 #expected to be 0.003 as large as 0.01
 i = np.pi/2.*80./90. #idk using 80 deg but it wont be that high
 w = 0. #Argument of periapsis
 W = 0. #longitude of the ascending node
 nu = 0. #true anomaly
 r_Earth_sun = np.asarray([1.,0.,0.])#Assumed Sun to Earth vector
+mu = 398600*10**9
 
 def XYZ_from_KOE(a,e,i,w,W,nu):
     r = a*(1-e**2.)/(1.+e*np.cos(nu))
     return r*np.asarray([np.cos(W)*np.cos(w+nu) - np.sin(W)*np.sin(w+nu)*np.cos(i),\
         np.sin(W)*np.cos(w+nu) + np.cos(W)*np.sin(w+nu)*np.cos(i),\
         np.sin(w+nu)*np.sin(i)])
+
+# def XdYdZd_from_KOE(a,e,i,w,W,v):
+#     Xd = X*h*e/rp*np.sin(v)-h/r*(np.cos(W)*np.sin(w+v)+np.sin(W)*np.cos(w+v)*np.cos(i))
+#     Yd = Y*h*e/rp*np.sin(v)-h/r*(np.sin(W)*np.sin(w+v)-np.cos(W)*np.cos(w+v)*np.cos(i))
+#     Zd = Z*h*e/rp*np.sin(v)+h/r*np.sin(i)*np.cos(w+v)
+#     return Xd, Yd, Zd
+
+def kep_2_cart(a,e,i,omega_AP,omega_LAN,T, EA):
+
+    n = np.sqrt(mu/(a**3))
+    M = n*(t - T)
+    #2
+    MA = EA - e*np.sin(EA)
+    #3
+    nu = 2*np.arctan(np.sqrt((1+e)/(1-e)) * np.tan(EA/2))
+    #4
+    r = a*(1 - e*np.cos(EA))
+    #5
+    h = np.sqrt(mu*a * (1 - e**2))
+    #6
+    Om = omega_LAN
+    w =  omega_AP
+    X = r*(np.cos(Om)*np.cos(w+nu) - np.sin(Om)*np.sin(w+nu)*np.cos(i))
+    Y = r*(np.sin(Om)*np.cos(w+nu) + np.cos(Om)*np.sin(w+nu)*np.cos(i))
+    Z = r*(np.sin(i)*np.sin(w+nu))
+
+    #7
+    p = a*(1-e**2)
+
+    V_X = (X*h*e/(r*p))*np.sin(nu) - (h/r)*(np.cos(Om)*np.sin(w+nu) + np.sin(Om)*np.cos(w+nu)*np.cos(i))
+    V_Y = (Y*h*e/(r*p))*np.sin(nu) - (h/r)*(np.sin(Om)*np.sin(w+nu) - np.cos(Om)*np.cos(w+nu)*np.cos(i))
+    V_Z = (Z*h*e/(r*p))*np.sin(nu) + (h/r)*(np.cos(w+nu)*np.sin(i))
+
+    return [X,Y,Z],[V_X,V_Y,V_Z]
+
+def XdYdZd_from_KOE(a,e,i,w,W,v,mu):    
+    r = a*(1-e**2.)/(1.+e*np.cos(v))
+    h = np.sqrt(mu*a * (1 - e**2))
+    X = r*(np.cos(W)*np.cos(w+v) - np.sin(W)*np.sin(w+v)*np.cos(i))
+    Y = r*(np.sin(W)*np.cos(w+v) + np.cos(W)*np.sin(w+v)*np.cos(i))
+    Z = r*(np.sin(i)*np.sin(w+v))
+    p = a*(1-e**2)
+    V_X = (X*h*e/(r*p))*np.sin(v) - (h/r)*(np.cos(W)*np.sin(w+v) + np.sin(W)*np.cos(w+v)*np.cos(i))
+    V_Y = (Y*h*e/(r*p))*np.sin(v) - (h/r)*(np.sin(W)*np.sin(w+v) - np.cos(W)*np.cos(w+v)*np.cos(i))
+    V_Z = (Z*h*e/(r*p))*np.sin(v) + (h/r)*(np.cos(w+v)*np.sin(i))
+
+    #return [X,Y,Z],[V_X,V_Y,V_Z]
+    return V_X, V_Y, V_Z
+
+#the plan
+#USE XdYdZd_from_KOE and XYZ_from_KOE to generate positions along the oribit
+#for each increment of time, use the alpha equation to 
+
+def dndt(A,a,rho,Cd,mu,m):
+    """
+    Returns:
+        (float) acceleration of angule vs time
+    """
+    return 3.*mu**2.*rho*Cd*A/(2.*a**2.*np.pi*m)
+
+nus = np.linspace(start=0.,stop=2.*np.pi*90*(3*7*24*60),num=10**6)
+xa, ya, za = XYZ_from_KOE(a,e,i,w,W,nus)
+#TLE KOE should produce XYZ in Earth J2000 frame, aka EME 2000, actually ICRF
+
+def noisyXYZ_from_XYZ(xs,ys,zs,sigma):
+    dx = normal(np.zeros(len(xs)),sigma,len(xs))
+    dy = normal(np.zeros(len(xs)),sigma,len(xs))
+    dz = normal(np.zeros(len(xs)),sigma,len(xs))
+    return xs+dx,ys+dy,zs+dz
+
+
+xd,yd,zd = noisyXYZ_from_XYZ(xa,ya,za,sigma=0.0001)
+
+
+#https://en.wikipedia.org/wiki/True_anomaly
+#argument of latitude u
+ud = np.arccos(np.tensordot(n,r,axis=1)/(np.linalg.norm(n)*np.linalg.norm(r)))
+#if z < 0, then u = 2.np.pi-u
+
+#### do this with theta #########################################################
+#true theta
+#simulate theta noise (will actually need to be computed from lat lon at some point in the future)
+#################################################################################
+
+
+
+
+#### Kalman Filter Equations #################################
+#https://www.kalmanfilter.net/kalman1d.html
+
+#Kalman Filter Gain
+#K_n = uncertainty in estimate / (uncertainty in estimate + uncertainty in measurement) = P_nnm1/(P_nnm1+r_n)
+K_n = P_nnm1/(P_nnm1+r_n)
+#p_nnm1 is the extrapolated estimate uncertainty
+#r_n is the measurement uncertainty
+#0<=K_n<=1
+#State update Equation
+xhat_nn = xhat_nnm1 + K_n*(z_n - xhat_nnm1)
+#I WILL NEED THE ESTIMATE UNCERTAINTY FROM TLE
+
+#Estimate Uncertainty of current state
+P_nn = (1-K_n)*p_nnm1 #covariance update equation
+
+#Estimate Uncertainty Extrapolation
+xhat_np1n = xhat_nn + dt*xdhat_nn + #ADD TIME HERE
+xdhat_np1n = xdhat_nn + #add time update equation
+##############################################################
+
+
+def initializeKalmanFilter(p00,xhat00):
+    """
+    Args:
+        p00 (float) - estimate uncertainty initial guess
+        x00 (float) - system state initial guess
+    Returns:
+        xhat_np1n (float) - system state estimate for next step
+        p_np1n (float) - next state uncertainty
+    """
+    return xhat_np1n, p_np1n
+
+def stepKalmanFilter(r_n,z_n,P_nnm1,xhat_nnm1,dt):
+    """ Advances to the next step with the Kalman Filter
+    Args:
+        rn (float) - measurement uncertainty
+        zn (float) - measured value
+        P_nnm1 (float) - previous state estimate uncertainty
+        xhat_nnm1 (float) - previous system state estimate
+        dt (float) - the amount of time to wait
+    """
+    #UPDATE
+    #Calculate Kalman Gain
+    K_n = P_nnm1/(P_nnm1+r_n)
+    #State update equation
+
+    #Update Estimate Uncertainty of current state
+    P_nn = (1-K_n)*p_nnm1 #covariance update equation
+
+    #PREDICT
+    xhat_np1n = 
+
+    #p_np1n = 
+
+    return
+
+#### Predicts ##################################################################
+#effectively, each attitude change will need a new component
+def analyticalPropagator(x0,Atarray,tmax):
+    """ NOTE IT IS UNKOWN IF THE VARIATIONS IN ATMOSPHERIC DENSITY MAKE THIS APPROACH UNTENABLE
+    Args:
+        x0 (ndarray) - x0[0] initial angular position, x0[1] initial angular velocity, x0[2] initial angular acceleration
+        Atarray (ndarray) - nx2 array where each i in n is an Area A and starting time t
+        tmax (float) - the maximum time to simulate
+    Returns:
+        x (ndarray) - updated angular position, angular velocity, angular acceleration
+    """
+    x = x0
+    Aarray = Atarray[:,0] #array of Areas
+    tarray = Atarray[:,1] #array of times relative to now (0)
+    #iterate over Atarray
+    for i in Atarray:
+        if i == len(tarray): #this is the lasy area to be executed
+            dt = tmax-tarray[i]
+        elif i == 0: #this is the first area to be executed
+            dt = tarray[i]
+        else: #this is a general area to be executed
+            dt = tarray[i+1] - tarray[i]
+        #COMPUTE THE STATES AT THE END OF THE PROPAGATION
+        
+    return x
+
+def constructEclipseTerminators():
+    return #A SET OF THE GENERIC ECLIPSE TERMINATIONS
+######################################################################
 
 
 #### Compute the nu(s) where eclipse occurs
