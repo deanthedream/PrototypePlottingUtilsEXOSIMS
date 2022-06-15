@@ -399,7 +399,7 @@ for i in np.arange(len(edges1)):
 #         intersectionAreaVertices.append(edges2[j][0]) #add leading vertex
 print("Intersection Area Vertices: " + str(intersectionAreaVertices))
 
-#Compute the Centroid
+#Compute the Centroid of intersection area
 intersectionCentroid = polyCentroid(intersectionAreaVertices)
 
 
@@ -433,6 +433,63 @@ print(area)
 ######################################
 
 
+def intersectingArea_from_twoPoly(rect1,rect2):
+    """
+    """
+    #Create Edges From Vertices
+    edges1 = edges_from_points(rect1)
+    edges2 = edges_from_points(rect2)
+
+    #Reconstruct Vertices Array
+    vertices = list()
+    for i in np.arange(len(edges1)):
+        vertices.append(edges1[i][0])
+    intersectionAreaVertices = list()
+    vertices1 = vertices_from_edges(edges1)
+    vertices2 = vertices_from_edges(edges2)
+    for j in np.arange(len(edges2)):
+        if inside_convex_polygon(edges2[j][0],vertices1):
+            print("edges2[j][0] Inside: " + str(edges2[j][0]))
+            intersectionAreaVertices.append(edges2[j][0]) #add leading vertex
+    for j in np.arange(len(edges1)):
+        if inside_convex_polygon(edges1[j][0],vertices2):
+            print("edges1[j][0] Inside: " + str(edges1[j][0]))
+            intersectionAreaVertices.append(edges1[j][0]) #add leading vertex    
+    # for j in np.arange(len(edges2)):
+    #     if inside_convex_polygon(edges2[j][0],vertices1) and inside_convex_polygon(edges2[j][1],vertices1):
+    #         print("Both Vertices Inside: " + str(edges2[j][0]) + " " + str(edges2[j][1]))
+    #         intersectionAreaVertices.append(edges2[j][0]) #add leading vertex
+    for i in np.arange(len(edges1)):
+        for j in np.arange(len(edges2)):
+            #print(str((i,j)))
+            #Both vertices are inside the 
+            #if inside_convex_polygon(edges2[j][0],vertices1) and inside_convex_polygon(edges2[j][1],vertices1):
+            #    print("Both Edges Inside: " + str(edges2[j][0]) + " " + str(edges2[j][1]))
+            #    intersectionAreaVertices.append(edges2[j][0]) #add leading vertex
+            if do_edges_intersect(edges1[i],edges2[j]) and not (inside_convex_polygon(edges2[j][0],vertices1) and inside_convex_polygon(edges2[j][1],vertices1)): #If edges intersect
+                #Add point of intersection
+                print("Edge Intersection Point: " + str(pt_of_edge_intersection(edges1[i],edges2[j])))
+                intersectionAreaVertices.append(pt_of_edge_intersection(edges1[i],edges2[j]))
+
+    #Compute the Centroid of intersection area
+    intersectionCentroid = polyCentroid(intersectionAreaVertices)
+
+    #Create vectors from intersecting area centroid to each vertex
+    centroidToCornerVectors = np.zeros((len(intersectionAreaVertices),2))
+    for i in np.arange(len(intersectionAreaVertices)):
+        centroidToCornerVectors[i,:] = np.asarray([intersectionAreaVertices[i][0]-intersectionCentroid[0],intersectionAreaVertices[i][1]-intersectionCentroid[1]])
+
+    #Order vectors counter-clockwise
+    angles = np.zeros(len(centroidToCornerVectors))
+    for i in np.arange(len(centroidToCornerVectors)):
+        angles[i] = np.arctan2(centroidToCornerVectors[i][1],centroidToCornerVectors[i][0])
+    angleIndOrder = np.argsort(angles)
+
+    area = shoeLaceArea(centroidToCornerVectors[angleIndOrder])
+    return area
+
+
+area2 = intersectingArea_from_twoPoly(rect1,rect2)
 
 
 
@@ -463,16 +520,16 @@ print(area)
 
 #ASSUMING SOME INTERSECTION OCCURS
 #FIND A STARTING VERTEX
-vertices = list()
-currentEdge = 0
-currentPoly = 0
-i = 0
-while i < len(edges1):
-    if inside_convex_polygon(edges1[i][0], rect2):
-        vertices.append(edges1[i][0])
-        currentEdge = i #identify the index of the starting edge
-        i = len(edges1) # end looping found starting vertex
-    i = i+1
+# vertices = list()
+# currentEdge = 0
+# currentPoly = 0
+# i = 0
+# while i < len(edges1):
+#     if inside_convex_polygon(edges1[i][0], rect2):
+#         vertices.append(edges1[i][0])
+#         currentEdge = i #identify the index of the starting edge
+#         i = len(edges1) # end looping found starting vertex
+#     i = i+1
 
 #while next node is not startingEdge (i.e. we have not gone around the entire perimeter of the polygon)
 
