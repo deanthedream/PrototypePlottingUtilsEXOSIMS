@@ -72,6 +72,8 @@ def inside_convex_polygon(point, vertices):
     Args:
         point (tuple) - containing x,y coordintes of point
         vertices (list) - a list of points
+    Returns:
+        boolean - indicates when point is inside the set of vertices
     """
     previous_side = None
     n_vertices = len(vertices)
@@ -93,8 +95,13 @@ def inside_convex_polygon(point, vertices):
 
 def get_side(a, b):
     """ Determines whether cross product between a and b is in plane or out of plane
+    Args:
+        a (tuple) - (x,y) describing the endpoint of the line
+        b (tuple) - (x,y) describing the starting point of the line
+    Returns:
+        (sting) - LEFT RIGHT or zero indicating whether the vector is counter-clockwise or clockwise or on the line
     """
-    x = cosine_sign(a, b)
+    x = cosine_sign(a, b) #computes z component of out of plane component
     if x < 0:
         return LEFT
     elif x > 0: 
@@ -106,11 +113,21 @@ def get_side(a, b):
 
 def v_sub(a, b):
     """ Computes deltas from point 0 to point 1
+    Args:
+        a (tuple) - (x,y) describing the endpoint of the line
+        b (tuple) - (x,y) describing the starting point of the line
+    Returns:
+        (tuple) - the deltas (dx,dy) from b to a
     """
     return (a[0]-b[0], a[1]-b[1])
 
 def cosine_sign(a, b):
-    """ Out of plane component of cross product of two vectors a and b
+    """ Out of plane component of cross product of two vectors a cross b
+    Args:
+        a (tuple) - (x,y) describing the endpoint of the line
+        b (tuple) - (x,y) describing the starting point of the line
+    Returns:
+        (float) - z component of cross product between vectors a cross b
     """
     return a[0]*b[1]-a[1]*b[0]
 
@@ -140,6 +157,10 @@ plt.show(block=False)
 
 def edges_from_points(vertices):
     """ Creates an array of edges from the vertices of a polygon
+    Args:
+        vertices (ndarray) - nx2 array of vertices of the polygon
+    Returns:
+        edges (list) - list of edges
     """
     edges = list()
     for i in np.arange(len(vertices)):
@@ -148,6 +169,10 @@ def edges_from_points(vertices):
 
 def vertices_from_edges(edges):
     """ Create vertices from edges
+    Args:
+        edges (list) - list of edge
+    Returns:
+        vertices (ndarray) - nx2 array of vertices of the polygon
     """
     vertices = np.zeros((len(edges),2))
     for i in np.arange(len(edges)):
@@ -157,6 +182,7 @@ def vertices_from_edges(edges):
 def pt_of_edge_intersection(edge0,edge1):
     """ Computes where  the two edges intersect or not
     Args:
+        edge0 (list) - list of 2 tuples describing endpoints of the edge
         edge1 (list) - list of 2 tuples describing endpoints of the edge
     Returns:
         tuple - the point of intersection
@@ -182,6 +208,7 @@ def pt_of_edge_intersection(edge0,edge1):
 def do_edges_intersect(edge0,edge1):
     """ Computes whether the two edges intersect or not
     Args:
+        edge0 (list) - list of 2 tuples describing endpoints of the edge
         edge1 (list) - list of 2 tuples describing endpoints of the edge
     Returns:
         boolean - true of the two edges intersect
