@@ -4,6 +4,38 @@ import matplotlib.pyplot as plt
 import numpy as np
 from scipy.integrate import odeint
 from scipy.integrate import solve_ivp # for multivariable functions
+from scipy.interpolate import interp1d
+
+#### Data From iSALE Analysis ############
+#Read time data
+folder = '/home/dean/Documents/iSALE2D-dellen/share/examples/lunarImpact'
+filename = 'lv_vs_radialpos.txt'
+with open(os.path.join(folder,filename), newline='') as csvfile:
+    spamreader = csv.reader(csvfile, delimiter=',', quotechar='|')
+    lvdata = list()
+    for row in spamreader:
+        lvdata.append(np.asarray([float(row[0]),float(row[1])]))
+    lvdata = np.asarray(lvdata)
+lvdata_model = np.poly1d(np.polyfit(lvdata[:,0], lvdata[:,1], 4))
+lvdata_model = interp1d(lvdata[:,0],lvdata[:,1],fill_value='extrapolate',kind='cubic')
+
+filename = 'impulse_vs_radialpos.txt'
+with open(os.path.join(folder,filename), newline='') as csvfile:
+    spamreader = csv.reader(csvfile, delimiter=',', quotechar='|')
+    impulsedata = list()
+    for row in spamreader:
+        impulsedata.append(np.asarray([float(row[0]),float(row[1])]))
+    impulsedata = np.asarray(impulsedata)
+impulsedata_model = np.poly1d(np.polyfit(impulsedata[:,0], impulsedata[:,1], 4))
+impulsedata_model = interp1d(impulsedata[:,0],impulsedata[:,1],fill_value='extrapolate',kind='cubic')
+
+
+plt.figure(556874324)
+plt.plot(np.linspace(start=0.1,stop=10),lvdata_model(np.linspace(start=0.1,stop=10)))
+plt.show(block=False)
+plt.close(556874324)
+##########################################
+
 
 
 
@@ -143,6 +175,7 @@ plt.ylim([0,100])
 plt.xlabel(r'$x_0/R$')
 plt.ylabel('Elevation Angle (deg)')
 plt.show(block=False)
+plt.close(1)
 
 
 #
@@ -178,6 +211,8 @@ plt.figure(9999)
 plt.scatter(np.log10(np.asarray(xarhodeltav)), np.log10(vU),s=1,color='blue')
 #plt.plot(txspace,tyspace,color='red')
 plt.plot(txspace,model2(txspace),color='orange')
+plt.ylabel('Launch Velocity Relative to Impactor Velocity')
+plt.xlabel('x a rho delta^v From Paper')
 plt.show(block=False)
 print("slope: " + str(model2[0]))
 print("offset: " + str(model2[1]))
@@ -232,7 +267,7 @@ test_vU2 = 10.**test_vU
 plt.figure(3)
 plt.scatter(test_x/a*(rho_sand/delta)**nu,test_vU2,marker='x',color='red')
 plt.show(block=False)
-
+plt.close(3)
 
 
 
@@ -351,7 +386,7 @@ plt.show(block=False)
 plt.figure(2304857290384523)
 plt.plot(res.y[2])
 plt.show(block=False)
-
+plt.close(2304857290384523)
 
 
 
@@ -369,7 +404,7 @@ plt.show(block=False)
 plt.figure(2304857290384523)
 plt.plot(res.y[2])
 plt.show(block=False)
-
+plt.close(2304857290384523)
 
 
 
@@ -451,7 +486,7 @@ k = 0.3 #for sand
 H2 = 0.4 #for SFA a sand/fly ash
 H1 = 0.59 #sand
 k_crater = 0.4 #from housen 2011
-a = (m/delta/(4./3.*np.pi))**(1./3.) #
+a = (m/delta/(4./3.*np.pi))**(1./3.) # radius of impactor
 
 #### 1 generate total mass ejected by integrating cumMassEjectedFasterThanV from 0 to inf (or some large number)
 #R = R_crater(m,rho,delta,U,H2,Y,nu,mu)
@@ -463,6 +498,7 @@ M_crater = k_crater*rho*R**3.
 angles = np.linspace(start=0.,stop=2.*np.pi, endpoint=True, num=50)
 #radii = np.linspace(start=1e-1,stop=R,num=10)
 radii = np.logspace(start=np.log10(1.1*a),stop=np.log10(R),num=50,base=10.0)
+radii = np.logspace(start=np.log10(0.1*a),stop=np.log10(R),num=50,base=10.0) #modified for iSALE radii
 resStorage = np.zeros(())
 
 fig2 = plt.figure(num=8888,figsize=(8,8))
@@ -473,11 +509,18 @@ reses = list()
 for j in np.arange(len(radii)):
     #Get Launch Angle
     LaunchAngle = model(radii[j]/R) + np.random.normal(loc=0.,scale=std_angle) #initial random launch angle
+    
+    #Launch Velocity From Papers
     LaunchVelocity_stdComponent = np.random.normal(loc=0.,scale=std_vU)
     LaunchVelocity_vU = np.log10(nominal_vU(radii[j],model2[1],model2[0],a,rho_sand,delta,nu)) + test_stdComponent
     LaunchVelocity_vU2 = 10.**LaunchVelocity_vU
     LaunchVelocity = LaunchVelocity_vU2*U
-    print(LaunchVelocity)
+    ####
+    #Launch Velocity From iSALE analysis
+    #LaunchVelocity = lvdata_model(radii[j])
+    ####
+
+    print("x0: " + str(radii[j]) + ' LV: ' + str(LaunchVelocity))
     if LaunchVelocity > 2.38*1000.: #2.38km/s is escape velocity for moon
         LaunchVelocity = 2.2*1000.
     #LaunchVelocity = cumMassEjectedFasterThanV(v,m,U,rho,delta,nu,mu=0.41)
@@ -526,7 +569,6 @@ for i in np.arange(len(reses)):
         maxalt = np.max(alts)
     plt.plot(reses[i].t/60.,alts/1000.,color=(1.-radii[i]/R,0.,radii[i]/R))#,color='black')
     plt.show(block=False)
-    print(i)
 
 #norm = mcol.Normalize(vmin=5, vmax=10)
 #cb1 = mpl.colorbar.ColorbarBase(plt.gca(), cmap=cmap, norm=norm,
@@ -551,10 +593,127 @@ for i in np.arange(len(reses)):
     if np.max(dist) > maxDist:
         maxDist = np.max(dist)
     plt.plot(reses[i].t/60.,dist/1000.,color=(1.-radii[i]/R,0.,radii[i]/R))#,color='black')
-    print(i)
 plt.xlabel("Time (min)")
+plt.ylabel("Distance From Impact (km)")
+plt.show(block=False)
+plt.close(1230980979896)
+#plt.close(1230980979896)
+
+
+### Downrange Distance vs Initial Radial Position
+#maxDist = 0.
+plt.figure(12309666666666)
+for i in np.arange(len(reses)):
+    dist = np.linalg.norm(np.asarray([reses[i].y[0]-reses[i].y[0,0],reses[i].y[2]-reses[i].y[2,0],reses[i].y[4]-reses[i].y[4,0]]),axis=0)
+    plt.scatter(radii[i],np.max(dist),color='black',marker='x')#,color='black')
+plt.yscale('log')
+plt.xlabel("Radial Position, " + r"$x_0 (m)$")
 plt.ylabel("Distance From Impact (km)")
 plt.show(block=False)
 
 
 
+
+
+
+#agglutinate
+r = 0.005
+A = np.pi*(r)**2. #area of an ice or Lunar agglutinate
+V = 4./3.*np.pi*r**3. #volume of icr or lunar agglutinate
+rho = 1500. #kg/m3 #density of lunar soil
+mass = V*rho#agglutinate mass for single particle
+
+
+
+#### Particles Per Square Meter and Velocity Monte Carlo
+num=5000
+#plot x as "landing distance"
+#plot y as "particle flux per m2"
+#plot color as impact velocity in m/s? maybe symbol type and color
+#use numbers to demonstrate severity
+dists = list()
+endVels = list()
+for i in np.arange(num):
+    if np.mod(i,10) == 0:
+        print(i)
+    r = R/2*np.sqrt(np.random.uniform(low=1e-2,high=1))
+    #Get Launch Angle
+    LaunchAngle = model(r/R) + np.random.normal(loc=0.,scale=std_angle) #initial random launch angle
+    #Launch Velocity From Papers
+    LaunchVelocity_stdComponent = np.random.normal(loc=0.,scale=std_vU)
+    LaunchVelocity_vU = np.log10(nominal_vU(r,model2[1],model2[0],a,rho_sand,delta,nu)) + test_stdComponent
+    LaunchVelocity_vU2 = 10.**LaunchVelocity_vU
+    LaunchVelocity = LaunchVelocity_vU2*U
+    ####
+    #Launch Velocity From iSALE analysis
+    #LaunchVelocity = lvdata_model(r)
+    ####
+
+    #print("x0: " + str(radii[j]) + ' LV: ' + str(LaunchVelocity))
+    while LaunchVelocity > 2.25*1000.: #2.38km/s is escape velocity for moon
+        r = R/2*np.sqrt(np.random.uniform(low=1e-2,high=1))
+        #Get Launch Angle
+        LaunchAngle = model(r/R) + np.random.normal(loc=0.,scale=std_angle) #initial random launch angle
+        #Launch Velocity From Papers
+        LaunchVelocity_stdComponent = np.random.normal(loc=0.,scale=std_vU)
+        LaunchVelocity_vU = np.log10(nominal_vU(r,model2[1],model2[0],a,rho_sand,delta,nu)) + test_stdComponent
+        LaunchVelocity_vU2 = 10.**LaunchVelocity_vU
+        LaunchVelocity = LaunchVelocity_vU2*U
+    #LaunchVelocity = cumMassEjectedFasterThanV(v,m,U,rho,delta,nu,mu=0.41)
+
+    angle = np.random.uniform(low=0.,high=2.*np.pi)
+    r_unit = np.asarray([np.cos(angle),0.,np.sin(angle)])
+    r_impact = np.asarray([0.,r_moon,0.])
+    r0 = r_impact + r*r_unit
+    v0 = np.asarray([r_unit[0]*LaunchVelocity*np.cos(LaunchAngle*np.pi/180.),LaunchVelocity*np.sin(LaunchAngle*np.pi/180.),r_unit[2]*LaunchVelocity*np.cos(LaunchAngle*np.pi/180.)])
+
+    
+
+    x0 = np.asarray([0.,0.,R,1000.,0.,1000.])
+    x0 = np.asarray([r0[0],v0[0],r0[1],v0[1],r0[2],v0[2]])
+    #t_span = (0., 100.*60.) # interval of times in seconds
+    t_span = (0.,1000.*60.)
+    res = solve_ivp(model_3D_simple, t_span, x0, method='RK45', dense_output=True,\
+                        events=[event_hit_ground_3D_simple],max_step=2.)#, options={'first_step':1.0})#t_eval=t_eval,\
+    assert res.success
+
+    dist = np.linalg.norm(np.asarray([res.y[0]-res.y[0,0],res.y[2]-res.y[2,0],res.y[4]-res.y[4,0]]),axis=0)
+    dists.append(np.max(dist))
+    assert np.max(dist) < 15000*1000, 'distance is too far'
+    #assert np.max(dist) < 8000*1000, 'distance is too far'
+    endVel = np.linalg.norm(np.asarray([res.y[1,-1],res.y[3,-1],res.y[5,-1]]))
+    endVels.append(endVel)
+
+
+plt.figure(777777778863888)
+ax1 = plt.gca()
+ax2 = ax1.twinx()
+for i in np.arange(num):
+    ax1.scatter(dists[i]/1000,endVels[i],color='black',marker='x',s=2)#,color='black')
+bins=np.logspace(start=np.log10(np.min(dists)/1000.),stop=np.log10(np.max(dists)/1000.),base=10.0,num=20)
+ax2.hist(np.asarray(dists)/1000., bins=bins, histtype="step", color='deepskyblue', density=True) # Plot histogram of nums2
+ax1.plot([0.9*np.min(dists)/1000.,0.9*np.max(dists)/1000.],[343.,343.],color='black')
+ax1.text(5,350,'.22 LR round velocity')
+ax1.plot([0.9*np.min(dists)/1000.,0.9*np.max(dists)/1000.],[240.,240.],color='black')
+ax1.text(1.,250,'~airsoft pellet velocity')
+ax2.plot([0.9*np.min(dists)/1000.,0.9*np.max(dists)/1000.],[0.275,0.275],color='deepskyblue')
+ax2.text(10,1.1*0.275,"Annual Lunar Particle Deposition Rate",color='deepskyblue')
+ax2.yaxis.label.set_color('deepskyblue')
+ax2.spines['right'].set_color('deepskyblue')
+ax2.tick_params(axis='y', colors='deepskyblue')
+ax1.set_xscale('log')
+ax2.set_xscale('log')
+ax2.set_yscale('log')
+ax2.set_ylabel("Particle Flux Rate in #/" + r"$m^2$",color='deepskyblue')
+ax1.set_xlabel("Down Range Distance (km)")
+ax1.set_ylabel("Impact Velocity (m/s)")
+ax1.set_xlim([0.9*np.min(dists)/1000.,0.9*np.max(dists)/1000.])
+
+plt.show(block=False)
+
+
+#maybe probability of hitting a lethal impact hitting a 10m^2 structure
+
+
+
+plt.close(9999)
