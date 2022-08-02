@@ -20,7 +20,7 @@ import matplotlib.pyplot as plt
 #from mipOptimalScheduler import recurSum
 #from mipOptimalScheduler import multiply_along_axis
 
-whichRun = 7
+whichRun = 8
 if whichRun == 1:
     time0 = time.time()
     #### Generate Inputs
@@ -52,7 +52,7 @@ if whichRun == 1:
     for (i,j) in itertools.product(np.arange(numSV),np.arange(numOBSs)):
         xs[i,j] = solver.IntVar(0,1,'x' + str(i) + '_' + str(j))
     time2 = time.time()
-    print("Done Adding Free Variables Total:" + str(numSV*numOBSs + numSV*numT) + " execution time: " + str((time2-time1)))
+    print("Done Adding Free Variables Total:" + str(numSV*numOBSs + numSV*numT) + str((time2-time1)))
 
     #### CONSTRAINTS ################################
     #Each OBS Observed at most once (by one SV)
@@ -64,7 +64,7 @@ if whichRun == 1:
     for (i,j) in itertools.product(np.arange(numSV),np.arange(numOBSs)):
         svTimeConstraints.append(solver.Add(solver.Sum([ys[i,t] for t in OBSStarts[j]+np.arange(OBSDurs[j])]) == xs[i,j]*OBSDurs[j]))
     time3 = time.time()
-    print("Done Adding Constraints:" + str(numSV*numOBSs + numSV*numT) + " execution time: " + str((time3-time2)))
+    print("Done Adding Constraints:" + str(numSV*numOBSs + numSV*numT) + str((time3-time2)))
 
     #### Objective Function
     objective = solver.Objective()
@@ -73,7 +73,7 @@ if whichRun == 1:
         objective.SetCoefficient(xs[i,j], OBSValues[i]) #OBSValues could be different for each SV making the observation
     objective.SetMaximization()
     time4 = time.time()
-    print('Done Setting Objective Function execution time: ' + " execution time: " + str((time4-time3)))
+    print('Done Setting Objective Function execution time: ' + str((time4-time3)))
 
     #solver.EnableOutput()# this line enables output of the CBC MIXED INTEGER PROGRAM (Was hard to find don't delete)
     solver.SetTimeLimit(60*1000)#time limit for solver in milliseconds
@@ -81,7 +81,7 @@ if whichRun == 1:
     #might be able to add SetHint() to furnish an IFS
     cpres = solver.Solve() # actually solve MIP
     time5 = time.time()
-    print('Done Solving execution time: ' + " execution time: " + str((time5-time4)))
+    print('Done Solving execution time: ' + str((time5-time4)))
     x0d = dict()
     y0d = dict()
     z0d = dict()
@@ -153,7 +153,7 @@ elif whichRun == 2:
     for (i,j) in itertools.product(np.arange(numSV),np.arange(numOBSs)):
         xs[i,j] = solver.IntVar(0,1,'x' + str(i) + '_' + str(j))
     time2 = time.time()
-    print("2 Done Adding Free Variables Total:" + str(numSV*numOBSs + numSV*numT) + " execution time: " + str((time2-time1)))
+    print("2 Done Adding Free Variables Total:" + str(numSV*numOBSs + numSV*numT) + str((time2-time1)))
 
     #### CONSTRAINTS ################################
     #Each OBS Observed at most once (by one SV)
@@ -165,7 +165,7 @@ elif whichRun == 2:
     for (i,j) in itertools.product(np.arange(numSV),np.arange(numOBSs)):
         svTimeConstraints.append(solver.Add(solver.Sum([ys[i,t] for t in np.arange(len(time_windows))]) == xs[i,j]*OBSDurs[j]))
     time3 = time.time()
-    print("2 Done Adding Constraints:" + str(numSV*numOBSs + numSV*numT) + " execution time: " + str((time3-time2)))
+    print("2 Done Adding Constraints:" + str(numSV*numOBSs + numSV*numT) + str((time3-time2)))
 
     #### Objective Function
     objective = solver.Objective()
@@ -174,7 +174,7 @@ elif whichRun == 2:
         objective.SetCoefficient(xs[i,j], OBSValues[i]) #OBSValues could be different for each SV making the observation
     objective.SetMaximization()
     time4 = time.time()
-    print('2 Done Setting Objective Function execution time: ' + " execution time: " + str((time4-time3)))
+    print('2 Done Setting Objective Function execution time: ' + str((time4-time3)))
 
     #solver.EnableOutput()# this line enables output of the CBC MIXED INTEGER PROGRAM (Was hard to find don't delete)
     solver.SetTimeLimit(60*1000)#time limit for solver in milliseconds
@@ -182,7 +182,7 @@ elif whichRun == 2:
     #might be able to add SetHint() to furnish an IFS
     cpres = solver.Solve() # actually solve MIP
     time5 = time.time()
-    print('2 Done Solving execution time: ' + " execution time: " + str((time5-time4)))
+    print('2 Done Solving execution time: ' + str((time5-time4)))
     x0d = dict()
     y0d = dict()
     z0d = dict()
@@ -252,7 +252,7 @@ elif whichRun == 3:
     for (i,j) in itertools.product(np.arange(numSV),np.arange(numOBSs)):
         xs[i,j] = solver.IntVar(0,1,'x' + str(i) + '_' + str(j))
     time2 = time.time()
-    print("3 Done Adding Free Variables Total:" + str(numSV*numOBSs + numSV*numT) + " execution time: " + str((time2-time1)))
+    print("3 Done Adding Free Variables Total:" + str(numSV*numOBSs + numSV*numT) + str((time2-time1)))
 
     #### CONSTRAINTS ################################
     #Each OBS Observed at most once (by one SV)
@@ -264,7 +264,7 @@ elif whichRun == 3:
     for (i,j) in itertools.product(np.arange(numSV),np.arange(numOBSs)):
         svTimeConstraints.append(solver.Add(solver.Sum([ys[i,t] for t in np.arange(len(time_windows))]) == xs[i,j]*OBSDurs[j]))
     time3 = time.time()
-    print("3 Done Adding Constraints:" + str(numSV*numOBSs + numSV*numT) + " execution time: " + str((time3-time2)))
+    print("3 Done Adding Constraints:" + str(numSV*numOBSs + numSV*numT) + str((time3-time2)))
 
     #### Objective Function
     objective = solver.Objective()
@@ -273,7 +273,7 @@ elif whichRun == 3:
         objective.SetCoefficient(xs[i,j], OBSValues[i]) #OBSValues could be different for each SV making the observation
     objective.SetMaximization()
     time4 = time.time()
-    print('3 Done Setting Objective Function execution time: ' + " execution time: " + str((time4-time3)))
+    print('3 Done Setting Objective Function execution time: ' + str((time4-time3)))
 
     #solver.EnableOutput()# this line enables output of the CBC MIXED INTEGER PROGRAM (Was hard to find don't delete)
     solver.SetTimeLimit(60*1000)#time limit for solver in milliseconds
@@ -281,7 +281,7 @@ elif whichRun == 3:
     #might be able to add SetHint() to furnish an IFS
     cpres = solver.Solve() # actually solve MIP
     time5 = time.time()
-    print('3 Done Solving execution time: ' + " execution time: " + str((time5-time4)))
+    print('3 Done Solving execution time: ' + str((time5-time4)))
     x0d = dict()
     y0d = dict()
     z0d = dict()
@@ -407,7 +407,7 @@ elif whichRun == 4:
         if np.any(satOBJs[i]['isVisible']):
             xs[i,j] = solver.NumVar(0, 1,'x' + str(i) + '_' + str(j))
     time2 = time.time()
-    print("4 Done Adding Free Variables Total:" + str(numSV*numOBSs + numSV*numT) + " execution time: " + str((time2-time1)))
+    print("4 Done Adding Free Variables Total:" + str(numSV*numOBSs + numSV*numT) + str((time2-time1)))
 
     #### CONSTRAINTS ################################
     #Each OBS Observed at most once (by one SV)
@@ -420,7 +420,7 @@ elif whichRun == 4:
         if np.any(satOBJs[i]['isVisible']):
             svTimeConstraints.append(solver.Add(solver.Sum([ys[i,t] for t in np.arange(len(time_windows))]) == xs[i,j]*OBSDurs[j]))
     time3 = time.time()
-    print("4 Done Adding Constraints:" + str(numSV*numOBSs + numSV*numT) + " execution time: " + str((time3-time2)))
+    print("4 Done Adding Constraints:" + str(numSV*numOBSs + numSV*numT) + str((time3-time2)))
 
     #### Objective Function
     objective = solver.Objective()
@@ -430,7 +430,7 @@ elif whichRun == 4:
             objective.SetCoefficient(xs[i,j], OBSValues[i]) #OBSValues could be different for each SV making the observation
     objective.SetMaximization()
     time4 = time.time()
-    print('4 Done Setting Objective Function execution time: ' + " execution time: " + str((time4-time3)))
+    print('4 Done Setting Objective Function execution time: ' + str((time4-time3)))
 
     #solver.EnableOutput()# this line enables output of the CBC MIXED INTEGER PROGRAM (Was hard to find don't delete)
     solver.SetTimeLimit(60*1000)#time limit for solver in milliseconds
@@ -438,7 +438,7 @@ elif whichRun == 4:
     #might be able to add SetHint() to furnish an IFS
     cpres = solver.Solve() # actually solve MIP
     time5 = time.time()
-    print('4 Done Solving execution time: ' + " execution time: " + str((time5-time4)))
+    print('4 Done Solving execution time: ' + str((time5-time4)))
     x0d = dict()
     y0d = dict()
     z0d = dict()
@@ -579,7 +579,7 @@ elif whichRun == 5:
         if satOBJs[i]['isVisibleAtAll'][j] == 1: #the satellite cannot see current OBS at all
             xs[i,j] = solver.BoolVar('x' + str(i) + '_' + str(j))
     time2 = time.time()
-    print("5 Done Adding Free Variables Total:" + str(len(xs)) + " execution time: " + str((time2-time1)))
+    print("5 Done Adding Free Variables Total:" + str(len(xs)) + str((time2-time1)))
 
     #### CONSTRAINTS ################################
     #Each SV CAN ONLY OBSERVE ONE OBS AT A TIME
@@ -614,7 +614,7 @@ elif whichRun == 5:
         eachOBSonlyOnceConstraints.append(solver.Add(solver.Sum([xs[i,j] for i in np.arange(numSV) if (i,j) in xs.keys()]) <= 1))
 
     time3 = time.time()
-    print("5 Done Adding Constraints:" + str(len(oneOBSatAtimeConstraints)) + " execution time: " + str((time3-time2)))
+    print("5 Done Adding Constraints:" + str(len(oneOBSatAtimeConstraints)) + str((time3-time2)))
     ####
 
     #### Objective Function
@@ -625,7 +625,7 @@ elif whichRun == 5:
             objective.SetCoefficient(xs[i,j], OBSValues[i]) #OBSValues could be different for each SV making the observation
     objective.SetMaximization()
     time4 = time.time()
-    print('5 Done Setting Objective Function execution time: ' + " execution time: " + str((time4-time3)))
+    print('5 Done Setting Objective Function execution time: ' + str((time4-time3)))
 
     #solver.EnableOutput()# this line enables output of the CBC MIXED INTEGER PROGRAM (Was hard to find don't delete)
     solver.SetTimeLimit(60*1000)#time limit for solver in milliseconds
@@ -633,7 +633,7 @@ elif whichRun == 5:
     #might be able to add SetHint() to furnish an IFS
     cpres = solver.Solve() # actually solve MIP
     time5 = time.time()
-    print('5 Done Solving execution time: ' + " execution time: " + str((time5-time4)))
+    print('5 Done Solving execution time: ' + str((time5-time4)))
     x0d = dict()
     for (i,j) in xs.keys():
         x0d[(i,j)] = int(xs[i,j].solution_value())
@@ -779,7 +779,7 @@ elif whichRun == 6:
             #xs[i,j] = solver.BoolVar('x' + str(i) + '_' + str(j))
 
     time2 = time.time()
-    print("6 Done Adding Free Variables Total:" + str(len(xs)) + " execution time: " + str((time2-time1)))
+    print("6 Done Adding Free Variables Total:" + str(len(xs)) + str((time2-time1)))
 
     #### CONSTRAINTS ################################
     # #Each SV CAN ONLY OBSERVE ONE OBS AT A TIME
@@ -816,7 +816,7 @@ elif whichRun == 6:
         eachOBSonlyOnceConstraints.append(solver.Add(solver.Sum([xs[i,j] for i in np.arange(numSV) if (i,j) in xs.keys() and satOBJs[i]['isVisibleAtAll'][j] == 1]) <= 1))
 
     time3 = time.time()
-    # print("6 Done Adding Constraints:" + str(len(oneOBSatAtimeConstraints)) + " execution time: " + str((time3-time2)))
+    # print("6 Done Adding Constraints:" + str(len(oneOBSatAtimeConstraints)) + str((time3-time2)))
     ####
 
     #### Objective Function
@@ -827,7 +827,7 @@ elif whichRun == 6:
         objective.SetCoefficient(xs[i,j], 1.)#OBSValues[j]) #OBSValues could be different for each SV making the observation
     objective.SetMaximization()
     time4 = time.time()
-    print('6 Done Setting Objective Function execution time: ' + " execution time: " + str((time4-time3)))
+    print('6 Done Setting Objective Function execution time: ' + str((time4-time3)))
 
     #solver.EnableOutput()# this line enables output of the CBC MIXED INTEGER PROGRAM (Was hard to find don't delete)
     solver.SetTimeLimit(60*1000)#time limit for solver in milliseconds
@@ -835,11 +835,11 @@ elif whichRun == 6:
     #might be able to add SetHint() to furnish an IFS
     cpres = solver.Solve() # actually solve MIP
     time5 = time.time()
-    print('6 Done Solving execution time: ' + " execution time: " + str((time5-time4)))
+    print('6 Done Solving execution time: ' + str((time5-time4)))
     x0d = dict()
     for (i,j) in xs.keys():
         x0d[(i,j)] = xs[i,j].solution_value()
-        print(xs[i,j].solution_value()) 
+        #print(xs[i,j].solution_value()) 
     # for (i,t) in ys.keys():
     #     y0d[(i,t)] = int(ys[i,t].solution_value())
 
@@ -891,9 +891,9 @@ elif whichRun == 6:
 
 
     #Print all keys where an observation would be made
-    for (i,j)in x0d.keys():
-        if x0d[(i,j)] == 1:
-            print((i,j))
+    # for (i,j)in x0d.keys():
+    #     if x0d[(i,j)] == 1:
+    #         print((i,j))
 
 
 
@@ -985,11 +985,13 @@ elif whichRun == 7:
 
     #### Instantiate MIP Solver
     time1 = time.time()
-    solver = pywraplp.Solver('SolveIntegerProblem',pywraplp.Solver.CLP_LINEAR_PROGRAMMING) # create solver instance
     #solver = pywraplp.Solver('SolveIntegerProblem',pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING) # create solver instance
     #solver = pywraplp.Solver.CreateSolver('SCIP') #DID NOT produce feasible solution MPSOLVER ABNORMAL
     #solver = pywraplp.Solver.CreateSolver('CP_SAT')
-    #solver = pywraplp.Solver.CreateSolver('GLOP')
+    
+    #CLP worked, trying GLOP
+    #solver = pywraplp.Solver('SolveIntegerProblem',pywraplp.Solver.CLP_LINEAR_PROGRAMMING) # create solver instance
+    solver = pywraplp.Solver.CreateSolver('GLOP')
     print("7 Instantiate LP Solver: " + str((time1-time0)))
 
 
@@ -1008,7 +1010,7 @@ elif whichRun == 7:
             xs[i,j] = solver.IntVar(0,1,'x' + str(i) + '_' + str(j))
             #xs[i,j] = solver.BoolVar('x' + str(i) + '_' + str(j))
     time2 = time.time()
-    print("7 Done Adding Free Variables Total:" + str(len(xs)) + " execution time: " + str((time2-time1)))
+    print("7 Done Adding Free Variables Total:" + str(len(xs)) + str((time2-time1)))
 
     #### CONSTRAINTS ################################
     gt0constraint = list()
@@ -1031,7 +1033,7 @@ elif whichRun == 7:
         eachOBSonlyOnceConstraints.append(solver.Add(solver.Sum([xs[i,j] for i in np.arange(numSV) if (i,j) in xs.keys() and satOBJs[i]['isVisibleAtAll'][j] == 1]) <= 1))
 
     time3 = time.time()
-    # print("6 Done Adding Constraints:" + str(len(oneOBSatAtimeConstraints)) + " execution time: " + str((time3-time2)))
+    # print("6 Done Adding Constraints:" + str(len(oneOBSatAtimeConstraints)) + str((time3-time2)))
     ####
 
     #### Objective Function
@@ -1042,7 +1044,7 @@ elif whichRun == 7:
         objective.SetCoefficient(xs[i,j],OBSValues[j])# 1.)#OBSValues[j]) #OBSValues could be different for each SV making the observation
     objective.SetMaximization()
     time4 = time.time()
-    print('7 Done Setting Objective Function execution time: ' + " execution time: " + str((time4-time3)))
+    print('7 Done Setting Objective Function execution time: ' + str((time4-time3)))
 
     #solver.EnableOutput()# this line enables output of the CBC MIXED INTEGER PROGRAM (Was hard to find don't delete)
     solver.SetTimeLimit(60*1000)#time limit for solver in milliseconds
@@ -1050,11 +1052,11 @@ elif whichRun == 7:
     #might be able to add SetHint() to furnish an IFS
     cpres = solver.Solve() # actually solve MIP
     time5 = time.time()
-    print('7 Done Solving execution time: ' + " execution time: " + str((time5-time4)))
+    print('7 Done Solving execution time: ' + str((time5-time4)))
     x0d = dict()
     for (i,j) in xs.keys():
         x0d[(i,j)] = xs[i,j].solution_value()
-        print(xs[i,j].solution_value()) 
+        #print(xs[i,j].solution_value()) 
 
 
     fig = plt.figure(65468464646541111)
@@ -1114,7 +1116,7 @@ elif whichRun == 7:
         objective2.SetCoefficient(xs2[i,j],OBSValues[j])# 1.)#OBSValues[j]) #OBSValues could be different for each SV making the observation
     objective2.SetMaximization()
     time4 = time.time()
-    print('7_2 Done Setting Objective Function execution time: ' + " execution time: " + str((time4-time3)))
+    print('7_2 Done Setting Objective Function execution time: ' + str((time4-time3)))
 
     #solver.EnableOutput()# this line enables output of the CBC MIXED INTEGER PROGRAM (Was hard to find don't delete)
     solver2.SetTimeLimit(60*1000)#time limit for solver in milliseconds
@@ -1204,6 +1206,297 @@ elif whichRun == 7:
     ax.broken_barh([(time_windows[i*2],time_windows[i*2+1]-time_windows[i*2])], (-1, 4),facecolors =('green'))
     plt.title('OBS interferences')
     plt.show(block=False)
+
+
+
+
+
+
+
+elif whichRun == 8:
+    from earthOccultation import *
+    #### SOLVING USING ONLY OBS TIME WINDOWS, CONTINUOUS TIME ##################################################
+    print('#### EXECUTION 8 #################################################################')
+    time0 = time.time()
+    #### Generate Inputs
+    numSV = len(satOBJs) #50 #100 SV
+    numOBSs = 600 #numOBSs = numT
+    meanOBSduration = 30
+    stdOBSduration = 5
+    tmax = 7*60 #the maximum time range
+
+    ##### Create LOS array between each SV and each time, 1 if sat can see OBS k location at time j 
+    for i in np.arange(len(satOBJs)):#iterate over satellite objects
+        isVisible = np.zeros((satOBJs[i]['r'].shape[0],numOBSs))
+        for j in np.arange(satOBJs[i]['r'].shape[0]): #iterate over time steps
+            satDist = np.linalg.norm(satOBJs[i]['r'][j])
+            earthFOVAng = np.arcsin(r_earth/np.linalg.norm(satOBJs[i]['r'][j]))
+            for k in np.arange(r_locs.shape[1]):#Iterate over OBSs
+                r_obj_OBS = r_locs.T[k] - satOBJs[i]['r'][j]
+                OBSDist = np.linalg.norm(r_obj_OBS)
+                angBetweenEarthCenterAndLoc = np.arccos(np.dot(r_obj_OBS,-satOBJs[i]['r'][j])/satDist/OBSDist)
+                if earthFOVAng <= angBetweenEarthCenterAndLoc:
+                    isVisible[j,k] = 1 #it is visible
+        satOBJs[i]['isVisible'] = isVisible #shape 7x numpOBSs
+        satOBJs[i]['isVisibleAtAll'] = np.any(satOBJs[i]['isVisible'],axis=0).astype('int') #can satellite i see OBS j at all (saved as array of j)
+    ####
+
+    ##### Randomly Generate OBS durations
+    OBSDurs= np.random.normal(loc=meanOBSduration,scale=stdOBSduration,size=numOBSs) #create a random obs duration for each obs
+    time_windows = list() #an array containing the start and end points of each OBS
+    time_window_OBSnum = list() #an array containing OBS numbers of this time window
+    for j in np.arange(numOBSs):
+        start = np.random.uniform(low=0.,high=tmax-OBSDurs[j]) #create a random obs start time within time window
+        time_windows.append(start) #save obs start time
+        time_windows.append(start+OBSDurs[j]) #save obs end time
+        time_window_OBSnum.append(j) #saves OBS index associated with time_window index
+        time_window_OBSnum.append(j)
+    time_windows = np.asarray(time_windows) #cast to arrays
+    time_window_OBSnum = np.asarray(time_window_OBSnum)
+    #sort by 
+    time_windows_argsort = np.argsort(time_windows) #getting the indicies to sort the timewindows defined by the start and stop of each OBS
+    sortedTW = time_windows[time_windows_argsort] #sorting the time windows from earliest to lates
+    assert np.all(sortedTW[:-1] < sortedTW[1:]), 'not all time windows sorted'
+    sortedTW_OBSnum = time_window_OBSnum[time_windows_argsort] #sorted timewindows
+    numT = len(time_windows) #number of time windows
+    OBSValues = np.linspace(start=1.,stop=1.+1e-4,num=numOBSs)#nearly equal values for all #np.ones(numOBSs) #equal values for all
+
+    #creates a matrix where if i is the OBS being observed, all j that are 1 are OBSs which occur within the same timeframe as this observation
+    OBSInterferenceMatrix = np.zeros((numOBSs,numOBSs))
+    for (i,j) in itertools.product(np.arange(numOBSs),np.arange(numOBSs)):
+        #if i==j: #skip this one
+        #    continue
+        #If the start of other is within TW, if the end of other is within TW, or if other spans TW
+        if (time_windows[i*2] < time_windows[j*2] and time_windows[j*2] < time_windows[i*2+1])\
+            or (time_windows[i*2] < time_windows[j*2+1] and time_windows[j*2+1] < time_windows[i*2+1])\
+            or (time_windows[j*2] < time_windows[i*2] and time_windows[i*2+1] < time_windows[j*2+1]):
+            OBSInterferenceMatrix[i,j] = 1
+    ####
+
+    #### Instantiate MIP Solver
+    time1 = time.time()
+    #solver = pywraplp.Solver('SolveIntegerProblem',pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING) # create solver instance
+    #solver = pywraplp.Solver.CreateSolver('SCIP') #DID NOT produce feasible solution MPSOLVER ABNORMAL
+    #solver = pywraplp.Solver.CreateSolver('CP_SAT')
+    
+    #CLP worked, trying GLOP
+    #solver = pywraplp.Solver('SolveIntegerProblem',pywraplp.Solver.CLP_LINEAR_PROGRAMMING) # create solver instance
+    solver = pywraplp.Solver.CreateSolver('CPLEX')
+    print("8 Instantiate LP Solver: " + str((time1-time0)))
+
+
+    #### Count # SV not able to see anything
+    numWithNoVisible = 0
+    for i in np.arange(len(satOBJs)):
+        if np.any(satOBJs[i]['isVisible']):
+            numWithNoVisible += 1
+    print('8 numSV is ' + str(numSV))
+    print('8 numSV able to see at least 1: ' + str(numSV-numWithNoVisible))
+
+    #### Free Variables
+    xs = dict() #is SV i observing OBS j
+    for (i,j) in itertools.product(np.arange(numSV),np.arange(numOBSs)):
+        if satOBJs[i]['isVisibleAtAll'][j] == 1: #the satellite cannot see current OBS at all
+            xs[i,j] = solver.IntVar(0,1,'x' + str(i) + '_' + str(j))
+            #xs[i,j] = solver.BoolVar('x' + str(i) + '_' + str(j))
+    time2 = time.time()
+    print("8 Done Adding Free Variables Total:" + str(len(xs)) + str((time2-time1)))
+
+    #### CONSTRAINTS ################################
+    gt0constraint = list()
+    for (i,j) in xs.keys():
+        gt0constraint.append(solver.Add(xs[(i,j)] >= 0))
+    # #Each SV CAN ONLY OBSERVE ONE OBS AT A TIME
+    oneOBSatAtimeConstraints = list()
+    for i in np.arange(numSV): #for each SV observing each OBS
+        #Should be iterate over OBSs this SV can observe
+        for j in np.arange(numOBSs): #iterate over all OBSS
+            if satOBJs[i]['isVisibleAtAll'][j] == 1: #if this SV can see this OBS
+                #add constraint ensuring only one OBS is observed at a time
+                oneOBSatAtimeConstraints.append(solver.Add(\
+                    solver.Sum([xs[i,k] for k in np.arange(numOBSs) \
+                        if (i,k) in xs.keys() and OBSInterferenceMatrix[j,k] == 1 and satOBJs[i]['isVisibleAtAll'][k] == 1]) <= 1))
+
+    #MULTIPLE SV CANNOT OBSERVE SAME OBS
+    eachOBSonlyOnceConstraints = list()
+    for j in np.arange(numOBSs):
+        eachOBSonlyOnceConstraints.append(solver.Add(solver.Sum([xs[i,j] for i in np.arange(numSV) if (i,j) in xs.keys() and satOBJs[i]['isVisibleAtAll'][j] == 1]) <= 1))
+
+    time3 = time.time()
+    # print("6 Done Adding Constraints:" + str(len(oneOBSatAtimeConstraints)) + str((time3-time2)))
+    ####
+
+    #### Objective Function
+    objective = solver.Objective()
+    #Set Total Partial Reward Coefficients
+    for (i,j) in xs.keys():#itertools.product(np.arange(numSV),np.arange(numOBSs)):
+        #if (satOBJs[i]['isVisibleAtAll'][j] == 1): #the satellite cannot see current OBS at all
+        objective.SetCoefficient(xs[i,j],OBSValues[j])# 1.)#OBSValues[j]) #OBSValues could be different for each SV making the observation
+    objective.SetMaximization()
+    time4 = time.time()
+    print('7 Done Setting Objective Function execution time: ' + str((time4-time3)))
+
+    #solver.EnableOutput()# this line enables output of the CBC MIXED INTEGER PROGRAM (Was hard to find don't delete)
+    solver.SetTimeLimit(60*1000)#time limit for solver in milliseconds
+    solver.SetNumThreads(6)
+    #might be able to add SetHint() to furnish an IFS
+    cpres = solver.Solve() # actually solve MIP
+    time5 = time.time()
+    print('7 Done Solving execution time: ' + str((time5-time4)))
+    x0d = dict()
+    for (i,j) in xs.keys():
+        x0d[(i,j)] = xs[i,j].solution_value()
+        #print(xs[i,j].solution_value()) 
+
+
+    fig = plt.figure(65468464646541111)
+    ax = plt.gca()
+    #plt.matshow()
+    svObs = list()
+    for i in np.arange(numSV):
+        svObs.append(list())
+    for (i,j) in x0d.keys():
+        if x0d[(i,j)] > 0:
+            tmpIndTimeWindow = np.where(sortedTW_OBSnum == j)[0]
+            #tmpIndTimeWindow = np.where(sortedTW_OBSnum == i)[0]
+            #print(tmpIndTimeWindow)
+            assert tmpIndTimeWindow[0] < tmpIndTimeWindow[1], 'time window ordering not right'
+            svObs[i].append((sortedTW[tmpIndTimeWindow[0]],sortedTW[tmpIndTimeWindow[1]]-sortedTW[tmpIndTimeWindow[0]])) #(start,duration)
+
+    for i in np.arange(len(svObs)):
+        #for j in np.arange(len(svObs[i])):
+        ax.broken_barh(svObs[i], (2*i, 2),facecolors =('black','red'))
+    plt.title("Int Schedule")
+    plt.show(block=False)
+
+    # #Print all keys where an observation would be made
+    # for (i,j)in x0d.keys():
+    #     if x0d[(i,j)] == 1:
+    #         print((i,j))
+
+    #### REFORMULATION, the LP has been solved. Now consider only the nonzero solutions
+    solver2 = pywraplp.Solver('SolveIntegerProblem',pywraplp.Solver.CBC_MIXED_INTEGER_PROGRAMMING) # create solver instance
+
+    xs2 = dict() #is SV i observing OBS j
+    for (i,j) in xs.keys():
+        if xs[(i,j)].solution_value() > 0:
+            xs2[i,j] = solver2.IntVar(0,1,'x' + str(i) + '_' + str(j))
+
+    oneOBSatAtimeConstraints2 = list()
+    for i in np.arange(numSV): #for each SV observing each OBS
+        #Should be iterate over OBSs this SV can observe
+        for j in np.arange(numOBSs): #iterate over all OBSS
+            if satOBJs[i]['isVisibleAtAll'][j] == 1: #if this SV can see this OBS
+                #add constraint ensuring only one OBS is observed at a time
+                oneOBSatAtimeConstraints2.append(solver2.Add(\
+                    solver2.Sum([xs2[i,k] for k in np.arange(numOBSs) \
+                        if (i,k) in xs2.keys() and OBSInterferenceMatrix[j,k] == 1 and satOBJs[i]['isVisibleAtAll'][k] == 1]) <= 1))
+
+
+    #MULTIPLE SV CANNOT OBSERVE SAME OBS
+    eachOBSonlyOnceConstraints2 = list()
+    for j in np.arange(numOBSs):
+        eachOBSonlyOnceConstraints2.append(solver2.Add(solver2.Sum([xs2[i,j] for i in np.arange(numSV) if (i,j) in xs2.keys() and satOBJs[i]['isVisibleAtAll'][j] == 1]) <= 1))
+
+
+    objective2 = solver2.Objective()
+    #Set Total Partial Reward Coefficients
+    for (i,j) in xs2.keys():#itertools.product(np.arange(numSV),np.arange(numOBSs)):
+        #if (satOBJs[i]['isVisibleAtAll'][j] == 1): #the satellite cannot see current OBS at all
+        objective2.SetCoefficient(xs2[i,j],OBSValues[j])# 1.)#OBSValues[j]) #OBSValues could be different for each SV making the observation
+    objective2.SetMaximization()
+    time4 = time.time()
+    print('7_2 Done Setting Objective Function execution time: ' + str((time4-time3)))
+
+    #solver.EnableOutput()# this line enables output of the CBC MIXED INTEGER PROGRAM (Was hard to find don't delete)
+    solver2.SetTimeLimit(60*1000)#time limit for solver in milliseconds
+    solver2.SetNumThreads(6)
+    #might be able to add SetHint() to furnish an IFS
+    cpres2 = solver2.Solve() # actually solve MIP
+
+    x0d2 = dict()
+    for (i,j) in xs2.keys():
+        x0d2[(i,j)] = xs2[i,j].solution_value()
+        #print(xs2[i,j].solution_value()) 
+
+    #### Evaluate How Much Reward Was Collected ###############################################################
+    #Set Total Partial Reward Coefficients
+    TPR = 0
+    for (i,j) in xs2.keys():
+        TPR += xs2[i,j].solution_value()*OBSValues[j]
+
+    # Outputs the Solver Objective Function Value
+    objFunValue = solver2.Objective().Value()
+
+    print("7_2 Obj Fun Value: " + str(objFunValue) + " max obj fun val: " + str(numOBSs))
+    print("7_2 Number of Variables: " + str(solver2.NumVariables()))
+    print("7_2 Number of Constraints: " + str(solver2.NumConstraints()))
+
+
+    cumSum = 0
+    maxi = 0
+    maxj = 0
+    for (i,j) in x0d2.keys():
+        cumSum += x0d2[(i,j)]
+        if i > maxi:
+            maxi = i
+        if j > maxj:
+            maxj = j
+    print("cumSum: " + str(cumSum))
+    
+    fig = plt.figure(65468464646542222)
+    ax = plt.gca()
+    #plt.matshow()
+    svObs2 = list()
+    for i in np.arange(numSV):
+        svObs2.append(list())
+    for (i,j) in x0d2.keys():
+        if x0d2[(i,j)] > 0:
+            tmpIndTimeWindow = np.where(sortedTW_OBSnum == j)[0]
+            #tmpIndTimeWindow = np.where(sortedTW_OBSnum == i)[0]
+            #print(tmpIndTimeWindow)
+            assert tmpIndTimeWindow[0] < tmpIndTimeWindow[1], 'time window ordering not right'
+            svObs2[i].append((sortedTW[tmpIndTimeWindow[0]],sortedTW[tmpIndTimeWindow[1]]-sortedTW[tmpIndTimeWindow[0]])) #(start,duration)
+
+    for i in np.arange(len(svObs2)):
+        #for j in np.arange(len(svObs[i])):
+        ax.broken_barh(svObs2[i], (2*i, 2),facecolors =('black','red'))
+    plt.title("Int Schedule")
+    plt.show(block=False)
+
+
+
+    #Print all keys where an observation would be made
+    # for (i,j)in x0d2.keys():
+    #     if x0d2[(i,j)] == 1:
+    #         print((i,j))
+
+
+
+    #Plot all potential OBSs
+    fig = plt.figure(22343523422224354342222)
+    ax = plt.gca()
+    for i in np.arange(numOBSs):
+        ax.broken_barh([(time_windows[i*2],time_windows[i*2+1]-time_windows[i*2])], (2*i, 2),facecolors =('black','red'))
+    plt.title('all OBSs')
+    plt.show(block=False)
+    ####
+
+
+    #Plot OBS interference matrix
+    fig = plt.figure(11115466546542222)
+    ax = plt.gca()
+    i=0
+    k = 0 #the index of the line to print at
+    for j in np.arange(numOBSs):
+        if OBSInterferenceMatrix[i,j]==1:
+            ax.scatter([time_windows[j*2],time_windows[j*2+1]],[2*k,2*k],color='red',s=1)
+            ax.broken_barh([(time_windows[j*2],time_windows[j*2+1]-time_windows[j*2])], (2*k, 2),facecolors =('black','red'))
+            k+=1
+    ax.broken_barh([(time_windows[i*2],time_windows[i*2+1]-time_windows[i*2])], (-1, 4),facecolors =('green'))
+    plt.title('OBS interferences')
+    plt.show(block=False)
+
 
 
 
