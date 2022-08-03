@@ -626,7 +626,7 @@ mass = V*rho#agglutinate mass for single particle
 
 
 #### Particles Per Square Meter and Velocity Monte Carlo
-num=5000
+num=np.round(1/mass)*10 #equivalent to 10kg of particles   #5000
 #plot x as "landing distance"
 #plot y as "particle flux per m2"
 #plot color as impact velocity in m/s? maybe symbol type and color
@@ -689,22 +689,23 @@ plt.figure(777777778863888)
 ax1 = plt.gca()
 ax2 = ax1.twinx()
 for i in np.arange(num):
+    i = int(i)
     ax1.scatter(dists[i]/1000,endVels[i],color='black',marker='x',s=2)#,color='black')
 bins=np.logspace(start=np.log10(np.min(dists)/1000.),stop=np.log10(np.max(dists)/1000.),base=10.0,num=20)
 ax2.hist(np.asarray(dists)/1000., bins=bins, histtype="step", color='deepskyblue', density=True) # Plot histogram of nums2
 ax1.plot([0.9*np.min(dists)/1000.,0.9*np.max(dists)/1000.],[343.,343.],color='black')
-ax1.text(5,350,'.22 LR round velocity')
+ax1.text(1.,350,'.22 LR round velocity')
 ax1.plot([0.9*np.min(dists)/1000.,0.9*np.max(dists)/1000.],[240.,240.],color='black')
 ax1.text(1.,250,'~airsoft pellet velocity')
 ax2.plot([0.9*np.min(dists)/1000.,0.9*np.max(dists)/1000.],[0.275,0.275],color='deepskyblue')
-ax2.text(10,1.1*0.275,"Annual Lunar Particle Deposition Rate",color='deepskyblue')
+ax2.text(5,1.1*0.275,"Annual Lunar Particle Deposition Rate",color='deepskyblue')
 ax2.yaxis.label.set_color('deepskyblue')
 ax2.spines['right'].set_color('deepskyblue')
 ax2.tick_params(axis='y', colors='deepskyblue')
 ax1.set_xscale('log')
 ax2.set_xscale('log')
 ax2.set_yscale('log')
-ax2.set_ylabel("Particle Flux Rate in #/" + r"$m^2$",color='deepskyblue')
+ax2.set_ylabel("Particle Flux Rate per 10 Kg Ejected in #/" + r"$m^2$" + "/10 Kg",color='deepskyblue')
 ax1.set_xlabel("Down Range Distance (km)")
 ax1.set_ylabel("Impact Velocity (m/s)")
 ax1.set_xlim([0.9*np.min(dists)/1000.,0.9*np.max(dists)/1000.])
