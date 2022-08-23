@@ -633,6 +633,10 @@ num=np.round(1/mass)*10 #equivalent to 10kg of particles   #5000
 #use numbers to demonstrate severity
 dists = list()
 endVels = list()
+ress = list()
+maxt = 0
+maxdim = -10000
+mindim = 100000
 for i in np.arange(num):
     if np.mod(i,10) == 0:
         print(i)
@@ -676,6 +680,16 @@ for i in np.arange(num):
     res = solve_ivp(model_3D_simple, t_span, x0, method='RK45', dense_output=True,\
                         events=[event_hit_ground_3D_simple],max_step=2.)#, options={'first_step':1.0})#t_eval=t_eval,\
     assert res.success
+    #save array
+    ress.append(res)
+    #find max time
+    if np.max(res.t) > maxt:
+        maxt = np.max(res.t)
+    if np.max([np.max(res.y[0]),np.max(res.y[2]),np.max(res.y[4])]) > maxdim:
+        maxdim = np.max([np.max(res.y[0]),np.max(res.y[2]),np.max(res.y[4])])
+    if np.min([np.min(res.y[0]),np.min(res.y[2]),np.min(res.y[4])]) > mindim:
+        mindim = np.min([np.min(res.y[0]),np.min(res.y[2]),np.min(res.y[4])])
+
 
     dist = np.linalg.norm(np.asarray([res.y[0]-res.y[0,0],res.y[2]-res.y[2,0],res.y[4]-res.y[4,0]]),axis=0)
     dists.append(np.max(dist))
@@ -685,6 +699,67 @@ for i in np.arange(num):
     endVels.append(endVel)
 
 
+
+
+#### Plot Each Particle's 
+#ts = np.linspace(start=0.,stop=np.ceil(maxt),num=150)
+ts = np.arange(200)*10 #maxt was arount 1751
+for t in np.arange(len(ts)):
+    fig3 = plt.figure(num=45383421345341113,figsize=(8,8))
+    ax3 = fig3.add_subplot(111, projection='3d',computed_zorder=False)
+    ax3.set_box_aspect(aspect = (1,1,1))#set_aspect('equal')
+    u, v = np.mgrid[0:2*np.pi:40j, 0:np.pi:20j]
+    x = np.cos(u)*np.sin(v)
+    y = np.sin(u)*np.sin(v)
+    z = np.cos(v)
+    ax3.plot_wireframe(r_moon/1000.*x, r_moon/1000.*y, r_moon/1000.*z, color="grey",zorder=10)
+    xs = np.zeros(len(ress))
+    ys = np.zeros(len(ress))
+    zs = np.zeros(len(ress))
+    onSurfaceInds = list()
+    nonOnSurfaceInds = list()
+    for i in np.arange(len(ress)):
+        if np.max(ress[i].t) > ts[t]:
+            #find in where in between two time intervals
+            j = np.where((ts[t] >= ress[i].t[:-1])*(ts[t] < ress[i].t[1:]))[0]
+            tmpx = ress[i].y[0,j] + (ts[t] - ress[i].t[j])*(ress[i].y[0,j+1] - ress[i].y[0,j])/(ress[i].t[j+1] - ress[i].t[j])
+            tmpy = ress[i].y[2,j] + (ts[t] - ress[i].t[j])*(ress[i].y[2,j+1] - ress[i].y[2,j])/(ress[i].t[j+1] - ress[i].t[j])
+            tmpz = ress[i].y[4,j] + (ts[t] - ress[i].t[j])*(ress[i].y[4,j+1] - ress[i].y[4,j])/(ress[i].t[j+1] - ress[i].t[j])
+            #ax3.scatter(tmpx/1000,-tmpy/1000,tmpz/1000,color='black',s=2,zorder=10)
+            xs[i] = tmpx/1000
+            ys[i] = -tmpy/1000
+            zs[i] = tmpz/1000
+            nonOnSurfaceInds.append(i)
+        else:
+            #ax3.scatter(ress[i].y[0,-1]/1000,-ress[i].y[2,-1]/1000,ress[i].y[4,-1]/1000,color='black',s=2,zorder=10)
+            onSurfaceInds.append(i)
+            xs[i] = ress[i].y[0,-1]/1000
+            ys[i] = -ress[i].y[2,-1]/1000
+            zs[i] = ress[i].y[4,-1]/1000
+    onSurfaceInds = np.asarray(onSurfaceInds)
+    nonOnSurfaceInds = np.asarray(nonOnSurfaceInds)
+    if len(onSurfaceInds) > 0:
+        ax3.scatter(xs[onSurfaceInds],ys[onSurfaceInds],zs[onSurfaceInds],color='deepskyblue',s=2,zorder=20)
+    if len(nonOnSurfaceInds) > 0:
+        ax3.scatter(xs[nonOnSurfaceInds],ys[nonOnSurfaceInds],zs[nonOnSurfaceInds],color='blue',s=2,zorder=20)
+    ax3.set_xlim([-2500,2500])
+    ax3.set_ylim([-2500,2500])
+    ax3.set_zlim([-2500,2500])
+    ax3.set_xlabel('x (km)')
+    ax3.set_ylabel('y (km)')
+    ax3.set_zlabel('z (km)')
+    ax3.set_title('Time: ' + str(ts[t]) + ' (s)')
+    plt.savefig('./EjectaParticleImages/image' + str(t) +  '.png', format='png', dpi=300)
+    plt.close(45383421345341113)
+#plt.show(block=False)
+
+
+
+
+
+
+
+#### PLOT PARTICLE FREQUENCY PER METER SQUARED
 plt.figure(777777778863888)
 ax1 = plt.gca()
 ax2 = ax1.twinx()
@@ -692,7 +767,10 @@ for i in np.arange(num):
     i = int(i)
     ax1.scatter(dists[i]/1000,endVels[i],color='black',marker='x',s=2)#,color='black')
 bins=np.logspace(start=np.log10(np.min(dists)/1000.),stop=np.log10(np.max(dists)/1000.),base=10.0,num=20)
-ax2.hist(np.asarray(dists)/1000., bins=bins, histtype="step", color='deepskyblue', density=True) # Plot histogram of nums2
+histvals, histedges = np.histogram(np.asarray(dists)/1000.,bins=bins)#,density=True)
+histvals = histvals/(np.pi*(histedges[1:]**2.-histedges[:-1]**2.))
+ax2.hist((histedges[1:]+histedges[:-1])/2., weights=histvals/10.,bins=bins, histtype="step", color='deepskyblue')
+#DELETEax2.hist(np.asarray(dists)/1000., bins=bins, histtype="step", color='deepskyblue')#, density=True) # Plot histogram of nums2
 ax1.plot([0.9*np.min(dists)/1000.,0.9*np.max(dists)/1000.],[343.,343.],color='black')
 ax1.text(1.,350,'.22 LR round velocity')
 ax1.plot([0.9*np.min(dists)/1000.,0.9*np.max(dists)/1000.],[240.,240.],color='black')
@@ -718,3 +796,41 @@ plt.show(block=False)
 
 
 plt.close(9999)
+
+
+
+
+totalMassEjected = 7.*3.**2.*np.pi*1500. #total mass ejected from iSALE sim crater dimensions
+plt.figure(777777778444444444863888)
+ax1 = plt.gca()
+ax2 = ax1.twinx()
+for i in np.arange(num):
+    i = int(i)
+    ax1.scatter(dists[i]/1000,endVels[i],color='black',marker='x',s=2)#,color='black')
+bins=np.logspace(start=np.log10(np.min(dists)/1000.),stop=np.log10(np.max(dists)/1000.),base=10.0,num=20)
+histvals, histedges = np.histogram(np.asarray(dists)/1000.,bins=bins)#,density=True)
+histvals = histvals/(np.pi*(histedges[1:]**2.-histedges[:-1]**2.))
+ax2.hist((histedges[1:]+histedges[:-1])/2., weights=histvals*(totalMassEjected/10.),bins=bins, histtype="step", color='deepskyblue')
+#DELETEax2.hist(np.asarray(dists)/1000., bins=bins, histtype="step", color='deepskyblue', density=True) # Plot histogram of nums2
+ax1.plot([0.9*np.min(dists)/1000.,0.9*np.max(dists)/1000.],[343.,343.],color='black')
+ax1.text(1.,350,'.22 LR round velocity')
+ax1.plot([0.9*np.min(dists)/1000.,0.9*np.max(dists)/1000.],[240.,240.],color='black')
+ax1.text(1.,250,'~airsoft pellet velocity')
+ax2.plot([0.9*np.min(dists)/1000.,0.9*np.max(dists)/1000.],[0.275,0.275],color='deepskyblue')
+ax2.text(5,1.1*0.275,"Annual Lunar Particle Deposition Rate",color='deepskyblue')
+ax2.yaxis.label.set_color('deepskyblue')
+ax2.spines['right'].set_color('deepskyblue')
+ax2.tick_params(axis='y', colors='deepskyblue')
+ax1.set_xscale('log')
+ax2.set_xscale('log')
+ax2.set_yscale('log')
+ax2.set_ylabel("Particle Flux Rate in #/" + r"$m^2$",color='deepskyblue')
+ax1.set_xlabel("Down Range Distance (km)")
+ax1.set_ylabel("Impact Velocity (m/s)")
+ax1.set_xlim([0.9*np.min(dists)/1000.,0.9*np.max(dists)/1000.])
+
+plt.show(block=False)
+
+
+#maybe probability of hitting a lethal impact hitting a 10m^2 structure
+
