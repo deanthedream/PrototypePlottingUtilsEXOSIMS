@@ -12,13 +12,16 @@ import time
 spkpath = './de432s.bsp'
 kernel = SPK.open(spkpath) # smaller file, covers mission time range
 step = 4000
+
+#### Create array of mjd times in range
 # we are going to get positions between these two dates
 utc = ['Jun 21, 2024', 'Jun 22, 2024'] #Earth shoud be almost entirely in the x direction relative to the sun
 utc = ['2024-06-21T00:00:00.00', '2024-06-22T00:00:00']
 utc = ['2024-06-21T00:00:00.00', '2025-06-21T00:00:00']
 jdlims = Time(utc,format='isot',scale='tai')
-jdtimes = np.linspace(start=jdlims.jd[0],stop=jdlims.jd[1],num=100)
+jdtimes = np.linspace(start=jdlims.jd[0],stop=jdlims.jd[1],num=50)
 
+#Create array of sun-earth-moon positions vs time
 #currentTime = Time(koTimes,format='mjd',scale='tai')  # scale must be tai to account for leap seconds
 #jdtime = np.array(currentTime.jd, ndmin=1)
 rs_earth_sun = list()
@@ -51,20 +54,36 @@ def genRandomLatLon(num=1,lat_low=-np.pi/2.,lat_high=np.pi/2.,lon_low=0,lon_high
     """ Generates a random latitude and longitude
     """
     lons = np.random.uniform(low=lon_low,high=lon_high,size=num)
-    lats = np.arccos(2.*np.random.uniform(low=np.sin(lat_low),high=np.sin(lat_high),size=num)-1.)
+    #lats = np.arccos(np.sin(np.random.uniform(low=np.sin(lat_low),high=np.sin(lat_high),size=num)))
+    lats = np.arccos(np.random.uniform(low=np.sin(lat_low),high=np.sin(lat_high),size=num))-np.pi/2.
     return lons, lats
 
 def lonLats_to_xyz(r,lons,lats):
     """ Computes x,y,z position from lons and lats
     """
-    return r*np.asarray([np.cos(lats)*np.sin(lons),np.cos(lats)*np.sin(lons),np.sin(lats)])
+    return r*np.asarray([np.cos(lons)*np.cos(lats),np.sin(lons)*np.cos(lats),np.sin(lats)])
 
-num_locs = 200    
+num_locs = 400#50#400#200    
 lons, lats = genRandomLatLon(num_locs,lat_low=-np.pi/2.,lat_high=np.pi/2.,lon_low=0.,lon_high=2.*np.pi) #Full sphere
 #Randomly generate locations
-r_locs = lonLats_to_xyz(r_earth+200,lons,lats)
+r_locs = lonLats_to_xyz(r_earth+1000.,lons,lats)
 
 
+#### At Given Time, plot SV and positions that are visible
+fig4 = plt.figure(num=455888999999999999,figsize=(8,8))
+ax3 = fig4.add_subplot(111, projection='3d',computed_zorder=False)
+ax3.set_box_aspect(aspect = (1,1,1))#set_aspect('equal')
+#plot invisible box to bound
+ax3.scatter(r_locs[0],r_locs[1],r_locs[2],color='blue')
+#Plot wireframe of earth
+plt.show(block=False)
+
+
+
+
+
+
+#### SV
 sv = list()
 for i in np.arange(num_locs):
     print(i/num_locs)
@@ -100,7 +119,11 @@ for i in np.arange(num_locs):
 
             sv.append(data)
 
-#TODO verify these calculations!!!, is it tpt_c[0]*a pr tpt_c[0]/a?????
+
+
+
+
+#Compute Tangent Point and Tangent Height
 def tangentPointline_spherespace(p0_c,p1_c):
     """ Computes the Tangent Point on the line
     """
@@ -125,7 +148,6 @@ def pt_to_ptc(p0, p1, a, b, c):
     p1_c = np.asarray([p1[0]/a,p1[1]/b,p1[2]/c])
     return p0_c, p1_c
 
-
 def tangentPointline_ellipsespace(p0,p1,a,b,c):
     """Computes tangent point of the line in ellipsoid space
     p0, p1
@@ -135,7 +157,6 @@ def tangentPointline_ellipsespace(p0,p1,a,b,c):
     tpt_c = tangentPointline_spherespace(p0_c,p1_c)
     tpt = np.asarray([tpt_c[0]*a,tpt_c[1]*b,tpt_c[2]*c])
     return tpt
-
 
 def tangentPointellipse_ellipsespace(p0,p1,a,b,c):
     """
@@ -147,7 +168,6 @@ def tangentPointellipse_ellipsespace(p0,p1,a,b,c):
     tpt = np.asarray([tpt_onCircle[0]*a,tpt_onCircle[1]*b,tpt_onCircle[2]*c])
     return tpt
 
-
 def tangentHeight(tpt_c,a,b,c):
     n_c = tpt_c/np.linalg.norm(tpt_c)
     #L_c = n_c
@@ -156,32 +176,307 @@ def tangentHeight(tpt_c,a,b,c):
     height = np.linalg.norm(tpt-L)
     return height
 
+def nhat(x0,y0,z0,a,b,c):
+    """ Surface normal vector to point on ellipsoid in ellipsoid space
+    """
+    return np.asarray([x0/a**2,y0/b**2,z0/c**2])/np.sqrt((x0**2/a**4+y0**2/b**4+z0**2/c**4))
+
+def uhat(p0,p1):
+    return (p1-p0)/np.linalg.norm(p1-p0)
+
+def x_tangentpoint_from_line(p0,p1,p2,p3):
+    x0,y0,z0 = p0[0],p0[1],p0[2]
+    x1,y1,z1 = p1[0],p1[1],p1[2]
+    x2,y2,z2 = p2[0],p2[1],p2[2]
+    x3,y3,z3 = p3[0],p3[1],p3[2]
+    #P0x = p0[0]
+    #P0y = p0[1]
+    #x0 = L[0]
+    #y0 = L[1]
+    #e = uhat[0]
+    #f = uhat[1]
+
+    #the two lines are parallel
+    if x1==x0 and x2==x3:
+        if x0==x2: #the two lines are identical
+            return x0
+        else: #the two lines will never intersect
+            return np.nan
+
+    if x1==x0:
+        return x0
+    else:
+        m_line = (y1-y0)/(x1-x0)
+        
+    if x2==x3:
+        return x3
+    else:
+        m_tan = (y3-y2)/(x3-x2)
+
+    b_line = y0-m_line*x0
+    b_tan = y2-m_tan*x2
+
+    x = (b_tan-b_line)/(m_line-m_tan)
+        #c_lt = y0-nhat[1]/nhat[0]*x0 #from y=mx+c_lt
+        #c_pp = P0y-nhat[1]/nhat[0]*P0x
+
+        #t = (p0[1]-L[1] - nhat[1]/nhat[0]*L[0]+nhat[1]/nhat[0]*L[0])/(nhat[1]/nhat[0]*e-f)
+        #x = (c_pp-c_lt)/(nhat[1]-nhat[0]-f/e)
+        #dx = (y0 - P0y)/(f/e-nhat[1]/nhat[0])
+        #t = (x-P0x)/e
+    return x
+
+def xyz_tangentpoint_from_line(p0,p1,p2,p3):
+    """
+    p0 is the SV
+    p1 is the target
+    p2 is a point along the tangent line
+    """
+    x0,y0,z0 = p0[0],p0[1],p0[2]
+    x1,y1,z1 = p1[0],p1[1],p1[2]
+    x2,y2,z2 = p2[0],p2[1],p2[2]
+    x3,y3,z3 = p3[0],p3[1],p3[2]
+    #P0x = p0[0]
+    #P0y = p0[1]
+    #x0 = L[0]
+    #y0 = L[1]
+    #e = uhat[0]
+    #f = uhat[1]
+
+    #the two lines are parallel
+    if x1==x0 and x2==x3:
+        if x0==x2: #the two lines are identical
+            return x0
+        else: #the two lines will never intersect
+            return np.nan
+
+    if x1==x0:
+        return x0
+    else:
+        m_line = (y1-y0)/(x1-x0)
+        
+    if x2==x3:
+        return x3
+    else:
+        m_tan = (y3-y2)/(x3-x2)
+
+    b_line = y0-m_line*x0
+    b_tan = y2-m_tan*x2
+
+    #Compute x
+    x = (b_tan-b_line)/(m_line-m_tan)
+
+    #Compute y
+    y = (x-x0)*m_line + y0
+
+    #Compute z
+    m_line2 = (z1-z0)/(x1-x0)
+    z = m_line2*(x-x0) + +z0
+
+    return x, y, z
+
+def tangentHeight(p0,p1,a,b,c):
+    """ Computes the Tangent Height of the Observation
+    p0 - space vehicle location
+    p1 - target location
+    a, b, c ellipsoid parameters
+    """
+    tptellipse_ellipseSpace = tangentPointellipse_ellipsespace(p0,p1,a,b,c)
+    nhat0 = nhat(tptellipse_ellipseSpace[0],tptellipse_ellipseSpace[1],tptellipse_ellipseSpace[2],a,b,c)
+    x,y,z = xyz_tangentpoint_from_line(p0,p1,tptellipse_ellipseSpace,tptellipse_ellipseSpace+1*nhat0)
+    tangentPoint = np.asarray([x,y,z])
+    sgn = -1.
+    if np.linalg.norm(tangentPoint) > np.linalg.norm(tptellipse_ellipseSpace):
+        sgn = 1.
+    return sgn*np.linalg.norm(tangentPoint - tptellipse_ellipseSpace)
+
+
+def lunarKOVisible(p0,p1,r_earth_moon,KOangle=6*np.pi/180.):
+    rhat_SV_targ = (p1-p0)/np.linalg.norm(p1-p0) #spacecraft to target vector
+    rhat_SV_moon = (r_earth_moon-p0)/np.linalg.norm(r_earth_moon-p0) #spacecraft to moon vector
+    angle = np.arccos(np.dot(rhat_SV_targ,rhat_SV_moon))
+    if angle < KOangle:
+        return False
+    else:
+        return True
+
+def solarKOVisible(p0,p1,r_earth_sun,KOangle=10*np.pi/180.):
+    rhat_SV_targ = (p1-p0)/np.linalg.norm(p1-p0) #spacecraft to target vector
+    rhat_SV_sun = (r_earth_sun-p0)/np.linalg.norm(r_earth_sun-p0) #spacecraft to sun vector
+    angle = np.arccos(np.dot(rhat_SV_targ,rhat_SV_sun))
+    if angle < KOangle:
+        return False
+    else:
+        return True
+
+def tangentHeightVisible(p0,p1,a,b,c,heightLimit=200.):
+    height = tangentHeight(p0,p1,a,b,c)
+
+    if height < heightLimit:
+        return False
+    else:
+        return True
+
+def solarZenithAngleVisible(p0,p1,a,b,c,r_earth_sun,zenithAngleLimit = 90*np.pi/180.):
+    tptellipse_ellipseSpace = tangentPointellipse_ellipsespace(p0,p1,a,b,c)
+    rhat_tpt_sun = (r_earth_sun-tptellipse_ellipseSpace)/np.linalg.norm(r_earth_sun-tptellipse_ellipseSpace)
+    nhat0 = nhat(p0[0],p0[1],p0[2],a,b,c)
+    zenithAngle = np.arccos(np.dot(rhat_tpt_sun,nhat0))
+    if zenithAngle < zenithAngleLimit:
+        return False
+    else:
+        return True
+
+def solarPhaseAngleVisible(p0,p1,a,b,c,r_earth_sun,solarPhaseAngleLimit=160*np.pi/180.):
+    #tptellipse_ellipseSpace = tangentPointellipse_ellipsespace(p0,p1,a,b,c)
+    rhat_tpt_sun = (r_earth_sun-tptellipse_ellipseSpace)/np.linalg.norm(r_earth_sun-tptellipse_ellipseSpace)
+    solarPhaseAngle = np.arccos(np.dot(-uhat(p0,p1),rhat_tpt_sun))
+    if solarPhaseAngle > solarPhaseAngleLimit:
+        return False
+    else:
+        return True
 
 
 
 
+utc = ['2024-06-21T00:00:00.00', '2025-06-21T00:00:00']
+a, b, c = 6371., 6371., 6371.
+jd = Time([utc[0]],format='isot',scale='tai')
+jdtime = jd.jd[0]
+
+def isVisible(p0,p1,kernel,jdtime,a,b,c):
+    #r_earth_sun
+    #vectors in heliocentric ecliptic frame, origin at the sun center, fundamental plane in the plane of the earth's equator, x-axis toward vernal equinox
+    r_solarbarycenter_sun = kernel[0,10].compute(jdtime)
+    r_solarbarycenter_earthbarycenter = kernel[0,3].compute(jdtime)
+    r_earthbarycenter_moon = kernel[3,301].compute(jdtime)
+    r_earthbarycenter_earth = kernel[3,399].compute(jdtime)
+
+    r_earth_sun = -r_earthbarycenter_earth - r_solarbarycenter_earthbarycenter + r_solarbarycenter_sun #vector from Earth center to sun center
+    r_earth_moon = -r_earthbarycenter_earth + r_earthbarycenter_moon #vector from Earth center to moon
+
+
+
+    isVisibleLunar = lunarKOVisible(p0,p1,r_earth_moon)
+    isVisibleSolar = solarKOVisible(p0,p1,r_earth_sun)
+    isVisibleTangentHeight = tangentHeightVisible(p0,p1,a,b,c)
+    isVisibleSolarZenithAngle = solarZenithAngleVisible(p0,p1,a,b,c,r_earth_sun)
+    isVisibleSolarPhaseAngle = solarPhaseAngleVisible(p0,p1,a,b,c,r_earth_sun)
+    visible = bool(isVisibleLunar*isVisibleSolar*isVisibleTangentHeight*isVisibleSolarZenithAngle*isVisibleSolarPhaseAngle)
+    return visible, isVisibleLunar, isVisibleSolar, isVisibleTangentHeight, isVisibleSolarZenithAngle, isVisibleSolarPhaseAngle 
+
+
+
+#### Verify Tangent Height Calculations ################3
 p0 = np.asarray([-20,0,0])
 p1 = np.asarray([0,20,0])
 a = 10
 b = 5
 c = 1
-
-
 plt.figure(2342356236)
 xs = np.linspace(start=0,stop=-a)
 ys = np.sqrt(b**2.*(1.-xs**2./a**2.))
-plt.plot(xs,ys)
-plt.plot([p0[0],p1[0]],[p0[1],p1[1]])
+plt.plot(xs,ys,color='black')
+plt.plot([p0[0],p1[0]],[p0[1],p1[1]],color='orange')
 #pt0_c, pt1_c = pt_to_ptc(p0, p1, a, b, c)
-tptline_ellipseSpace = tangentPointline_ellipsespace(p0,p1,a,b,c)
-plt.scatter(tptline_ellipseSpace[0],tptline_ellipseSpace[1])
+#tptline_ellipseSpace = tangentPointline_ellipsespace(p0,p1,a,b,c)
+#plt.scatter(tptline_ellipseSpace[0],tptline_ellipseSpace[1],color='red')
+
+#The Tangent Point on the Ellipse
 tptellipse_ellipseSpace = tangentPointellipse_ellipsespace(p0,p1,a,b,c)
-plt.scatter(tptellipse_ellipseSpace[0],tptellipse_ellipseSpace[1])
+plt.scatter(tptellipse_ellipseSpace[0],tptellipse_ellipseSpace[1],color='blue')
+nhat0 = nhat(tptellipse_ellipseSpace[0],tptellipse_ellipseSpace[1],tptellipse_ellipseSpace[2],a,b,c)
+uhat0 = uhat(p0,p1)
+# t = t_tangentLine_line(nhat0, p0, tptellipse_ellipseSpace, uhat0)
+#x = x_tangentLine_line(nhat0, p0, tptellipse_ellipseSpace, uhat0)
+x = x_tangentpoint_from_line(p0,p1,tptellipse_ellipseSpace,tptellipse_ellipseSpace+1*nhat0)
+#tptline_ellipseSpace = p0+uhat0*t
+plt.scatter(x,p0[1] + (x-p0[0])*uhat0[1]/uhat0[0],color='red')
+#plt.scatter(tptline_ellipseSpace[0],tptline_ellipseSpace[1],color='red')
+
+#The tangent point!!!!!
+x,y,z = xyz_tangentpoint_from_line(p0,p1,tptellipse_ellipseSpace,tptellipse_ellipseSpace+1*nhat0)
+plt.scatter(x,y,color='green')
+
+plt.gca().axis('equal')
 plt.show(block=False)
+plt.close(2342356236)
 
 
 
+p0 = np.asarray([20,0,0])
+p1 = np.asarray([0,20,0])
+a = 10
+b = 5
+c = 1
+plt.figure(23423562342236)
+xs = np.linspace(start=0,stop=-a)
+ys = np.sqrt(b**2.*(1.-xs**2./a**2.))
+plt.plot(xs,ys,color='black')
+plt.plot([p0[0],p1[0]],[p0[1],p1[1]],color='orange')
+#pt0_c, pt1_c = pt_to_ptc(p0, p1, a, b, c)
+#tptline_ellipseSpace = tangentPointline_ellipsespace(p0,p1,a,b,c)
+#plt.scatter(tptline_ellipseSpace[0],tptline_ellipseSpace[1],color='red')
 
+#The Tangent Point on the Ellipse
+tptellipse_ellipseSpace = tangentPointellipse_ellipsespace(p0,p1,a,b,c)
+plt.scatter(tptellipse_ellipseSpace[0],tptellipse_ellipseSpace[1],color='blue')
+nhat0 = nhat(tptellipse_ellipseSpace[0],tptellipse_ellipseSpace[1],tptellipse_ellipseSpace[2],a,b,c)
+uhat0 = uhat(p0,p1)
+# t = t_tangentLine_line(nhat0, p0, tptellipse_ellipseSpace, uhat0)
+#x = x_tangentLine_line(nhat0, p0, tptellipse_ellipseSpace, uhat0)
+x = x_tangentpoint_from_line(p0,p1,tptellipse_ellipseSpace,tptellipse_ellipseSpace+1*nhat0)
+#tptline_ellipseSpace = p0+uhat0*t
+plt.scatter(x,p0[1] + (x-p0[0])*uhat0[1]/uhat0[0],color='red')
+#plt.scatter(tptline_ellipseSpace[0],tptline_ellipseSpace[1],color='red')
+
+#The tangent point!!!!!
+x,y,z = xyz_tangentpoint_from_line(p0,p1,tptellipse_ellipseSpace,tptellipse_ellipseSpace+1*nhat0)
+plt.scatter(x,y,color='green')
+
+plt.gca().axis('equal')
+plt.show(block=False)
+plt.close(23423562342236)
+
+
+p0 = np.asarray([15,0,0])
+p1 = np.asarray([0,-20,0])
+a = 10
+b = 5
+c = 1
+plt.figure(23423562323442236)
+xs = np.linspace(start=0,stop=-a)
+ys = np.sqrt(b**2.*(1.-xs**2./a**2.))
+plt.plot(xs,ys,color='black')
+plt.plot([p0[0],p1[0]],[p0[1],p1[1]],color='orange')
+#pt0_c, pt1_c = pt_to_ptc(p0, p1, a, b, c)
+#tptline_ellipseSpace = tangentPointline_ellipsespace(p0,p1,a,b,c)
+#plt.scatter(tptline_ellipseSpace[0],tptline_ellipseSpace[1],color='red')
+
+#The Tangent Point on the Ellipse
+tptellipse_ellipseSpace = tangentPointellipse_ellipsespace(p0,p1,a,b,c)
+plt.scatter(tptellipse_ellipseSpace[0],tptellipse_ellipseSpace[1],color='blue')
+nhat0 = nhat(tptellipse_ellipseSpace[0],tptellipse_ellipseSpace[1],tptellipse_ellipseSpace[2],a,b,c)
+uhat0 = uhat(p0,p1)
+# t = t_tangentLine_line(nhat0, p0, tptellipse_ellipseSpace, uhat0)
+#x = x_tangentLine_line(nhat0, p0, tptellipse_ellipseSpace, uhat0)
+x = x_tangentpoint_from_line(p0,p1,tptellipse_ellipseSpace,tptellipse_ellipseSpace+1*nhat0)
+#tptline_ellipseSpace = p0+uhat0*t
+plt.scatter(x,p0[1] + (x-p0[0])*uhat0[1]/uhat0[0],color='red')
+#plt.scatter(tptline_ellipseSpace[0],tptline_ellipseSpace[1],color='red')
+
+#The tangent point!!!!!
+x,y,z = xyz_tangentpoint_from_line(p0,p1,tptellipse_ellipseSpace,tptellipse_ellipseSpace+1*nhat0)
+plt.scatter(x,y,color='green')
+
+plt.gca().axis('equal')
+plt.show(block=False)
+plt.close(23423562323442236)
+########################################################
+
+
+
+#### Plot Earth at different times #######################
 fig3 = plt.figure(num=45383421345341113,figsize=(8,8))
 ax3 = fig3.add_subplot(111, projection='3d',computed_zorder=False)
 ax3.set_box_aspect(aspect = (1,1,1))#set_aspect('equal')
@@ -189,12 +484,12 @@ u, v = np.mgrid[0:2*np.pi:40j, 0:np.pi:20j]
 x = np.cos(u)*np.sin(v)
 y = np.sin(u)*np.sin(v)
 z = np.cos(v)
-r_earth = 6731. #in km
+r_earth = 6371. #in km
 for i in np.arange(len(rs_earth_sun)):
     #plot invisible box to bound
     ax3.scatter([-1.5*r_earth/1000.,-1.5*r_earth/1000.,1.5*r_earth/1000.,1.5*r_earth/1000.,-1.5*r_earth/1000.,-1.5*r_earth/1000.,1.5*r_earth/1000.,1.5*r_earth/1000.],[-1.5*r_earth/1000.,1.5*r_earth/1000.,-1.5*r_earth/1000.,1.5*r_earth/1000.,-1.5*r_earth/1000.,1.5*r_earth/1000.,-1.5*r_earth/1000.,1.5*r_earth/1000.],[-1.5*r_earth/1000.,-1.5*r_earth/1000.,-1.5*r_earth/1000.,-1.5*r_earth/1000.,1.5*r_earth/1000.,1.5*r_earth/1000.,1.5*r_earth/1000.,1.5*r_earth/1000.],alpha=0.)
     #Plot wireframe of earth
-    ax3.plot_wireframe(r_earth/1000.*x, r_earth/1000.*y, r_earth/1000.*z, color="grey",zorder=10)
+    ax3.plot_wireframe(r_earth/1000.*x, r_earth/1000.*y, r_earth/1000.*z, color="lightgrey",zorder=10)
     #plot origin
     ax3.scatter(0,0,0,color='blue')
     #plot sun and moon vectors
@@ -202,13 +497,131 @@ for i in np.arange(len(rs_earth_sun)):
     ax3.scatter(1.5*r_earth/1000.*rshat_earth_moon[i][0],1.5*r_earth/1000.*rshat_earth_moon[i][1],1.5*r_earth/1000.*rshat_earth_moon[i][2],color='grey')
     ax3.plot([0,1.5*r_earth/1000.*rshat_earth_sun[i][0]],[0,1.5*r_earth/1000.*rshat_earth_sun[i][1]],[0,1.5*r_earth/1000.*rshat_earth_sun[i][2]],color='yellow')
     ax3.plot([0,1.5*r_earth/1000.*rshat_earth_moon[i][0]],[0,1.5*r_earth/1000.*rshat_earth_moon[i][1]],[0,1.5*r_earth/1000.*rshat_earth_moon[i][2]],color='grey')
+    ax3.set_title("JD: " + str(jdtimes[i]))
     plt.show(block=False)
     #time.sleep(0.2)
     plt.pause(0.01)
     plt.cla()
+####
 
 
 
+#At Given Time, plot SV and positions that are visible
+fig3 = plt.figure(num=4555555545341113,figsize=(8,8))
+ax3 = fig3.add_subplot(111, projection='3d',computed_zorder=False)
+ax3.set_box_aspect(aspect = (1,1,1))#set_aspect('equal')
+u, v = np.mgrid[0:2*np.pi:40j, 0:np.pi:20j]
+x = np.cos(u)*np.sin(v)
+y = np.sin(u)*np.sin(v)
+z = np.cos(v)
+r_earth = 6371. #in km
+i=0
+#plot invisible box to bound
+ax3.scatter([-1.5*r_earth/1000.,-1.5*r_earth/1000.,1.5*r_earth/1000.,1.5*r_earth/1000.,-1.5*r_earth/1000.,-1.5*r_earth/1000.,1.5*r_earth/1000.,1.5*r_earth/1000.],[-1.5*r_earth/1000.,1.5*r_earth/1000.,-1.5*r_earth/1000.,1.5*r_earth/1000.,-1.5*r_earth/1000.,1.5*r_earth/1000.,-1.5*r_earth/1000.,1.5*r_earth/1000.],[-1.5*r_earth/1000.,-1.5*r_earth/1000.,-1.5*r_earth/1000.,-1.5*r_earth/1000.,1.5*r_earth/1000.,1.5*r_earth/1000.,1.5*r_earth/1000.,1.5*r_earth/1000.],alpha=0.)
+#Plot wireframe of earth
+ax3.plot_wireframe(r_earth/1000.*x, r_earth/1000.*y, r_earth/1000.*z, color="grey",zorder=10)
+#plot origin
+ax3.scatter(0,0,0,color='blue')
+#plot sun and moon vectors
+ax3.scatter(1.5*r_earth/1000.*rshat_earth_sun[i][0],1.5*r_earth/1000.*rshat_earth_sun[i][1],1.5*r_earth/1000.*rshat_earth_sun[i][2],color='yellow')
+ax3.scatter(1.5*r_earth/1000.*rshat_earth_moon[i][0],1.5*r_earth/1000.*rshat_earth_moon[i][1],1.5*r_earth/1000.*rshat_earth_moon[i][2],color='grey')
+ax3.plot([0,1.5*r_earth/1000.*rshat_earth_sun[i][0]],[0,1.5*r_earth/1000.*rshat_earth_sun[i][1]],[0,1.5*r_earth/1000.*rshat_earth_sun[i][2]],color='yellow')
+ax3.plot([0,1.5*r_earth/1000.*rshat_earth_moon[i][0]],[0,1.5*r_earth/1000.*rshat_earth_moon[i][1]],[0,1.5*r_earth/1000.*rshat_earth_moon[i][2]],color='grey')
+
+#Plot Look Vectors
+utc = ['2024-07-04T00:00:00.00', '2025-06-21T00:00:00']
+a, b, c = 6371., 6371., 6371.
+jd = Time([utc[0]],format='isot',scale='tai')
+jdtime = jd.jd[0]
+numPlotted = 0
+numTanHeight = 0
+numVisible = 0
+vis0 = list()
+#for i in np.arange(num_locs):
+i=50
+vis1 = list()
+for j in np.arange(num_locs):
+    if not (i==j):
+        visible, isVisibleLunar, isVisibleSolar, isVisibleTangentHeight, isVisibleSolarZenithAngle, isVisibleSolarPhaseAngle  = \
+            isVisible(r_locs[:,i],r_locs[:,j],kernel,jdtime,a,b,c)
+        print(str(i) + ", " + str(visible) + ", "+ str(isVisibleLunar) + ", " +str(isVisibleSolar) + ", " +str(isVisibleTangentHeight) + ", "+ str(isVisibleSolarZenithAngle) + ", "+ str(isVisibleSolarPhaseAngle))
+        vis1.append([visible, isVisibleLunar, isVisibleSolar, isVisibleTangentHeight, isVisibleSolarZenithAngle, isVisibleSolarPhaseAngle])
+        if visible:
+            color='green'#'lightgreen'
+            numVisible += 1
+            print(i/num_locs)
+            #color='green'
+        elif isVisibleTangentHeight: #the SV is not obscured by the planet
+            if not isVisibleLunar: #a small and unique keepout
+                color='grey'
+            elif not isVisibleSolar: #A larger lunar keepout
+                color='goldenrod'
+            elif not isVisibleSolarPhaseAngle: #a larger solar keepout
+                color='gold'
+            elif not isVisibleSolarZenithAngle: #A solar zenith angle, draws so many lines
+                color='mediumpurple'
+            else:
+                continue #don't plot anything
+        else:
+            numTanHeight += 1
+            #color='purple'
+            continue #don't plot anything
+        ax3.plot([r_locs[0,i]/1000.,r_locs[0,j]/1000.],[r_locs[1,i]/1000.,r_locs[1,j]/1000.],[r_locs[2,i]/1000.,r_locs[2,j]/1000.],color=color,alpha=1.)
+
+        numPlotted += 1
+    else:
+        vis1.append([])
+plt.show(block=False)
+
+
+
+####    ##################################
+#0 - visible
+#1 - lunar
+#2 - solar
+#3 - solar phase
+#4 - zenith
+#5 - tangent height
+#from itertools import combinations
+from itertools import product
+combos = list(product([0,1],repeat=5))
+combos = np.asarray(combos)
+combos_ij = list()
+for i in np.arange(combos.shape[0]):
+    combos_ij.append(list())
+
+
+utc = ['2024-07-04T00:00:00.00', '2025-01-21T00:00:00']
+jdlims = Time(utc,format='isot',scale='tai')
+jdtimes = np.linspace(start=jdlims.jd[0],stop=jdlims.jd[1],num=100)
+jds = Time(utc,format='isot',scale='tai')
+jdtime = jds.jd[0]
+
+for k in np.arange(len(jds)):
+    jdtime = jds.jd[k]
+    #### Create array of all visiblity status between two points
+    visibility = np.full((num_locs, num_locs, 6), False)
+    for i in np.arange(num_locs):
+        for j in np.arange(num_locs):
+            if not (i==j):
+                visible, isVisibleLunar, isVisibleSolar, isVisibleTangentHeight, isVisibleSolarZenithAngle, isVisibleSolarPhaseAngle  = \
+                    isVisible(r_locs[:,i],r_locs[:,j],kernel,jds.jd[k],a,b,c)
+                #print("(" + str(i) + "," + str(j) + "), " + str(visible) + ", "+ str(isVisibleLunar) + ", " +str(isVisibleSolar) + ", " +str(isVisibleTangentHeight) + ", "+ str(isVisibleSolarZenithAngle) + ", "+ str(isVisibleSolarPhaseAngle))
+                visibility[i,j,0] = visible
+                visibility[i,j,1] = isVisibleLunar
+                visibility[i,j,2] = isVisibleSolar
+                visibility[i,j,3] = isVisibleTangentHeight
+                visibility[i,j,4] = isVisibleSolarZenithAngle
+                visibility[i,j,5] = isVisibleSolarPhaseAngle
+                ind = np.where(np.all(combos == np.asarray([int(isVisibleLunar), int(isVisibleSolar), int(isVisibleTangentHeight), int(isVisibleSolarZenithAngle), int(isVisibleSolarPhaseAngle)]),axis=1))[0][0]
+                combos_ij[ind].append((i,j,jdtime))
+
+#Enumerate the number of each combination that has occured
+lenCombos = list()
+for i in np.arange(len(combos_ij)):
+    lenCombos.append(len(combos_ij[i]))
+    if len(combos_ij[i]) == 0:
+        print(combos[i])
 
 
 
@@ -268,3 +681,76 @@ def xyz_vxvyvz_to_TLE(x,y,z,vx,vy,vz):
     lines.append(line1)
     lines.append(line2)
     return lines
+
+
+
+#### TLE FROM KOE
+def TLE_from_KOE(satnum, epochyr, epochdays, ndot, bstar, inclination, raan, eccentricity, perigee, meanAnomaly, meanMotion):
+    """ Returns a list containing two lines defining the TLE
+    """
+    tle = list()
+
+    tle1 = "1 "
+    tle1 += '{:5d}'.format(satnum)#tle1 += "%05d".format(satnum)#String.format("%05d", satnum)
+    tle1 += "U"
+    tle1 += "          "
+    tle1 += '{:2d}'.format(epochyr) #"%02d".format(epochyr)
+    tle1 += '{:12.8f}'.format(epochdays).replace(' ','0') #"%03.8f".format(epochdays)
+    tle1 += ("%.8f".format(ndot))[1:]#"%.8f" .substring(1)
+    tle1 += "  "
+    tmpstring = "{:.4e}".format(bstar) #"%5e" bstar
+    y = tmpstring.split("e")
+    bstar_exp = str(int(y[1])) #Integer.toString(Integer.parseInt(y[1])+1)
+    bstar_float = float(y[0]) #Double.parseDouble(y[0])
+    tle1 += "00000-0"
+    tle1 += "  "
+    tle1 += str(bstar_float).replace(".","") + bstar_exp #String.format("%.4f",bstar_float).replace(".", "") + bstar_exp
+    tle1 += " "
+    tle1 += "0"
+    tle1 += " "
+    tle1 += "0000"
+
+
+    tle2 = "2 "
+    tle2 += '{:5d}'.format(satnum) #String.format("%05d", satnum)
+    tle2 += " "
+    #DecimalFormat df1 = new DecimalFormat("000.0000")
+    tle2 += "{:8.4f}".format(inclination).replace(' ','0') #df1.format(Math.toDegrees(inclination))
+    tle2 += " "
+    tle2 += "{:8.4f}".format(raan).replace(' ','0') #df1.format(Math.toDegrees(raan))
+    tle2 += "{:.7f}".format(eccentricity).replace(' ','0') #String.format("%.7f",eccentricity).replace("0.","")
+    tle2 += " "
+    tle2 += "{:8.4f}".format(perigee).replace(' ','0') #df1.format(Math.toDegrees(perigee))
+    tle2 += " "
+    tle2 += "{:8.4f}".format(meanAnomaly).replace(' ','0') #df1.format(Math.toDegrees(meanAnomaly))
+    tle2 += " "
+    df2 = new DecimalFormat("00.00000000")
+    meanMotionString = df2.format(meanMotion)
+    tle2 += "{:11.8}".format(meanMotion).replace(' ','0')
+    tle2 += "00000"
+    Integer checksumVal2 = (Integer) calculateChecksum(line2)%10
+    tle2 += checksumVal2.toString()
+
+
+
+    return tle
+
+
+
+def calculateChecksum(tleLine):
+    int checksum = 0;
+    char[] chars = tleLine.toCharArray();
+    for char c in chars:
+        if c==" " or c == "." or c=="+" or character.isletter(c):
+            continue
+        elif c == "-":
+            checksum +=1
+        elif character.isDigit(c):
+            checksum += Character.getNumericValue(c)
+        else:
+            throw new build exception
+
+    checksum -= Character.getNumericValue(chars[chars.length - 1])
+    checksum %= 10
+
+    return checksum
