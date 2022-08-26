@@ -5,6 +5,8 @@ import numpy as np
 from scipy.integrate import odeint
 from scipy.integrate import solve_ivp # for multivariable functions
 from scipy.interpolate import interp1d
+import matplotlib.gridspec as gridspec
+from matplotlib.ticker import NullFormatter, MaxNLocator
 
 #### Data From iSALE Analysis ############
 #Read time data
@@ -383,6 +385,8 @@ ax2.set_ylabel('y')
 ax2.set_zlabel('z')
 plt.show(block=False)
 
+
+
 plt.figure(2304857290384523)
 plt.plot(res.y[2])
 plt.show(block=False)
@@ -549,6 +553,48 @@ plt.show(block=False)
 
 
 
+
+
+#### Plot Altitude vs Downrange Distance
+fig9 = plt.figure(num=9999,figsize=(8,8))
+#ax9 = plt.gca()#fig9.add_subplot(111, projection='3d')
+maxDist = 0.
+maxAlt = 0.
+for i in np.arange(len(reses)):
+    projectedDist = np.zeros((reses[i].y.shape[1]))
+    alts = np.zeros((reses[i].y.shape[1]))
+    for j in np.arange(reses[i].y.shape[1]-1):
+        r0 = np.asarray([reses[i].y[0,j],reses[i].y[2,j],reses[i].y[4,j]])
+        r1 = np.asarray([reses[i].y[0,j+1],reses[i].y[2,j+1],reses[i].y[4,j+1]])
+        angularPos = np.arccos(np.dot(r0,r1)/np.linalg.norm(r0)/np.linalg.norm(r1))
+        projectedDist[j+1] = angularPos*r_moon + projectedDist[j]
+        alts[j] = np.linalg.norm(np.asarray([reses[i].y[0,j],reses[i].y[2,j],reses[i].y[4,j]]),axis=0)-r_moon
+    #ax9.plot(projectedDist,alts,color='blue')
+    plt.plot(projectedDist/1000.,alts/1000.,color='blue')
+    if maxDist < np.max(projectedDist):
+        maxDist = np.max(projectedDist)
+    if maxAlt < np.max(alts):
+        maxAlt = np.max(alts)
+#ax9.plot(res.y[0],res.y[2],res.y[4])
+
+#ax9.set_xscale('log')
+#ax9.set_yscale('log')
+#ax9.set_xlabel('x')
+#ax9.set_ylabel('y')
+plt.xscale('log')
+plt.yscale('log')
+plt.ylim([1e-6,1.05*maxAlt/1000.])
+plt.xlim([1e-1,1.05*maxDist/1000.])
+plt.xlabel('Downrange Distance (km)')
+plt.ylabel('Altitude (km)')
+plt.show(block=False)
+####
+
+
+
+
+
+
 ##### Radii Where half the mass
 R_half_mass = R/(2.)**(1./3.)
 
@@ -568,7 +614,9 @@ for i in np.arange(len(reses)):
     if np.max(alts) > maxalt:
         maxalt = np.max(alts)
     plt.plot(reses[i].t/60.,alts/1000.,color=(1.-radii[i]/R,0.,radii[i]/R))#,color='black')
-    plt.show(block=False)
+plt.xscale('log')
+plt.yscale('log')
+plt.show(block=False)
 
 #norm = mcol.Normalize(vmin=5, vmax=10)
 #cb1 = mpl.colorbar.ColorbarBase(plt.gca(), cmap=cmap, norm=norm,
@@ -697,6 +745,174 @@ for i in np.arange(num):
     #assert np.max(dist) < 8000*1000, 'distance is too far'
     endVel = np.linalg.norm(np.asarray([res.y[1,-1],res.y[3,-1],res.y[5,-1]]))
     endVels.append(endVel)
+
+
+
+
+#### Plot Altitude vs Downrange Distance
+fig10 = plt.figure(num=10101010,figsize=(8,8))
+#ax9 = plt.gca()#fig9.add_subplot(111, projection='3d')
+maxDist = 0.
+maxAlt = 0.
+for i in np.arange(len(ress)):
+    projectedDist = np.zeros((ress[i].y.shape[1]))
+    alts = np.zeros((ress[i].y.shape[1]))
+    for j in np.arange(ress[i].y.shape[1]-1):
+        r0 = np.asarray([ress[i].y[0,j],ress[i].y[2,j],ress[i].y[4,j]])
+        r1 = np.asarray([ress[i].y[0,j+1],ress[i].y[2,j+1],ress[i].y[4,j+1]])
+        angularPos = np.arccos(np.dot(r0,r1)/np.linalg.norm(r0)/np.linalg.norm(r1))
+        projectedDist[j+1] = angularPos*r_moon + projectedDist[j]
+        alts[j] = np.linalg.norm(np.asarray([ress[i].y[0,j],ress[i].y[2,j],ress[i].y[4,j]]),axis=0)-r_moon
+    #ax9.plot(projectedDist,alts,color='blue')
+    plt.plot(projectedDist/1000.,alts/1000.,color='blue')
+    if maxDist < np.max(projectedDist):
+        maxDist = np.max(projectedDist)
+    if maxAlt < np.max(alts):
+        maxAlt = np.max(alts)
+
+#plt.xscale('log')
+#plt.yscale('log')
+plt.ylim([1e-6,1.05*maxAlt/1000.])
+plt.xlim([1e-1,1.05*maxDist/1000.])
+plt.xlabel('Downrange Distance (km)',weight='bold')
+plt.ylabel('Altitude (km)',weight='bold')
+plt.show(block=False)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+################ 
+#Create Figure and define gridspec
+fig12121212 = plt.figure(12121212, figsize=(6.5,4.5))
+gs = gridspec.GridSpec(2,2, width_ratios=[6,1], height_ratios=[1,6])
+gs.update(wspace=0.06, hspace=0.06) # set the spacing between axes. 
+plt.rc('axes',linewidth=2)
+plt.rc('lines',linewidth=2)
+plt.rcParams['axes.linewidth']=2
+plt.rc('font',weight='bold')
+
+#What the plot layout looks like
+###-----------------------------------
+# | gs[0]  gs[1] |
+# | gs[2]  gs[3] |
+###-----------------------------------
+ax1 = plt.subplot(gs[2]) #alt vs dist
+ax2 = plt.subplot(gs[0]) #dist histogram
+ax3 = plt.subplot(gs[3]) #alt histogram
+
+maxDist = 0.
+maxAlt = 0.
+maxDists = list()
+maxAlts = list()
+for i in np.arange(len(ress)):
+    projectedDist = np.zeros((ress[i].y.shape[1]))
+    alts = np.zeros((ress[i].y.shape[1]))
+    for j in np.arange(ress[i].y.shape[1]-1):
+        r0 = np.asarray([ress[i].y[0,j],ress[i].y[2,j],ress[i].y[4,j]])
+        r1 = np.asarray([ress[i].y[0,j+1],ress[i].y[2,j+1],ress[i].y[4,j+1]])
+        angularPos = np.arccos(np.dot(r0,r1)/np.linalg.norm(r0)/np.linalg.norm(r1))
+        projectedDist[j+1] = angularPos*r_moon + projectedDist[j]
+        alts[j] = np.linalg.norm(np.asarray([ress[i].y[0,j],ress[i].y[2,j],ress[i].y[4,j]]),axis=0)-r_moon
+    #ax1.plot(projectedDist,alts,color='blue')
+    ax1.plot(projectedDist/1000.,alts/1000.,color='blue',linewidth='0.5',alpha=0.3)
+    if maxDist < np.max(projectedDist):
+        maxDist = np.max(projectedDist)
+    if maxAlt < np.max(alts):
+        maxAlt = np.max(alts)
+    indsNotNan = np.where(np.logical_not(np.isnan(projectedDist))*np.logical_not(np.isnan(alts)))[0]
+    maxDists.append(np.max(projectedDist[indsNotNan]))
+    maxAlts.append(np.max(alts[indsNotNan]))
+
+#plt.xscale('log')
+#plt.yscale('log')
+#ax1.set_ylim([1e-6,1.05*maxAlt/1000.])
+#ax1.set_xlim([1e-1,1.05*maxDist/1000.])
+ax1.set_xlabel('Downrange Distance (km)',weight='bold')
+ax1.set_ylabel('Altitude (km)',weight='bold')
+
+assert np.any(np.isnan(maxDists)) == False, "problem"
+assert np.any(np.isnan(maxAlts)) == False, "problem"
+
+# Set up default x and y limits
+xlims = [1e-1,1.05*maxDist/1000]#[sim.PlanetPopulation.arange[0].value, sim.PlanetPopulation.arange[1].value]#[min(x),max(x)]# of aPOP
+ylims = [1e-1,1.05*maxAlt/1000]#[min(y),ymax]#max(y)]# of RpPOp
+xmin = xlims[0]
+xmax = xlims[1]
+ymin = ylims[0]
+ymax = ylims[1]
+
+# Plot the temperature data
+nxbins = 50
+nybins = 50
+xbins = np.linspace(start = xmin, stop = xmax, num = nxbins)
+ybins = np.linspace(start = ymin, stop = ymax, num = nybins)
+xwidths = np.diff(xbins)
+xcents = np.diff(xbins)/2.+xbins[:-1]
+ywidths = np.diff(ybins)
+ycents = np.diff(ybins)/2.+ybins[:-1]
+
+nx, xbins = np.histogram(np.asarray(maxDists)/1000, bins=xbins)#,normed=True)
+ax2.bar(xcents, np.log10(nx), xwidths, color = 'black')#, alpha=0.)
+
+ny, ybins = np.histogram(np.asarray(maxAlts)/1000, bins=ybins)#,normed=True)
+assert np.any(np.isnan(ny)) == False, "something is wrong"
+ax3.barh(ycents, np.log10(ny), ywidths, color = 'black')#, alpha=0.)
+
+#Set plot limits
+ax1.set_xlim(xlims)
+ax1.set_ylim(ylims)
+ax2.set_xlim(xlims)
+ax3.set_ylim(ylims)
+
+ax2.set_yscale('log')
+ax3.set_xscale('log')
+
+#Remove xticks on x-histogram and remove yticks on y-histogram
+ax2.set_xticks([])
+ax3.set_yticks([])
+
+# Remove the inner axes numbers of the histograms
+nullfmt = NullFormatter()
+#ax2.xaxis.set_major_formatter(nullfmt)
+#ax3.yaxis.set_major_formatter(nullfmt)
+fig12121212.subplots_adjust(bottom=0.15, top=0.75)
+plt.show(block=False)
+
+
+
+
+
+
+
+
+
+
+####
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
