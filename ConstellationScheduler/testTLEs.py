@@ -7,6 +7,7 @@ from skyfield.sgp4lib import TEME_to_ITRF
 from jplephem.spk import SPK
 from astropy.time import Time
 import time
+import os
 
 #### INPUTS
 spkpath = './de432s.bsp'
@@ -48,7 +49,7 @@ for i in np.arange(len(jdtimes)):
 
 
 #### Generate Obs
-r_earth = 6371.0
+r_earth = 6371.0 #km
 
 def genRandomLatLon(num=1,lat_low=-np.pi/2.,lat_high=np.pi/2.,lon_low=0,lon_high=2.*np.pi):
     """ Generates a random latitude and longitude
@@ -292,6 +293,9 @@ def tangentHeight(p0,p1,a,b,c):
 
 
 def lunarKOVisible(p0,p1,r_earth_moon,KOangle=6*np.pi/180.):
+    """
+    look vector from p0 to p1
+    """
     rhat_SV_targ = (p1-p0)/np.linalg.norm(p1-p0) #spacecraft to target vector
     rhat_SV_moon = (r_earth_moon-p0)/np.linalg.norm(r_earth_moon-p0) #spacecraft to moon vector
     angle = np.arccos(np.dot(rhat_SV_targ,rhat_SV_moon))
@@ -345,6 +349,10 @@ jd = Time([utc[0]],format='isot',scale='tai')
 jdtime = jd.jd[0]
 
 def isVisible(p0,p1,kernel,jdtime,a,b,c):
+    """
+    p0 is the source point
+    p1 is the target point
+    """
     #r_earth_sun
     #vectors in heliocentric ecliptic frame, origin at the sun center, fundamental plane in the plane of the earth's equator, x-axis toward vernal equinox
     r_solarbarycenter_sun = kernel[0,10].compute(jdtime)
@@ -487,16 +495,16 @@ z = np.cos(v)
 r_earth = 6371. #in km
 for i in np.arange(len(rs_earth_sun)):
     #plot invisible box to bound
-    ax3.scatter([-1.5*r_earth/1000.,-1.5*r_earth/1000.,1.5*r_earth/1000.,1.5*r_earth/1000.,-1.5*r_earth/1000.,-1.5*r_earth/1000.,1.5*r_earth/1000.,1.5*r_earth/1000.],[-1.5*r_earth/1000.,1.5*r_earth/1000.,-1.5*r_earth/1000.,1.5*r_earth/1000.,-1.5*r_earth/1000.,1.5*r_earth/1000.,-1.5*r_earth/1000.,1.5*r_earth/1000.],[-1.5*r_earth/1000.,-1.5*r_earth/1000.,-1.5*r_earth/1000.,-1.5*r_earth/1000.,1.5*r_earth/1000.,1.5*r_earth/1000.,1.5*r_earth/1000.,1.5*r_earth/1000.],alpha=0.)
+    ax3.scatter([-1.5*r_earth,-1.5*r_earth,1.5*r_earth,1.5*r_earth,-1.5*r_earth,-1.5*r_earth,1.5*r_earth,1.5*r_earth],[-1.5*r_earth,1.5*r_earth,-1.5*r_earth,1.5*r_earth,-1.5*r_earth,1.5*r_earth,-1.5*r_earth,1.5*r_earth],[-1.5*r_earth,-1.5*r_earth,-1.5*r_earth,-1.5*r_earth,1.5*r_earth,1.5*r_earth,1.5*r_earth,1.5*r_earth],alpha=0.)
     #Plot wireframe of earth
-    ax3.plot_wireframe(r_earth/1000.*x, r_earth/1000.*y, r_earth/1000.*z, color="lightgrey",zorder=10)
+    ax3.plot_wireframe(r_earth*x, r_earth*y, r_earth*z, color="lightgrey",zorder=10)
     #plot origin
     ax3.scatter(0,0,0,color='blue')
     #plot sun and moon vectors
-    ax3.scatter(1.5*r_earth/1000.*rshat_earth_sun[i][0],1.5*r_earth/1000.*rshat_earth_sun[i][1],1.5*r_earth/1000.*rshat_earth_sun[i][2],color='yellow')
-    ax3.scatter(1.5*r_earth/1000.*rshat_earth_moon[i][0],1.5*r_earth/1000.*rshat_earth_moon[i][1],1.5*r_earth/1000.*rshat_earth_moon[i][2],color='grey')
-    ax3.plot([0,1.5*r_earth/1000.*rshat_earth_sun[i][0]],[0,1.5*r_earth/1000.*rshat_earth_sun[i][1]],[0,1.5*r_earth/1000.*rshat_earth_sun[i][2]],color='yellow')
-    ax3.plot([0,1.5*r_earth/1000.*rshat_earth_moon[i][0]],[0,1.5*r_earth/1000.*rshat_earth_moon[i][1]],[0,1.5*r_earth/1000.*rshat_earth_moon[i][2]],color='grey')
+    ax3.scatter(1.5*r_earth*rshat_earth_sun[i][0],1.5*r_earth*rshat_earth_sun[i][1],1.5*r_earth*rshat_earth_sun[i][2],color='yellow')
+    ax3.scatter(1.5*r_earth*rshat_earth_moon[i][0],1.5*r_earth*rshat_earth_moon[i][1],1.5*r_earth*rshat_earth_moon[i][2],color='grey')
+    ax3.plot([0,1.5*r_earth*rshat_earth_sun[i][0]],[0,1.5*r_earth*rshat_earth_sun[i][1]],[0,1.5*r_earth*rshat_earth_sun[i][2]],color='yellow')
+    ax3.plot([0,1.5*r_earth*rshat_earth_moon[i][0]],[0,1.5*r_earth*rshat_earth_moon[i][1]],[0,1.5*r_earth*rshat_earth_moon[i][2]],color='grey')
     ax3.set_title("JD: " + str(jdtimes[i]))
     plt.show(block=False)
     #time.sleep(0.2)
@@ -517,16 +525,16 @@ z = np.cos(v)
 r_earth = 6371. #in km
 i=0
 #plot invisible box to bound
-ax3.scatter([-1.5*r_earth/1000.,-1.5*r_earth/1000.,1.5*r_earth/1000.,1.5*r_earth/1000.,-1.5*r_earth/1000.,-1.5*r_earth/1000.,1.5*r_earth/1000.,1.5*r_earth/1000.],[-1.5*r_earth/1000.,1.5*r_earth/1000.,-1.5*r_earth/1000.,1.5*r_earth/1000.,-1.5*r_earth/1000.,1.5*r_earth/1000.,-1.5*r_earth/1000.,1.5*r_earth/1000.],[-1.5*r_earth/1000.,-1.5*r_earth/1000.,-1.5*r_earth/1000.,-1.5*r_earth/1000.,1.5*r_earth/1000.,1.5*r_earth/1000.,1.5*r_earth/1000.,1.5*r_earth/1000.],alpha=0.)
+ax3.scatter([-1.5*r_earth,-1.5*r_earth,1.5*r_earth,1.5*r_earth,-1.5*r_earth,-1.5*r_earth,1.5*r_earth,1.5*r_earth],[-1.5*r_earth,1.5*r_earth,-1.5*r_earth,1.5*r_earth,-1.5*r_earth,1.5*r_earth,-1.5*r_earth,1.5*r_earth],[-1.5*r_earth,-1.5*r_earth,-1.5*r_earth,-1.5*r_earth,1.5*r_earth,1.5*r_earth,1.5*r_earth,1.5*r_earth],alpha=0.)
 #Plot wireframe of earth
-ax3.plot_wireframe(r_earth/1000.*x, r_earth/1000.*y, r_earth/1000.*z, color="grey",zorder=10)
+ax3.plot_wireframe(r_earth*x, r_earth*y, r_earth*z, color="grey",zorder=10)
 #plot origin
 ax3.scatter(0,0,0,color='blue')
 #plot sun and moon vectors
-ax3.scatter(1.5*r_earth/1000.*rshat_earth_sun[i][0],1.5*r_earth/1000.*rshat_earth_sun[i][1],1.5*r_earth/1000.*rshat_earth_sun[i][2],color='yellow')
-ax3.scatter(1.5*r_earth/1000.*rshat_earth_moon[i][0],1.5*r_earth/1000.*rshat_earth_moon[i][1],1.5*r_earth/1000.*rshat_earth_moon[i][2],color='grey')
-ax3.plot([0,1.5*r_earth/1000.*rshat_earth_sun[i][0]],[0,1.5*r_earth/1000.*rshat_earth_sun[i][1]],[0,1.5*r_earth/1000.*rshat_earth_sun[i][2]],color='yellow')
-ax3.plot([0,1.5*r_earth/1000.*rshat_earth_moon[i][0]],[0,1.5*r_earth/1000.*rshat_earth_moon[i][1]],[0,1.5*r_earth/1000.*rshat_earth_moon[i][2]],color='grey')
+ax3.scatter(1.5*r_earth*rshat_earth_sun[i][0],1.5*r_earth*rshat_earth_sun[i][1],1.5*r_earth*rshat_earth_sun[i][2],color='yellow')
+ax3.scatter(1.5*r_earth*rshat_earth_moon[i][0],1.5*r_earth*rshat_earth_moon[i][1],1.5*r_earth*rshat_earth_moon[i][2],color='grey')
+ax3.plot([0,1.5*r_earth*rshat_earth_sun[i][0]],[0,1.5*r_earth*rshat_earth_sun[i][1]],[0,1.5*r_earth*rshat_earth_sun[i][2]],color='yellow')
+ax3.plot([0,1.5*r_earth*rshat_earth_moon[i][0]],[0,1.5*r_earth*rshat_earth_moon[i][1]],[0,1.5*r_earth*rshat_earth_moon[i][2]],color='grey')
 
 #Plot Look Vectors
 utc = ['2024-07-04T00:00:00.00', '2025-06-21T00:00:00']
@@ -566,7 +574,7 @@ for j in np.arange(num_locs):
             numTanHeight += 1
             #color='purple'
             continue #don't plot anything
-        ax3.plot([r_locs[0,i]/1000.,r_locs[0,j]/1000.],[r_locs[1,i]/1000.,r_locs[1,j]/1000.],[r_locs[2,i]/1000.,r_locs[2,j]/1000.],color=color,alpha=1.)
+        ax3.plot([r_locs[0,i],r_locs[0,j]],[r_locs[1,i],r_locs[1,j]],[r_locs[2,i],r_locs[2,j]],color=color,alpha=1.)
 
         numPlotted += 1
     else:
@@ -597,13 +605,13 @@ jdtimes = np.linspace(start=jdlims.jd[0],stop=jdlims.jd[1],num=100)
 jds = Time(utc,format='isot',scale='tai')
 jdtime = jds.jd[0]
 
-for k in np.arange(len(jds)):
+for k in np.arange(len(jds)): #iterate over times to evaluate at
     jdtime = jds.jd[k]
     #### Create array of all visiblity status between two points
     visibility = np.full((num_locs, num_locs, 6), False)
-    for i in np.arange(num_locs):
-        for j in np.arange(num_locs):
-            if not (i==j):
+    for i in np.arange(num_locs):#Iterate over number of points
+        for j in np.arange(num_locs):#Iterate over number of points
+            if not (i==j): #If theyre not the same point, comput evisibility
                 visible, isVisibleLunar, isVisibleSolar, isVisibleTangentHeight, isVisibleSolarZenithAngle, isVisibleSolarPhaseAngle  = \
                     isVisible(r_locs[:,i],r_locs[:,j],kernel,jds.jd[k],a,b,c)
                 #print("(" + str(i) + "," + str(j) + "), " + str(visible) + ", "+ str(isVisibleLunar) + ", " +str(isVisibleSolar) + ", " +str(isVisibleTangentHeight) + ", "+ str(isVisibleSolarZenithAngle) + ", "+ str(isVisibleSolarPhaseAngle))
@@ -626,67 +634,47 @@ for i in np.arange(len(combos_ij)):
 
 
 
-#### EARTH, MOON, SUN POSITIONS
-spice.furnsh("./naif0009.tls")
-# get et values one and two, we could vectorize str2et
-etOne = spice.str2et(utc[0])
-etTwo = spice.str2et(utc[1])
-print("ET One: {}, ET Two: {}".format(etOne, etTwo))
-# get times
-times = [x*(etTwo-etOne)/step + etOne for x in range(step)]
+# #### EARTH, MOON, SUN POSITIONS
+# spice.furnsh("./naif0009.tls")
+# # get et values one and two, we could vectorize str2et
+# etOne = spice.str2et(utc[0])
+# etTwo = spice.str2et(utc[1])
+# print("ET One: {}, ET Two: {}".format(etOne, etTwo))
+# # get times
+# times = [x*(etTwo-etOne)/step + etOne for x in range(step)]
 
-#Run spkpos as a vectorized function
-#positions, lightTimes = spice.spkpos('Cassini', times, 'J2000', 'NONE', 'SATURN BARYCENTER')
-positions_sun, lightTimes = spice.spkpos('10', times, 'J2000', 'NONE', '399') #399 Earth center, #10 sun center, #301 Moon center
-positions_moon, lightTimes = spice.spkpos('301', times, 'J2000', 'NONE', '399')
-"""
-    targ       I   Target body name.
-   et         I   Observer epoch. in seconds past J2000
-   ref        I   Reference frame of output position vector. i.e J2000, 
-   abcorr     I   Aberration correction flag. "NONE" means no correction will be applied
-   obs        I   Observing body name. #some valid bodies https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/Tutorials/pdf/individual_docs/18_spk.pdf
-"""
-
-
-# Positions is a 3xN vector of XYZ positions
-print("Positions: ")
-print(positions[0])
-
-# Light times is a N vector of time
-print("Light Times: ")
-print(lightTimes[0])
+# #Run spkpos as a vectorized function
+# #positions, lightTimes = spice.spkpos('Cassini', times, 'J2000', 'NONE', 'SATURN BARYCENTER')
+# positions_sun, lightTimes = spice.spkpos('10', times, 'J2000', 'NONE', '399') #399 Earth center, #10 sun center, #301 Moon center
+# positions_moon, lightTimes = spice.spkpos('301', times, 'J2000', 'NONE', '399')
+# """
+#     targ       I   Target body name.
+#    et         I   Observer epoch. in seconds past J2000
+#    ref        I   Reference frame of output position vector. i.e J2000, 
+#    abcorr     I   Aberration correction flag. "NONE" means no correction will be applied
+#    obs        I   Observing body name. #some valid bodies https://naif.jpl.nasa.gov/pub/naif/toolkit_docs/Tutorials/pdf/individual_docs/18_spk.pdf
+# """
 
 
+# # Positions is a 3xN vector of XYZ positions
+# print("Positions: ")
+# print(positions[0])
 
-
+# # Light times is a N vector of time
+# print("Light Times: ")
+# print(lightTimes[0])
 
 #ts = np.arange(180)*10 #maxt was arount 1751
 #for t in np.arange(len(ts)):
 
-
-
-
-
-
-
-
-#### TODO Position in ITRS to TLE
-
-
-def xyz_vxvyvz_to_TLE(x,y,z,vx,vy,vz):
-    """ A function to convert from xyz and vx,vy,vz to a TLE
-    """
-
-    lines = list()
-    lines.append(line1)
-    lines.append(line2)
-    return lines
-
-
-
 #### TLE FROM KOE
 def TLE_from_KOE(satnum, epochyr, epochdays, ndot, bstar, inclination, raan, eccentricity, perigee, meanAnomaly, meanMotion):
     """ Returns a list containing two lines defining the TLE
+    inclination in degrees
+    raan in degrees
+    perigee in degrees
+    meanAnomaly in degrees
+    meanMotion in revolutions per day
     """
     tle = list()
 
@@ -696,61 +684,187 @@ def TLE_from_KOE(satnum, epochyr, epochdays, ndot, bstar, inclination, raan, ecc
     tle1 += "          "
     tle1 += '{:2d}'.format(epochyr) #"%02d".format(epochyr)
     tle1 += '{:12.8f}'.format(epochdays).replace(' ','0') #"%03.8f".format(epochdays)
-    tle1 += ("%.8f".format(ndot))[1:]#"%.8f" .substring(1)
+    tle1 += "  "
+    tle1 += ("{:.8f}".format(ndot))[1:]#"%.8f" .substring(1) #9
     tle1 += "  "
     tmpstring = "{:.4e}".format(bstar) #"%5e" bstar
     y = tmpstring.split("e")
     bstar_exp = str(int(y[1])) #Integer.toString(Integer.parseInt(y[1])+1)
     bstar_float = float(y[0]) #Double.parseDouble(y[0])
-    tle1 += "00000-0"
-    tle1 += "  "
-    tle1 += str(bstar_float).replace(".","") + bstar_exp #String.format("%.4f",bstar_float).replace(".", "") + bstar_exp
+    if bstar_float > 0:
+        tle1 += " "
+    if int(y[1]) < 0:
+        bstar_sgn = '-'
+    else:
+        bstar_sgn = '+'
+    tle1 += "{:.4f}".format(bstar_float).replace(".","") + bstar_sgn + bstar_exp #String.format("%.4f",bstar_float).replace(".", "") + bstar_exp
+    tle1 += " "
+    tle1 += " 00000-0"
     tle1 += " "
     tle1 += "0"
     tle1 += " "
-    tle1 += "0000"
+    tle1 += " 0000"
 
 
     tle2 = "2 "
     tle2 += '{:5d}'.format(satnum) #String.format("%05d", satnum)
     tle2 += " "
     #DecimalFormat df1 = new DecimalFormat("000.0000")
-    tle2 += "{:8.4f}".format(inclination).replace(' ','0') #df1.format(Math.toDegrees(inclination))
+    tmpInc = "{:8.4f}".format(inclination).replace(' ','0') #df1.format(Math.toDegrees(inclination))
+    if tmpInc[:2] == "00":
+        tmpInc = "  " + tmpInc[2:]
+    elif tmpInc[0] == "0":
+        tmpInc = " " + tmpInc[1:]
+    tle2 += tmpInc
     tle2 += " "
     tle2 += "{:8.4f}".format(raan).replace(' ','0') #df1.format(Math.toDegrees(raan))
-    tle2 += "{:.7f}".format(eccentricity).replace(' ','0') #String.format("%.7f",eccentricity).replace("0.","")
     tle2 += " "
-    tle2 += "{:8.4f}".format(perigee).replace(' ','0') #df1.format(Math.toDegrees(perigee))
+    tle2 += "{:.7f}".format(eccentricity).replace('0.','') #String.format("%.7f",eccentricity).replace("0.","")
+    tle2 += " "
+    perigeeString = "{:8.4f}".format(perigee).replace(' ','0') #df1.format(Math.toDegrees(perigee))
+    if perigeeString[:2] == "00":
+        perigeeString = "  " + perigeeString[2:]
+    elif perigeeString[0] == "0":
+        perigeeString = " " + perigeeString[1:]
+    tle2 += perigeeString
     tle2 += " "
     tle2 += "{:8.4f}".format(meanAnomaly).replace(' ','0') #df1.format(Math.toDegrees(meanAnomaly))
     tle2 += " "
-    df2 = new DecimalFormat("00.00000000")
-    meanMotionString = df2.format(meanMotion)
-    tle2 += "{:11.8}".format(meanMotion).replace(' ','0')
+    #df2 = new DecimalFormat("00.00000000")
+    #meanMotionString = df2.format(meanMotion)
+    tle2 += "{:11.10}".format(meanMotion).replace(' ','0')
     tle2 += "00000"
-    Integer checksumVal2 = (Integer) calculateChecksum(line2)%10
-    tle2 += checksumVal2.toString()
+    #Integer checksumVal2 = (Integer) calculateChecksum(line2)%10
+    #tle2 += checksumVal2.toString()
+    tle2 += str(calculateChecksum(tle2)%10)
 
 
-
+    tle.append(tle1)
+    tle.append(tle2)
     return tle
 
-
-
 def calculateChecksum(tleLine):
-    int checksum = 0;
-    char[] chars = tleLine.toCharArray();
-    for char c in chars:
-        if c==" " or c == "." or c=="+" or character.isletter(c):
+    checksum = 0 #int checksum = 0;
+    #char[] chars = tleLine.toCharArray();
+    for c in tleLine:
+        if c == " " or c == "." or c == "+" or c.isalnum(): #character.isletter(c):
             continue
         elif c == "-":
             checksum +=1
-        elif character.isDigit(c):
-            checksum += Character.getNumericValue(c)
+        elif c.isdigit(): #character.isDigit(c):
+            checksum += int(c) #Character.getNumericValue(c)
         else:
-            throw new build exception
+            assert error, "something went wrong"
+        #    throw new build exception
 
-    checksum -= Character.getNumericValue(chars[chars.length - 1])
+    checksum -= int(tleLine[-1])
+    #checksum -= Character.getNumericValue(chars[chars.length - 1])
     checksum %= 10
 
     return checksum
+
+
+
+
+
+
+
+
+
+#### Position in ITRS to TLE
+i=50
+n=1
+
+def XYZ_to_TLE(X,Y,Z,jd):
+    n=1
+    # X = r_locs[0,i]
+    # Y = r_locs[1,i]
+    # Z = r_locs[2,i]
+    #out_lines = xyz_vxvyvz_to_TLE(r_locs[0,i],r_locs[1,i],r_locs[2,i],,,)
+    #we can assume the following
+    eccentricity=0.
+    # inclination
+    C = 0.5*(np.cos(0.)-np.cos(np.pi))
+    I = (np.arccos(np.cos(0.) - 2.*C*np.random.uniform(size=n)))
+    # longitude of the ascending node
+    O = np.random.uniform(low=0., high=2.*np.pi, size=n)
+    # argument of periapse
+    w = 0.# np.random.uniform(low=0., high=2.*np.pi, size=n)
+    #inclination = 
+    #raan = 
+    #perigee = 
+    #for circular orbits, true anomaly does not exist, use u=v+w to compute argument of latitude
+    #X = r(cos(Ω) cos(ω + ν) − sin(Ω) sin(ω + ν) cos(i))
+    #Y = r(sin(Ω) cos(ω + ν) + cos(Ω) sin(ω + ν) cos(i))
+    #Z = r sin(i) sin(ω + ν).
+    meanAnomaly = np.arctan2(Z*np.cos(O),X*np.sin(I)+Z*np.sin(O)*np.cos(I))
+    satnum=0
+    epochyr=int(str(jd.datetime[0].year)[-2:])
+    epochdays=jd.datetime[0].timetuple().tm_yday + (jd.datetime[0].timetuple().tm_hour+(jd.datetime[0].timetuple().tm_min+jd.datetime[0].timetuple().tm_sec/60.)/60.)/24.
+    ndot=0.
+    bstar=0.
+    sma = np.sqrt((X)**2.+(Y)**2.+(Z)**2.) #in km
+    M=5.972*10**24. #in kg
+    G=6.6743*10**-11./(1000**3.) #in km3
+    meanMotion=np.sqrt(G*M/sma**3.)*(24.*60.*60.)/(2.*np.pi) # in rev per day (is this the right day?)
+
+    tleLines = TLE_from_KOE(satnum, epochyr, epochdays, ndot, bstar, I[0]*(180./np.pi), O[0]*(180./np.pi), eccentricity, w*(180./np.pi), meanAnomaly[0]*(180./np.pi), meanMotion)
+    return tleLines
+
+
+# def xyz_vxvyvz_to_TLE(x,y,z,vx,vy,vz):
+#     """ A function to convert from xyz and vx,vy,vz to a TLE
+#     """
+
+#     lines = list()
+#     lines.append(line1)
+#     lines.append(line2)
+#     return lines
+
+
+############################################################
+# #### A Check to ensure the TLE function works as intended
+# #tle = "ORBCOMM-X [-]           
+# tle1 = "1 21576U 91050C   22237.17288983  .00000077  00000+0  37081-4 0  9994"
+# tle2 = "2 21576  98.4766 302.3208 0004616  54.6548 305.5072 14.41800866634069"
+# satnum = 21576
+# epochyr = 22
+# epochdays = 237.17288983
+# ndot = .00000077
+# bstar = 00000+0
+# inclination = 98.4766
+# raan = 302.3208
+# eccentricity = 0.0004616
+# perigee = 54.6548
+# meanAnomaly = 305.5072
+# meanMotion = 14.41800866
+# tle = TLE_from_KOE(satnum, epochyr, epochdays, ndot, bstar, inclination*(180./np.pi), raan*(180./np.pi), eccentricity, perigee*(180./np.pi), meanAnomaly*(180./np.pi), meanMotion)
+# ############################################################################
+
+
+
+
+#### Print Combos Out To Files #######################################################
+for i in np.arange(len(combos)):
+    #Create the filename
+    filename = "combos" + "".join(str(x) for x in combos[i]) + ".txt"
+
+    #if file exists, delete it
+    if os.path.exists(filename):
+        os.remove(filename)
+
+    for j in np.arange(len(combos_ij[i])):
+        datatuple = combos_ij[i][j]
+        #datatuple[0] gets turned into TLE
+        tleLine = XYZ_to_TLE(r_locs[0,datatuple[0]],r_locs[1,datatuple[0]],r_locs[2,datatuple[0]],jd)
+        #datatuple[1] is the xyz point
+        xyz = r_locs[:,datatuple[1]]
+        #datatuple[2] jdtime in tai
+
+
+        #Write out to file
+        with open(filename, "a+") as file:
+            file.write(tleLine[0] + "\n")
+            file.write(tleLine[1] + "\n")
+            file.write(str(xyz[0]) + ","+str(xyz[1])+","+str(xyz[2])+","+str(jd.jd[0])+"\n")
+#######################################################################################
