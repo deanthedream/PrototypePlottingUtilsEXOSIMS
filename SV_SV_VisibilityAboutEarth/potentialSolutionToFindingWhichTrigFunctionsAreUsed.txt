@@ -1,0 +1,8 @@
+# Excellent solution to high order quadratics with unknown solutions.
+1. determine the maximum order that the trig functions can have
+2. ensure they are quasi independent.
+3. Take a number of sample datapoints
+4. solve system of euqations for coefficient values. Or solve as eigenvalue problem
+5. The solutions to this eigen value problem should be the polynomial term inn the sv-sv visibility about earth equations.
+
+6. plug solutions back in to original equations to ensure the values are correct.
