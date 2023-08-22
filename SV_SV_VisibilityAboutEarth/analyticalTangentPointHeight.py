@@ -81,6 +81,37 @@ plt.show(block=False)
 
 
 
+from scipy.optimize import minimize_scalar
+def erf(x,h_avg,a_p,e_p,i_p,W_p,w_p,nu1,a_q,e_q,i_q,W_q,w_q):
+    return np.abs(h_avg- tangentHeight(a_p,e_p,i_p,W_p,w_p,nu1,a_q,e_q,i_q,W_q,w_q,x))
+
+h_avg = np.mean([np.max(hs),np.min(hs)])
+pts = list()
+pts2 = list()
+for i in np.arange(len(nus)):
+    for j in np.arange(len(nus)-1):
+        if (tangentHeight(a_p,e_p,i_p,W_p,w_p,nus[i],a_q,e_q,i_q,W_q,w_q,nus[j]) < h_avg and \
+            tangentHeight(a_p,e_p,i_p,W_p,w_p,nus[i],a_q,e_q,i_q,W_q,w_q,nus[j+1]) > h_avg) or\
+            (tangentHeight(a_p,e_p,i_p,W_p,w_p,nus[i],a_q,e_q,i_q,W_q,w_q,nus[j]) > h_avg and \
+            tangentHeight(a_p,e_p,i_p,W_p,w_p,nus[i],a_q,e_q,i_q,W_q,w_q,nus[j+1]) < h_avg):
+            pts2.append([nus[i],nus[j]])
+            # out = minimize_scalar(erf,bounds=(nus[j],nus[j+1]),args=(h_avg,a_p,e_p,i_p,W_p,w_p,nus[i],a_q,e_q,i_q,W_q,w_q))
+            # if out.x > 2.*np.pi:
+            #     out.x = out.x-2.*np.pi
+            # elif out.x < 0.:
+            #     out.x = out.x+2.*np.pi
+            # pts.append([nus[i],out.x])
+#pts = np.asarray(pts)
+pts2 = np.asarray(pts2)
+
+plt.figure(num=2)
+plt.contourf(nu1s,nu2s,hs,cmap='bwr',levels=100)
+plt.colorbar()
+#plt.scatter(pts[:,0],pts[:,1],color='blue')
+plt.scatter(pts2[:,0],pts2[:,1],color='purple')
+plt.show(block=False)
+
+
 
 # A_p**2*(e_q*x + 1)**2
 # *(
