@@ -1,6 +1,7 @@
 
 import numpy as np
 import matplotlib.pyplot as plt
+import sympy as sp
 
 """
 From SV_SV_visibilityAboutEarth.ipynb
@@ -109,7 +110,119 @@ plt.contourf(nu1s,nu2s,hs,cmap='bwr',levels=100)
 plt.colorbar()
 #plt.scatter(pts[:,0],pts[:,1],color='blue')
 plt.scatter(pts2[:,0],pts2[:,1],color='purple')
+for i in np.arange(1,9):
+    plt.plot([0,2*np.pi],[i*np.pi/4,i*np.pi/4],color='k')
+    plt.plot([i*np.pi/4,i*np.pi/4],[0,2*np.pi],color='k')
 plt.show(block=False)
+
+
+
+
+
+terms = [sp.cos(nu_p)**2,
+ sp.cos(nu_p)**4,
+ sp.cos(nu_q)**2,
+ sp.sin(nu_p)**2,
+ sp.sin(nu_q)**2,
+ sp.cos(nu_p)**3,
+ sp.cos(nu_p)**2*sp.cos(nu_q)**2,
+ sp.sin(nu_p)**2*sp.cos(nu_p)**2,
+ sp.sin(nu_q)**2*sp.cos(nu_p)**4,
+ sp.sin(nu_p)**2*sp.cos(nu_q)**2,
+ sp.sin(nu_q)**2*sp.cos(nu_p)**2,
+ sp.sin(nu_p)*sp.cos(nu_p)**2,
+ sp.sin(nu_q)**2*sp.cos(nu_p)**3,
+ sp.sin(nu_q)**2*sp.cos(nu_p),
+ sp.sin(nu_p)*sp.cos(nu_p)**3,
+ sp.cos(nu_p)*sp.cos(nu_q)**2,
+ sp.sin(nu_p)**2*sp.cos(nu_p),
+ sp.sin(nu_p)**2*sp.cos(nu_q),
+ sp.sin(nu_p)*sp.cos(nu_p),
+ sp.sin(nu_q)*sp.cos(nu_q),
+ sp.cos(nu_p)**3*sp.cos(nu_q),
+ sp.sin(nu_q)*sp.cos(nu_p)**4,
+ sp.sin(nu_p)*sp.cos(nu_q)**2,
+ sp.cos(nu_p)*sp.cos(nu_q),
+ sp.sin(nu_q)*sp.cos(nu_p),
+ sp.sin(nu_p)*sp.cos(nu_q),
+ sp.sin(nu_p)*sp.sin(nu_q),
+ sp.cos(nu_p)**2*sp.cos(nu_q),
+ sp.sin(nu_q)*sp.cos(nu_p)**2,
+ sp.sin(nu_q)*sp.cos(nu_p)**3,
+ sp.sin(nu_p)**2*sp.cos(nu_p)**2*sp.cos(nu_q)**2,
+ sp.sin(nu_q)*sp.cos(nu_p)**2*sp.cos(nu_q),
+ sp.sin(nu_q)*sp.cos(nu_p)*sp.cos(nu_q),
+ sp.sin(nu_p)**2*sp.cos(nu_p)*sp.cos(nu_q),
+ sp.sin(nu_p)**2*sp.cos(nu_p)**2*sp.cos(nu_q),
+ sp.sin(nu_p)*sp.cos(nu_p)**2*sp.cos(nu_q),
+ sp.sin(nu_p)*sp.cos(nu_p)**3*sp.cos(nu_q),
+ sp.sin(nu_q)*sp.cos(nu_p)**3*sp.cos(nu_q),
+ sp.sin(nu_p)**2*sp.cos(nu_p)*sp.cos(nu_q)**2,
+ sp.sin(nu_p)*sp.cos(nu_p)**2*sp.cos(nu_q)**2,
+ sp.sin(nu_p)*sp.sin(nu_q)*sp.cos(nu_p)**3,
+ sp.sin(nu_p)*sp.cos(nu_p)*sp.cos(nu_q),
+ sp.sin(nu_p)*sp.sin(nu_q)*sp.cos(nu_q),
+ sp.sin(nu_p)*sp.cos(nu_p)*sp.cos(nu_q)**2,
+ sp.sin(nu_p)*sp.sin(nu_q)*sp.cos(nu_p)**2,
+ sp.sin(nu_p)*sp.sin(nu_q)*sp.cos(nu_p),
+ sp.sin(nu_p)*sp.sin(nu_q)*sp.cos(nu_p)**3*sp.cos(nu_q),
+ sp.sin(nu_p)*sp.sin(nu_q)*sp.cos(nu_p)**2*sp.cos(nu_q),
+ sp.sin(nu_p)*sp.sin(nu_q)*sp.cos(nu_p)*sp.cos(nu_q),
+ sp.sin(nu_p)**4,
+ sp.sin(nu_p)**3*sp.sin(nu_q),
+ sp.sin(nu_p)**3*sp.cos(nu_q)**2,
+ sp.sin(nu_p)**3*sp.cos(nu_q),
+ sp.sin(nu_p)**3*sp.cos(nu_p),
+ sp.sin(nu_p)**4*sp.cos(nu_q)**2,
+ sp.sin(nu_p)**2*sp.sin(nu_q)**2,
+ sp.sin(nu_p)**4*sp.cos(nu_q),
+ sp.sin(nu_p)**3*sp.sin(nu_q)*sp.cos(nu_p),
+ sp.sin(nu_p)**3*sp.sin(nu_q)*sp.cos(nu_q),
+ sp.sin(nu_p)**2*sp.sin(nu_q)*sp.cos(nu_p)**2,
+ sp.sin(nu_p)**2*sp.sin(nu_q)*sp.cos(nu_p),
+ sp.sin(nu_p)*sp.sin(nu_q)**2*sp.cos(nu_p)**3,
+ sp.sin(nu_p)**3*sp.cos(nu_p)*sp.cos(nu_q)**2,
+ sp.sin(nu_p)**2*sp.sin(nu_q)*sp.cos(nu_q),
+ sp.sin(nu_p)*sp.sin(nu_q)**2*sp.cos(nu_p),
+ sp.sin(nu_p)*sp.sin(nu_q)**2*sp.cos(nu_p)**2,
+ sp.sin(nu_p)**2*sp.sin(nu_q)**2*sp.cos(nu_p)**2,
+ sp.sin(nu_p)**3*sp.cos(nu_p)*sp.cos(nu_q),
+ sp.sin(nu_p)**2*sp.sin(nu_q)**2*sp.cos(nu_p),
+ sp.sin(nu_p)**3*sp.sin(nu_q)*sp.cos(nu_p)*sp.cos(nu_q),
+ sp.sin(nu_p)**2*sp.sin(nu_q)*sp.cos(nu_p)**2*sp.cos(nu_q),
+ sp.sin(nu_p)**2*sp.sin(nu_q)*sp.cos(nu_p)*sp.cos(nu_q)]
+
+
+terms2 = [sp.sin(2*nu_p),
+ 1,
+ sp.sin(nu_p + nu_q),
+ sp.cos(nu_p - nu_q),
+ sp.cos(nu_p)**2,
+ sp.cos(nu_q)**2,
+ sp.sin(nu_p)**2,
+ sp.sin(nu_q)**2,
+ sp.sin(nu_p + sp.pi/4)**2,
+ sp.sin(nu_q + sp.pi/4)**2,
+ sp.cos(nu_p - nu_q)**2,
+ sp.cos(nu_q),
+ sp.cos(2*nu_p - nu_q),
+ sp.cos(nu_p)**3,
+ sp.sin(nu_q),
+ sp.sin(2*nu_p + nu_q),
+ sp.cos(nu_p)**4,
+ sp.sin(nu_p + sp.pi/4),
+ sp.sin(nu_q + sp.pi/4),
+ sp.sin(2*nu_p - nu_q),
+ sp.cos(nu_p),
+ sp.sin(nu_p),
+ sp.sin(2*nu_p + nu_q)**2,
+ sp.sin(2*nu_p - nu_q)**2,
+ sp.cos(2*nu_p - nu_q)**2]
+
+
+
+
+
 
 
 
