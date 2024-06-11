@@ -55,16 +55,16 @@ a_p = 6371+5000
 e_p=0.
 i_p = np.pi/4.
 W_p = 1.5
-w_p = 5
+w_p = 0.#w_p = 5
 nu_p = 0.75
 a_q = 6371+1200.
 e_q = 0.15
 i_q = np.pi/2.
 W_q = 6
-w_q = 2.5
+w_q = 0.#w_q = 2.5
 nu_q = 2.
 
-nus = np.linspace(start=0.,stop=2.*np.pi,num=300)
+nus = np.linspace(start=0.,stop=2.*np.pi,num=100)
 nu1s,nu2s = np.meshgrid(nus,nus)
 
 h = tangentHeight(a_p,e_p,i_p,W_p,w_p,nu_p,a_q,e_q,i_q,W_q,w_q,nu_q)
@@ -117,113 +117,158 @@ plt.show(block=False)
 
 
 
+nup, nuq = sp.symbols('nu_p,nu_q',real=True)
+
+terms = [sp.cos(nup)**2,
+ sp.cos(nup)**4,
+ sp.cos(nuq)**2,
+ sp.sin(nup)**2,
+ sp.sin(nuq)**2,
+ sp.cos(nup)**3,
+ sp.cos(nup)**2*sp.cos(nuq)**2,
+ sp.sin(nup)**2*sp.cos(nup)**2,
+ sp.sin(nuq)**2*sp.cos(nup)**4,
+ sp.sin(nup)**2*sp.cos(nuq)**2,
+ sp.sin(nuq)**2*sp.cos(nup)**2,
+ sp.sin(nup)*sp.cos(nup)**2,
+ sp.sin(nuq)**2*sp.cos(nup)**3,
+ sp.sin(nuq)**2*sp.cos(nup),
+ sp.sin(nup)*sp.cos(nup)**3,
+ sp.cos(nup)*sp.cos(nuq)**2,
+ sp.sin(nup)**2*sp.cos(nup),
+ sp.sin(nup)**2*sp.cos(nuq),
+ sp.sin(nup)*sp.cos(nup),
+ sp.sin(nuq)*sp.cos(nuq),
+ sp.cos(nup)**3*sp.cos(nuq),
+ sp.sin(nuq)*sp.cos(nup)**4,
+ sp.sin(nup)*sp.cos(nuq)**2,
+ sp.cos(nup)*sp.cos(nuq),
+ sp.sin(nuq)*sp.cos(nup),
+ sp.sin(nup)*sp.cos(nuq),
+ sp.sin(nup)*sp.sin(nuq),
+ sp.cos(nup)**2*sp.cos(nuq),
+ sp.sin(nuq)*sp.cos(nup)**2,
+ sp.sin(nuq)*sp.cos(nup)**3,
+ sp.sin(nup)**2*sp.cos(nup)**2*sp.cos(nuq)**2,
+ sp.sin(nuq)*sp.cos(nup)**2*sp.cos(nuq),
+ sp.sin(nuq)*sp.cos(nup)*sp.cos(nuq),
+ sp.sin(nup)**2*sp.cos(nup)*sp.cos(nuq),
+ sp.sin(nup)**2*sp.cos(nup)**2*sp.cos(nuq),
+ sp.sin(nup)*sp.cos(nup)**2*sp.cos(nuq),
+ sp.sin(nup)*sp.cos(nup)**3*sp.cos(nuq),
+ sp.sin(nuq)*sp.cos(nup)**3*sp.cos(nuq),
+ sp.sin(nup)**2*sp.cos(nup)*sp.cos(nuq)**2,
+ sp.sin(nup)*sp.cos(nup)**2*sp.cos(nuq)**2,
+ sp.sin(nup)*sp.sin(nuq)*sp.cos(nup)**3,
+ sp.sin(nup)*sp.cos(nup)*sp.cos(nuq),
+ sp.sin(nup)*sp.sin(nuq)*sp.cos(nuq),
+ sp.sin(nup)*sp.cos(nup)*sp.cos(nuq)**2,
+ sp.sin(nup)*sp.sin(nuq)*sp.cos(nup)**2,
+ sp.sin(nup)*sp.sin(nuq)*sp.cos(nup),
+ sp.sin(nup)*sp.sin(nuq)*sp.cos(nup)**3*sp.cos(nuq),
+ sp.sin(nup)*sp.sin(nuq)*sp.cos(nup)**2*sp.cos(nuq),
+ sp.sin(nup)*sp.sin(nuq)*sp.cos(nup)*sp.cos(nuq),
+ sp.sin(nup)**4,
+ sp.sin(nup)**3*sp.sin(nuq),
+ sp.sin(nup)**3*sp.cos(nuq)**2,
+ sp.sin(nup)**3*sp.cos(nuq),
+ sp.sin(nup)**3*sp.cos(nup),
+ sp.sin(nup)**4*sp.cos(nuq)**2,
+ sp.sin(nup)**2*sp.sin(nuq)**2,
+ sp.sin(nup)**4*sp.cos(nuq),
+ sp.sin(nup)**3*sp.sin(nuq)*sp.cos(nup),
+ sp.sin(nup)**3*sp.sin(nuq)*sp.cos(nuq),
+ sp.sin(nup)**2*sp.sin(nuq)*sp.cos(nup)**2,
+ sp.sin(nup)**2*sp.sin(nuq)*sp.cos(nup),
+ sp.sin(nup)*sp.sin(nuq)**2*sp.cos(nup)**3,
+ sp.sin(nup)**3*sp.cos(nup)*sp.cos(nuq)**2,
+ sp.sin(nup)**2*sp.sin(nuq)*sp.cos(nuq),
+ sp.sin(nup)*sp.sin(nuq)**2*sp.cos(nup),
+ sp.sin(nup)*sp.sin(nuq)**2*sp.cos(nup)**2,
+ sp.sin(nup)**2*sp.sin(nuq)**2*sp.cos(nup)**2,
+ sp.sin(nup)**3*sp.cos(nup)*sp.cos(nuq),
+ sp.sin(nup)**2*sp.sin(nuq)**2*sp.cos(nup),
+ sp.sin(nup)**3*sp.sin(nuq)*sp.cos(nup)*sp.cos(nuq),
+ sp.sin(nup)**2*sp.sin(nuq)*sp.cos(nup)**2*sp.cos(nuq),
+ sp.sin(nup)**2*sp.sin(nuq)*sp.cos(nup)*sp.cos(nuq)]
 
 
-terms = [sp.cos(nu_p)**2,
- sp.cos(nu_p)**4,
- sp.cos(nu_q)**2,
- sp.sin(nu_p)**2,
- sp.sin(nu_q)**2,
- sp.cos(nu_p)**3,
- sp.cos(nu_p)**2*sp.cos(nu_q)**2,
- sp.sin(nu_p)**2*sp.cos(nu_p)**2,
- sp.sin(nu_q)**2*sp.cos(nu_p)**4,
- sp.sin(nu_p)**2*sp.cos(nu_q)**2,
- sp.sin(nu_q)**2*sp.cos(nu_p)**2,
- sp.sin(nu_p)*sp.cos(nu_p)**2,
- sp.sin(nu_q)**2*sp.cos(nu_p)**3,
- sp.sin(nu_q)**2*sp.cos(nu_p),
- sp.sin(nu_p)*sp.cos(nu_p)**3,
- sp.cos(nu_p)*sp.cos(nu_q)**2,
- sp.sin(nu_p)**2*sp.cos(nu_p),
- sp.sin(nu_p)**2*sp.cos(nu_q),
- sp.sin(nu_p)*sp.cos(nu_p),
- sp.sin(nu_q)*sp.cos(nu_q),
- sp.cos(nu_p)**3*sp.cos(nu_q),
- sp.sin(nu_q)*sp.cos(nu_p)**4,
- sp.sin(nu_p)*sp.cos(nu_q)**2,
- sp.cos(nu_p)*sp.cos(nu_q),
- sp.sin(nu_q)*sp.cos(nu_p),
- sp.sin(nu_p)*sp.cos(nu_q),
- sp.sin(nu_p)*sp.sin(nu_q),
- sp.cos(nu_p)**2*sp.cos(nu_q),
- sp.sin(nu_q)*sp.cos(nu_p)**2,
- sp.sin(nu_q)*sp.cos(nu_p)**3,
- sp.sin(nu_p)**2*sp.cos(nu_p)**2*sp.cos(nu_q)**2,
- sp.sin(nu_q)*sp.cos(nu_p)**2*sp.cos(nu_q),
- sp.sin(nu_q)*sp.cos(nu_p)*sp.cos(nu_q),
- sp.sin(nu_p)**2*sp.cos(nu_p)*sp.cos(nu_q),
- sp.sin(nu_p)**2*sp.cos(nu_p)**2*sp.cos(nu_q),
- sp.sin(nu_p)*sp.cos(nu_p)**2*sp.cos(nu_q),
- sp.sin(nu_p)*sp.cos(nu_p)**3*sp.cos(nu_q),
- sp.sin(nu_q)*sp.cos(nu_p)**3*sp.cos(nu_q),
- sp.sin(nu_p)**2*sp.cos(nu_p)*sp.cos(nu_q)**2,
- sp.sin(nu_p)*sp.cos(nu_p)**2*sp.cos(nu_q)**2,
- sp.sin(nu_p)*sp.sin(nu_q)*sp.cos(nu_p)**3,
- sp.sin(nu_p)*sp.cos(nu_p)*sp.cos(nu_q),
- sp.sin(nu_p)*sp.sin(nu_q)*sp.cos(nu_q),
- sp.sin(nu_p)*sp.cos(nu_p)*sp.cos(nu_q)**2,
- sp.sin(nu_p)*sp.sin(nu_q)*sp.cos(nu_p)**2,
- sp.sin(nu_p)*sp.sin(nu_q)*sp.cos(nu_p),
- sp.sin(nu_p)*sp.sin(nu_q)*sp.cos(nu_p)**3*sp.cos(nu_q),
- sp.sin(nu_p)*sp.sin(nu_q)*sp.cos(nu_p)**2*sp.cos(nu_q),
- sp.sin(nu_p)*sp.sin(nu_q)*sp.cos(nu_p)*sp.cos(nu_q),
- sp.sin(nu_p)**4,
- sp.sin(nu_p)**3*sp.sin(nu_q),
- sp.sin(nu_p)**3*sp.cos(nu_q)**2,
- sp.sin(nu_p)**3*sp.cos(nu_q),
- sp.sin(nu_p)**3*sp.cos(nu_p),
- sp.sin(nu_p)**4*sp.cos(nu_q)**2,
- sp.sin(nu_p)**2*sp.sin(nu_q)**2,
- sp.sin(nu_p)**4*sp.cos(nu_q),
- sp.sin(nu_p)**3*sp.sin(nu_q)*sp.cos(nu_p),
- sp.sin(nu_p)**3*sp.sin(nu_q)*sp.cos(nu_q),
- sp.sin(nu_p)**2*sp.sin(nu_q)*sp.cos(nu_p)**2,
- sp.sin(nu_p)**2*sp.sin(nu_q)*sp.cos(nu_p),
- sp.sin(nu_p)*sp.sin(nu_q)**2*sp.cos(nu_p)**3,
- sp.sin(nu_p)**3*sp.cos(nu_p)*sp.cos(nu_q)**2,
- sp.sin(nu_p)**2*sp.sin(nu_q)*sp.cos(nu_q),
- sp.sin(nu_p)*sp.sin(nu_q)**2*sp.cos(nu_p),
- sp.sin(nu_p)*sp.sin(nu_q)**2*sp.cos(nu_p)**2,
- sp.sin(nu_p)**2*sp.sin(nu_q)**2*sp.cos(nu_p)**2,
- sp.sin(nu_p)**3*sp.cos(nu_p)*sp.cos(nu_q),
- sp.sin(nu_p)**2*sp.sin(nu_q)**2*sp.cos(nu_p),
- sp.sin(nu_p)**3*sp.sin(nu_q)*sp.cos(nu_p)*sp.cos(nu_q),
- sp.sin(nu_p)**2*sp.sin(nu_q)*sp.cos(nu_p)**2*sp.cos(nu_q),
- sp.sin(nu_p)**2*sp.sin(nu_q)*sp.cos(nu_p)*sp.cos(nu_q)]
-
-
-terms2 = [sp.sin(2*nu_p),
- 1,
- sp.sin(nu_p + nu_q),
- sp.cos(nu_p - nu_q),
- sp.cos(nu_p)**2,
- sp.cos(nu_q)**2,
- sp.sin(nu_p)**2,
- sp.sin(nu_q)**2,
- sp.sin(nu_p + sp.pi/4)**2,
- sp.sin(nu_q + sp.pi/4)**2,
- sp.cos(nu_p - nu_q)**2,
- sp.cos(nu_q),
- sp.cos(2*nu_p - nu_q),
- sp.cos(nu_p)**3,
- sp.sin(nu_q),
- sp.sin(2*nu_p + nu_q),
- sp.cos(nu_p)**4,
- sp.sin(nu_p + sp.pi/4),
- sp.sin(nu_q + sp.pi/4),
- sp.sin(2*nu_p - nu_q),
- sp.cos(nu_p),
- sp.sin(nu_p),
- sp.sin(2*nu_p + nu_q)**2,
- sp.sin(2*nu_p - nu_q)**2,
- sp.cos(2*nu_p - nu_q)**2]
-
-
+terms2 = [sp.sin(2*nup),
+ sp.sin(nup + nuq),
+ sp.cos(nup - nuq),
+ sp.cos(nup)**2,
+ sp.cos(nuq)**2,
+ sp.sin(nup)**2,
+ sp.sin(nuq)**2,
+ sp.sin(nup + sp.pi/4)**2,
+ sp.sin(nuq + sp.pi/4)**2,
+ sp.cos(nup - nuq)**2,
+ sp.cos(nuq),
+ sp.cos(2*nup - nuq),
+ sp.cos(nup)**3,
+ sp.sin(nuq),
+ sp.sin(2*nup + nuq),
+ sp.cos(nup)**4,
+ sp.sin(nup + sp.pi/4),
+ sp.sin(nuq + sp.pi/4),
+ sp.sin(2*nup - nuq),
+ sp.cos(nup),
+ sp.sin(nup),
+ sp.sin(2*nup + nuq)**2,
+ sp.sin(2*nup - nuq)**2,
+ sp.cos(2*nup - nuq)**2] #1
 
 
 
+#compute svd matrix
+a_arr = list()
+for i in np.arange(len(pts2)):
+    a_s = list()
+    for j in np.arange(len(terms)):
+        tmp = terms[j].subs(nup,pts2[i,0]).subs(nuq,pts2[i,1]).evalf()
+        tmp = float(tmp)
+        a_s.append(tmp)
+    for j in np.arange(len(terms2)):
+        tmp = terms2[j].subs(nup,pts2[i,0]).subs(nuq,pts2[i,1]).evalf()
+        tmp = float(tmp)
+        a_s.append(tmp)
+    a_s.append(1.)
+    a_arr.append(np.asarray(a_s))
+a_arr = np.asarray(a_arr)    
 
+
+(U,S,Vh) = np.linalg.svd(a_arr)
+
+
+
+allterms = list()
+for i in np.arange(len(terms)):
+    allterms.append(terms[i])
+for i in np.arange(len(terms2)):
+    allterms.append(terms2[i])
+allterms.append(1.)
+
+
+#filter by S
+usedTerms = list()
+combinedEqn = 0
+for i in np.arange(len(allterms)):
+    if S[i] > 1e-5:
+        print(allterms[i])
+        usedTerms.append(allterms[i])
+        combinedEqn = combinedEqn + S[i]*allterms[i]
+
+
+#Plot
+hs2 = np.zeros((len(nus),len(nus)))
+for i in np.arange(len(nus)):
+    for j in np.arange(len(nus)):
+        hs2[i,j] = combinedEqn.subs(nup,nus[i]).subs(nuq,nus[j])
+
+plt.figure(num=3)
+plt.contourf(nu1s,nu2s,hs2,cmap='bwr',levels=100)
+plt.colorbar()
+plt.show(block=False)
 
 
 # A_p**2*(e_q*x + 1)**2
@@ -375,5 +420,42 @@ terms2 = [sp.sin(2*nu_p),
 # - cos(4*nu_p + 3*nu_q)
 # - cos(4*nu_p + 4*nu_q)
 # - 894184.586379905
+
+
+
+
+#### Iteratively generate
+nup,nuq = sp.symbols('nu_p,nu_q',real=True)
+var = [nu_p,nu_q]
+trig = [sp.sin(x),sp.cos(x),sp.asin(x),sp.acos(x)]
+pows = [-4,-3,-2,-1,-0.5,0.5,1,2,3,4]
+numterms = [1,2,3,4,5,6,7,8]
+pmt = [-1,1,2]
+maxDepth = 4
+
+for j in np.arange(len(pmt))+1:
+    for i in itertools.combinations(pmt,j):
+        print(i)
+
+
+def generateTerms(eqn,depth,numterm,maxDepth=4):
+    if depth > maxDepth:
+        return 0
+    for i in np.arange(numterm):
+        for j in np.arange(len(var)):
+            for k in np.arange(len(trig)):
+                for l in np.arange(len(pows))
+        eqn = 
+
+
+import itertools
+
+#iterate over the number of terms
+eqn = 0
+#for i in np.arange(len(numterms)):
+#num = len(var)*len(trig)*len(pows)*len(numterms)*len(pmt)*maxDeth**4
+#for i in np.arnage(num):
+eqn = generateTerm
+
 
 
